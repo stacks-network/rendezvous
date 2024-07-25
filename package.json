@@ -13,5 +13,8 @@
     "testing"
   ],
   "author": "Radu Bahmata, Nikos Baxevanis",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "typescript": "^5.5.4"
+  }
 }
