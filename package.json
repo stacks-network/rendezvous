@@ -1,0 +1,17 @@
+{
+  "name": "clarity-rendezvous",
+  "version": "0.0.1",
+  "description": "Meet your contract's vulnerabilities head-on.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "stacks",
+    "clarity",
+    "fuzz",
+    "testing"
+  ],
+  "author": "Radu Bahmata, Nikos Baxevanis",
+  "license": "MIT"
+}
