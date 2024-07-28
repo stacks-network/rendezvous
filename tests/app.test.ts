@@ -1,4 +1,4 @@
-import calculator from "./app";
+import calculator from "../app";
 
 // https://blog.codeleak.pl/2021/12/parameterized-tests-with-jest.html
 describe("Calculator", () => {
