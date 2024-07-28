@@ -1,8 +1,8 @@
 {
-  "name": "clarity-rendezvous",
+  "name": "rendezvous",
   "version": "0.0.1",
   "description": "Meet your contract's vulnerabilities head-on.",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
     "test": "npx jest"
   },
