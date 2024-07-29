@@ -1,4 +1,5 @@
-;; This file defines the invariants for the counter contract.
+;; The idea of having invariants side by side to the contract
+;; is to ensure that they are treated as first-class citizens.
 ;; Each invariant is a function that starts with "invariant-".
 
 (define-read-only (invariant-counter-non-negative)
