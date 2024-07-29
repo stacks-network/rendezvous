@@ -19,7 +19,7 @@ export default function calculator(operator: Operator, inputs: number[]) {
   }
 }
 
-(async function () {
+async function main() {
   // Get the arguments from the command-line.
   const args = process.argv;
   // 0: NodeJs path.
@@ -53,4 +53,8 @@ export default function calculator(operator: Operator, inputs: number[]) {
   // in app.test.ts (those having to do with the calculator function) and the
   // calculator function itself, defined in app.ts.
   // --------------------------------------------------------------------------
-})();
+}
+
+if (require.main === module) {
+  main();
+}
