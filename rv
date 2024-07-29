@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Navigate to the directory of the script.
+cd "$(dirname "$0")"
+
+# Compile TypeScript files to JavaScript using the project's tsconfig.json.
+echo "Compiling TypeScript files..."
+npx tsc --project tsconfig.json
+
+# Check if the compilation was successful.
+if [ $? -eq 0 ]; then
+    echo "Compilation successful. Starting fuzzing process..."
+    node app.js "$@"
+else
+    echo "TypeScript compilation failed, please check the errors above."
+    exit 1
+fi
