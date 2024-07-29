@@ -33,6 +33,11 @@ async function main() {
   });
 
   const manifestPath = args[2];
+
+  if (!manifestPath) {
+    throw new Error("Please provide a path to the Clarinet.toml manifest.");
+  }
+
   console.log(`Using manifest path: ${manifestPath}`);
 
   // FIXME
