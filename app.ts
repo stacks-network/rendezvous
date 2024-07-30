@@ -54,6 +54,27 @@ export const getFunctionsFromScInterfaces = (
   return contractsFunctions;
 };
 
+/**
+ * Filter the System Under Test (`SUT`) functions from the map of all
+ * contract functions.
+ *
+ * The SUT functions are the ones that have `public` access since they are
+ * capable of changing the contract state.
+ * @param allFunctionsMap The map containing all the functions for each contract.
+ * @returns A map containing only the SUT functions for each contract.
+ */
+export const filterSutFunctions = (
+  allFunctionsMap: Map<string, ContractFunction[]>
+) => {
+  const sutFunctionsMap = new Map<string, ContractFunction[]>();
+  allFunctionsMap.forEach((functions, contractName) => {
+    const contractSutFunctions = functions.filter((f) => f.access === "public");
+    sutFunctionsMap.set(contractName, contractSutFunctions);
+  });
+
+  return sutFunctionsMap;
+};
+
 export async function main() {
   // Get the arguments from the command-line.
   const args = process.argv;
@@ -86,6 +107,8 @@ export async function main() {
   const sutContractsAllFunctions = getFunctionsFromScInterfaces(
     sutContractsInterfaces
   );
+
+  const sutContractsSutFunctions = filterSutFunctions(sutContractsAllFunctions);
 
   // FIXME
   // --------------------------------------------------------------------------
