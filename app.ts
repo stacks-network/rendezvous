@@ -86,6 +86,21 @@ export const filterSutFunctions = (
   return sutFunctionsMap;
 };
 
+/**
+ * Get contract source code from the simnet.
+ * @param simnet The simnet instance.
+ * @param sutContractName The contract name.
+ * @returns The contract source code.
+ */
+export const getSimnetContractSrc = (
+  simnet: Simnet,
+  sutContractName: string
+) => {
+  if (simnet.getContractSource(sutContractName) === undefined)
+    throw new Error(`Contract ${sutContractName} not found in the network.`);
+  return simnet.getContractSource(sutContractName);
+};
+
 export async function main() {
   // Get the arguments from the command-line.
   const args = process.argv;
@@ -120,11 +135,10 @@ export async function main() {
 
   sutContracts.forEach((contract) => {
     // FIXME:
-    // - get the contract source code
     // - find the invariant contract
     // - concatenate the contracts
     // - deploy the newly generated contracts
-    console.log(`Contract: ${contract}`);
+    const sutContractSrc = getSimnetContractSrc(simnet, contract);
   });
 
   // FIXME: Get all functions from the concatenated contracts.
