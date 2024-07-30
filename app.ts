@@ -1,6 +1,13 @@
 import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
 import { ContractInterface } from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
 
+type ContractFunction = {
+  name: string;
+  access: "public" | "private" | "read_only";
+  args: any[];
+  outputs: object;
+};
+
 /**
  * Get the contracts interfaces from the simnet. If a deployer is provided,
  * only the contracts deployed by the deployer are returned.
@@ -30,6 +37,23 @@ export const getContractsInterfacesFromSimnet = (
   return filteredContracts;
 };
 
+/**
+ * Get the functions from the smart contract interfaces.
+ * @param contractsInterfaces The smart contract interfaces map.
+ * @returns A map containing the contracts functions.
+ */
+export const getFunctionsFromScInterfaces = (
+  contractsInterfaces: Map<string, ContractInterface>
+): Map<string, ContractFunction[]> => {
+  const contractsFunctions = new Map<string, ContractFunction[]>();
+
+  contractsInterfaces.forEach((scInterface, scName) => {
+    contractsFunctions.set(scName, scInterface.functions);
+  });
+
+  return contractsFunctions;
+};
+
 export async function main() {
   // Get the arguments from the command-line.
   const args = process.argv;
@@ -53,7 +77,15 @@ export async function main() {
 
   const simnet = await initSimnet(manifestPath);
   const deployer = simnet.deployer;
-  const sutContracts = getContractsInterfacesFromSimnet(simnet, deployer);
+
+  const sutContractsInterfaces = getContractsInterfacesFromSimnet(
+    simnet,
+    deployer
+  );
+
+  const sutContractsAllFunctions = getFunctionsFromScInterfaces(
+    sutContractsInterfaces
+  );
 
   // FIXME
   // --------------------------------------------------------------------------
