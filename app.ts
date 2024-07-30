@@ -114,11 +114,15 @@ export async function main() {
     console.log(arg);
   });
 
-  const manifestPath = args[2];
+  // FIXME: Decide if we want to pass only the directory or the full path.
+  const manifestDir = args[2];
 
-  if (!manifestPath) {
+  if (!manifestDir) {
     throw new Error("Please provide a path to the Clarinet.toml manifest.");
   }
+
+  const manifestPath = manifestDir + "/Clarinet.toml";
+  const contractsPath = manifestDir + "/contracts";
 
   console.log(`Using manifest path: ${manifestPath}`);
 
