@@ -9,6 +9,17 @@ type ContractFunction = {
 };
 
 /**
+ * Get the list of contracts from the contract interfaces.
+ * @param contractInterfaces The contract interfaces map.
+ * @returns The list of contracts.
+ */
+export const getContractsListFromInterfaces = (
+  contractInterfaces: Map<string, ContractInterface>
+): string[] => {
+  return Array.from(contractInterfaces.keys());
+};
+
+/**
  * Get the contracts interfaces from the simnet. If a deployer is provided,
  * only the contracts deployed by the deployer are returned.
  * @param simnet The simnet instance.
@@ -104,6 +115,19 @@ export async function main() {
     deployer
   );
 
+  // Get all the contracts from the interfaces.
+  const sutContracts = getContractsListFromInterfaces(sutContractsInterfaces);
+
+  sutContracts.forEach((contract) => {
+    // FIXME:
+    // - get the contract source code
+    // - find the invariant contract
+    // - concatenate the contracts
+    // - deploy the newly generated contracts
+    console.log(`Contract: ${contract}`);
+  });
+
+  // FIXME: Get all functions from the concatenated contracts.
   const sutContractsAllFunctions = getFunctionsFromScInterfaces(
     sutContractsInterfaces
   );
