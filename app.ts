@@ -1,3 +1,35 @@
+import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
+import { ContractInterface } from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
+
+/**
+ * Get the contracts interfaces from the simnet. If a deployer is provided,
+ * only the contracts deployed by the deployer are returned.
+ * @param simnet The simnet instance.
+ * @param deployer The deployer address - optional.
+ * @returns The contracts interfaces.
+ */
+export const getContractsInterfacesFromSimnet = (
+  simnet: Simnet,
+  deployer?: string
+): Map<string, ContractInterface> => {
+  const allContractsInterfaces = simnet.getContractsInterfaces();
+
+  if (!deployer) {
+    return allContractsInterfaces;
+  }
+  const filteredContracts = new Map<string, ContractInterface>();
+
+  allContractsInterfaces.forEach((contractInterface, key) => {
+    const [address] = key.split(".");
+
+    if (address === deployer) {
+      filteredContracts.set(key, contractInterface);
+    }
+  });
+
+  return filteredContracts;
+};
+
 export async function main() {
   // Get the arguments from the command-line.
   const args = process.argv;
@@ -18,6 +50,10 @@ export async function main() {
   }
 
   console.log(`Using manifest path: ${manifestPath}`);
+
+  const simnet = await initSimnet(manifestPath);
+  const deployer = simnet.deployer;
+  const sutContracts = getContractsInterfacesFromSimnet(simnet, deployer);
 
   // FIXME
   // --------------------------------------------------------------------------
