@@ -1,5 +1,6 @@
 import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
 import { ContractInterface } from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
+import { Cl, cvToJSON } from "@stacks/transactions";
 import fs from "fs";
 
 type ContractFunction = {
@@ -7,6 +8,19 @@ type ContractFunction = {
   access: "public" | "private" | "read_only";
   args: any[];
   outputs: object;
+};
+
+/**
+ * LocalContext is a data structure used to track the number of times each SUT function is called
+ * for every contract. It is a nested map where:
+ * - The outer key is the contract name.
+ * - The inner key is the SUT function name within the contract.
+ * - The value is the count of times the SUT function has been invoked.
+ */
+export type LocalContext = {
+  [contractName: string]: {
+    [functionName: string]: number;
+  };
 };
 
 /**
@@ -258,6 +272,34 @@ export async function main() {
   const concatContractsInvariantFunctions = filterInvariantFunctions(
     concatContractsAllFunctions
   );
+
+  // Initialize the local context
+  const localContext: LocalContext = {};
+
+  concatContractsSutFunctions.forEach((functions, contractName) => {
+    localContext[contractName] = {};
+    functions.forEach((f) => {
+      localContext[contractName][f.name] = 0;
+    });
+  });
+
+  // Initialize the Clarity context
+  concatContractsSutFunctions.forEach((fns, scName) => {
+    fns.forEach((fn) => {
+      const { result: initialize } = simnet.callPublicFn(
+        scName,
+        "update-context",
+        [Cl.stringAscii(fn.name), Cl.uint(0)],
+        deployer
+      );
+      const jsonResult = cvToJSON(initialize);
+      if (!jsonResult.value || !jsonResult.success) {
+        throw new Error(
+          `Failed to initialize the context for function: ${fn.name}`
+        );
+      }
+    });
+  });
 
   // FIXME
   // --------------------------------------------------------------------------
