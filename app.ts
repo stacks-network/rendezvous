@@ -247,10 +247,14 @@ export async function main() {
     concatContractsInterfaces
   );
 
+  // A map where the keys are the concatenated contract names and the values
+  // are arrays of their SUT (System Under Test) functions.
   const concatContractsSutFunctions = filterSutFunctions(
     concatContractsAllFunctions
   );
 
+  // A map where the keys are the concatenated contract names and the values
+  // are arrays of their invariant functions.
   const concatContractsInvariantFunctions = filterInvariantFunctions(
     concatContractsAllFunctions
   );
