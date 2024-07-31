@@ -120,6 +120,20 @@ export const filterSutFunctions = (
   return sutFunctionsMap;
 };
 
+export const filterInvariantFunctions = (
+  allFunctionsMap: Map<string, ContractFunction[]>
+) => {
+  const invariantFunctionsMap = new Map<string, ContractFunction[]>();
+  allFunctionsMap.forEach((functions, contractName) => {
+    const contractInvariantFunctions = functions.filter(
+      (f) => f.access === "read_only" && f.name.startsWith("invariant-")
+    );
+    invariantFunctionsMap.set(contractName, contractInvariantFunctions);
+  });
+
+  return invariantFunctionsMap;
+};
+
 /**
  * Get contract source code from the simnet.
  * @param simnet The simnet instance.
@@ -234,6 +248,10 @@ export async function main() {
   );
 
   const concatContractsSutFunctions = filterSutFunctions(
+    concatContractsAllFunctions
+  );
+
+  const concatContractsInvariantFunctions = filterInvariantFunctions(
     concatContractsAllFunctions
   );
 
