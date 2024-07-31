@@ -10,6 +10,18 @@ type ContractFunction = {
 };
 
 /**
+ * The context contract that will be concatenated with the SUT and the invariants contracts.
+ * It is a map that stores the number of times each SUT function is called.
+ */
+const contextContract = `(define-map context (string-ascii 100) {
+  called: uint
+  ;; other data
+})
+
+(define-public (update-context (function-name (string-ascii 100)) (called uint))
+  (ok (map-set context function-name {called: called})))`;
+
+/**
  * Get the list of contracts from the contract interfaces.
  * @param contractInterfaces The contract interfaces map.
  * @returns The list of contracts.
@@ -168,13 +180,14 @@ export async function main() {
 
   sutContracts.forEach((contract) => {
     // FIXME:
-    // - concatenate the contracts
     // - deploy the newly generated contracts
     const sutContractSrc = getSimnetContractSrc(simnet, contract);
     const invariantContractSrc = getInvariantContractSrc(
       contractsPath,
       contract
     );
+    const concatenatedContractSrc =
+      sutContractSrc + "\n\n" + invariantContractSrc + "\n\n" + contextContract;
   });
 
   // FIXME: Get all functions from the concatenated contracts.
