@@ -62,6 +62,25 @@ export const getContractsInterfacesFromSimnet = (
 };
 
 /**
+ * Filter the concatenated contracts interfaces from the contracts interfaces map.
+ * @param contractsInterfaces The contracts interfaces map.
+ * @returns The concatenated contracts interfaces.
+ */
+export const filterConcatContractsInterfaces = (
+  contractsInterfaces: Map<string, ContractInterface>
+) => {
+  const concatContractsInterfaces = new Map<string, ContractInterface>();
+
+  contractsInterfaces.forEach((scInterface, scName) => {
+    if (scName.endsWith("_concat")) {
+      concatContractsInterfaces.set(scName, scInterface);
+    }
+  });
+
+  return concatContractsInterfaces;
+};
+
+/**
  * Get the functions from the smart contract interfaces.
  * @param contractsInterfaces The smart contract interfaces map.
  * @returns A map containing the contracts functions.
@@ -92,7 +111,9 @@ export const filterSutFunctions = (
 ) => {
   const sutFunctionsMap = new Map<string, ContractFunction[]>();
   allFunctionsMap.forEach((functions, contractName) => {
-    const contractSutFunctions = functions.filter((f) => f.access === "public");
+    const contractSutFunctions = functions.filter(
+      (f) => f.access === "public" && f.name !== "update-context"
+    );
     sutFunctionsMap.set(contractName, contractSutFunctions);
   });
 
@@ -151,7 +172,7 @@ export async function main() {
   // 3: command-line arg 2.
   // 4: command-line arg 3.
   // ...
-  args.forEach(arg => {
+  args.forEach((arg) => {
     console.log(arg);
   });
 
@@ -177,25 +198,44 @@ export async function main() {
 
   // Get all the contracts from the interfaces.
   const sutContracts = getContractsListFromInterfaces(sutContractsInterfaces);
-
+  const concatContractsList: string[] = [];
   sutContracts.forEach((contract) => {
-    // FIXME:
-    // - deploy the newly generated contracts
+    // Get the source code of the SUT contract
     const sutContractSrc = getSimnetContractSrc(simnet, contract);
+    // Get the source code of the invariants contract
     const invariantContractSrc = getInvariantContractSrc(
       contractsPath,
       contract
     );
-    const concatenatedContractSrc =
+    // Concatenate the contracts.
+    const concatContractSrc =
       sutContractSrc + "\n\n" + invariantContractSrc + "\n\n" + contextContract;
+    // Get the name of the concatenated contract. This will be used for
+    // the deployment
+    const concatContractName = `${contract.split(".")[1]}_concat`;
+
+    // Deploy the concatenated contract
+    simnet.deployContract(
+      concatContractName,
+      concatContractSrc,
+      { clarityVersion: 2 },
+      deployer
+    );
+
+    concatContractsList.push(`${deployer}.${concatContractName}`);
   });
 
-  // FIXME: Get all functions from the concatenated contracts.
-  const sutContractsAllFunctions = getFunctionsFromScInterfaces(
-    sutContractsInterfaces
+  const concatContractsInterfaces = filterConcatContractsInterfaces(
+    getContractsInterfacesFromSimnet(simnet, deployer)
   );
 
-  const sutContractsSutFunctions = filterSutFunctions(sutContractsAllFunctions);
+  const concatContractsAllFunctions = getFunctionsFromScInterfaces(
+    concatContractsInterfaces
+  );
+
+  const concatContractsSutFunctions = filterSutFunctions(
+    concatContractsAllFunctions
+  );
 
   // FIXME
   // --------------------------------------------------------------------------
