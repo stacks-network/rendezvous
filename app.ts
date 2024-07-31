@@ -1,5 +1,6 @@
 import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
 import { ContractInterface } from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
+import fs from "fs";
 
 type ContractFunction = {
   name: string;
@@ -101,6 +102,34 @@ export const getSimnetContractSrc = (
   return simnet.getContractSource(sutContractName);
 };
 
+/**
+ * Get the invariant contract source code.
+ * @param contractsPath The contracts path.
+ * @param sutContractName The corresponding contract name.
+ * @returns The invariant contract source code.
+ */
+export const getInvariantContractSrc = (
+  contractsPath: string,
+  sutContractName: string
+) => {
+  // FIXME: Here, we can encounter a failure if the contract file name is
+  // not the same as the contract name in the manifest.
+  // Example:
+  // - Contract name in the manifest: [contracts.counter]
+  // - Contract file name: path = "contracts/counter.clar"
+  const invariantScName = `${sutContractName.split(".")[1]}.invariants`;
+  const invariantScPath = `${contractsPath}/${invariantScName}.clar`;
+  try {
+    return fs.readFileSync(invariantScPath).toString();
+  } catch (e: any) {
+    throw new Error(
+      `Error retrieving the corresponding invariant contract for the "${
+        sutContractName.split(".")[1]
+      }" contract. ${e.message}`
+    );
+  }
+};
+
 export async function main() {
   // Get the arguments from the command-line.
   const args = process.argv;
@@ -139,10 +168,13 @@ export async function main() {
 
   sutContracts.forEach((contract) => {
     // FIXME:
-    // - find the invariant contract
     // - concatenate the contracts
     // - deploy the newly generated contracts
     const sutContractSrc = getSimnetContractSrc(simnet, contract);
+    const invariantContractSrc = getInvariantContractSrc(
+      contractsPath,
+      contract
+    );
   });
 
   // FIXME: Get all functions from the concatenated contracts.
