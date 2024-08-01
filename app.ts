@@ -213,11 +213,10 @@ export async function main() {
   console.log(`Using manifest path: ${manifestPath}`);
 
   const simnet = await initSimnet(manifestPath);
-  const deployer = simnet.deployer;
 
   const sutContractsInterfaces = getContractsInterfacesFromSimnet(
     simnet,
-    deployer
+    simnet.deployer
   );
 
   // Get all the contracts from the interfaces.
@@ -243,14 +242,14 @@ export async function main() {
       concatContractName,
       concatContractSrc,
       { clarityVersion: 2 },
-      deployer
+      simnet.deployer
     );
 
-    concatContractsList.push(`${deployer}.${concatContractName}`);
+    concatContractsList.push(`${simnet.deployer}.${concatContractName}`);
   });
 
   const concatContractsInterfaces = filterConcatContractsInterfaces(
-    getContractsInterfacesFromSimnet(simnet, deployer)
+    getContractsInterfacesFromSimnet(simnet, simnet.deployer)
   );
 
   const concatContractsAllFunctions = getFunctionsFromScInterfaces(
@@ -286,7 +285,7 @@ export async function main() {
         scName,
         "update-context",
         [Cl.stringAscii(fn.name), Cl.uint(0)],
-        deployer
+        simnet.deployer
       );
       const jsonResult = cvToJSON(initialize);
       if (!jsonResult.value || !jsonResult.success) {
