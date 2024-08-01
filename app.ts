@@ -209,7 +209,6 @@ export async function main() {
 
   // Get all the contracts from the interfaces.
   const sutContracts = Array.from(sutContractsInterfaces.keys());
-  const concatContractsList: string[] = [];
   sutContracts.forEach((contract) => {
     // Get the source code of the SUT contract
     const sutContractSrc = getSimnetContractSrc(simnet, contract);
@@ -240,8 +239,6 @@ export async function main() {
         }.invariant.clar:\n${e}`
       );
     }
-
-    concatContractsList.push(`${simnet.deployer}.${concatContractName}`);
   });
 
   const concatContractsInterfaces = filterConcatContractsInterfaces(
