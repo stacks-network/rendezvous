@@ -32,15 +32,14 @@ const contextContract = `(define-map context (string-ascii 100) {
   (ok (map-set context function-name {called: called})))`;
 
 /**
- * Get the contracts interfaces from the simnet. If a deployer is provided,
- * only the contracts deployed by the deployer are returned.
+ * Get the interfaces of contracts deployed by the specified deployer from the simnet.
  * @param simnet The simnet instance.
- * @param deployer The deployer address - optional.
+ * @param deployer The deployer address.
  * @returns The contracts interfaces.
  */
-export const getContractsInterfacesFromSimnet = (
+export const getSimnetDeployerContractsInterfaces = (
   simnet: Simnet,
-  deployer?: string
+  deployer: string
 ): Map<string, ContractInterface> => {
   const allContractsInterfaces = simnet.getContractsInterfaces();
 
@@ -203,7 +202,7 @@ export async function main() {
 
   const simnet = await initSimnet(manifestPath);
 
-  const sutContractsInterfaces = getContractsInterfacesFromSimnet(
+  const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(
     simnet,
     simnet.deployer
   );
@@ -238,7 +237,7 @@ export async function main() {
   });
 
   const concatContractsInterfaces = filterConcatContractsInterfaces(
-    getContractsInterfacesFromSimnet(simnet, simnet.deployer)
+    getSimnetDeployerContractsInterfaces(simnet, simnet.deployer)
   );
 
   const concatContractsAllFunctions = getFunctionsFromScInterfaces(
