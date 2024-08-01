@@ -32,17 +32,6 @@ const contextContract = `(define-map context (string-ascii 100) {
   (ok (map-set context function-name {called: called})))`;
 
 /**
- * Get the list of contracts from the contract interfaces.
- * @param contractInterfaces The contract interfaces map.
- * @returns The list of contracts.
- */
-export const getContractsListFromInterfaces = (
-  contractInterfaces: Map<string, ContractInterface>
-): string[] => {
-  return Array.from(contractInterfaces.keys());
-};
-
-/**
  * Get the contracts interfaces from the simnet. If a deployer is provided,
  * only the contracts deployed by the deployer are returned.
  * @param simnet The simnet instance.
@@ -220,7 +209,7 @@ export async function main() {
   );
 
   // Get all the contracts from the interfaces.
-  const sutContracts = getContractsListFromInterfaces(sutContractsInterfaces);
+  const sutContracts = Array.from(sutContractsInterfaces.keys());
   const concatContractsList: string[] = [];
   sutContracts.forEach((contract) => {
     // Get the source code of the SUT contract
