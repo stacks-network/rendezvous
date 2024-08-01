@@ -1,14 +1,10 @@
 import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
-import { ContractInterface } from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
+import {
+  ContractInterface,
+  ContractInterfaceFunction,
+} from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
 import { Cl, cvToJSON } from "@stacks/transactions";
 import fs from "fs";
-
-type ContractFunction = {
-  name: string;
-  access: "public" | "private" | "read_only";
-  args: any[];
-  outputs: object;
-};
 
 /**
  * LocalContext is a data structure used to track the number of times each SUT function is called
@@ -101,8 +97,8 @@ export const filterConcatContractsInterfaces = (
  */
 export const getFunctionsFromScInterfaces = (
   contractsInterfaces: Map<string, ContractInterface>
-): Map<string, ContractFunction[]> => {
-  const contractsFunctions = new Map<string, ContractFunction[]>();
+): Map<string, ContractInterfaceFunction[]> => {
+  const contractsFunctions = new Map<string, ContractInterfaceFunction[]>();
 
   contractsInterfaces.forEach((scInterface, scName) => {
     contractsFunctions.set(scName, scInterface.functions);
@@ -121,9 +117,9 @@ export const getFunctionsFromScInterfaces = (
  * @returns A map containing only the SUT functions for each contract.
  */
 export const filterSutFunctions = (
-  allFunctionsMap: Map<string, ContractFunction[]>
+  allFunctionsMap: Map<string, ContractInterfaceFunction[]>
 ) => {
-  const sutFunctionsMap = new Map<string, ContractFunction[]>();
+  const sutFunctionsMap = new Map<string, ContractInterfaceFunction[]>();
   allFunctionsMap.forEach((functions, contractName) => {
     const contractSutFunctions = functions.filter(
       (f) => f.access === "public" && f.name !== "update-context"
@@ -135,9 +131,9 @@ export const filterSutFunctions = (
 };
 
 export const filterInvariantFunctions = (
-  allFunctionsMap: Map<string, ContractFunction[]>
+  allFunctionsMap: Map<string, ContractInterfaceFunction[]>
 ) => {
-  const invariantFunctionsMap = new Map<string, ContractFunction[]>();
+  const invariantFunctionsMap = new Map<string, ContractInterfaceFunction[]>();
   allFunctionsMap.forEach((functions, contractName) => {
     const contractInvariantFunctions = functions.filter(
       (f) => f.access === "read_only" && f.name.startsWith("invariant-")
