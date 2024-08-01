@@ -225,13 +225,21 @@ export async function main() {
     // the deployment
     const concatContractName = `${contract.split(".")[1]}_concat`;
 
-    // Deploy the concatenated contract
-    simnet.deployContract(
-      concatContractName,
-      concatContractSrc,
-      { clarityVersion: 2 },
-      simnet.deployer
-    );
+    try {
+      // Deploy the concatenated contract
+      simnet.deployContract(
+        concatContractName,
+        concatContractSrc,
+        { clarityVersion: 2 },
+        simnet.deployer
+      );
+    } catch (e: any) {
+      throw new Error(
+        `Something went wrong. Please double check the invariants contract: ${
+          contract.split(".")[1]
+        }.invariant.clar:\n${e}`
+      );
+    }
 
     concatContractsList.push(`${simnet.deployer}.${concatContractName}`);
   });
