@@ -4,7 +4,7 @@ import { main } from "../app";
 describe("Manifest handling", () => {
   it("throws error when manifest path is not provided", () => {
     expect(async () => await main()).rejects.toThrow(
-      "Please provide a path to the Clarinet.toml manifest."
+      "No path to Clarinet.toml manifest provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
     );
   });
 });

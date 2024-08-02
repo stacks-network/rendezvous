@@ -205,9 +205,9 @@ export const filterConcatContractsInterfaces = (
 ) => {
   const concatContractsInterfaces = new Map<string, ContractInterface>();
 
-  contractsInterfaces.forEach((scInterface, scName) => {
-    if (scName.endsWith("_concat")) {
-      concatContractsInterfaces.set(scName, scInterface);
+  contractsInterfaces.forEach((contractInterface, contractName) => {
+    if (contractName.endsWith("_concat")) {
+      concatContractsInterfaces.set(contractName, contractInterface);
     }
   });
 
@@ -219,13 +219,13 @@ export const filterConcatContractsInterfaces = (
  * @param contractsInterfaces The smart contract interfaces map.
  * @returns A map containing the contracts functions.
  */
-export const getFunctionsFromScInterfaces = (
+export const getFunctionsFromContractInterfaces = (
   contractsInterfaces: Map<string, ContractInterface>
 ): Map<string, ContractInterfaceFunction[]> => {
   const contractsFunctions = new Map<string, ContractInterfaceFunction[]>();
 
-  contractsInterfaces.forEach((scInterface, scName) => {
-    contractsFunctions.set(scName, scInterface.functions);
+  contractsInterfaces.forEach((contractInterface, contractName) => {
+    contractsFunctions.set(contractName, contractInterface.functions);
   });
 
   return contractsFunctions;
@@ -298,10 +298,10 @@ export const getInvariantContractSrc = (
   // Example:
   // - Contract name in the manifest: [contracts.counter]
   // - Contract file name: path = "contracts/counter.clar"
-  const invariantScName = `${sutContractName.split(".")[1]}.invariants`;
-  const invariantScPath = `${contractsPath}/${invariantScName}.clar`;
+  const invariantContractName = `${sutContractName.split(".")[1]}.invariants`;
+  const invariantContractPath = `${contractsPath}/${invariantContractName}.clar`;
   try {
-    return fs.readFileSync(invariantScPath).toString();
+    return fs.readFileSync(invariantContractPath).toString();
   } catch (e: any) {
     throw new Error(
       `Error retrieving the corresponding invariant contract for the "${
@@ -385,7 +385,7 @@ export async function main() {
     getSimnetDeployerContractsInterfaces(simnet)
   );
 
-  const concatContractsAllFunctions = getFunctionsFromScInterfaces(
+  const concatContractsAllFunctions = getFunctionsFromContractInterfaces(
     concatContractsInterfaces
   );
 
@@ -412,10 +412,10 @@ export async function main() {
   });
 
   // Initialize the Clarity context
-  concatContractsSutFunctions.forEach((fns, scName) => {
+  concatContractsSutFunctions.forEach((fns, contractName) => {
     fns.forEach((fn) => {
       const { result: initialize } = simnet.callPublicFn(
-        scName,
+        contractName,
         "update-context",
         [Cl.stringAscii(fn.name), Cl.uint(0)],
         simnet.deployer
