@@ -296,11 +296,39 @@ export async function main() {
 
   fc.assert(
     fc.property(
-      fc.oneof(
-        ...concatContractsList.map((contractName) => fc.constant(contractName))
-      ),
-      (contractName) => {
-        console.log(contractName);
+      fc
+        .record({
+          contractName: fc.oneof(
+            ...concatContractsList.map((contractName) =>
+              fc.constant(contractName)
+            )
+          ),
+        })
+        .chain((r) => {
+          const functions = concatContractsSutFunctions.get(r.contractName);
+          const invariantFunctions = concatContractsInvariantFunctions.get(
+            r.contractName
+          );
+          const fnGenerator =
+            functions?.length === 0
+              ? fc.constant({})
+              : fc.constantFrom(...(functions as ContractInterfaceFunction[]));
+          const invariantFnGenerator =
+            invariantFunctions?.length === 0
+              ? fc.constant({})
+              : fc.constantFrom(
+                  ...(invariantFunctions as ContractInterfaceFunction[])
+                );
+
+          return fc
+            .record({
+              generatedFn: fnGenerator,
+              generatedInvariant: invariantFnGenerator,
+            })
+            .map((fn) => ({ ...r, ...fn }));
+        }),
+      (r) => {
+        console.log(r);
       }
     )
   );
