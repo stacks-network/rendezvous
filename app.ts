@@ -128,11 +128,8 @@ const complexTypesToFC: ComplexTypesToFcType = {
 export const generateArbitrariesForFunction = (
   fn: ContractInterfaceFunction,
   addresses: string[]
-): fc.Arbitrary<any>[] => {
-  return fn.args.map((arg) => {
-    return generateArbitrary(arg.type as ArgType, addresses);
-  });
-};
+): fc.Arbitrary<any>[] =>
+  fn.args.map((arg) => generateArbitrary(arg.type as ArgType, addresses));
 
 /**
  * For a given type, generate a fast-check arbitrary.
