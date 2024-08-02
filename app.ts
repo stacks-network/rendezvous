@@ -192,7 +192,7 @@ export async function main() {
   const manifestDir = args[2];
 
   if (!manifestDir) {
-    throw new Error("Please provide a path to the Clarinet.toml manifest.");
+    throw new Error("No path to Clarinet.toml manifest provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.");
   }
 
   const manifestPath = manifestDir + "/Clarinet.toml";
