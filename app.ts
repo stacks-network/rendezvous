@@ -121,6 +121,19 @@ const complexTypesToFC: ComplexTypesToFcType = {
     ),
 };
 
+/** For a given function, dynamically generate fast-check arbitraries.
+ * @param fn ContractFunction
+ * @returns Array of fast-check arbitraries
+ */
+export const generateArbitrariesForFunction = (
+  fn: ContractInterfaceFunction,
+  addresses: string[]
+): fc.Arbitrary<any>[] => {
+  return fn.args.map((arg) => {
+    return generateArbitrary(arg.type as ArgType, addresses);
+  });
+};
+
 /**
  * For a given type, generate a fast-check arbitrary.
  * @param type
