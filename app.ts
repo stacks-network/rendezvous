@@ -401,7 +401,7 @@ export async function main() {
     concatContractsAllFunctions
   );
 
-  // Initialize the local context
+  // Initialize the local context.
   const localContext: LocalContext = {};
 
   concatContractsSutFunctions.forEach((functions, contractName) => {
@@ -411,7 +411,7 @@ export async function main() {
     });
   });
 
-  // Initialize the Clarity context
+  // Initialize the Clarity context.
   concatContractsSutFunctions.forEach((fns, contractName) => {
     fns.forEach((fn) => {
       const { result: initialize } = simnet.callPublicFn(
@@ -423,7 +423,7 @@ export async function main() {
       const jsonResult = cvToJSON(initialize);
       if (!jsonResult.value || !jsonResult.success) {
         throw new Error(
-          `Failed to initialize the context for function: ${fn.name}`
+          `Failed to initialize the context for function: ${fn.name}.`
         );
       }
     });
