@@ -20,6 +20,13 @@ export type LocalContext = {
   };
 };
 
+export type BaseTypesToFcType = {
+  int128: ReturnType<typeof fc.integer>;
+  uint128: ReturnType<typeof fc.nat>;
+  bool: ReturnType<typeof fc.boolean>;
+  principal: (addresses: string[]) => ReturnType<typeof fc.constantFrom>;
+};
+
 /**
  * The context contract that will be concatenated with the SUT and the invariants contracts.
  * It is a map that stores the number of times each SUT function is called.
@@ -31,6 +38,16 @@ const contextContract = `(define-map context (string-ascii 100) {
 
 (define-public (update-context (function-name (string-ascii 100)) (called uint))
   (ok (map-set context function-name {called: called})))`;
+
+/**
+ * Base types to fast-check arbitraries mapping.
+ */
+export const baseTypesToFC: BaseTypesToFcType = {
+  int128: fc.integer(),
+  uint128: fc.nat(),
+  bool: fc.boolean(),
+  principal: (addresses: string[]) => fc.constantFrom(...addresses),
+};
 
 /**
  * Get the interfaces of contracts deployed by the specified deployer from the simnet.
