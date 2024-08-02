@@ -242,31 +242,27 @@ export const getFunctionsFromContractInterfaces = (
  */
 export const filterSutFunctions = (
   allFunctionsMap: Map<string, ContractInterfaceFunction[]>
-) => {
-  const sutFunctionsMap = new Map<string, ContractInterfaceFunction[]>();
-  allFunctionsMap.forEach((functions, contractName) => {
-    const contractSutFunctions = functions.filter(
-      (f) => f.access === "public" && f.name !== "update-context"
-    );
-    sutFunctionsMap.set(contractName, contractSutFunctions);
-  });
-
-  return sutFunctionsMap;
-};
+) =>
+  new Map(
+    Array.from(allFunctionsMap, ([contractName, functions]) => [
+      contractName,
+      functions.filter(
+        (f) => f.access === "public" && f.name !== "update-context"
+      ),
+    ])
+  );
 
 export const filterInvariantFunctions = (
   allFunctionsMap: Map<string, ContractInterfaceFunction[]>
-) => {
-  const invariantFunctionsMap = new Map<string, ContractInterfaceFunction[]>();
-  allFunctionsMap.forEach((functions, contractName) => {
-    const contractInvariantFunctions = functions.filter(
-      (f) => f.access === "read_only" && f.name.startsWith("invariant-")
-    );
-    invariantFunctionsMap.set(contractName, contractInvariantFunctions);
-  });
-
-  return invariantFunctionsMap;
-};
+) =>
+  new Map(
+    Array.from(allFunctionsMap, ([contractName, functions]) => [
+      contractName,
+      functions.filter(
+        (f) => f.access === "read_only" && f.name.startsWith("invariant-")
+      ),
+    ])
+  );
 
 /**
  * Get contract source code from the simnet.
