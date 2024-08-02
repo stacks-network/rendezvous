@@ -186,24 +186,13 @@ const generateArbitrary = (
  * @returns The contracts interfaces.
  */
 export const getSimnetDeployerContractsInterfaces = (
-  simnet: Simnet,
-  deployer: string
+  simnet: Simnet
 ): Map<string, ContractInterface> => {
-  const allContractsInterfaces = simnet.getContractsInterfaces();
-  if (!deployer) {
-    return allContractsInterfaces;
-  }
-  const filteredContracts = new Map<string, ContractInterface>();
-
-  allContractsInterfaces.forEach((contractInterface, key) => {
-    const [address] = key.split(".");
-
-    if (address === deployer) {
-      filteredContracts.set(key, contractInterface);
-    }
-  });
-
-  return filteredContracts;
+  return new Map(
+    Array.from(simnet.getContractsInterfaces()).filter(
+      ([key]) => key.split(".")[0] === simnet.deployer
+    )
+  );
 };
 
 /**
@@ -353,10 +342,7 @@ export async function main() {
 
   const concatContractsList: string[] = [];
 
-  const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(
-    simnet,
-    simnet.deployer
-  );
+  const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
 
   // Get all the contracts from the interfaces.
   const sutContracts = Array.from(sutContractsInterfaces.keys());
@@ -396,7 +382,7 @@ export async function main() {
   });
 
   const concatContractsInterfaces = filterConcatContractsInterfaces(
-    getSimnetDeployerContractsInterfaces(simnet, simnet.deployer)
+    getSimnetDeployerContractsInterfaces(simnet)
   );
 
   const concatContractsAllFunctions = getFunctionsFromScInterfaces(
