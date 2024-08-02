@@ -459,16 +459,31 @@ export async function main() {
           const invariantFunctions = concatContractsInvariantFunctions.get(
             r.contractName
           );
-          const fnGenerator =
-            functions?.length === 0
-              ? fc.constant({})
-              : fc.constantFrom(...(functions as ContractInterfaceFunction[]));
-          const invariantFnGenerator =
-            invariantFunctions?.length === 0
-              ? fc.constant({})
-              : fc.constantFrom(
-                  ...(invariantFunctions as ContractInterfaceFunction[])
-                );
+          console.log("invariantFunctions: ", invariantFunctions);
+
+          if (functions?.length === 0) {
+            throw new Error(
+              `No public functions found for the "${r.contractName
+                .split(".")[1]
+                .replace("_concat", "")}" contract.`
+            );
+          }
+          if (invariantFunctions?.length === 0) {
+            throw new Error(
+              `No invariant functions found for the "${r.contractName
+                .split(".")[1]
+                .replace(
+                  "_concat",
+                  ""
+                )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
+            );
+          }
+          const fnGenerator = fc.constantFrom(
+            ...(functions as ContractInterfaceFunction[])
+          );
+          const invariantFnGenerator = fc.constantFrom(
+            ...(invariantFunctions as ContractInterfaceFunction[])
+          );
 
           return fc
             .record({
@@ -476,6 +491,24 @@ export async function main() {
               generatedInvariant: invariantFnGenerator,
             })
             .map((fn) => ({ ...r, ...fn }));
+        })
+        .chain((r) => {
+          const functionArgsArb = generateArbitrariesForFunction(
+            r.generatedFn,
+            Array.from(simnet.getAccounts().values())
+          );
+
+          const invArgsArb = generateArbitrariesForFunction(
+            r.generatedInvariant,
+            Array.from(simnet.getAccounts().values())
+          );
+
+          return fc
+            .record({
+              functionArgsArb: fc.tuple(...functionArgsArb),
+              invaraintArgsArb: fc.tuple(...invArgsArb),
+            })
+            .map((args) => ({ ...r, ...args }));
         }),
       (r) => {
         console.log(r);
