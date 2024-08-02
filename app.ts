@@ -4,6 +4,7 @@ import {
   ContractInterfaceFunction,
 } from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
 import { Cl, cvToJSON } from "@stacks/transactions";
+import fc from "fast-check";
 import fs from "fs";
 
 /**
@@ -42,7 +43,6 @@ export const getSimnetDeployerContractsInterfaces = (
   deployer: string
 ): Map<string, ContractInterface> => {
   const allContractsInterfaces = simnet.getContractsInterfaces();
-
   if (!deployer) {
     return allContractsInterfaces;
   }
@@ -202,6 +202,8 @@ export async function main() {
 
   const simnet = await initSimnet(manifestPath);
 
+  const concatContractsList: string[] = [];
+
   const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(
     simnet,
     simnet.deployer
@@ -209,6 +211,7 @@ export async function main() {
 
   // Get all the contracts from the interfaces.
   const sutContracts = Array.from(sutContractsInterfaces.keys());
+
   sutContracts.forEach((contract) => {
     // Get the source code of the SUT contract
     const sutContractSrc = getSimnetContractSrc(simnet, contract);
@@ -232,6 +235,8 @@ export async function main() {
         { clarityVersion: 2 },
         simnet.deployer
       );
+
+      concatContractsList.push(`${simnet.deployer}.${concatContractName}`);
     } catch (e: any) {
       throw new Error(
         `Something went wrong. Please double check the invariants contract: ${
@@ -288,6 +293,17 @@ export async function main() {
       }
     });
   });
+
+  fc.assert(
+    fc.property(
+      fc.oneof(
+        ...concatContractsList.map((contractName) => fc.constant(contractName))
+      ),
+      (contractName) => {
+        console.log(contractName);
+      }
+    )
+  );
 
   // FIXME
   // --------------------------------------------------------------------------
