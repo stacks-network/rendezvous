@@ -80,6 +80,8 @@ type TupleData<T extends ClarityValue = ClarityValue> = {
   [key: string]: T;
 };
 
+type ResponseStatus = "ok" | "error";
+
 type BaseTypesToCvType = {
   int128: (arg: number) => ReturnType<typeof intCV>;
   uint128: (arg: number) => ReturnType<typeof uintCV>;
@@ -95,10 +97,12 @@ type ComplexTypesToCvType = {
   tuple: (tupleData: TupleData) => ReturnType<typeof tupleCV>;
   optional: (arg: ClarityValue | null) => ReturnType<typeof optionalCVOf>;
   response: (
-    status: "ok" | "error",
+    status: ResponseStatus,
     value: ClarityValue
   ) => ReturnType<typeof responseOkCV | typeof responseErrorCV>;
 };
+
+const baseTypes: BaseType[] = ["int128", "uint128", "bool", "principal"];
 
 /** The character set used for generating ASCII strings.*/
 const charSet =
@@ -244,11 +248,76 @@ const complexTypesToCV: ComplexTypesToCvType = {
   },
   optional: (arg: ClarityValue | null) =>
     arg ? optionalCVOf(arg) : optionalCVOf(undefined),
-  response: (status: "ok" | "error", value: ClarityValue) => {
+  response: (status: ResponseStatus, value: ClarityValue) => {
     if (status === "ok") return responseOkCV(value);
     else if (status === "error") return responseErrorCV(value);
     else throw new Error(`Unsupported response status: ${status}`);
   },
+};
+
+const isBaseType = (type: ArgType): type is BaseType => {
+  return baseTypes.includes(type as BaseType);
+};
+
+/**
+ * Convert function arguments to Clarity values.
+ * @param fn ContractFunction
+ * @param args Array of arguments
+ * @returns Array of Clarity values
+ */
+const argsToCV = (fn: ContractInterfaceFunction, args: any[]) => {
+  return fn.args.map((arg, i) => argToCV(args[i], arg.type as ArgType));
+};
+
+/**
+ * Convert a function argument to a Clarity value.
+ * @param arg Generated argument
+ * @param type Argument type (base or complex)
+ * @returns Clarity value
+ */
+const argToCV = (arg: any, type: ArgType): ClarityValue => {
+  if (isBaseType(type)) {
+    // Base type
+    switch (type) {
+      case "int128":
+        return baseTypesToCV.int128(arg as number);
+      case "uint128":
+        return baseTypesToCV.uint128(arg as number);
+      case "bool":
+        return baseTypesToCV.bool(arg as boolean);
+      case "principal":
+        return baseTypesToCV.principal(arg as string);
+      default:
+        throw new Error(`Unsupported base type: ${type}`);
+    }
+  } else {
+    // Complex type
+    if ("buffer" in type) {
+      return complexTypesToCV.buffer(arg);
+    } else if ("string-ascii" in type) {
+      return complexTypesToCV["string-ascii"](arg);
+    } else if ("string-utf8" in type) {
+      return complexTypesToCV["string-utf8"](arg);
+    } else if ("list" in type) {
+      const listItems = arg.map((item: any) => argToCV(item, type.list.type));
+      return complexTypesToCV.list(listItems);
+    } else if ("tuple" in type) {
+      const tupleData: { [key: string]: ClarityValue } = {};
+      type.tuple.forEach((field) => {
+        tupleData[field.name] = argToCV(arg[field.name], field.type);
+      });
+      return complexTypesToCV.tuple(tupleData);
+    } else if ("optional" in type) {
+      return optionalCVOf(arg ? argToCV(arg, type.optional) : undefined);
+    } else if ("response" in type) {
+      const status = arg.status as ResponseStatus;
+      const branchType = type.response[status];
+      const responseValue = argToCV(arg.value, branchType);
+      return complexTypesToCV.response(status, responseValue);
+    } else {
+      throw new Error(`Unsupported complex type: ${JSON.stringify(type)}`);
+    }
+  }
 };
 
 /**
@@ -509,7 +578,6 @@ export async function main() {
           const invariantFunctions = concatContractsInvariantFunctions.get(
             r.contractName
           );
-          console.log("invariantFunctions: ", invariantFunctions);
 
           if (functions?.length === 0) {
             throw new Error(
@@ -531,6 +599,8 @@ export async function main() {
           const fnGenerator = fc.constantFrom(
             ...(functions as ContractInterfaceFunction[])
           );
+          // FIXME: For invariants, we have to be able to pick a random
+          // number of them (zero or more).
           const invariantFnGenerator = fc.constantFrom(
             ...(invariantFunctions as ContractInterfaceFunction[])
           );
@@ -561,8 +631,25 @@ export async function main() {
             .map((args) => ({ ...r, ...args }));
         }),
       (r) => {
-        console.log(r);
-        // TODO: Get the Clarity arguments and call the functions.
+        const pickedFnArg = argsToCV(r.pickedFn, r.functionArgsArb);
+        const pickedInvariantArg = argsToCV(
+          r.pickedInvariant,
+          r.invaraintArgsArb
+        );
+        console.log(
+          "picked function: ",
+          r.pickedFn,
+          "\nClarity arguments",
+          pickedFnArg,
+          "\n------------------------------------------------------------------"
+        );
+        console.log(
+          "picked invariant: ",
+          r.pickedInvariant,
+          "\nClarity arguments:",
+          pickedInvariantArg,
+          "\n------------------------------------------------------------------"
+        );
       }
     )
   );
