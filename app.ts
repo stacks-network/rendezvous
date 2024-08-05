@@ -36,8 +36,8 @@ type ComplexType =
 type ArgType = BaseType | ComplexType;
 
 /**
- * LocalContext is a data structure used to track the number of times each SUT function is called
- * for every contract. It is a nested map where:
+ * LocalContext is a data structure used to track the number of times each SUT
+ * function is called for every contract. It is a nested map where:
  * - The outer key is the contract name.
  * - The inner key is the SUT function name within the contract.
  * - The value is the count of times the SUT function has been invoked.
