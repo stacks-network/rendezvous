@@ -537,19 +537,19 @@ export async function main() {
 
           return fc
             .record({
-              generatedFn: fnGenerator,
-              generatedInvariant: invariantFnGenerator,
+              pickedFn: fnGenerator,
+              pickedInvariant: invariantFnGenerator,
             })
             .map((fn) => ({ ...r, ...fn }));
         })
         .chain((r) => {
           const functionArgsArb = generateArbitrariesForFunction(
-            r.generatedFn,
+            r.pickedFn,
             Array.from(simnet.getAccounts().values())
           );
 
           const invArgsArb = generateArbitrariesForFunction(
-            r.generatedInvariant,
+            r.pickedInvariant,
             Array.from(simnet.getAccounts().values())
           );
 
