@@ -161,7 +161,7 @@ const complexTypesToArbitrary: ComplexTypesToArbitraryType = {
 };
 
 /** For a given function, dynamically generate fast-check arbitraries.
- * @param fn ContractFunction
+ * @param fn ContractInterfaceFunction
  * @returns Array of fast-check arbitraries
  */
 const generateArbitrariesForFunction = (
@@ -612,29 +612,29 @@ export async function main() {
                 )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
             );
           }
-          const fnGenerator = fc.constantFrom(
+          const functionGenerator = fc.constantFrom(
             ...(functions as ContractInterfaceFunction[])
           );
           // FIXME: For invariants, we have to be able to pick a random
           // number of them (zero or more).
-          const invariantFnGenerator = fc.constantFrom(
+          const invariantFunctionGenerator = fc.constantFrom(
             ...(invariantFunctions as ContractInterfaceFunction[])
           );
 
           return fc
             .record({
-              pickedFn: fnGenerator,
-              pickedInvariant: invariantFnGenerator,
+              pickedFunction: functionGenerator,
+              pickedInvariant: invariantFunctionGenerator,
             })
-            .map((fn) => ({ ...r, ...fn }));
+            .map((pickedFunctions) => ({ ...r, ...pickedFunctions }));
         })
         .chain((r) => {
           const functionArgsArb = generateArbitrariesForFunction(
-            r.pickedFn,
+            r.pickedFunction,
             Array.from(simnet.getAccounts().values())
           );
 
-          const invArgsArb = generateArbitrariesForFunction(
+          const invariantArgsArb = generateArbitrariesForFunction(
             r.pickedInvariant,
             Array.from(simnet.getAccounts().values())
           );
@@ -642,28 +642,31 @@ export async function main() {
           return fc
             .record({
               functionArgsArb: fc.tuple(...functionArgsArb),
-              invaraintArgsArb: fc.tuple(...invArgsArb),
+              invariantArgsArb: fc.tuple(...invariantArgsArb),
             })
             .map((args) => ({ ...r, ...args }));
         }),
       (r) => {
-        const pickedFnArg = argsToCV(r.pickedFn, r.functionArgsArb);
-        const pickedInvariantArg = argsToCV(
+        const pickedFunctionArgs = argsToCV(
+          r.pickedFunction,
+          r.functionArgsArb
+        );
+        const pickedInvariantArgs = argsToCV(
           r.pickedInvariant,
-          r.invaraintArgsArb
+          r.invariantArgsArb
         );
         console.log(
           "picked function: ",
-          r.pickedFn,
+          r.pickedFunction,
           "\nClarity arguments",
-          pickedFnArg,
+          pickedFunctionArgs,
           "\n------------------------------------------------------------------"
         );
         console.log(
           "picked invariant: ",
           r.pickedInvariant,
           "\nClarity arguments:",
-          pickedInvariantArg,
+          pickedInvariantArgs,
           "\n------------------------------------------------------------------"
         );
       }
