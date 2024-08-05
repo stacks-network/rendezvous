@@ -495,8 +495,10 @@ export async function main() {
       contract
     );
     // Concatenate the contracts.
-    const concatContractSrc =
-      contexatenate(sutContractSrc!, invariantContractSrc);
+    const concatContractSrc = contexatenate(
+      sutContractSrc!,
+      invariantContractSrc
+    );
     // Get the name of the concatenated contract. This will be used for
     // the deployment
     const concatContractName = `${contract.split(".")[1]}_concat`;
