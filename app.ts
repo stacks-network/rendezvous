@@ -105,18 +105,6 @@ const charSet =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
 
 /**
- * The context contract that will be concatenated with the SUT and the invariants contracts.
- * It is a map that stores the number of times each SUT function is called.
- */
-const contextContract = `(define-map context (string-ascii 100) {
-  called: uint
-  ;; other data
-})
-
-(define-public (update-context (function-name (string-ascii 100)) (called uint))
-  (ok (map-set context function-name {called: called})))`;
-
-/**
  * Base types to fast-check arbitraries mapping.
  */
 const baseTypesToFC: BaseTypesToFcType = {
@@ -376,6 +364,23 @@ const getInvariantContractSrc = (
   }
 };
 
+export function contexatenate(contract: string, invariants: string): string {
+  /**
+   * The context contract to be concatenated with the SUT and the invariants
+   * contracts. It's a map that stores the number of times each SUT function
+   * is called.
+   */
+  const context = `(define-map context (string-ascii 100) {
+    called: uint
+    ;; other data
+  })
+
+  (define-public (update-context (function-name (string-ascii 100)) (called uint))
+    (ok (map-set context function-name {called: called})))`;
+
+  return `${contract}\n\n${context}\n\n${invariants}`;
+}
+
 export async function main() {
   // Get the arguments from the command-line.
   const args = process.argv;
@@ -422,7 +427,7 @@ export async function main() {
     );
     // Concatenate the contracts.
     const concatContractSrc =
-      sutContractSrc + "\n\n" + invariantContractSrc + "\n\n" + contextContract;
+      contexatenate(sutContractSrc!, invariantContractSrc);
     // Get the name of the concatenated contract. This will be used for
     // the deployment
     const concatContractName = `${contract.split(".")[1]}_concat`;
