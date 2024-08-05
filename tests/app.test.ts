@@ -1,7 +1,6 @@
 import { contexatenate, main } from "../app";
 import fc from "fast-check";
 
-// https://blog.codeleak.pl/2021/12/parameterized-tests-with-jest.html
 describe("Manifest handling", () => {
   it("throws error when manifest path is not provided", () => {
     expect(async () => await main()).rejects.toThrow(
@@ -28,7 +27,7 @@ describe("Contract concatenation", () => {
         // Assert
         const expected = `${contract}\n\n${context}\n\n${invariants}`;
         expect(actual).toBe(expected);
-      }),
+      })
     );
   });
 });
