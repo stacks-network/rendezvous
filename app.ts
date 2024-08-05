@@ -5,10 +5,19 @@ import {
 } from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
 import {
   boolCV,
+  bufferCV,
   Cl,
+  ClarityValue,
   cvToJSON,
   intCV,
+  listCV,
+  optionalCVOf,
   principalCV,
+  responseErrorCV,
+  responseOkCV,
+  stringAsciiCV,
+  stringUtf8CV,
+  tupleCV,
   uintCV,
 } from "@stacks/transactions";
 import fc from "fast-check";
@@ -67,11 +76,28 @@ type ComplexTypesToFcType = {
   ) => fc.Arbitrary<any>;
 };
 
-export type BaseTypesToCvType = {
+type TupleData<T extends ClarityValue = ClarityValue> = {
+  [key: string]: T;
+};
+
+type BaseTypesToCvType = {
   int128: (arg: number) => ReturnType<typeof intCV>;
   uint128: (arg: number) => ReturnType<typeof uintCV>;
   bool: (arg: boolean) => ReturnType<typeof boolCV>;
   principal: (arg: string) => ReturnType<typeof principalCV>;
+};
+
+type ComplexTypesToCvType = {
+  buffer: (arg: string) => ReturnType<typeof bufferCV>;
+  "string-ascii": (arg: string) => ReturnType<typeof stringAsciiCV>;
+  "string-utf8": (arg: string) => ReturnType<typeof stringUtf8CV>;
+  list: (type: ClarityValue[]) => ReturnType<typeof listCV>;
+  tuple: (tupleData: TupleData) => ReturnType<typeof tupleCV>;
+  optional: (arg: ClarityValue | null) => ReturnType<typeof optionalCVOf>;
+  response: (
+    status: "ok" | "error",
+    value: ClarityValue
+  ) => ReturnType<typeof responseOkCV | typeof responseErrorCV>;
 };
 
 /** The character set used for generating ASCII strings.*/
@@ -201,6 +227,28 @@ const baseTypesToCV: BaseTypesToCvType = {
   uint128: (arg: number) => uintCV(arg),
   bool: (arg: boolean) => boolCV(arg),
   principal: (arg: string) => principalCV(arg),
+};
+
+/**
+ * Complex types to Clarity values mapping.
+ */
+const complexTypesToCV: ComplexTypesToCvType = {
+  buffer: (arg: string) => bufferCV(Uint8Array.from(Buffer.from(arg, "hex"))),
+  "string-ascii": (arg: string) => stringAsciiCV(arg),
+  "string-utf8": (arg: string) => stringUtf8CV(arg),
+  list: (items: ClarityValue[]) => {
+    return listCV(items);
+  },
+  tuple: (tupleData: TupleData<ClarityValue>) => {
+    return tupleCV(tupleData);
+  },
+  optional: (arg: ClarityValue | null) =>
+    arg ? optionalCVOf(arg) : optionalCVOf(undefined),
+  response: (status: "ok" | "error", value: ClarityValue) => {
+    if (status === "ok") return responseOkCV(value);
+    else if (status === "error") return responseErrorCV(value);
+    else throw new Error(`Unsupported response status: ${status}`);
+  },
 };
 
 /**
