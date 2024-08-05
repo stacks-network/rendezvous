@@ -28,12 +28,12 @@ type ComplexType =
   | { buffer: { length: number } }
   | { "string-ascii": { length: number } }
   | { "string-utf8": { length: number } }
-  | { list: { type: ArgType; length: number } }
-  | { tuple: { name: string; type: ArgType }[] }
-  | { optional: ArgType }
-  | { response: { ok: ArgType; error: ArgType } };
+  | { list: { type: ParameterType; length: number } }
+  | { tuple: { name: string; type: ParameterType }[] }
+  | { optional: ParameterType }
+  | { response: { ok: ParameterType; error: ParameterType } };
 
-type ArgType = BaseType | ComplexType;
+type ParameterType = BaseType | ComplexType;
 
 /**
  * LocalContext is a data structure used to track the number of times each SUT
@@ -60,18 +60,18 @@ type ComplexTypesToFcType = {
   "string-ascii": (length: number) => fc.Arbitrary<string>;
   "string-utf8": (length: number) => fc.Arbitrary<string>;
   list: (
-    type: ArgType,
+    type: ParameterType,
     length: number,
     addresses: string[]
   ) => fc.Arbitrary<any[]>;
   tuple: (
-    items: { name: string; type: ArgType }[],
+    items: { name: string; type: ParameterType }[],
     addresses: string[]
   ) => fc.Arbitrary<object>;
-  optional: (type: ArgType, addresses: string[]) => fc.Arbitrary<any>;
+  optional: (type: ParameterType, addresses: string[]) => fc.Arbitrary<any>;
   response: (
-    okType: ArgType,
-    errType: ArgType,
+    okType: ParameterType,
+    errType: ParameterType,
     addresses: string[]
   ) => fc.Arbitrary<any>;
 };
@@ -129,18 +129,25 @@ const complexTypesToFC: ComplexTypesToFcType = {
       minLength: 1,
     }),
   "string-utf8": (length: number) => fc.string({ maxLength: length }),
-  list: (type: ArgType, length: number, addresses: string[]) =>
+  list: (type: ParameterType, length: number, addresses: string[]) =>
     fc.array(generateArbitrary(type, addresses), { maxLength: length }),
-  tuple: (items: { name: string; type: ArgType }[], addresses: string[]) => {
+  tuple: (
+    items: { name: string; type: ParameterType }[],
+    addresses: string[]
+  ) => {
     const tupleArbitraries: { [key: string]: fc.Arbitrary<any> } = {};
     items.forEach((item) => {
       tupleArbitraries[item.name] = generateArbitrary(item.type, addresses);
     });
     return fc.record(tupleArbitraries);
   },
-  optional: (type: ArgType, addresses: string[]) =>
+  optional: (type: ParameterType, addresses: string[]) =>
     fc.option(generateArbitrary(type, addresses)),
-  response: (okType: ArgType, errType: ArgType, addresses: string[]) =>
+  response: (
+    okType: ParameterType,
+    errType: ParameterType,
+    addresses: string[]
+  ) =>
     fc.oneof(
       fc.record({
         status: fc.constant("ok"),
@@ -161,7 +168,7 @@ const generateArbitrariesForFunction = (
   fn: ContractInterfaceFunction,
   addresses: string[]
 ): fc.Arbitrary<any>[] =>
-  fn.args.map((arg) => generateArbitrary(arg.type as ArgType, addresses));
+  fn.args.map((arg) => generateArbitrary(arg.type as ParameterType, addresses));
 
 /**
  * For a given type, generate a fast-check arbitrary.
@@ -169,7 +176,7 @@ const generateArbitrariesForFunction = (
  * @returns fast-check arbitrary
  */
 const generateArbitrary = (
-  type: ArgType,
+  type: ParameterType,
   addresses: string[]
 ): fc.Arbitrary<any> => {
   if (typeof type === "string") {
@@ -243,7 +250,7 @@ const complexTypesToCV: ComplexTypesToCvType = {
   },
 };
 
-const isBaseType = (type: ArgType): type is BaseType => {
+const isBaseType = (type: ParameterType): type is BaseType => {
   return baseTypes.includes(type as BaseType);
 };
 
@@ -254,7 +261,7 @@ const isBaseType = (type: ArgType): type is BaseType => {
  * @returns Array of Clarity values
  */
 const argsToCV = (fn: ContractInterfaceFunction, args: any[]) => {
-  return fn.args.map((arg, i) => argToCV(args[i], arg.type as ArgType));
+  return fn.args.map((arg, i) => argToCV(args[i], arg.type as ParameterType));
 };
 
 /**
@@ -263,7 +270,7 @@ const argsToCV = (fn: ContractInterfaceFunction, args: any[]) => {
  * @param type Argument type (base or complex)
  * @returns Clarity value
  */
-const argToCV = (arg: any, type: ArgType): ClarityValue => {
+const argToCV = (arg: any, type: ParameterType): ClarityValue => {
   if (isBaseType(type)) {
     // Base type
     switch (type) {
