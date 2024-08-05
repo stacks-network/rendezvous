@@ -48,14 +48,14 @@ type LocalContext = {
   };
 };
 
-type BaseTypesToFcType = {
+type BaseTypesToArbitraryType = {
   int128: ReturnType<typeof fc.integer>;
   uint128: ReturnType<typeof fc.nat>;
   bool: ReturnType<typeof fc.boolean>;
   principal: (addresses: string[]) => ReturnType<typeof fc.constantFrom>;
 };
 
-type ComplexTypesToFcType = {
+type ComplexTypesToArbitraryType = {
   buffer: (length: number) => fc.Arbitrary<string>;
   "string-ascii": (length: number) => fc.Arbitrary<string>;
   "string-utf8": (length: number) => fc.Arbitrary<string>;
@@ -111,7 +111,7 @@ const charSet =
 /**
  * Base types to fast-check arbitraries mapping.
  */
-const baseTypesToFC: BaseTypesToFcType = {
+const baseTypesToArbitrary: BaseTypesToArbitraryType = {
   int128: fc.integer(),
   uint128: fc.nat(),
   bool: fc.boolean(),
@@ -121,7 +121,7 @@ const baseTypesToFC: BaseTypesToFcType = {
 /**
  * Complex types to fast-check arbitraries mapping.
  */
-const complexTypesToFC: ComplexTypesToFcType = {
+const complexTypesToArbitrary: ComplexTypesToArbitraryType = {
   buffer: (length: number) => fc.hexaString({ maxLength: length }),
   "string-ascii": (length: number) =>
     fc.stringOf(fc.constantFrom(...charSet), {
@@ -186,28 +186,30 @@ const generateArbitrary = (
         throw new Error(
           "No addresses could be retrieved from the simnet instance!"
         );
-      return baseTypesToFC.principal(addresses);
-    } else return baseTypesToFC[type];
+      return baseTypesToArbitrary.principal(addresses);
+    } else return baseTypesToArbitrary[type];
   } else {
     // The type is a complex type
     if ("buffer" in type) {
-      return complexTypesToFC["buffer"](type.buffer.length);
+      return complexTypesToArbitrary["buffer"](type.buffer.length);
     } else if ("string-ascii" in type) {
-      return complexTypesToFC["string-ascii"](type["string-ascii"].length);
+      return complexTypesToArbitrary["string-ascii"](
+        type["string-ascii"].length
+      );
     } else if ("string-utf8" in type) {
-      return complexTypesToFC["string-utf8"](type["string-utf8"].length);
+      return complexTypesToArbitrary["string-utf8"](type["string-utf8"].length);
     } else if ("list" in type) {
-      return complexTypesToFC["list"](
+      return complexTypesToArbitrary["list"](
         type.list.type,
         type.list.length,
         addresses
       );
     } else if ("tuple" in type) {
-      return complexTypesToFC["tuple"](type.tuple, addresses);
+      return complexTypesToArbitrary["tuple"](type.tuple, addresses);
     } else if ("optional" in type) {
-      return complexTypesToFC["optional"](type.optional, addresses);
+      return complexTypesToArbitrary["optional"](type.optional, addresses);
     } else if ("response" in type) {
-      return complexTypesToFC.response(
+      return complexTypesToArbitrary.response(
         type.response.ok,
         type.response.error,
         addresses
