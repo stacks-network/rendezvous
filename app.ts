@@ -655,42 +655,94 @@ export async function main() {
           r.pickedInvariant,
           r.invariantArgsArb
         );
-        console.log(
-          "picked function: ",
-          r.pickedFunction,
-          "\nClarity arguments",
+
+        const printedFunctionArgs = r.functionArgsArb
+          .map((arg) => {
+            try {
+              return typeof arg === "object"
+                ? JSON.stringify(arg)
+                : arg.toString();
+            } catch {
+              return "[Circular]";
+            }
+          })
+          .join(" ");
+
+        const { result: functionCallResult } = simnet.callPublicFn(
+          r.contractName,
+          r.pickedFunction.name,
           pickedFunctionArgs,
-          "\n------------------------------------------------------------------"
+          simnet.deployer
         );
-        console.log(
-          "picked invariant: ",
-          r.pickedInvariant,
-          "\nClarity arguments:",
+
+        const functionCallResultJson = cvToJSON(functionCallResult);
+
+        if (functionCallResultJson.success) {
+          localContext[r.contractName][r.pickedFunction.name]++;
+
+          simnet.callPublicFn(
+            r.contractName,
+            "update-context",
+            [
+              Cl.stringAscii(r.pickedFunction.name),
+              Cl.uint(localContext[r.contractName][r.pickedFunction.name]),
+            ],
+            simnet.deployer
+          );
+
+          console.log(
+            " ✔ ",
+            r.contractName.split(".")[1].replace("_concat", ""),
+            r.pickedFunction.name,
+            printedFunctionArgs
+          );
+        } else {
+          console.log(
+            " ✗ ",
+            r.contractName.split(".")[1].replace("_concat", ""),
+            r.pickedFunction.name,
+            printedFunctionArgs
+          );
+        }
+
+        const printedInvariantArgs = r.invariantArgsArb
+          .map((arg) => {
+            try {
+              return typeof arg === "object"
+                ? JSON.stringify(arg)
+                : arg.toString();
+            } catch {
+              return "[Circular]";
+            }
+          })
+          .join(" ");
+
+        console.log("\nChecking invariants...");
+
+        const { result: invariantCallResult } = simnet.callReadOnlyFn(
+          r.contractName,
+          r.pickedInvariant.name,
           pickedInvariantArgs,
-          "\n------------------------------------------------------------------"
+          simnet.deployer
         );
+
+        const invariantCallResultJson = cvToJSON(invariantCallResult);
+
+        console.log("🤺 " + r.pickedInvariant.name, printedInvariantArgs);
+        console.log("\n");
+
+        if (!invariantCallResultJson.value) {
+          throw new Error(
+            `Invariant failed for ${r.contractName
+              .split(".")[1]
+              .replace("_concat", "")} contract: "${
+              r.pickedInvariant.name
+            }" returned ${invariantCallResultJson.value}`
+          );
+        }
       }
     )
   );
-
-  // FIXME
-  // --------------------------------------------------------------------------
-  // With the path to the Clarinet.toml above (manifestPath), use the code off
-  // of the prototype branch to read the contracts, concatenate them, and then
-  // run the invariant checker, on the concatenated contracts.
-  // (Add the mininum required code needed for the above task.)
-  //
-  // Once everything is added, we expect that running `rv <path-to-manifest>`
-  // will catch the bug in the contracts.
-  //
-  // At this point we must consider covering the code we copied over from the
-  // prototype branch with unit tests, parameterized unit tests, and property
-  // -based tests. See examples in the `app.test.ts` file for how to do this.
-  //
-  // Once tests are added and passing we can get rid of the ice-breaker tests
-  // in app.test.ts (those having to do with the calculator function) and the
-  // calculator function itself, defined in app.ts.
-  // --------------------------------------------------------------------------
 }
 
 if (require.main === module) {
