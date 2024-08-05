@@ -3,7 +3,14 @@ import {
   ContractInterface,
   ContractInterfaceFunction,
 } from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
-import { Cl, cvToJSON } from "@stacks/transactions";
+import {
+  boolCV,
+  Cl,
+  cvToJSON,
+  intCV,
+  principalCV,
+  uintCV,
+} from "@stacks/transactions";
 import fc from "fast-check";
 import fs from "fs";
 
@@ -58,6 +65,13 @@ type ComplexTypesToFcType = {
     errType: ArgType,
     addresses: string[]
   ) => fc.Arbitrary<any>;
+};
+
+export type BaseTypesToCvType = {
+  int128: (arg: number) => ReturnType<typeof intCV>;
+  uint128: (arg: number) => ReturnType<typeof uintCV>;
+  bool: (arg: boolean) => ReturnType<typeof boolCV>;
+  principal: (arg: string) => ReturnType<typeof principalCV>;
 };
 
 /** The character set used for generating ASCII strings.*/
@@ -177,6 +191,16 @@ const generateArbitrary = (
       throw new Error(`Unsupported complex type: ${JSON.stringify(type)}`);
     }
   }
+};
+
+/**
+ * Base types to Clarity values mapping.
+ */
+const baseTypesToCV: BaseTypesToCvType = {
+  int128: (arg: number) => intCV(arg),
+  uint128: (arg: number) => uintCV(arg),
+  bool: (arg: boolean) => boolCV(arg),
+  principal: (arg: string) => principalCV(arg),
 };
 
 /**
@@ -490,6 +514,7 @@ export async function main() {
         }),
       (r) => {
         console.log(r);
+        // TODO: Get the Clarity arguments and call the functions.
       }
     )
   );
