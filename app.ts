@@ -7,8 +7,8 @@ import { Cl, cvToJSON } from "@stacks/transactions";
 import fc from "fast-check";
 import fs from "fs";
 
-export type BaseType = "int128" | "uint128" | "bool" | "principal";
-export type ComplexType =
+type BaseType = "int128" | "uint128" | "bool" | "principal";
+type ComplexType =
   | { buffer: { length: number } }
   | { "string-ascii": { length: number } }
   | { "string-utf8": { length: number } }
@@ -17,7 +17,7 @@ export type ComplexType =
   | { optional: ArgType }
   | { response: { ok: ArgType; error: ArgType } };
 
-export type ArgType = BaseType | ComplexType;
+type ArgType = BaseType | ComplexType;
 
 /**
  * LocalContext is a data structure used to track the number of times each SUT function is called
@@ -26,20 +26,20 @@ export type ArgType = BaseType | ComplexType;
  * - The inner key is the SUT function name within the contract.
  * - The value is the count of times the SUT function has been invoked.
  */
-export type LocalContext = {
+type LocalContext = {
   [contractName: string]: {
     [functionName: string]: number;
   };
 };
 
-export type BaseTypesToFcType = {
+type BaseTypesToFcType = {
   int128: ReturnType<typeof fc.integer>;
   uint128: ReturnType<typeof fc.nat>;
   bool: ReturnType<typeof fc.boolean>;
   principal: (addresses: string[]) => ReturnType<typeof fc.constantFrom>;
 };
 
-export type ComplexTypesToFcType = {
+type ComplexTypesToFcType = {
   buffer: (length: number) => fc.Arbitrary<string>;
   "string-ascii": (length: number) => fc.Arbitrary<string>;
   "string-utf8": (length: number) => fc.Arbitrary<string>;
@@ -79,7 +79,7 @@ const contextContract = `(define-map context (string-ascii 100) {
 /**
  * Base types to fast-check arbitraries mapping.
  */
-export const baseTypesToFC: BaseTypesToFcType = {
+const baseTypesToFC: BaseTypesToFcType = {
   int128: fc.integer(),
   uint128: fc.nat(),
   bool: fc.boolean(),
@@ -125,7 +125,7 @@ const complexTypesToFC: ComplexTypesToFcType = {
  * @param fn ContractFunction
  * @returns Array of fast-check arbitraries
  */
-export const generateArbitrariesForFunction = (
+const generateArbitrariesForFunction = (
   fn: ContractInterfaceFunction,
   addresses: string[]
 ): fc.Arbitrary<any>[] =>
@@ -185,7 +185,7 @@ const generateArbitrary = (
  * @param deployer The deployer address.
  * @returns The contracts interfaces.
  */
-export const getSimnetDeployerContractsInterfaces = (
+const getSimnetDeployerContractsInterfaces = (
   simnet: Simnet
 ): Map<string, ContractInterface> => {
   return new Map(
@@ -200,7 +200,7 @@ export const getSimnetDeployerContractsInterfaces = (
  * @param contractsInterfaces The contracts interfaces map.
  * @returns The concatenated contracts interfaces.
  */
-export const filterConcatContractsInterfaces = (
+const filterConcatContractsInterfaces = (
   contractsInterfaces: Map<string, ContractInterface>
 ) => {
   const concatContractsInterfaces = new Map<string, ContractInterface>();
@@ -219,7 +219,7 @@ export const filterConcatContractsInterfaces = (
  * @param contractsInterfaces The smart contract interfaces map.
  * @returns A map containing the contracts functions.
  */
-export const getFunctionsFromContractInterfaces = (
+const getFunctionsFromContractInterfaces = (
   contractsInterfaces: Map<string, ContractInterface>
 ): Map<string, ContractInterfaceFunction[]> => {
   const contractsFunctions = new Map<string, ContractInterfaceFunction[]>();
@@ -240,7 +240,7 @@ export const getFunctionsFromContractInterfaces = (
  * @param allFunctionsMap The map containing all the functions for each contract.
  * @returns A map containing only the SUT functions for each contract.
  */
-export const filterSutFunctions = (
+const filterSutFunctions = (
   allFunctionsMap: Map<string, ContractInterfaceFunction[]>
 ) =>
   new Map(
@@ -252,7 +252,7 @@ export const filterSutFunctions = (
     ])
   );
 
-export const filterInvariantFunctions = (
+const filterInvariantFunctions = (
   allFunctionsMap: Map<string, ContractInterfaceFunction[]>
 ) =>
   new Map(
@@ -270,10 +270,7 @@ export const filterInvariantFunctions = (
  * @param sutContractName The contract name.
  * @returns The contract source code.
  */
-export const getSimnetContractSrc = (
-  simnet: Simnet,
-  sutContractName: string
-) => {
+const getSimnetContractSrc = (simnet: Simnet, sutContractName: string) => {
   if (simnet.getContractSource(sutContractName) === undefined)
     throw new Error(`Contract ${sutContractName} not found in the network.`);
   return simnet.getContractSource(sutContractName);
@@ -285,7 +282,7 @@ export const getSimnetContractSrc = (
  * @param sutContractName The corresponding contract name.
  * @returns The invariant contract source code.
  */
-export const getInvariantContractSrc = (
+const getInvariantContractSrc = (
   contractsPath: string,
   sutContractName: string
 ) => {
