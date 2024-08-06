@@ -534,6 +534,11 @@ export const deployConcatenatedContract = (
   }
 };
 
+export const getFunctionsListForContract = (
+  functionsMap: Map<string, ContractInterfaceFunction[]>,
+  contractName: string
+) => functionsMap.get(contractName) || [];
+
 export async function main() {
   // Get the arguments from the command-line.
   const args = process.argv;
@@ -645,8 +650,12 @@ export async function main() {
           ),
         })
         .chain((r) => {
-          const functions = concatContractsSutFunctions.get(r.contractName);
-          const invariantFunctions = concatContractsInvariantFunctions.get(
+          const functions = getFunctionsListForContract(
+            concatContractsSutFunctions,
+            r.contractName
+          );
+          const invariantFunctions = getFunctionsListForContract(
+            concatContractsInvariantFunctions,
             r.contractName
           );
 
