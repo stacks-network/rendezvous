@@ -4,6 +4,7 @@ import {
   deployConcatenatedContract,
   generateAllConcatContractsData,
   generateConcatContractName,
+  getFunctionsListForContract,
   getInvariantContractSource,
   getSimnetContractSource,
   getSimnetDeployerContractsInterfaces,
@@ -135,6 +136,34 @@ describe("Simnet contracts operations", () => {
 
     // Assert
     expect(actualContractSources).toEqual(expectedContractSources);
+  });
+
+  it("retrieves the contract functions from the simnet", async () => {
+    // Arrange
+    const manifestPath = path.resolve(__dirname, "Clarinet.toml");
+    const simnet = await initSimnet(manifestPath);
+    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+    const sutContractsList = Array.from(sutContractsInterfaces.keys());
+    const allFunctionsMap = new Map(
+      Array.from(
+        sutContractsInterfaces,
+        ([contractName, contractInterface]) => [
+          contractName,
+          contractInterface.functions,
+        ]
+      )
+    );
+    const expectedContractFunctionsList = sutContractsList.map(
+      (contractName) => allFunctionsMap.get(contractName) || []
+    );
+
+    // Act
+    const actualContractFunctionsList = sutContractsList.map((contractName) =>
+      getFunctionsListForContract(allFunctionsMap, contractName)
+    );
+
+    // Assert
+    expect(actualContractFunctionsList).toEqual(expectedContractFunctionsList);
   });
 
   it("retrieves concatenated contracts data", async () => {
