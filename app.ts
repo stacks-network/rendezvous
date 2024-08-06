@@ -351,7 +351,7 @@ const filterConcatContractsInterfaces = (
  * @param contractsInterfaces The smart contract interfaces map.
  * @returns A map containing the contracts functions.
  */
-const getFunctionsFromContractInterfaces = (
+export const getFunctionsFromContractInterfaces = (
   contractsInterfaces: Map<string, ContractInterface>
 ): Map<string, ContractInterfaceFunction[]> =>
   new Map(
@@ -507,6 +507,24 @@ const generateConcatContractData = (
 };
 
 /**
+ * Initialize the local context, setting the number of times each function
+ * has been called to zero.
+ * @param concatContractsSutFunctions The concatenated contracts functions.
+ * @returns The initialized local context.
+ */
+export const initializeLocalContext = (
+  concatContractsSutFunctions: Map<string, ContractInterfaceFunction[]>
+): LocalContext =>
+  Object.fromEntries(
+    Array.from(concatContractsSutFunctions.entries()).map(
+      ([contractName, functions]) => [
+        contractName,
+        Object.fromEntries(functions.map((f) => [f.name, 0])),
+      ]
+    )
+  );
+
+/**
  * Deploy the concatenated contract to the simnet.
  * @param simnet The simnet instance.
  * @param concatContractName The concatenated contract name.
@@ -612,14 +630,7 @@ export async function main() {
   );
 
   // Initialize the local context.
-  const localContext: LocalContext = {};
-
-  concatContractsSutFunctions.forEach((functions, contractName) => {
-    localContext[contractName] = {};
-    functions.forEach((f) => {
-      localContext[contractName][f.name] = 0;
-    });
-  });
+  const localContext = initializeLocalContext(concatContractsSutFunctions);
 
   // Initialize the Clarity context.
   concatContractsSutFunctions.forEach((fns, contractName) => {

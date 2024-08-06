@@ -4,10 +4,12 @@ import {
   deployConcatenatedContract,
   generateAllConcatContractsData,
   generateConcatContractName,
+  getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
   getInvariantContractSource,
   getSimnetContractSource,
   getSimnetDeployerContractsInterfaces,
+  initializeLocalContext,
   main,
 } from "../app";
 import fc from "fast-check";
@@ -245,5 +247,56 @@ describe("Simnet contracts operations", () => {
     expect(actualSimnetContractsListAfterDeploy).toHaveLength(
       2 * sutContractsList.length
     );
+  });
+
+  it("extracts the functions from the contract interfaces", async () => {
+    // Arrange
+    const manifestPath = path.resolve(__dirname, "Clarinet.toml");
+    const simnet = await initSimnet(manifestPath);
+    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+    const expectedAllFunctionsMap = new Map(
+      Array.from(
+        sutContractsInterfaces,
+        ([contractName, contractInterface]) => [
+          contractName,
+          contractInterface.functions,
+        ]
+      )
+    );
+
+    // Act
+    const actualAllFunctionsMap = getFunctionsFromContractInterfaces(
+      sutContractsInterfaces
+    );
+
+    // Assert
+    expect(actualAllFunctionsMap).toEqual(expectedAllFunctionsMap);
+  });
+
+  it("initializes the local context", async () => {
+    // Arrange
+    const manifestPath = path.resolve(__dirname, "Clarinet.toml");
+    const simnet = await initSimnet(manifestPath);
+    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+    const sutContractsAllFunctions = getFunctionsFromContractInterfaces(
+      sutContractsInterfaces
+    );
+
+    const expectedInitialContext = Object.fromEntries(
+      Array.from(sutContractsAllFunctions.entries()).map(
+        ([contractName, functions]) => [
+          contractName,
+          Object.fromEntries(functions.map((f) => [f.name, 0])),
+        ]
+      )
+    );
+
+    // Act
+    const actualInitialContext = initializeLocalContext(
+      sutContractsAllFunctions
+    );
+
+    // Assert
+    expect(actualInitialContext).toEqual(expectedInitialContext);
   });
 });
