@@ -325,13 +325,12 @@ const argToCV = (arg: any, type: ParameterType): ClarityValue => {
  */
 const getSimnetDeployerContractsInterfaces = (
   simnet: Simnet
-): Map<string, ContractInterface> => {
-  return new Map(
+): Map<string, ContractInterface> =>
+  new Map(
     Array.from(simnet.getContractsInterfaces()).filter(
       ([key]) => key.split(".")[0] === simnet.deployer
     )
   );
-};
 
 /**
  * Filter the concatenated contracts interfaces from the contracts interfaces map.
@@ -340,17 +339,12 @@ const getSimnetDeployerContractsInterfaces = (
  */
 const filterConcatContractsInterfaces = (
   contractsInterfaces: Map<string, ContractInterface>
-) => {
-  const concatContractsInterfaces = new Map<string, ContractInterface>();
-
-  contractsInterfaces.forEach((contractInterface, contractName) => {
-    if (contractName.endsWith("_concat")) {
-      concatContractsInterfaces.set(contractName, contractInterface);
-    }
-  });
-
-  return concatContractsInterfaces;
-};
+) =>
+  new Map(
+    Array.from(contractsInterfaces).filter(([contractName]) =>
+      contractName.endsWith("_concat")
+    )
+  );
 
 /**
  * Get the functions from the smart contract interfaces.
@@ -359,15 +353,13 @@ const filterConcatContractsInterfaces = (
  */
 const getFunctionsFromContractInterfaces = (
   contractsInterfaces: Map<string, ContractInterface>
-): Map<string, ContractInterfaceFunction[]> => {
-  const contractsFunctions = new Map<string, ContractInterfaceFunction[]>();
-
-  contractsInterfaces.forEach((contractInterface, contractName) => {
-    contractsFunctions.set(contractName, contractInterface.functions);
-  });
-
-  return contractsFunctions;
-};
+): Map<string, ContractInterfaceFunction[]> =>
+  new Map(
+    Array.from(contractsInterfaces, ([contractName, contractInterface]) => [
+      contractName,
+      contractInterface.functions,
+    ])
+  );
 
 /**
  * Filter the System Under Test (`SUT`) functions from the map of all
