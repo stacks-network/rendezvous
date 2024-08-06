@@ -323,7 +323,7 @@ const argToCV = (arg: any, type: ParameterType): ClarityValue => {
  * @param deployer The deployer address.
  * @returns The contracts interfaces.
  */
-const getSimnetDeployerContractsInterfaces = (
+export const getSimnetDeployerContractsInterfaces = (
   simnet: Simnet
 ): Map<string, ContractInterface> =>
   new Map(
