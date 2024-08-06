@@ -400,7 +400,7 @@ const filterInvariantFunctions = (
  * @param sutContractName The contract name.
  * @returns The contract source code.
  */
-const getSimnetContractSrc = (simnet: Simnet, sutContractName: string) => {
+const getSimnetContractSource = (simnet: Simnet, sutContractName: string) => {
   if (simnet.getContractSource(sutContractName) === undefined)
     throw new Error(`Contract ${sutContractName} not found in the network.`);
   return simnet.getContractSource(sutContractName);
@@ -412,7 +412,7 @@ const getSimnetContractSrc = (simnet: Simnet, sutContractName: string) => {
  * @param sutContractName The corresponding contract name.
  * @returns The invariant contract source code.
  */
-const getInvariantContractSrc = (
+const getInvariantContractSource = (
   contractsPath: string,
   sutContractName: string
 ) => {
@@ -489,16 +489,16 @@ export async function main() {
 
   sutContracts.forEach((contract) => {
     // Get the source code of the SUT contract
-    const sutContractSrc = getSimnetContractSrc(simnet, contract);
+    const sutContractSource = getSimnetContractSource(simnet, contract);
     // Get the source code of the invariants contract
-    const invariantContractSrc = getInvariantContractSrc(
+    const invariantContractSource = getInvariantContractSource(
       contractsPath,
       contract
     );
     // Concatenate the contracts.
-    const concatContractSrc = contexatenate(
-      sutContractSrc!,
-      invariantContractSrc
+    const concatContractSource = contexatenate(
+      sutContractSource!,
+      invariantContractSource
     );
     // Get the name of the concatenated contract. This will be used for
     // the deployment
@@ -508,7 +508,7 @@ export async function main() {
       // Deploy the concatenated contract
       simnet.deployContract(
         concatContractName,
-        concatContractSrc,
+        concatContractSource,
         { clarityVersion: 2 },
         simnet.deployer
       );
