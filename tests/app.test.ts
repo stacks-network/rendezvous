@@ -1,5 +1,11 @@
-import { contexatenate, main } from "../app";
+import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
+import {
+  contexatenate,
+  getSimnetDeployerContractsInterfaces,
+  main,
+} from "../app";
 import fc from "fast-check";
+import path from "path";
 
 describe("Manifest handling", () => {
   it("throws error when manifest path is not provided", () => {
@@ -29,5 +35,29 @@ describe("Contract concatenation", () => {
         expect(actual).toBe(expected);
       })
     );
+  });
+});
+
+describe("Simnet contracts operations", () => {
+  let simnet: Simnet;
+  const manifestPath = path.resolve(__dirname, "Clarinet.toml");
+
+  beforeEach(async () => {
+    simnet = await initSimnet(manifestPath);
+  });
+  it("retrieves the contracts from the simnet", async () => {
+    // Arrange
+    const expectedDeployerContracts = new Map(
+      Array.from(simnet.getContractsInterfaces()).filter(
+        ([key]) => key.split(".")[0] === simnet.deployer
+      )
+    );
+
+    // Act
+    const actualDeployerContracts =
+      getSimnetDeployerContractsInterfaces(simnet);
+
+    // Assert
+    expect(actualDeployerContracts).toEqual(expectedDeployerContracts);
   });
 });
