@@ -48,14 +48,14 @@ type LocalContext = {
   };
 };
 
-type BaseTypesToArbitraryType = {
+type BaseTypesToArbitrary = {
   int128: ReturnType<typeof fc.integer>;
   uint128: ReturnType<typeof fc.nat>;
   bool: ReturnType<typeof fc.boolean>;
   principal: (addresses: string[]) => ReturnType<typeof fc.constantFrom>;
 };
 
-type ComplexTypesToArbitraryType = {
+type ComplexTypesToArbitrary = {
   buffer: (length: number) => fc.Arbitrary<string>;
   "string-ascii": (length: number) => fc.Arbitrary<string>;
   "string-utf8": (length: number) => fc.Arbitrary<string>;
@@ -82,14 +82,14 @@ type TupleData<T extends ClarityValue = ClarityValue> = {
 
 type ResponseStatus = "ok" | "error";
 
-type BaseTypesToCvType = {
+type BaseTypesToCV = {
   int128: (arg: number) => ReturnType<typeof intCV>;
   uint128: (arg: number) => ReturnType<typeof uintCV>;
   bool: (arg: boolean) => ReturnType<typeof boolCV>;
   principal: (arg: string) => ReturnType<typeof principalCV>;
 };
 
-type ComplexTypesToCvType = {
+type ComplexTypesToCV = {
   buffer: (arg: string) => ReturnType<typeof bufferCV>;
   "string-ascii": (arg: string) => ReturnType<typeof stringAsciiCV>;
   "string-utf8": (arg: string) => ReturnType<typeof stringUtf8CV>;
@@ -111,7 +111,7 @@ const charSet =
 /**
  * Base types to fast-check arbitraries mapping.
  */
-const baseTypesToArbitrary: BaseTypesToArbitraryType = {
+const baseTypesToArbitrary: BaseTypesToArbitrary = {
   int128: fc.integer(),
   uint128: fc.nat(),
   bool: fc.boolean(),
@@ -121,7 +121,7 @@ const baseTypesToArbitrary: BaseTypesToArbitraryType = {
 /**
  * Complex types to fast-check arbitraries mapping.
  */
-const complexTypesToArbitrary: ComplexTypesToArbitraryType = {
+const complexTypesToArbitrary: ComplexTypesToArbitrary = {
   buffer: (length: number) => fc.hexaString({ maxLength: length }),
   "string-ascii": (length: number) =>
     fc.stringOf(fc.constantFrom(...charSet), {
@@ -223,7 +223,7 @@ const generateArbitrary = (
 /**
  * Base types to Clarity values mapping.
  */
-const baseTypesToCV: BaseTypesToCvType = {
+const baseTypesToCV: BaseTypesToCV = {
   int128: (arg: number) => intCV(arg),
   uint128: (arg: number) => uintCV(arg),
   bool: (arg: boolean) => boolCV(arg),
@@ -233,7 +233,7 @@ const baseTypesToCV: BaseTypesToCvType = {
 /**
  * Complex types to Clarity values mapping.
  */
-const complexTypesToCV: ComplexTypesToCvType = {
+const complexTypesToCV: ComplexTypesToCV = {
   buffer: (arg: string) => bufferCV(Uint8Array.from(Buffer.from(arg, "hex"))),
   "string-ascii": (arg: string) => stringAsciiCV(arg),
   "string-utf8": (arg: string) => stringUtf8CV(arg),
