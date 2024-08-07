@@ -2,6 +2,7 @@ import { initSimnet } from "@hirosystems/clarinet-sdk";
 import {
   contexatenate,
   deployConcatenatedContract,
+  filterConcatContractsInterfaces,
   generateAllConcatContractsData,
   generateConcatContractName,
   getFunctionsFromContractInterfaces,
@@ -9,12 +10,14 @@ import {
   getInvariantContractSource,
   getSimnetContractSource,
   getSimnetDeployerContractsInterfaces,
+  initializeClarityContext,
   initializeLocalContext,
   main,
 } from "../app";
 import fc from "fast-check";
 import fs from "fs";
 import path from "path";
+import { Cl } from "@stacks/transactions";
 
 describe("Manifest handling", () => {
   it("throws error when manifest path is not provided", () => {
@@ -298,5 +301,99 @@ describe("Simnet contracts operations", () => {
 
     // Assert
     expect(actualInitialContext).toEqual(expectedInitialContext);
+  });
+
+  it("correctly filters the concatenated contracts interfaces", async () => {
+    // Arrange
+    const manifestPath = path.resolve(__dirname, "Clarinet.toml");
+    const contractsPath = path.resolve(__dirname, "contracts");
+    const simnet = await initSimnet(manifestPath);
+    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+    const sutContractsList = Array.from(sutContractsInterfaces.keys());
+    const concatContractsData = generateAllConcatContractsData(
+      simnet,
+      sutContractsList,
+      contractsPath
+    );
+    concatContractsData.forEach((contractData) => {
+      deployConcatenatedContract(
+        simnet,
+        contractData.concatContractName,
+        contractData.concatContractSource
+      );
+    });
+    const expectedConcatContractsList = concatContractsData.map(
+      (contractData) => contractData.fullContractName
+    );
+
+    // Act
+    const concatContractsInterfaces = filterConcatContractsInterfaces(
+      getSimnetDeployerContractsInterfaces(simnet)
+    );
+    const actualConcatContractsList = Array.from(
+      concatContractsInterfaces.keys()
+    );
+
+    // Assert
+    expect(actualConcatContractsList).toEqual(expectedConcatContractsList);
+  });
+
+  it("correctly initializes the Clarity context", async () => {
+    // Arrange
+    const manifestPath = path.resolve(__dirname, "Clarinet.toml");
+    const contractsPath = path.resolve(__dirname, "contracts");
+    const simnet = await initSimnet(manifestPath);
+    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+    const sutContractsList = Array.from(sutContractsInterfaces.keys());
+    const concatContractsData = generateAllConcatContractsData(
+      simnet,
+      sutContractsList,
+      contractsPath
+    );
+    concatContractsData.forEach((contractData) => {
+      deployConcatenatedContract(
+        simnet,
+        contractData.concatContractName,
+        contractData.concatContractSource
+      );
+    });
+    const concatContractsInterfaces = filterConcatContractsInterfaces(
+      getSimnetDeployerContractsInterfaces(simnet)
+    );
+    const concatContractsAllFunctions = getFunctionsFromContractInterfaces(
+      concatContractsInterfaces
+    );
+
+    // The JS representation of Clarity `(some (tuple (called uint)))`, where `called` is
+    // initialized to 0.
+    const expectedClarityValue = Cl.some(Cl.tuple({ called: Cl.uint(0) }));
+    const expectedContext = Array.from(concatContractsAllFunctions).flatMap(
+      ([contractName, functions]) =>
+        functions.map((f) => {
+          return {
+            contractName,
+            functionName: f.name,
+            called: expectedClarityValue,
+          };
+        })
+    );
+
+    // Act
+    initializeClarityContext(simnet, concatContractsAllFunctions);
+
+    const actualContext = Array.from(concatContractsAllFunctions).flatMap(
+      ([contractName, functions]) =>
+        functions.map((f) => {
+          const actualValue = simnet.getMapEntry(
+            contractName,
+            "context",
+            Cl.stringAscii(f.name)
+          );
+          return { contractName, functionName: f.name, called: actualValue };
+        })
+    );
+
+    // Assert
+    expect(actualContext).toEqual(expectedContext);
   });
 });

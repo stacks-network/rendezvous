@@ -337,7 +337,7 @@ export const getSimnetDeployerContractsInterfaces = (
  * @param contractsInterfaces The contracts interfaces map.
  * @returns The concatenated contracts interfaces.
  */
-const filterConcatContractsInterfaces = (
+export const filterConcatContractsInterfaces = (
   contractsInterfaces: Map<string, ContractInterface>
 ) =>
   new Map(
@@ -524,6 +524,27 @@ export const initializeLocalContext = (
     )
   );
 
+export const initializeClarityContext = (
+  simnet: Simnet,
+  concatContractsSutFunctions: Map<string, ContractInterfaceFunction[]>
+) =>
+  concatContractsSutFunctions.forEach((fns, contractName) => {
+    fns.forEach((fn) => {
+      const { result: initialize } = simnet.callPublicFn(
+        contractName,
+        "update-context",
+        [Cl.stringAscii(fn.name), Cl.uint(0)],
+        simnet.deployer
+      );
+      const jsonResult = cvToJSON(initialize);
+      if (!jsonResult.value || !jsonResult.success) {
+        throw new Error(
+          `Failed to initialize the context for function: ${fn.name}.`
+        );
+      }
+    });
+  });
+
 /**
  * Deploy the concatenated contract to the simnet.
  * @param simnet The simnet instance.
@@ -633,22 +654,7 @@ export async function main() {
   const localContext = initializeLocalContext(concatContractsSutFunctions);
 
   // Initialize the Clarity context.
-  concatContractsSutFunctions.forEach((fns, contractName) => {
-    fns.forEach((fn) => {
-      const { result: initialize } = simnet.callPublicFn(
-        contractName,
-        "update-context",
-        [Cl.stringAscii(fn.name), Cl.uint(0)],
-        simnet.deployer
-      );
-      const jsonResult = cvToJSON(initialize);
-      if (!jsonResult.value || !jsonResult.success) {
-        throw new Error(
-          `Failed to initialize the context for function: ${fn.name}.`
-        );
-      }
-    });
-  });
+  initializeClarityContext(simnet, concatContractsSutFunctions);
 
   fc.assert(
     fc.property(
