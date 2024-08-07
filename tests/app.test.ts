@@ -276,7 +276,7 @@ describe("Simnet contracts operations", () => {
     expect(actualAllFunctionsMap).toEqual(expectedAllFunctionsMap);
   });
 
-  it("initializes the local context", async () => {
+  it("correctly initializes the local context for a given functions map", async () => {
     // Arrange
     const manifestPath = path.resolve(__dirname, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
