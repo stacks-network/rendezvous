@@ -337,7 +337,7 @@ export const getSimnetDeployerContractsInterfaces = (
  * @param contractsInterfaces The contracts interfaces map.
  * @returns The concatenated contracts interfaces.
  */
-export const filterConcatContractsInterfaces = (
+export const filterConcatenatedContractsInterfaces = (
   contractsInterfaces: Map<string, ContractInterface>
 ) =>
   new Map(
@@ -442,7 +442,7 @@ export const getInvariantContractSource = (
  * @param contract The contract name.
  * @returns The concatenated contract name.
  */
-export const generateConcatContractName = (contract: string) =>
+export const generateConcatenatedContractName = (contract: string) =>
   `${contract.split(".")[1]}_concat`;
 
 export function contexatenate(contract: string, invariants: string): string {
@@ -469,7 +469,7 @@ export function contexatenate(contract: string, invariants: string): string {
  * @param contractsPath The contracts path.
  * @returns The concatenated contract data.
  */
-export const generateConcatContractData = (
+export const buildConcatenatedContractData = (
   simnet: Simnet,
   contractName: string,
   contractsPath: string
@@ -480,16 +480,17 @@ export const generateConcatContractData = (
       contractsPath,
       contractName
     );
-    const concatContractSource = contexatenate(
+    const concatenatedContractSource = contexatenate(
       sutContractSource!,
       invariantContractSource
     );
-    const concatContractName = generateConcatContractName(contractName);
+    const concatenatedContractName =
+      generateConcatenatedContractName(contractName);
 
     return {
-      concatContractName,
-      concatContractSource,
-      fullContractName: `${simnet.deployer}.${concatContractName}`,
+      concatenatedContractName: concatenatedContractName,
+      concatenatedContractSource: concatenatedContractSource,
+      fullContractName: `${simnet.deployer}.${concatenatedContractName}`,
     };
   } catch (e: any) {
     throw new Error(`Error processing contract ${contractName}: ${e.message}`);
@@ -499,14 +500,14 @@ export const generateConcatContractData = (
 /**
  * Initialize the local context, setting the number of times each function
  * has been called to zero.
- * @param concatContractsSutFunctions The concatenated contracts functions.
+ * @param concatenatedContractsSutFunctions The concatenated contracts functions.
  * @returns The initialized local context.
  */
 export const initializeLocalContext = (
-  concatContractsSutFunctions: Map<string, ContractInterfaceFunction[]>
+  concatenatedContractsSutFunctions: Map<string, ContractInterfaceFunction[]>
 ): LocalContext =>
   Object.fromEntries(
-    Array.from(concatContractsSutFunctions.entries()).map(
+    Array.from(concatenatedContractsSutFunctions.entries()).map(
       ([contractName, functions]) => [
         contractName,
         Object.fromEntries(functions.map((f) => [f.name, 0])),
@@ -516,9 +517,9 @@ export const initializeLocalContext = (
 
 export const initializeClarityContext = (
   simnet: Simnet,
-  concatContractsSutFunctions: Map<string, ContractInterfaceFunction[]>
+  concatenatedContractsSutFunctions: Map<string, ContractInterfaceFunction[]>
 ) =>
-  concatContractsSutFunctions.forEach((fns, contractName) => {
+  concatenatedContractsSutFunctions.forEach((fns, contractName) => {
     fns.forEach((fn) => {
       const { result: initialize } = simnet.callPublicFn(
         contractName,
@@ -538,24 +539,24 @@ export const initializeClarityContext = (
 /**
  * Deploy the concatenated contract to the simnet.
  * @param simnet The simnet instance.
- * @param concatContractName The concatenated contract name.
- * @param concatContractSource The concatenated contract source code.
+ * @param concatenatedContractName The concatenated contract name.
+ * @param concatenatedContractSource The concatenated contract source code.
  */
 export const deployConcatenatedContract = (
   simnet: Simnet,
-  concatContractName: string,
-  concatContractSource: string
+  concatenatedContractName: string,
+  concatenatedContractSource: string
 ) => {
   try {
     simnet.deployContract(
-      concatContractName,
-      concatContractSource,
+      concatenatedContractName,
+      concatenatedContractSource,
       { clarityVersion: 2 },
       simnet.deployer
     );
   } catch (e: any) {
     throw new Error(
-      `Something went wrong. Please double check the invariants contract: ${concatContractName.replace(
+      `Something went wrong. Please double check the invariants contract: ${concatenatedContractName.replace(
         "_concat",
         ""
       )}.invariant.clar:\n${e}`
@@ -602,65 +603,67 @@ export async function main() {
   // Get all the contracts from the interfaces.
   const sutContracts = Array.from(sutContractsInterfaces.keys());
 
-  const concatContractsData = sutContracts.map((contractName) =>
-    generateConcatContractData(simnet, contractName, contractsPath)
+  const concatenatedContractsData = sutContracts.map((contractName) =>
+    buildConcatenatedContractData(simnet, contractName, contractsPath)
   );
 
-  concatContractsData.forEach((contractData) => {
+  concatenatedContractsData.forEach((contractData) => {
     deployConcatenatedContract(
       simnet,
-      contractData.concatContractName,
-      contractData.concatContractSource
+      contractData.concatenatedContractName,
+      contractData.concatenatedContractSource
     );
   });
 
-  const concatContractsList = concatContractsData.map(
-    (concatData) => concatData.fullContractName
+  const concatenatedContractsList = concatenatedContractsData.map(
+    (concatenatedContractData) => concatenatedContractData.fullContractName
   );
 
-  const concatContractsInterfaces = filterConcatContractsInterfaces(
+  const concatenatedContractsInterfaces = filterConcatenatedContractsInterfaces(
     getSimnetDeployerContractsInterfaces(simnet)
   );
 
-  const concatContractsAllFunctions = getFunctionsFromContractInterfaces(
-    concatContractsInterfaces
+  const concatenatedContractsAllFunctions = getFunctionsFromContractInterfaces(
+    concatenatedContractsInterfaces
   );
 
   // A map where the keys are the concatenated contract names and the values
   // are arrays of their SUT (System Under Test) functions.
-  const concatContractsSutFunctions = filterSutFunctions(
-    concatContractsAllFunctions
+  const concatenatedContractsSutFunctions = filterSutFunctions(
+    concatenatedContractsAllFunctions
   );
 
   // A map where the keys are the concatenated contract names and the values
   // are arrays of their invariant functions.
-  const concatContractsInvariantFunctions = filterInvariantFunctions(
-    concatContractsAllFunctions
+  const concatenatedContractsInvariantFunctions = filterInvariantFunctions(
+    concatenatedContractsAllFunctions
   );
 
   // Initialize the local context.
-  const localContext = initializeLocalContext(concatContractsSutFunctions);
+  const localContext = initializeLocalContext(
+    concatenatedContractsSutFunctions
+  );
 
   // Initialize the Clarity context.
-  initializeClarityContext(simnet, concatContractsSutFunctions);
+  initializeClarityContext(simnet, concatenatedContractsSutFunctions);
 
   fc.assert(
     fc.property(
       fc
         .record({
           contractName: fc.oneof(
-            ...concatContractsList.map((contractName) =>
+            ...concatenatedContractsList.map((contractName) =>
               fc.constant(contractName)
             )
           ),
         })
         .chain((r) => {
           const functions = getFunctionsListForContract(
-            concatContractsSutFunctions,
+            concatenatedContractsSutFunctions,
             r.contractName
           );
           const invariantFunctions = getFunctionsListForContract(
-            concatContractsInvariantFunctions,
+            concatenatedContractsInvariantFunctions,
             r.contractName
           );
 
