@@ -607,16 +607,15 @@ export async function main() {
     buildConcatenatedContractData(simnet, contractName, contractsPath)
   );
 
-  concatenatedContractsData.forEach((contractData) => {
-    deployConcatenatedContract(
-      simnet,
-      contractData.concatenatedContractName,
-      contractData.concatenatedContractSource
-    );
-  });
-
   const concatenatedContractsList = concatenatedContractsData.map(
-    (concatenatedContractData) => concatenatedContractData.fullContractName
+    (contractData) => {
+      deployConcatenatedContract(
+        simnet,
+        contractData.concatenatedContractName,
+        contractData.concatenatedContractSource
+      );
+      return contractData.fullContractName;
+    }
   );
 
   const concatenatedContractsInterfaces = filterConcatenatedContractsInterfaces(

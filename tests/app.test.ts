@@ -315,15 +315,15 @@ describe("Simnet contracts operations", () => {
     const concatenatedContractsData = sutContractsList.map((contractName) =>
       buildConcatenatedContractData(simnet, contractName, contractsPath)
     );
-    concatenatedContractsData.forEach((contractData) => {
-      deployConcatenatedContract(
-        simnet,
-        contractData.concatenatedContractName,
-        contractData.concatenatedContractSource
-      );
-    });
     const expectedconcatenatedContractsList = concatenatedContractsData.map(
-      (contractData) => contractData.fullContractName
+      (contractData) => {
+        deployConcatenatedContract(
+          simnet,
+          contractData.concatenatedContractName,
+          contractData.concatenatedContractSource
+        );
+        return contractData.fullContractName;
+      }
     );
 
     // Act
