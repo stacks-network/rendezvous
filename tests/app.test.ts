@@ -13,6 +13,7 @@ import {
   initializeClarityContext,
   initializeLocalContext,
   main,
+  getContractNameFromRendezvousContract,
 } from "../app";
 import fc from "fast-check";
 import fs from "fs";
@@ -66,6 +67,30 @@ describe("Contract concatenation", () => {
           // Assert
           const expected = `${contractName}_concat`;
           expect(actual).toBe(expected);
+        }
+      )
+    );
+  });
+
+  it("gets contract name from rendezvous contract name", () => {
+    const addressCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const contractNameCharset =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    fc.assert(
+      // Arrange
+      fc.property(
+        fc.stringOf(fc.constantFrom(...addressCharset)),
+        fc.stringOf(fc.constantFrom(...contractNameCharset)),
+        (address, contractName) => {
+          const rendezvousContractName = `${address}.${contractName}_concat`;
+
+          // Act
+          const actual = getContractNameFromRendezvousContract(
+            rendezvousContractName
+          );
+
+          // Assert
+          expect(actual).toBe(contractName);
         }
       )
     );
