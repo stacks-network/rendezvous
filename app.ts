@@ -443,7 +443,7 @@ export const getInvariantContractSource = (
 };
 
 /**
- * Generate the concatenated contract name.
+ * Derive the concatenated contract name.
  * @param contract The contract name.
  * @returns The concatenated contract name.
  */
