@@ -684,19 +684,19 @@ export async function main() {
                 )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
             );
           }
-          const functionGenerator = fc.constantFrom(
+          const functionArbitrary = fc.constantFrom(
             ...(functions as ContractInterfaceFunction[])
           );
           // FIXME: For invariants, we have to be able to pick a random
           // number of them (zero or more).
-          const invariantFunctionGenerator = fc.constantFrom(
+          const invariantFunctionArbitrary = fc.constantFrom(
             ...(invariantFunctions as ContractInterfaceFunction[])
           );
 
           return fc
             .record({
-              pickedFunction: functionGenerator,
-              pickedInvariant: invariantFunctionGenerator,
+              pickedFunction: functionArbitrary,
+              pickedInvariant: invariantFunctionArbitrary,
             })
             .map((pickedFunctions) => ({ ...r, ...pickedFunctions }));
         })
