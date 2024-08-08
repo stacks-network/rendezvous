@@ -450,6 +450,14 @@ export const getInvariantContractSource = (
 export const deriveConcatenatedContractName = (contract: string) =>
   `${contract.split(".")[1]}_concat`;
 
+/**
+ * Get the contract name from the rendezvous contract name.
+ * @param contractName The rendezvous contract name.
+ * @returns The contract name.
+ */
+export const getContractNameFromRendezvousContract = (contractName: string) =>
+  contractName.split(".")[1].replace("_concat", "");
+
 export function contexatenate(contract: string, invariants: string): string {
   /**
    * The context contract to be concatenated with the SUT and the invariants
@@ -669,19 +677,16 @@ export async function main() {
 
           if (functions?.length === 0) {
             throw new Error(
-              `No public functions found for the "${r.contractName
-                .split(".")[1]
-                .replace("_concat", "")}" contract.`
+              `No public functions found for the "${getContractNameFromRendezvousContract(
+                r.contractName
+              )}" contract.`
             );
           }
           if (invariantFunctions?.length === 0) {
             throw new Error(
-              `No invariant functions found for the "${r.contractName
-                .split(".")[1]
-                .replace(
-                  "_concat",
-                  ""
-                )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
+              `No invariant functions found for the "${getContractNameFromRendezvousContract(
+                r.contractName
+              )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
             );
           }
           const functionArbitrary = fc.constantFrom(
@@ -764,14 +769,14 @@ export async function main() {
 
           console.log(
             " ✔ ",
-            r.contractName.split(".")[1].replace("_concat", ""),
+            getContractNameFromRendezvousContract(r.contractName),
             r.selectedFunction.name,
             printedFunctionArgs
           );
         } else {
           console.log(
             " ✗ ",
-            r.contractName.split(".")[1].replace("_concat", ""),
+            getContractNameFromRendezvousContract(r.contractName),
             r.selectedFunction.name,
             printedFunctionArgs
           );
@@ -805,11 +810,11 @@ export async function main() {
 
         if (!invariantCallResultJson.value) {
           throw new Error(
-            `Invariant failed for ${r.contractName
-              .split(".")[1]
-              .replace("_concat", "")} contract: "${
-              r.selectedInvariant.name
-            }" returned ${invariantCallResultJson.value}`
+            `Invariant failed for ${getContractNameFromRendezvousContract(
+              r.contractName
+            )} contract: "${r.selectedInvariant.name}" returned ${
+              invariantCallResultJson.value
+            }`
           );
         }
       }
