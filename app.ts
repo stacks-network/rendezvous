@@ -1,3 +1,5 @@
+// Single file (app.ts) is flexible, keeps git history clean. Better early on.
+// Multiple files improve organization, readability, and collaboration as the project grows.
 import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
 import {
   ContractInterface,
