@@ -1,0 +1,11 @@
+(define-read-only (invariant-last-shipment-id-non-zero-after-create-shipment)
+    (let ((create-shipment-num-calls (default-to u0 (get called (map-get? context "create-new-shipment"))))) 
+        (if (> create-shipment-num-calls u0)
+            (> (var-get last-shipment-id) u0)
+            true)))
+
+(define-read-only (invariant-shipment-exists-id-lte-last-token-id (checked-shipment-id uint))
+    (let ((cur-last-shipment-id (var-get last-shipment-id))) 
+        (if (>= cur-last-shipment-id checked-shipment-id)
+            (is-some (map-get? shipments checked-shipment-id))
+            true)))
