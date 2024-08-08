@@ -687,7 +687,7 @@ export async function main() {
           const functionArbitrary = fc.constantFrom(
             ...(functions as ContractInterfaceFunction[])
           );
-          // FIXME: For invariants, we have to be able to pick a random
+          // FIXME: For invariants, we have to be able to select a random
           // number of them (zero or more).
           const invariantFunctionArbitrary = fc.constantFrom(
             ...(invariantFunctions as ContractInterfaceFunction[])
@@ -695,19 +695,19 @@ export async function main() {
 
           return fc
             .record({
-              pickedFunction: functionArbitrary,
-              pickedInvariant: invariantFunctionArbitrary,
+              selectedFunction: functionArbitrary,
+              selectedInvariant: invariantFunctionArbitrary,
             })
-            .map((pickedFunctions) => ({ ...r, ...pickedFunctions }));
+            .map((selectedFunctions) => ({ ...r, ...selectedFunctions }));
         })
         .chain((r) => {
           const functionArgsArb = functionToArbitrary(
-            r.pickedFunction,
+            r.selectedFunction,
             Array.from(simnet.getAccounts().values())
           );
 
           const invariantArgsArb = functionToArbitrary(
-            r.pickedInvariant,
+            r.selectedInvariant,
             Array.from(simnet.getAccounts().values())
           );
 
@@ -719,12 +719,12 @@ export async function main() {
             .map((args) => ({ ...r, ...args }));
         }),
       (r) => {
-        const pickedFunctionArgs = argsToCV(
-          r.pickedFunction,
+        const selectedFunctionArgs = argsToCV(
+          r.selectedFunction,
           r.functionArgsArb
         );
-        const pickedInvariantArgs = argsToCV(
-          r.pickedInvariant,
+        const selectedInvariantArgs = argsToCV(
+          r.selectedInvariant,
           r.invariantArgsArb
         );
 
@@ -742,22 +742,22 @@ export async function main() {
 
         const { result: functionCallResult } = simnet.callPublicFn(
           r.contractName,
-          r.pickedFunction.name,
-          pickedFunctionArgs,
+          r.selectedFunction.name,
+          selectedFunctionArgs,
           simnet.deployer
         );
 
         const functionCallResultJson = cvToJSON(functionCallResult);
 
         if (functionCallResultJson.success) {
-          localContext[r.contractName][r.pickedFunction.name]++;
+          localContext[r.contractName][r.selectedFunction.name]++;
 
           simnet.callPublicFn(
             r.contractName,
             "update-context",
             [
-              Cl.stringAscii(r.pickedFunction.name),
-              Cl.uint(localContext[r.contractName][r.pickedFunction.name]),
+              Cl.stringAscii(r.selectedFunction.name),
+              Cl.uint(localContext[r.contractName][r.selectedFunction.name]),
             ],
             simnet.deployer
           );
@@ -765,14 +765,14 @@ export async function main() {
           console.log(
             " ✔ ",
             r.contractName.split(".")[1].replace("_concat", ""),
-            r.pickedFunction.name,
+            r.selectedFunction.name,
             printedFunctionArgs
           );
         } else {
           console.log(
             " ✗ ",
             r.contractName.split(".")[1].replace("_concat", ""),
-            r.pickedFunction.name,
+            r.selectedFunction.name,
             printedFunctionArgs
           );
         }
@@ -793,14 +793,14 @@ export async function main() {
 
         const { result: invariantCallResult } = simnet.callReadOnlyFn(
           r.contractName,
-          r.pickedInvariant.name,
-          pickedInvariantArgs,
+          r.selectedInvariant.name,
+          selectedInvariantArgs,
           simnet.deployer
         );
 
         const invariantCallResultJson = cvToJSON(invariantCallResult);
 
-        console.log("🤺 " + r.pickedInvariant.name, printedInvariantArgs);
+        console.log("🤺 " + r.selectedInvariant.name, printedInvariantArgs);
         console.log("\n");
 
         if (!invariantCallResultJson.value) {
@@ -808,7 +808,7 @@ export async function main() {
             `Invariant failed for ${r.contractName
               .split(".")[1]
               .replace("_concat", "")} contract: "${
-              r.pickedInvariant.name
+              r.selectedInvariant.name
             }" returned ${invariantCallResultJson.value}`
           );
         }
