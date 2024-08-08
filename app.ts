@@ -338,11 +338,11 @@ export const getSimnetDeployerContractsInterfaces = (
   );
 
 /**
- * Filter the concatenated contracts interfaces from the contracts interfaces map.
+ * Filter the Rendezvous interfaces from the contracts interfaces map.
  * @param contractsInterfaces The contracts interfaces map.
- * @returns The concatenated contracts interfaces.
+ * @returns The Rendezvous interfaces.
  */
-export const filterConcatenatedContractsInterfaces = (
+export const filterRendezvousInterfaces = (
   contractsInterfaces: Map<string, ContractInterface>
 ) =>
   new Map(
@@ -443,26 +443,29 @@ export const getInvariantContractSource = (
 };
 
 /**
- * Derive the concatenated contract name.
+ * Derive the Rendezvous name.
  * @param contract The contract name.
- * @returns The concatenated contract name.
+ * @returns The Rendezvous name.
  */
-export const deriveConcatenatedContractName = (contract: string) =>
+export const deriveRendezvousName = (contract: string) =>
   `${contract.split(".")[1]}_concat`;
 
 /**
- * Get the contract name from the rendezvous contract name.
- * @param contractName The rendezvous contract name.
+ * Get the contract name from the Rendezvous name.
+ * @param rendezvousName The Rendezvous name.
  * @returns The contract name.
  */
-export const getContractNameFromRendezvousContract = (contractName: string) =>
-  contractName.split(".")[1].replace("_concat", "");
+export const getContractNameFromRendezvousName = (rendezvousName: string) =>
+  rendezvousName.split(".")[1].replace("_concat", "");
 
-export function contexatenate(contract: string, invariants: string): string {
+export function scheduleRendezvous(
+  contract: string,
+  invariants: string
+): string {
   /**
-   * The context contract to be concatenated with the SUT and the invariants
-   * contracts. It's a map that stores the number of times each SUT function
-   * is called.
+   * The context is like the secret sauce for a successful rendez-vous. It can
+   * totally change the conversation from "meh" to "wow" and set the mood for
+   * a legendary chat. Handle with care!
    */
   const context = `(define-map context (string-ascii 100) {
     called: uint
@@ -476,13 +479,13 @@ export function contexatenate(contract: string, invariants: string): string {
 }
 
 /**
- * Generate the concatenated contract data.
+ * Build the Rendezvous data.
  * @param simnet The simnet instance.
  * @param contractName The contract name.
  * @param contractsPath The contracts path.
- * @returns The concatenated contract data.
+ * @returns The Rendezvous data.
  */
-export const buildConcatenatedContractData = (
+export const buildRendezvousData = (
   simnet: Simnet,
   contractName: string,
   contractsPath: string
@@ -493,17 +496,16 @@ export const buildConcatenatedContractData = (
       contractsPath,
       contractName
     );
-    const concatenatedContractSource = contexatenate(
+    const rendezvousSource = scheduleRendezvous(
       sutContractSource!,
       invariantContractSource
     );
-    const concatenatedContractName =
-      deriveConcatenatedContractName(contractName);
+    const rendezvousName = deriveRendezvousName(contractName);
 
     return {
-      concatenatedContractName: concatenatedContractName,
-      concatenatedContractSource: concatenatedContractSource,
-      fullContractName: `${simnet.deployer}.${concatenatedContractName}`,
+      rendezvousName,
+      rendezvousSource,
+      fullContractName: `${simnet.deployer}.${rendezvousName}`,
     };
   } catch (e: any) {
     throw new Error(`Error processing contract ${contractName}: ${e.message}`);
@@ -513,14 +515,14 @@ export const buildConcatenatedContractData = (
 /**
  * Initialize the local context, setting the number of times each function
  * has been called to zero.
- * @param concatenatedContractsSutFunctions The concatenated contracts functions.
+ * @param rendezvousSutFunctions The Rendezvous functions.
  * @returns The initialized local context.
  */
 export const initializeLocalContext = (
-  concatenatedContractsSutFunctions: Map<string, ContractInterfaceFunction[]>
+  rendezvousSutFunctions: Map<string, ContractInterfaceFunction[]>
 ): LocalContext =>
   Object.fromEntries(
-    Array.from(concatenatedContractsSutFunctions.entries()).map(
+    Array.from(rendezvousSutFunctions.entries()).map(
       ([contractName, functions]) => [
         contractName,
         Object.fromEntries(functions.map((f) => [f.name, 0])),
@@ -530,9 +532,9 @@ export const initializeLocalContext = (
 
 export const initializeClarityContext = (
   simnet: Simnet,
-  concatenatedContractsSutFunctions: Map<string, ContractInterfaceFunction[]>
+  rendezvousSutFunctions: Map<string, ContractInterfaceFunction[]>
 ) =>
-  concatenatedContractsSutFunctions.forEach((fns, contractName) => {
+  rendezvousSutFunctions.forEach((fns, contractName) => {
     fns.forEach((fn) => {
       const { result: initialize } = simnet.callPublicFn(
         contractName,
@@ -550,26 +552,26 @@ export const initializeClarityContext = (
   });
 
 /**
- * Deploy the concatenated contract to the simnet.
+ * Deploy the Rendezvous to the simnet.
  * @param simnet The simnet instance.
- * @param concatenatedContractName The concatenated contract name.
- * @param concatenatedContractSource The concatenated contract source code.
+ * @param rendezvousName The Rendezvous name.
+ * @param rendezvousSource The Rendezvous source code.
  */
-export const deployConcatenatedContract = (
+export const deployRendezvous = (
   simnet: Simnet,
-  concatenatedContractName: string,
-  concatenatedContractSource: string
+  rendezvousName: string,
+  rendezvousSource: string
 ) => {
   try {
     simnet.deployContract(
-      concatenatedContractName,
-      concatenatedContractSource,
+      rendezvousName,
+      rendezvousSource,
       { clarityVersion: 2 },
       simnet.deployer
     );
   } catch (e: any) {
     throw new Error(
-      `Something went wrong. Please double check the invariants contract: ${concatenatedContractName.replace(
+      `Something went wrong. Please double check the invariants contract: ${rendezvousName.replace(
         "_concat",
         ""
       )}.invariant.clar:\n${e}`
@@ -616,75 +618,68 @@ export async function main() {
   // Get all the contracts from the interfaces.
   const sutContracts = Array.from(sutContractsInterfaces.keys());
 
-  const concatenatedContractsData = sutContracts.map((contractName) =>
-    buildConcatenatedContractData(simnet, contractName, contractsPath)
+  const rendezvousData = sutContracts.map((contractName) =>
+    buildRendezvousData(simnet, contractName, contractsPath)
   );
 
-  const concatenatedContractsList = concatenatedContractsData.map(
-    (contractData) => {
-      deployConcatenatedContract(
-        simnet,
-        contractData.concatenatedContractName,
-        contractData.concatenatedContractSource
-      );
-      return contractData.fullContractName;
-    }
-  );
+  const rendezvousList = rendezvousData.map((contractData) => {
+    deployRendezvous(
+      simnet,
+      contractData.rendezvousName,
+      contractData.rendezvousSource
+    );
+    return contractData.fullContractName;
+  });
 
-  const concatenatedContractsInterfaces = filterConcatenatedContractsInterfaces(
+  const rendezvousInterfaces = filterRendezvousInterfaces(
     getSimnetDeployerContractsInterfaces(simnet)
   );
 
-  const concatenatedContractsAllFunctions = getFunctionsFromContractInterfaces(
-    concatenatedContractsInterfaces
-  );
+  const rendezvousAllFunctions =
+    getFunctionsFromContractInterfaces(rendezvousInterfaces);
 
-  // A map where the keys are the concatenated contract names and the values
+  // A map where the keys are the Rendezvous names and the values
   // are arrays of their SUT (System Under Test) functions.
-  const concatenatedContractsSutFunctions = filterSutFunctions(
-    concatenatedContractsAllFunctions
-  );
+  const rendezvousSutFunctions = filterSutFunctions(rendezvousAllFunctions);
 
-  // A map where the keys are the concatenated contract names and the values
+  // A map where the keys are the Rendezvous names and the values
   // are arrays of their invariant functions.
-  const concatenatedContractsInvariantFunctions = filterInvariantFunctions(
-    concatenatedContractsAllFunctions
+  const rendezvousInvariantFunctions = filterInvariantFunctions(
+    rendezvousAllFunctions
   );
 
   // Initialize the local context.
-  const localContext = initializeLocalContext(
-    concatenatedContractsSutFunctions
-  );
+  const localContext = initializeLocalContext(rendezvousSutFunctions);
 
   // Initialize the Clarity context.
-  initializeClarityContext(simnet, concatenatedContractsSutFunctions);
+  initializeClarityContext(simnet, rendezvousSutFunctions);
 
   fc.assert(
     fc.property(
       fc
         .record({
-          contractName: fc.constantFrom(...concatenatedContractsList),
+          contractName: fc.constantFrom(...rendezvousList),
         })
         .chain((r) => {
           const functions = getFunctionsListForContract(
-            concatenatedContractsSutFunctions,
+            rendezvousSutFunctions,
             r.contractName
           );
           const invariantFunctions = getFunctionsListForContract(
-            concatenatedContractsInvariantFunctions,
+            rendezvousInvariantFunctions,
             r.contractName
           );
 
           if (functions?.length === 0) {
             throw new Error(
-              `No public functions found for the "${getContractNameFromRendezvousContract(
+              `No public functions found for the "${getContractNameFromRendezvousName(
                 r.contractName
               )}" contract.`
             );
           }
           if (invariantFunctions?.length === 0) {
             throw new Error(
-              `No invariant functions found for the "${getContractNameFromRendezvousContract(
+              `No invariant functions found for the "${getContractNameFromRendezvousName(
                 r.contractName
               )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
             );
@@ -769,14 +764,14 @@ export async function main() {
 
           console.log(
             " ✔ ",
-            getContractNameFromRendezvousContract(r.contractName),
+            getContractNameFromRendezvousName(r.contractName),
             r.selectedFunction.name,
             printedFunctionArgs
           );
         } else {
           console.log(
             " ✗ ",
-            getContractNameFromRendezvousContract(r.contractName),
+            getContractNameFromRendezvousName(r.contractName),
             r.selectedFunction.name,
             printedFunctionArgs
           );
@@ -810,7 +805,7 @@ export async function main() {
 
         if (!invariantCallResultJson.value) {
           throw new Error(
-            `Invariant failed for ${getContractNameFromRendezvousContract(
+            `Invariant failed for ${getContractNameFromRendezvousName(
               r.contractName
             )} contract: "${r.selectedInvariant.name}" returned ${
               invariantCallResultJson.value
