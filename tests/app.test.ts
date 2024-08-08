@@ -3,7 +3,7 @@ import {
   contexatenate,
   deployConcatenatedContract,
   filterConcatContractsInterfaces,
-  generateAllConcatContractsData,
+  generateConcatContractData,
   generateConcatContractName,
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
@@ -199,10 +199,8 @@ describe("Simnet contracts operations", () => {
     });
 
     // Act
-    const actualConcatContractsData = generateAllConcatContractsData(
-      simnet,
-      sutContractsList,
-      contractsPath
+    const actualConcatContractsData = sutContractsList.map((contractName) =>
+      generateConcatContractData(simnet, contractName, contractsPath)
     );
 
     // Assert
@@ -216,10 +214,8 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const concatContractsData = generateAllConcatContractsData(
-      simnet,
-      sutContractsList,
-      contractsPath
+    const concatContractsData = sutContractsList.map((contractName) =>
+      generateConcatContractData(simnet, contractName, contractsPath)
     );
 
     // Act
@@ -310,10 +306,8 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const concatContractsData = generateAllConcatContractsData(
-      simnet,
-      sutContractsList,
-      contractsPath
+    const concatContractsData = sutContractsList.map((contractName) =>
+      generateConcatContractData(simnet, contractName, contractsPath)
     );
     concatContractsData.forEach((contractData) => {
       deployConcatenatedContract(
@@ -345,10 +339,8 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const concatContractsData = generateAllConcatContractsData(
-      simnet,
-      sutContractsList,
-      contractsPath
+    const concatContractsData = sutContractsList.map((contractName) =>
+      generateConcatContractData(simnet, contractName, contractsPath)
     );
     concatContractsData.forEach((contractData) => {
       deployConcatenatedContract(
