@@ -1,0 +1,31 @@
+Acknowledgements
+
+The idea behind Rendezvous originates from several inspiring sources:
+
+- John Hughes: For his pioneering work in property-based testing and the
+  creation of QuickCheck, which laid the foundation for modern property testing.
+  His paper, "Testing the Hard Stuff and Staying Sane"[^1], has been a
+  significant inspiration for our approach in `rv`.
+- Jude Nelson: For the valuable insights and methods presented in poxl[^2],
+  demonstrating a way to write tests in Clarity.
+- Nicolas Dubien: For creating fast-check[^3], the underlying property-based
+  testing framework we currently use in Rendezvous.
+- Jacob Stanley: For his lasting inspiration and contributions to
+  property-based testing and the Hedgehog library[^4]. Jacob's legacy and
+  influence remain a guiding force in our work.
+- Trail of Bits: For creating Echidna[^5], which initially utilized Hedgehog,
+  furthering the development of smart contract fuzzers.
+- LNow: For the initial discussions and ideas on this topic in 2022.
+
+We are deeply grateful to the Stacks Open Internet Foundation for supporting
+our work and providing crucial assistance, and to the open-source community
+for their continuous support and contributions.
+
+References:
+
+[^1]: Hughes, J. (2004). "Testing the Hard Stuff and Staying Sane". In Proceedings
+of the ACM SIGPLAN Workshop on Haskell (Haskell '04).
+[^2]: poxl: https://github.com/jcnelson/poxl
+[^3]: fast-check: https://github.com/dubzzz/fast-check
+[^4]: hedgehog: https://github.com/hedgehogqa
+[^5]: echidna: https://github.com/crytic/echidna
