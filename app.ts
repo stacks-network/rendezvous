@@ -447,7 +447,7 @@ export const getInvariantContractSource = (
  * @param contract The contract name.
  * @returns The concatenated contract name.
  */
-export const generateConcatenatedContractName = (contract: string) =>
+export const deriveConcatenatedContractName = (contract: string) =>
   `${contract.split(".")[1]}_concat`;
 
 export function contexatenate(contract: string, invariants: string): string {
@@ -490,7 +490,7 @@ export const buildConcatenatedContractData = (
       invariantContractSource
     );
     const concatenatedContractName =
-      generateConcatenatedContractName(contractName);
+      deriveConcatenatedContractName(contractName);
 
     return {
       concatenatedContractName: concatenatedContractName,
