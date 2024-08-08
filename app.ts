@@ -130,19 +130,22 @@ const complexTypesToArbitrary: ComplexTypesToArbitrary = {
     }),
   "string-utf8": (length: number) => fc.string({ maxLength: length }),
   list: (type: ParameterType, length: number, addresses: string[]) =>
-    fc.array(generateArbitrary(type, addresses), { maxLength: length }),
+    fc.array(parameterTypeToArbitrary(type, addresses), { maxLength: length }),
   tuple: (
     items: { name: string; type: ParameterType }[],
     addresses: string[]
   ) => {
     const tupleArbitraries: { [key: string]: fc.Arbitrary<any> } = {};
     items.forEach((item) => {
-      tupleArbitraries[item.name] = generateArbitrary(item.type, addresses);
+      tupleArbitraries[item.name] = parameterTypeToArbitrary(
+        item.type,
+        addresses
+      );
     });
     return fc.record(tupleArbitraries);
   },
   optional: (type: ParameterType, addresses: string[]) =>
-    fc.option(generateArbitrary(type, addresses)),
+    fc.option(parameterTypeToArbitrary(type, addresses)),
   response: (
     okType: ParameterType,
     errType: ParameterType,
@@ -151,11 +154,11 @@ const complexTypesToArbitrary: ComplexTypesToArbitrary = {
     fc.oneof(
       fc.record({
         status: fc.constant("ok"),
-        value: generateArbitrary(okType, addresses),
+        value: parameterTypeToArbitrary(okType, addresses),
       }),
       fc.record({
         status: fc.constant("error"),
-        value: generateArbitrary(errType, addresses),
+        value: parameterTypeToArbitrary(errType, addresses),
       })
     ),
 };
@@ -164,18 +167,20 @@ const complexTypesToArbitrary: ComplexTypesToArbitrary = {
  * @param fn ContractInterfaceFunction
  * @returns Array of fast-check arbitraries
  */
-const generateArbitrariesForFunction = (
+const functionToArbitrary = (
   fn: ContractInterfaceFunction,
   addresses: string[]
 ): fc.Arbitrary<any>[] =>
-  fn.args.map((arg) => generateArbitrary(arg.type as ParameterType, addresses));
+  fn.args.map((arg) =>
+    parameterTypeToArbitrary(arg.type as ParameterType, addresses)
+  );
 
 /**
  * For a given type, generate a fast-check arbitrary.
  * @param type
  * @returns fast-check arbitrary
  */
-const generateArbitrary = (
+const parameterTypeToArbitrary = (
   type: ParameterType,
   addresses: string[]
 ): fc.Arbitrary<any> => {
@@ -700,12 +705,12 @@ export async function main() {
             .map((pickedFunctions) => ({ ...r, ...pickedFunctions }));
         })
         .chain((r) => {
-          const functionArgsArb = generateArbitrariesForFunction(
+          const functionArgsArb = functionToArbitrary(
             r.pickedFunction,
             Array.from(simnet.getAccounts().values())
           );
 
-          const invariantArgsArb = generateArbitrariesForFunction(
+          const invariantArgsArb = functionToArbitrary(
             r.pickedInvariant,
             Array.from(simnet.getAccounts().values())
           );
