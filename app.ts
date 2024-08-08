@@ -655,11 +655,7 @@ export async function main() {
     fc.property(
       fc
         .record({
-          contractName: fc.oneof(
-            ...concatenatedContractsList.map((contractName) =>
-              fc.constant(contractName)
-            )
-          ),
+          contractName: fc.constantFrom(...concatenatedContractsList),
         })
         .chain((r) => {
           const functions = getFunctionsListForContract(
