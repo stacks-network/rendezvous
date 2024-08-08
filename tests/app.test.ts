@@ -2,9 +2,9 @@ import { initSimnet } from "@hirosystems/clarinet-sdk";
 import {
   contexatenate,
   deployConcatenatedContract,
-  filterConcatContractsInterfaces,
-  generateConcatContractData,
-  generateConcatContractName,
+  filterConcatenatedContractsInterfaces,
+  buildConcatenatedContractData,
+  generateConcatenatedContractName,
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
   getInvariantContractSource,
@@ -60,7 +60,7 @@ describe("Contract concatenation", () => {
         fc.stringOf(fc.constantFrom(...contractNameCharset)),
         (address, contractName) => {
           // Act
-          const actual = generateConcatContractName(
+          const actual = generateConcatenatedContractName(
             `${address}.${contractName}`
           );
           // Assert
@@ -179,32 +179,38 @@ describe("Simnet contracts operations", () => {
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
 
-    const expectedConcatContractsData = sutContractsList.map((contractName) => {
-      const sutContractSource = getSimnetContractSource(simnet, contractName);
-      const invariantContractSource = getInvariantContractSource(
-        contractsPath,
-        contractName
-      );
-      const concatContractSource = contexatenate(
-        sutContractSource!,
-        invariantContractSource
-      );
-      const concatContractName = generateConcatContractName(contractName);
+    const expectedConcatenatedContractsData = sutContractsList.map(
+      (contractName) => {
+        const sutContractSource = getSimnetContractSource(simnet, contractName);
+        const invariantContractSource = getInvariantContractSource(
+          contractsPath,
+          contractName
+        );
+        const concatenatedContractSource = contexatenate(
+          sutContractSource!,
+          invariantContractSource
+        );
+        const concatenatedContractName =
+          generateConcatenatedContractName(contractName);
 
-      return {
-        concatContractName,
-        concatContractSource,
-        fullContractName: `${simnet.deployer}.${concatContractName}`,
-      };
-    });
+        return {
+          concatenatedContractName: concatenatedContractName,
+          concatenatedContractSource: concatenatedContractSource,
+          fullContractName: `${simnet.deployer}.${concatenatedContractName}`,
+        };
+      }
+    );
 
     // Act
-    const actualConcatContractsData = sutContractsList.map((contractName) =>
-      generateConcatContractData(simnet, contractName, contractsPath)
+    const actualconcatenatedContractsData = sutContractsList.map(
+      (contractName) =>
+        buildConcatenatedContractData(simnet, contractName, contractsPath)
     );
 
     // Assert
-    expect(actualConcatContractsData).toEqual(expectedConcatContractsData);
+    expect(actualconcatenatedContractsData).toEqual(
+      expectedConcatenatedContractsData
+    );
   });
 
   it("deploys concatenated contracts to the simnet", async () => {
@@ -214,16 +220,16 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const concatContractsData = sutContractsList.map((contractName) =>
-      generateConcatContractData(simnet, contractName, contractsPath)
+    const concatenatedContractsData = sutContractsList.map((contractName) =>
+      buildConcatenatedContractData(simnet, contractName, contractsPath)
     );
 
     // Act
-    concatContractsData.forEach((contractData) => {
+    concatenatedContractsData.forEach((contractData) => {
       deployConcatenatedContract(
         simnet,
-        contractData.concatContractName,
-        contractData.concatContractSource
+        contractData.concatenatedContractName,
+        contractData.concatenatedContractSource
       );
     });
 
@@ -236,7 +242,7 @@ describe("Simnet contracts operations", () => {
 
     // Assert
     // Check if all expected concatenated contracts are present in the result
-    concatContractsData.forEach((contractData) => {
+    concatenatedContractsData.forEach((contractData) => {
       expect(actualSimnetContractsListAfterDeploy).toContain(
         contractData.fullContractName
       );
@@ -306,30 +312,33 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const concatContractsData = sutContractsList.map((contractName) =>
-      generateConcatContractData(simnet, contractName, contractsPath)
+    const concatenatedContractsData = sutContractsList.map((contractName) =>
+      buildConcatenatedContractData(simnet, contractName, contractsPath)
     );
-    concatContractsData.forEach((contractData) => {
+    concatenatedContractsData.forEach((contractData) => {
       deployConcatenatedContract(
         simnet,
-        contractData.concatContractName,
-        contractData.concatContractSource
+        contractData.concatenatedContractName,
+        contractData.concatenatedContractSource
       );
     });
-    const expectedConcatContractsList = concatContractsData.map(
+    const expectedconcatenatedContractsList = concatenatedContractsData.map(
       (contractData) => contractData.fullContractName
     );
 
     // Act
-    const concatContractsInterfaces = filterConcatContractsInterfaces(
-      getSimnetDeployerContractsInterfaces(simnet)
-    );
-    const actualConcatContractsList = Array.from(
-      concatContractsInterfaces.keys()
+    const concatenatedContractsInterfaces =
+      filterConcatenatedContractsInterfaces(
+        getSimnetDeployerContractsInterfaces(simnet)
+      );
+    const actualconcatenatedContractsList = Array.from(
+      concatenatedContractsInterfaces.keys()
     );
 
     // Assert
-    expect(actualConcatContractsList).toEqual(expectedConcatContractsList);
+    expect(actualconcatenatedContractsList).toEqual(
+      expectedconcatenatedContractsList
+    );
   });
 
   it("correctly initializes the Clarity context", async () => {
@@ -339,41 +348,42 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const concatContractsData = sutContractsList.map((contractName) =>
-      generateConcatContractData(simnet, contractName, contractsPath)
+    const concatenatedContractsData = sutContractsList.map((contractName) =>
+      buildConcatenatedContractData(simnet, contractName, contractsPath)
     );
-    concatContractsData.forEach((contractData) => {
+    concatenatedContractsData.forEach((contractData) => {
       deployConcatenatedContract(
         simnet,
-        contractData.concatContractName,
-        contractData.concatContractSource
+        contractData.concatenatedContractName,
+        contractData.concatenatedContractSource
       );
     });
-    const concatContractsInterfaces = filterConcatContractsInterfaces(
-      getSimnetDeployerContractsInterfaces(simnet)
-    );
-    const concatContractsAllFunctions = getFunctionsFromContractInterfaces(
-      concatContractsInterfaces
-    );
+    const concatenatedContractsInterfaces =
+      filterConcatenatedContractsInterfaces(
+        getSimnetDeployerContractsInterfaces(simnet)
+      );
+    const concatenatedContractsAllFunctions =
+      getFunctionsFromContractInterfaces(concatenatedContractsInterfaces);
 
     // The JS representation of Clarity `(some (tuple (called uint)))`, where `called` is
     // initialized to 0.
     const expectedClarityValue = Cl.some(Cl.tuple({ called: Cl.uint(0) }));
-    const expectedContext = Array.from(concatContractsAllFunctions).flatMap(
-      ([contractName, functions]) =>
-        functions.map((f) => {
-          return {
-            contractName,
-            functionName: f.name,
-            called: expectedClarityValue,
-          };
-        })
+    const expectedContext = Array.from(
+      concatenatedContractsAllFunctions
+    ).flatMap(([contractName, functions]) =>
+      functions.map((f) => {
+        return {
+          contractName,
+          functionName: f.name,
+          called: expectedClarityValue,
+        };
+      })
     );
 
     // Act
-    initializeClarityContext(simnet, concatContractsAllFunctions);
+    initializeClarityContext(simnet, concatenatedContractsAllFunctions);
 
-    const actualContext = Array.from(concatContractsAllFunctions).flatMap(
+    const actualContext = Array.from(concatenatedContractsAllFunctions).flatMap(
       ([contractName, functions]) =>
         functions.map((f) => {
           const actualValue = simnet.getMapEntry(
