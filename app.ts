@@ -349,7 +349,7 @@ export const filterRendezvousInterfaces = (
 ) =>
   new Map(
     Array.from(contractsInterfaces).filter(([contractName]) =>
-      contractName.endsWith("_concat")
+      contractName.endsWith("_rendezvous")
     )
   );
 
@@ -450,7 +450,7 @@ export const getInvariantContractSource = (
  * @returns The Rendezvous name.
  */
 export const deriveRendezvousName = (contract: string) =>
-  `${contract.split(".")[1]}_concat`;
+  `${contract.split(".")[1]}_rendezvous`;
 
 /**
  * Get the contract name from the Rendezvous name.
@@ -458,7 +458,7 @@ export const deriveRendezvousName = (contract: string) =>
  * @returns The contract name.
  */
 export const getContractNameFromRendezvousName = (rendezvousName: string) =>
-  rendezvousName.split(".")[1].replace("_concat", "");
+  rendezvousName.split(".")[1].replace("_rendezvous", "");
 
 export function scheduleRendezvous(
   contract: string,
@@ -574,7 +574,7 @@ export const deployRendezvous = (
   } catch (e: any) {
     throw new Error(
       `Something went wrong. Please double check the invariants contract: ${rendezvousName.replace(
-        "_concat",
+        "_rendezvous",
         ""
       )}.invariant.clar:\n${e}`
     );

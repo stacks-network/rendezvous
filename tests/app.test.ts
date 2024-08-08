@@ -63,7 +63,7 @@ describe("Successfully schedules rendez-vous", () => {
           // Act
           const actual = deriveRendezvousName(`${address}.${contractName}`);
           // Assert
-          const expected = `${contractName}_concat`;
+          const expected = `${contractName}_rendezvous`;
           expect(actual).toBe(expected);
         }
       )
@@ -80,7 +80,7 @@ describe("Successfully schedules rendez-vous", () => {
         fc.stringOf(fc.constantFrom(...addressCharset)),
         fc.stringOf(fc.constantFrom(...contractNameCharset)),
         (address, contractName) => {
-          const rendezvousName = `${address}.${contractName}_concat`;
+          const rendezvousName = `${address}.${contractName}_rendezvous`;
 
           // Act
           const actual = getContractNameFromRendezvousName(rendezvousName);
