@@ -4,7 +4,7 @@ import {
   deployConcatenatedContract,
   filterConcatenatedContractsInterfaces,
   buildConcatenatedContractData,
-  generateConcatenatedContractName,
+  deriveConcatenatedContractName,
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
   getInvariantContractSource,
@@ -60,7 +60,7 @@ describe("Contract concatenation", () => {
         fc.stringOf(fc.constantFrom(...contractNameCharset)),
         (address, contractName) => {
           // Act
-          const actual = generateConcatenatedContractName(
+          const actual = deriveConcatenatedContractName(
             `${address}.${contractName}`
           );
           // Assert
@@ -191,7 +191,7 @@ describe("Simnet contracts operations", () => {
           invariantContractSource
         );
         const concatenatedContractName =
-          generateConcatenatedContractName(contractName);
+          deriveConcatenatedContractName(contractName);
 
         return {
           concatenatedContractName: concatenatedContractName,
