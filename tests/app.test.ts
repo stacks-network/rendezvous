@@ -1,10 +1,11 @@
 import { initSimnet } from "@hirosystems/clarinet-sdk";
 import {
-  contexatenate,
-  deployConcatenatedContract,
-  filterConcatenatedContractsInterfaces,
-  buildConcatenatedContractData,
-  deriveConcatenatedContractName,
+  scheduleRendezvous,
+  deployRendezvous,
+  filterRendezvousInterfaces,
+  buildRendezvousData,
+  deriveRendezvousName,
+  getContractNameFromRendezvousName,
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
   getInvariantContractSource,
@@ -13,7 +14,6 @@ import {
   initializeClarityContext,
   initializeLocalContext,
   main,
-  getContractNameFromRendezvousContract,
 } from "../app";
 import fc from "fast-check";
 import fs from "fs";
@@ -28,7 +28,7 @@ describe("Manifest handling", () => {
   });
 });
 
-describe("Contract concatenation", () => {
+describe("Successfully schedules rendez-vous", () => {
   const context = `(define-map context (string-ascii 100) {
     called: uint
     ;; other data
@@ -42,7 +42,7 @@ describe("Contract concatenation", () => {
       // Arrange
       fc.property(fc.string(), fc.string(), (contract, invariants) => {
         // Act
-        const actual = contexatenate(contract, invariants);
+        const actual = scheduleRendezvous(contract, invariants);
         // Assert
         const expected = `${contract}\n\n${context}\n\n${invariants}`;
         expect(actual).toBe(expected);
@@ -50,7 +50,7 @@ describe("Contract concatenation", () => {
     );
   });
 
-  it("generates concatenated contract name", () => {
+  it("generates Rendezvous contract name", () => {
     const addressCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     const contractNameCharset =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -61,9 +61,7 @@ describe("Contract concatenation", () => {
         fc.stringOf(fc.constantFrom(...contractNameCharset)),
         (address, contractName) => {
           // Act
-          const actual = deriveConcatenatedContractName(
-            `${address}.${contractName}`
-          );
+          const actual = deriveRendezvousName(`${address}.${contractName}`);
           // Assert
           const expected = `${contractName}_concat`;
           expect(actual).toBe(expected);
@@ -72,7 +70,7 @@ describe("Contract concatenation", () => {
     );
   });
 
-  it("gets contract name from rendezvous contract name", () => {
+  it("gets contract name from Rendezvous contract name", () => {
     const addressCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     const contractNameCharset =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -82,12 +80,10 @@ describe("Contract concatenation", () => {
         fc.stringOf(fc.constantFrom(...addressCharset)),
         fc.stringOf(fc.constantFrom(...contractNameCharset)),
         (address, contractName) => {
-          const rendezvousContractName = `${address}.${contractName}_concat`;
+          const rendezvousName = `${address}.${contractName}_concat`;
 
           // Act
-          const actual = getContractNameFromRendezvousContract(
-            rendezvousContractName
-          );
+          const actual = getContractNameFromRendezvousName(rendezvousName);
 
           // Assert
           expect(actual).toBe(contractName);
@@ -196,7 +192,7 @@ describe("Simnet contracts operations", () => {
     expect(actualContractFunctionsList).toEqual(expectedContractFunctionsList);
   });
 
-  it("retrieves concatenated contracts data", async () => {
+  it("retrieves Rendezvous contracts data", async () => {
     // Arrange
     const manifestPath = path.resolve(__dirname, "Clarinet.toml");
     const contractsPath = path.resolve(__dirname, "contracts");
@@ -204,57 +200,51 @@ describe("Simnet contracts operations", () => {
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
 
-    const expectedConcatenatedContractsData = sutContractsList.map(
-      (contractName) => {
-        const sutContractSource = getSimnetContractSource(simnet, contractName);
-        const invariantContractSource = getInvariantContractSource(
-          contractsPath,
-          contractName
-        );
-        const concatenatedContractSource = contexatenate(
-          sutContractSource!,
-          invariantContractSource
-        );
-        const concatenatedContractName =
-          deriveConcatenatedContractName(contractName);
+    const expectedRendezvousData = sutContractsList.map((contractName) => {
+      const sutContractSource = getSimnetContractSource(simnet, contractName);
+      const invariantContractSource = getInvariantContractSource(
+        contractsPath,
+        contractName
+      );
+      const rendezvousSource = scheduleRendezvous(
+        sutContractSource!,
+        invariantContractSource
+      );
+      const rendezvousName = deriveRendezvousName(contractName);
 
-        return {
-          concatenatedContractName: concatenatedContractName,
-          concatenatedContractSource: concatenatedContractSource,
-          fullContractName: `${simnet.deployer}.${concatenatedContractName}`,
-        };
-      }
-    );
+      return {
+        rendezvousName,
+        rendezvousSource,
+        fullContractName: `${simnet.deployer}.${rendezvousName}`,
+      };
+    });
 
     // Act
-    const actualconcatenatedContractsData = sutContractsList.map(
-      (contractName) =>
-        buildConcatenatedContractData(simnet, contractName, contractsPath)
+    const actualRendezvousData = sutContractsList.map((contractName) =>
+      buildRendezvousData(simnet, contractName, contractsPath)
     );
 
     // Assert
-    expect(actualconcatenatedContractsData).toEqual(
-      expectedConcatenatedContractsData
-    );
+    expect(actualRendezvousData).toEqual(expectedRendezvousData);
   });
 
-  it("deploys concatenated contracts to the simnet", async () => {
+  it("deploys Rendezvous contracts to the simnet", async () => {
     // Arrange
     const manifestPath = path.resolve(__dirname, "Clarinet.toml");
     const contractsPath = path.resolve(__dirname, "contracts");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const concatenatedContractsData = sutContractsList.map((contractName) =>
-      buildConcatenatedContractData(simnet, contractName, contractsPath)
+    const rendezvousData = sutContractsList.map((contractName) =>
+      buildRendezvousData(simnet, contractName, contractsPath)
     );
 
     // Act
-    concatenatedContractsData.forEach((contractData) => {
-      deployConcatenatedContract(
+    rendezvousData.forEach((contractData) => {
+      deployRendezvous(
         simnet,
-        contractData.concatenatedContractName,
-        contractData.concatenatedContractSource
+        contractData.rendezvousName,
+        contractData.rendezvousSource
       );
     });
 
@@ -266,14 +256,14 @@ describe("Simnet contracts operations", () => {
     );
 
     // Assert
-    // Check if all expected concatenated contracts are present in the result
-    concatenatedContractsData.forEach((contractData) => {
+    // Check if all expected Rendezvous contracts are present in the result
+    rendezvousData.forEach((contractData) => {
       expect(actualSimnetContractsListAfterDeploy).toContain(
         contractData.fullContractName
       );
     });
 
-    // Ensure there are exactly double the number of original contracts (pre-deployment and concatenated)
+    // Ensure there are exactly double the number of original contracts (pre-deployment and Rendezvous)
     expect(actualSimnetContractsListAfterDeploy).toHaveLength(
       2 * sutContractsList.length
     );
@@ -330,40 +320,33 @@ describe("Simnet contracts operations", () => {
     expect(actualInitialContext).toEqual(expectedInitialContext);
   });
 
-  it("correctly filters the concatenated contracts interfaces", async () => {
+  it("correctly filters the Rendezvous contracts interfaces", async () => {
     // Arrange
     const manifestPath = path.resolve(__dirname, "Clarinet.toml");
     const contractsPath = path.resolve(__dirname, "contracts");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const concatenatedContractsData = sutContractsList.map((contractName) =>
-      buildConcatenatedContractData(simnet, contractName, contractsPath)
+    const rendezvousData = sutContractsList.map((contractName) =>
+      buildRendezvousData(simnet, contractName, contractsPath)
     );
-    const expectedconcatenatedContractsList = concatenatedContractsData.map(
-      (contractData) => {
-        deployConcatenatedContract(
-          simnet,
-          contractData.concatenatedContractName,
-          contractData.concatenatedContractSource
-        );
-        return contractData.fullContractName;
-      }
-    );
+    const expectedRendezvousList = rendezvousData.map((contractData) => {
+      deployRendezvous(
+        simnet,
+        contractData.rendezvousName,
+        contractData.rendezvousSource
+      );
+      return contractData.fullContractName;
+    });
 
     // Act
-    const concatenatedContractsInterfaces =
-      filterConcatenatedContractsInterfaces(
-        getSimnetDeployerContractsInterfaces(simnet)
-      );
-    const actualconcatenatedContractsList = Array.from(
-      concatenatedContractsInterfaces.keys()
+    const rendezvousInterfaces = filterRendezvousInterfaces(
+      getSimnetDeployerContractsInterfaces(simnet)
     );
+    const actualRendezvousList = Array.from(rendezvousInterfaces.keys());
 
     // Assert
-    expect(actualconcatenatedContractsList).toEqual(
-      expectedconcatenatedContractsList
-    );
+    expect(actualRendezvousList).toEqual(expectedRendezvousList);
   });
 
   it("correctly initializes the Clarity context", async () => {
@@ -373,42 +356,40 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const concatenatedContractsData = sutContractsList.map((contractName) =>
-      buildConcatenatedContractData(simnet, contractName, contractsPath)
+    const rendezvousData = sutContractsList.map((contractName) =>
+      buildRendezvousData(simnet, contractName, contractsPath)
     );
-    concatenatedContractsData.forEach((contractData) => {
-      deployConcatenatedContract(
+    rendezvousData.forEach((contractData) => {
+      deployRendezvous(
         simnet,
-        contractData.concatenatedContractName,
-        contractData.concatenatedContractSource
+        contractData.rendezvousName,
+        contractData.rendezvousSource
       );
     });
-    const concatenatedContractsInterfaces =
-      filterConcatenatedContractsInterfaces(
-        getSimnetDeployerContractsInterfaces(simnet)
-      );
-    const concatenatedContractsAllFunctions =
-      getFunctionsFromContractInterfaces(concatenatedContractsInterfaces);
+    const rendezvousInterfaces = filterRendezvousInterfaces(
+      getSimnetDeployerContractsInterfaces(simnet)
+    );
+    const rendezvousAllFunctions =
+      getFunctionsFromContractInterfaces(rendezvousInterfaces);
 
     // The JS representation of Clarity `(some (tuple (called uint)))`, where `called` is
     // initialized to 0.
     const expectedClarityValue = Cl.some(Cl.tuple({ called: Cl.uint(0) }));
-    const expectedContext = Array.from(
-      concatenatedContractsAllFunctions
-    ).flatMap(([contractName, functions]) =>
-      functions.map((f) => {
-        return {
-          contractName,
-          functionName: f.name,
-          called: expectedClarityValue,
-        };
-      })
+    const expectedContext = Array.from(rendezvousAllFunctions).flatMap(
+      ([contractName, functions]) =>
+        functions.map((f) => {
+          return {
+            contractName,
+            functionName: f.name,
+            called: expectedClarityValue,
+          };
+        })
     );
 
     // Act
-    initializeClarityContext(simnet, concatenatedContractsAllFunctions);
+    initializeClarityContext(simnet, rendezvousAllFunctions);
 
-    const actualContext = Array.from(concatenatedContractsAllFunctions).flatMap(
+    const actualContext = Array.from(rendezvousAllFunctions).flatMap(
       ([contractName, functions]) =>
         functions.map((f) => {
           const actualValue = simnet.getMapEntry(
