@@ -463,23 +463,13 @@ export function contexatenate(contract: string, invariants: string): string {
 }
 
 /**
- * Generate concatenated contract data.
+ * Generate the concatenated contract data.
  * @param simnet The simnet instance.
- * @param sutContracts The contracts to concatenate.
+ * @param contractName The contract name.
  * @param contractsPath The contracts path.
- * @returns A list of tuples containing the concatenated contract name
- * and the source code.
+ * @returns The concatenated contract data.
  */
-export const generateAllConcatContractsData = (
-  simnet: Simnet,
-  sutContracts: string[],
-  contractsPath: string
-) =>
-  sutContracts.map((contractName) =>
-    generateConcatContractData(simnet, contractName, contractsPath)
-  );
-
-const generateConcatContractData = (
+export const generateConcatContractData = (
   simnet: Simnet,
   contractName: string,
   contractsPath: string
@@ -612,10 +602,8 @@ export async function main() {
   // Get all the contracts from the interfaces.
   const sutContracts = Array.from(sutContractsInterfaces.keys());
 
-  const concatContractsData = generateAllConcatContractsData(
-    simnet,
-    sutContracts,
-    contractsPath
+  const concatContractsData = sutContracts.map((contractName) =>
+    generateConcatContractData(simnet, contractName, contractsPath)
   );
 
   concatContractsData.forEach((contractData) => {
