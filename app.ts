@@ -604,7 +604,7 @@ export async function main() {
 
   if (!manifestDir) {
     throw new Error(
-      "No path to Clarinet.toml manifest provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
+      "No path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
     );
   }
 
