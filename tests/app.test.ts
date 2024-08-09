@@ -330,20 +330,22 @@ describe("Simnet contracts operations", () => {
     const rendezvousData = sutContractsList.map((contractName) =>
       buildRendezvousData(simnet, contractName, contractsPath)
     );
-    const expectedRendezvousList = rendezvousData.map((contractData) => {
-      deployRendezvous(
-        simnet,
-        contractData.rendezvousName,
-        contractData.rendezvousSource
-      );
-      return contractData.fullContractName;
-    });
+    const expectedRendezvousList = rendezvousData
+      .map((contractData) => {
+        deployRendezvous(
+          simnet,
+          contractData.rendezvousName,
+          contractData.rendezvousSource
+        );
+        return contractData.fullContractName;
+      })
+      .sort();
 
     // Act
     const rendezvousInterfaces = filterRendezvousInterfaces(
       getSimnetDeployerContractsInterfaces(simnet)
     );
-    const actualRendezvousList = Array.from(rendezvousInterfaces.keys());
+    const actualRendezvousList = Array.from(rendezvousInterfaces.keys()).sort();
 
     // Assert
     expect(actualRendezvousList).toEqual(expectedRendezvousList);
