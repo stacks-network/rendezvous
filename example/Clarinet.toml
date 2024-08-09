@@ -1,5 +1,5 @@
 [project]
-name = "tests"
+name = "example"
 telemetry = false
 cache_dir = "./.cache"
 
