@@ -34,4 +34,26 @@ This will execute the fuzzing process, attempting to falsify the invariants.
 
 ---
 
+### Example
+
+Here is an example of a Clarity invariant designed to identify a bug in a smart contract:
+
+```clarity
+(define-read-only (invariant-counter-gt-zero)
+  (let
+      ((increment-num-calls (default-to u0 (get called (map-get? context "increment"))))
+       (decrement-num-calls (default-to u0 (get called (map-get? context "decrement")))))
+    (if (> increment-num-calls decrement-num-calls)
+        (> (var-get counter) u0)
+        true)))
+```
+
+To see how this and other invariants work in action, and to get a broader understanding of their implementation, you can run `rv` against the example Clarinet project:
+
+```
+rv example
+```
+
+---
+
 [^1]: Hughes, J. (2004). _Testing the Hard Stuff and Staying Sane_. In Proceedings of the ACM SIGPLAN Workshop on Haskell (Haskell '04).
