@@ -1,7 +1,7 @@
 This "contracts" folder is the hallowed ground for crafting code to be
 scrutinized and fortified. Each file here serves to define invariants,
 the unbreakable truths our tests will defend. Specifically, "PLACEHOLDER.clar"
-and "PLACEHOLDER_rv.clar" are the cornerstones for these invariants, ensuring
+and "PLACEHOLDER.invariants.clar" are the cornerstones for these invariants, ensuring
 integrity and resilience.
 
 May this folder always remain, a testament to our relentless pursuit of robust
