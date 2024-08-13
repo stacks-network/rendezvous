@@ -661,6 +661,16 @@ export async function main() {
       fc
         .record({
           contractName: fc.constantFrom(...rendezvousList),
+          functionCaller: fc.constantFrom(
+            ...new Map(
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+            ).entries()
+          ),
+          invariantCaller: fc.constantFrom(
+            ...new Map(
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+            ).entries()
+          ),
         })
         .chain((r) => {
           const functions = getFunctionsListForContract(
@@ -746,7 +756,7 @@ export async function main() {
           r.contractName,
           r.selectedFunction.name,
           selectedFunctionArgs,
-          simnet.deployer
+          r.functionCaller[1]
         );
 
         const functionCallResultJson = cvToJSON(functionCallResult);
@@ -766,6 +776,7 @@ export async function main() {
 
           console.log(
             " ✔ ",
+            r.functionCaller[0],
             getContractNameFromRendezvousName(r.contractName),
             r.selectedFunction.name,
             printedFunctionArgs
@@ -773,6 +784,7 @@ export async function main() {
         } else {
           console.log(
             " ✗ ",
+            r.functionCaller[0],
             getContractNameFromRendezvousName(r.contractName),
             r.selectedFunction.name,
             printedFunctionArgs
@@ -797,12 +809,17 @@ export async function main() {
           r.contractName,
           r.selectedInvariant.name,
           selectedInvariantArgs,
-          simnet.deployer
+          r.invariantCaller[1]
         );
 
         const invariantCallResultJson = cvToJSON(invariantCallResult);
 
-        console.log("🤺 " + r.selectedInvariant.name, printedInvariantArgs);
+        console.log(
+          "🤺 ",
+          r.invariantCaller[0],
+          r.selectedInvariant.name,
+          printedInvariantArgs
+        );
         console.log("\n");
 
         if (!invariantCallResultJson.value) {
