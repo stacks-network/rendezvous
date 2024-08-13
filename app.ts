@@ -661,7 +661,7 @@ export async function main() {
       fc
         .record({
           contractName: fc.constantFrom(...rendezvousList),
-          functionCaller: fc.constantFrom(
+          sutCaller: fc.constantFrom(
             ...new Map(
               [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
             ).entries()
@@ -756,7 +756,7 @@ export async function main() {
           r.contractName,
           r.selectedFunction.name,
           selectedFunctionArgs,
-          r.functionCaller[1]
+          r.sutCaller[1]
         );
 
         const functionCallResultJson = cvToJSON(functionCallResult);
@@ -776,7 +776,7 @@ export async function main() {
 
           console.log(
             " ✔ ",
-            r.functionCaller[0],
+            r.sutCaller[0],
             getContractNameFromRendezvousName(r.contractName),
             r.selectedFunction.name,
             printedFunctionArgs
@@ -784,7 +784,7 @@ export async function main() {
         } else {
           console.log(
             " ✗ ",
-            r.functionCaller[0],
+            r.sutCaller[0],
             getContractNameFromRendezvousName(r.contractName),
             r.selectedFunction.name,
             printedFunctionArgs
