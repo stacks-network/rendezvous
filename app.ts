@@ -817,6 +817,7 @@ export async function main() {
         console.log(
           "🤺 ",
           r.invariantCaller[0],
+          getContractNameFromRendezvousName(r.contractName),
           r.selectedInvariant.name,
           printedInvariantArgs
         );
