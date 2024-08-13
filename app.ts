@@ -752,11 +752,12 @@ export async function main() {
           })
           .join(" ");
 
+        const [sutCallerWallet, sutCallerAddress] = r.sutCaller;
         const { result: functionCallResult } = simnet.callPublicFn(
           r.contractName,
           r.selectedFunction.name,
           selectedFunctionArgs,
-          r.sutCaller[1]
+          sutCallerAddress
         );
 
         const functionCallResultJson = cvToJSON(functionCallResult);
@@ -776,7 +777,7 @@ export async function main() {
 
           console.log(
             " ✔ ",
-            r.sutCaller[0],
+            sutCallerWallet,
             getContractNameFromRendezvousName(r.contractName),
             r.selectedFunction.name,
             printedFunctionArgs
@@ -784,7 +785,7 @@ export async function main() {
         } else {
           console.log(
             " ✗ ",
-            r.sutCaller[0],
+            sutCallerWallet,
             getContractNameFromRendezvousName(r.contractName),
             r.selectedFunction.name,
             printedFunctionArgs
@@ -805,18 +806,20 @@ export async function main() {
 
         console.log("\nChecking invariants...");
 
+        const [invariantCallerWallet, invariantCallerAddress] =
+          r.invariantCaller;
         const { result: invariantCallResult } = simnet.callReadOnlyFn(
           r.contractName,
           r.selectedInvariant.name,
           selectedInvariantArgs,
-          r.invariantCaller[1]
+          invariantCallerAddress
         );
 
         const invariantCallResultJson = cvToJSON(invariantCallResult);
 
         console.log(
           "🤺 ",
-          r.invariantCaller[0],
+          invariantCallerWallet,
           getContractNameFromRendezvousName(r.contractName),
           r.selectedInvariant.name,
           printedInvariantArgs
