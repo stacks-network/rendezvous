@@ -22,7 +22,7 @@ import {
   tupleCV,
   uintCV,
 } from "@stacks/transactions";
-import fc, { VerbosityLevel } from "fast-check";
+import fc from "fast-check";
 import fs from "fs";
 
 type BaseType = "int128" | "uint128" | "bool" | "principal";
@@ -837,7 +837,7 @@ export async function main() {
         }
       }
     ),
-    { verbose: VerbosityLevel.VeryVerbose }
+    { verbose: true }
   );
 }
 
