@@ -600,6 +600,21 @@ export async function main() {
     console.log(arg);
   });
 
+  const seed = parseInt(
+    process.argv.find((arg) => arg.startsWith("--seed="))?.split("=")[1]!,
+    10,
+  ) || undefined;
+  if (seed !== undefined) {
+    console.log(`Using seed: ${seed}`);
+  }
+
+  const path =
+    process.argv.find((arg) => arg.startsWith("--path="))?.split("=")[1] ||
+    undefined;
+  if (path !== undefined) {
+    console.log(`Using path: ${path}`);
+  }
+
   // FIXME: Decide if we want to pass only the directory or the full path.
   const manifestDir = args[2];
 
@@ -838,7 +853,7 @@ export async function main() {
         }
       }
     ),
-    { verbose: true, reporter: reporter }
+    { verbose: true, reporter: reporter, seed: seed, path: path },
   );
 }
 
