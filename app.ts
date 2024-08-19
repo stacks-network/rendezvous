@@ -24,6 +24,7 @@ import {
 } from "@stacks/transactions";
 import fc from "fast-check";
 import fs from "fs";
+import { reporter } from "./heatstroke";
 
 type BaseType = "int128" | "uint128" | "bool" | "principal";
 type ComplexType =
@@ -837,7 +838,7 @@ export async function main() {
         }
       }
     ),
-    { verbose: true }
+    { verbose: true, reporter: reporter }
   );
 }
 
