@@ -4,14 +4,14 @@
 cd "$(dirname "$0")"
 
 # Compile TypeScript files to JavaScript using the project's tsconfig.json.
-echo "Scheduling RendezVous..."
+echo "Scheduling RendezVous with your contract..."
 npx tsc --project tsconfig.json
 
 # Check if the compilation was successful.
 if [ $? -eq 0 ]; then
-    echo "Compilation successful. Starting fuzzing process..."
+    echo "RendezVous scheduled! Ordering a taxi to be there on time..."
     node app.js "$@"
 else
-    echo "TypeScript compilation failed, please check the errors above."
+    echo "RendezVous canceled unexpectedly. Please check the cancellation reason above."
     exit 1
 fi
