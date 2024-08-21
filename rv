@@ -4,7 +4,7 @@
 cd "$(dirname "$0")"
 
 # Compile TypeScript files to JavaScript using the project's tsconfig.json.
-echo "Compiling TypeScript files..."
+echo "Scheduling RendezVous..."
 npx tsc --project tsconfig.json
 
 # Check if the compilation was successful.
