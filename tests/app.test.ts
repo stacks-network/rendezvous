@@ -19,12 +19,301 @@ import fc from "fast-check";
 import fs from "fs";
 import path from "path";
 import { Cl } from "@stacks/transactions";
+import { reporter } from "../heatstroke";
 
 describe("Manifest handling", () => {
   it("throws error when manifest path is not provided", () => {
     expect(async () => await main()).rejects.toThrow(
       "No path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
     );
+  });
+});
+
+describe("Custom reporter logging", () => {
+  it("should handle cases with missing path on failure", () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
+    try {
+      fc.assert(
+        fc.property(
+          fc.constant(true),
+          fc.nat(),
+          fc.nat(),
+          fc.ascii(),
+          fc.record({
+            name: fc.ascii(),
+            access: fc.ascii(),
+            outputs: fc.array(fc.ascii()),
+          }),
+          fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
+          fc.record({
+            name: fc.ascii(),
+            access: fc.ascii(),
+          }),
+          fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
+          fc.ascii(),
+          (
+            failed,
+            numRuns,
+            seed,
+            contractName,
+            selectedFunction,
+            functionArgsArb,
+            selectedInvariant,
+            invariantArgsArb,
+            errorMessage
+          ) => {
+            const mockRunDetails = {
+              failed: failed,
+              numRuns: numRuns,
+              seed: seed,
+              counterexample: [
+                {
+                  contractName: contractName,
+                  selectedFunction: {
+                    name: selectedFunction.name,
+                    access: selectedFunction.access,
+                    outputs: selectedFunction.outputs,
+                  },
+                  functionArgsArb: functionArgsArb,
+                  selectedInvariant: {
+                    name: selectedInvariant.name,
+                    access: selectedInvariant.access,
+                  },
+                  invariantArgsArb: invariantArgsArb,
+                },
+              ],
+              error: new Error(errorMessage),
+            };
+
+            // Act
+            reporter(mockRunDetails);
+
+            // Assert
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `Error: Property failed after ${numRuns} tests.`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(`Seed : ${seed}`);
+            expect(consoleErrorSpy).toHaveBeenCalledWith(`\nCounterexample:`);
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `- Contract : ${contractName}`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `- Function : ${selectedFunction.name} (${selectedFunction.access})`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `- Arguments: ${JSON.stringify(functionArgsArb)}`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `- Outputs  : ${JSON.stringify(selectedFunction.outputs)}`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `- Invariant: ${selectedInvariant.name} (${selectedInvariant.access})`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `- Arguments: ${JSON.stringify(invariantArgsArb)}`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `The invariant "${
+                selectedInvariant.name
+              }" returned:\n\n${mockRunDetails.error
+                ?.toString()
+                .split("\n")
+                .map((line) => "    " + line)
+                .join("\n")}\n`
+            );
+            expect(consoleErrorSpy).not.toHaveBeenCalledWith(
+              expect.stringContaining("Path :")
+            );
+          }
+        ),
+        { numRuns: 10 }
+      );
+    } finally {
+      jest.restoreAllMocks();
+    }
+  });
+  it("should handle cases with a specified path on failure", () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
+    try {
+      fc.assert(
+        fc.property(
+          fc.ascii(),
+          fc.constant(true),
+          fc.nat(),
+          fc.nat(),
+          fc.ascii(),
+          fc.record({
+            name: fc.ascii(),
+            access: fc.ascii(),
+            outputs: fc.array(fc.ascii()),
+          }),
+          fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
+          fc.record({
+            name: fc.ascii(),
+            access: fc.ascii(),
+          }),
+          fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
+          fc.ascii(),
+          (
+            path,
+            failed,
+            numRuns,
+            seed,
+            contractName,
+            selectedFunction,
+            functionArgsArb,
+            selectedInvariant,
+            invariantArgsArb,
+            errorMessage
+          ) => {
+            const mockRunDetails = {
+              path: path,
+              failed: failed,
+              numRuns: numRuns,
+              seed: seed,
+              counterexample: [
+                {
+                  contractName: contractName,
+                  selectedFunction: {
+                    name: selectedFunction.name,
+                    access: selectedFunction.access,
+                    outputs: selectedFunction.outputs,
+                  },
+                  functionArgsArb: functionArgsArb,
+                  selectedInvariant: {
+                    name: selectedInvariant.name,
+                    access: selectedInvariant.access,
+                  },
+                  invariantArgsArb: invariantArgsArb,
+                },
+              ],
+              error: new Error(errorMessage),
+            };
+
+            // Act
+            reporter(mockRunDetails);
+
+            // Assert
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `Error: Property failed after ${numRuns} tests.`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(`Seed : ${seed}`);
+            expect(consoleErrorSpy).toHaveBeenCalledWith(`Path : ${path}`);
+            expect(consoleErrorSpy).toHaveBeenCalledWith(`\nCounterexample:`);
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `- Contract : ${contractName}`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `- Function : ${selectedFunction.name} (${selectedFunction.access})`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `- Arguments: ${JSON.stringify(functionArgsArb)}`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `- Outputs  : ${JSON.stringify(selectedFunction.outputs)}`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `- Invariant: ${selectedInvariant.name} (${selectedInvariant.access})`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `- Arguments: ${JSON.stringify(invariantArgsArb)}`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`
+            );
+            expect(consoleErrorSpy).toHaveBeenCalledWith(
+              `The invariant "${
+                selectedInvariant.name
+              }" returned:\n\n${mockRunDetails.error
+                ?.toString()
+                .split("\n")
+                .map((line) => "    " + line)
+                .join("\n")}\n`
+            );
+          }
+        ),
+        { numRuns: 10 }
+      );
+    } finally {
+      jest.restoreAllMocks();
+    }
+  });
+  it("should not log anything on success", () => {
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
+
+    try {
+      fc.assert(
+        fc.property(
+          fc.ascii(),
+          fc.constant(false),
+          fc.nat(),
+          fc.nat(),
+          fc.ascii(),
+          fc.record({
+            name: fc.ascii(),
+            access: fc.ascii(),
+            outputs: fc.array(fc.ascii()),
+          }),
+          fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
+          fc.record({
+            name: fc.ascii(),
+            access: fc.ascii(),
+          }),
+          fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
+          fc.ascii(),
+          (
+            path,
+            failed,
+            numRuns,
+            seed,
+            contractName,
+            selectedFunction,
+            functionArgsArb,
+            selectedInvariant,
+            invariantArgsArb,
+            errorMessage
+          ) => {
+            const mockRunDetails = {
+              path: path,
+              failed: failed,
+              numRuns: numRuns,
+              seed: seed,
+              counterexample: [
+                {
+                  contractName: contractName,
+                  selectedFunction: {
+                    name: selectedFunction.name,
+                    access: selectedFunction.access,
+                    outputs: selectedFunction.outputs,
+                  },
+                  functionArgsArb: functionArgsArb,
+                  selectedInvariant: {
+                    name: selectedInvariant.name,
+                    access: selectedInvariant.access,
+                  },
+                  invariantArgsArb: invariantArgsArb,
+                },
+              ],
+              error: new Error(errorMessage),
+            };
+
+            // Act
+            reporter(mockRunDetails);
+
+            // Assert
+            expect(consoleErrorSpy).not.toHaveBeenCalled();
+          }
+        ),
+        { numRuns: 10 }
+      );
+    } finally {
+      jest.restoreAllMocks();
+    }
   });
 });
 
