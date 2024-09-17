@@ -30,7 +30,7 @@ describe("Manifest handling", () => {
 });
 
 describe("Custom reporter logging", () => {
-  it("should handle cases with missing path on failure", () => {
+  it("handles cases with missing path on failure", () => {
     try {
       fc.assert(
         fc.property(
@@ -139,7 +139,7 @@ describe("Custom reporter logging", () => {
     }
   });
 
-  it("should handle cases with a specified path on failure", () => {
+  it("handles cases with a specified path on failure", () => {
     try {
       fc.assert(
         fc.property(
@@ -252,7 +252,7 @@ describe("Custom reporter logging", () => {
     }
   });
 
-  it("should not log anything on success", () => {
+  it("does not log anything on success", () => {
     try {
       fc.assert(
         fc.property(
