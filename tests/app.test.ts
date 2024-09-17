@@ -31,103 +31,105 @@ describe("Manifest handling", () => {
 
 describe("Custom reporter logging", () => {
   it("should handle cases with missing path on failure", () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-
     try {
       fc.assert(
         fc.property(
-          fc.constant(true),
-          fc.nat(),
-          fc.nat(),
-          fc.ascii(),
           fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-            outputs: fc.array(fc.ascii()),
+            failed: fc.constant(true),
+            numRuns: fc.nat(),
+            seed: fc.nat(),
+            contractName: fc.ascii(),
+            selectedFunction: fc.record({
+              name: fc.ascii(),
+              access: fc.ascii(),
+              outputs: fc.array(fc.ascii()),
+            }),
+            functionArgsArb: fc.array(
+              fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
+            ),
+            selectedInvariant: fc.record({
+              name: fc.ascii(),
+              access: fc.ascii(),
+            }),
+            invariantArgsArb: fc.array(
+              fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
+            ),
+            errorMessage: fc.ascii(),
           }),
-          fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
-          fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-          }),
-          fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
-          fc.ascii(),
-          (
-            failed,
-            numRuns,
-            seed,
-            contractName,
-            selectedFunction,
-            functionArgsArb,
-            selectedInvariant,
-            invariantArgsArb,
-            errorMessage
-          ) => {
+          (r: {
+            failed: boolean;
+            numRuns: number;
+            seed: number;
+            contractName: string;
+            selectedFunction: {
+              name: string;
+              access: string;
+              outputs: string[];
+            };
+            functionArgsArb: (string | number | boolean)[];
+            selectedInvariant: {
+              name: string;
+              access: string;
+            };
+            invariantArgsArb: (string | number | boolean)[];
+            errorMessage: string;
+          }) => {
+            const consoleErrorLogs: string[] = [];
+
+            jest
+              .spyOn(console, "error")
+              .mockImplementation((message: string) => {
+                consoleErrorLogs.push(message);
+              });
+
             const mockRunDetails = {
-              failed: failed,
-              numRuns: numRuns,
-              seed: seed,
+              failed: r.failed,
+              numRuns: r.numRuns,
+              seed: r.seed,
               counterexample: [
                 {
-                  contractName: contractName,
+                  contractName: r.contractName,
                   selectedFunction: {
-                    name: selectedFunction.name,
-                    access: selectedFunction.access,
-                    outputs: selectedFunction.outputs,
+                    name: r.selectedFunction.name,
+                    access: r.selectedFunction.access,
+                    outputs: r.selectedFunction.outputs,
                   },
-                  functionArgsArb: functionArgsArb,
+                  functionArgsArb: r.functionArgsArb,
                   selectedInvariant: {
-                    name: selectedInvariant.name,
-                    access: selectedInvariant.access,
+                    name: r.selectedInvariant.name,
+                    access: r.selectedInvariant.access,
                   },
-                  invariantArgsArb: invariantArgsArb,
+                  invariantArgsArb: r.invariantArgsArb,
                 },
               ],
-              error: new Error(errorMessage),
+              error: new Error(r.errorMessage),
             };
 
             // Act
             reporter(mockRunDetails);
 
             // Assert
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `Error: Property failed after ${numRuns} tests.`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(`Seed : ${seed}`);
-            expect(consoleErrorSpy).toHaveBeenCalledWith(`\nCounterexample:`);
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `- Contract : ${contractName}`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `- Function : ${selectedFunction.name} (${selectedFunction.access})`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `- Arguments: ${JSON.stringify(functionArgsArb)}`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `- Outputs  : ${JSON.stringify(selectedFunction.outputs)}`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `- Invariant: ${selectedInvariant.name} (${selectedInvariant.access})`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `- Arguments: ${JSON.stringify(invariantArgsArb)}`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
+            const expectedMessages = [
+              `Error: Property failed after ${r.numRuns} tests.`,
+              `Seed : ${r.seed}`,
+              `\nCounterexample:`,
+              `- Contract : ${r.contractName}`,
+              `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
+              `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
+              `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`,
+              `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`,
+              `- Arguments: ${JSON.stringify(r.invariantArgsArb)}`,
+              `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
               `The invariant "${
-                selectedInvariant.name
+                r.selectedInvariant.name
               }" returned:\n\n${mockRunDetails.error
                 ?.toString()
                 .split("\n")
                 .map((line) => "    " + line)
-                .join("\n")}\n`
-            );
-            expect(consoleErrorSpy).not.toHaveBeenCalledWith(
-              expect.stringContaining("Path :")
-            );
+                .join("\n")}\n`,
+            ];
+
+            expect(consoleErrorLogs).toEqual(expectedMessages);
           }
         ),
         { numRuns: 10 }
@@ -138,104 +140,109 @@ describe("Custom reporter logging", () => {
   });
 
   it("should handle cases with a specified path on failure", () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-
     try {
       fc.assert(
         fc.property(
-          fc.ascii(),
-          fc.constant(true),
-          fc.nat(),
-          fc.nat(),
-          fc.ascii(),
           fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-            outputs: fc.array(fc.ascii()),
+            path: fc.ascii(),
+            failed: fc.constant(true),
+            numRuns: fc.nat(),
+            seed: fc.nat(),
+            contractName: fc.ascii(),
+            selectedFunction: fc.record({
+              name: fc.ascii(),
+              access: fc.ascii(),
+              outputs: fc.array(fc.ascii()),
+            }),
+            functionArgsArb: fc.array(
+              fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
+            ),
+            selectedInvariant: fc.record({
+              name: fc.ascii(),
+              access: fc.ascii(),
+            }),
+            invariantArgsArb: fc.array(
+              fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
+            ),
+            errorMessage: fc.ascii(),
           }),
-          fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
-          fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-          }),
-          fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
-          fc.ascii(),
-          (
-            path,
-            failed,
-            numRuns,
-            seed,
-            contractName,
-            selectedFunction,
-            functionArgsArb,
-            selectedInvariant,
-            invariantArgsArb,
-            errorMessage
-          ) => {
+          (r: {
+            path: string;
+            failed: boolean;
+            numRuns: number;
+            seed: number;
+            contractName: string;
+            selectedFunction: {
+              name: string;
+              access: string;
+              outputs: string[];
+            };
+            functionArgsArb: (string | number | boolean)[];
+            selectedInvariant: {
+              name: string;
+              access: string;
+            };
+            invariantArgsArb: (string | number | boolean)[];
+            errorMessage: string;
+          }) => {
+            const consoleErrorLogs: string[] = [];
+
+            jest
+              .spyOn(console, "error")
+              .mockImplementation((message: string) => {
+                consoleErrorLogs.push(message);
+              });
+
             const mockRunDetails = {
-              path: path,
-              failed: failed,
-              numRuns: numRuns,
-              seed: seed,
+              path: r.path,
+              failed: r.failed,
+              numRuns: r.numRuns,
+              seed: r.seed,
               counterexample: [
                 {
-                  contractName: contractName,
+                  contractName: r.contractName,
                   selectedFunction: {
-                    name: selectedFunction.name,
-                    access: selectedFunction.access,
-                    outputs: selectedFunction.outputs,
+                    name: r.selectedFunction.name,
+                    access: r.selectedFunction.access,
+                    outputs: r.selectedFunction.outputs,
                   },
-                  functionArgsArb: functionArgsArb,
+                  functionArgsArb: r.functionArgsArb,
                   selectedInvariant: {
-                    name: selectedInvariant.name,
-                    access: selectedInvariant.access,
+                    name: r.selectedInvariant.name,
+                    access: r.selectedInvariant.access,
                   },
-                  invariantArgsArb: invariantArgsArb,
+                  invariantArgsArb: r.invariantArgsArb,
                 },
               ],
-              error: new Error(errorMessage),
+              error: new Error(r.errorMessage),
             };
 
             // Act
             reporter(mockRunDetails);
 
             // Assert
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `Error: Property failed after ${numRuns} tests.`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(`Seed : ${seed}`);
-            expect(consoleErrorSpy).toHaveBeenCalledWith(`Path : ${path}`);
-            expect(consoleErrorSpy).toHaveBeenCalledWith(`\nCounterexample:`);
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `- Contract : ${contractName}`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `- Function : ${selectedFunction.name} (${selectedFunction.access})`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `- Arguments: ${JSON.stringify(functionArgsArb)}`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `- Outputs  : ${JSON.stringify(selectedFunction.outputs)}`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `- Invariant: ${selectedInvariant.name} (${selectedInvariant.access})`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `- Arguments: ${JSON.stringify(invariantArgsArb)}`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
-              `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`
-            );
-            expect(consoleErrorSpy).toHaveBeenCalledWith(
+            const expectedMessages = [
+              `Error: Property failed after ${r.numRuns} tests.`,
+              `Seed : ${r.seed}`,
+              `Path : ${r.path}`,
+              `\nCounterexample:`,
+              `- Contract : ${r.contractName}`,
+              `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
+              `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
+              `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`,
+              `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`,
+              `- Arguments: ${JSON.stringify(r.invariantArgsArb)}`,
+              `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
               `The invariant "${
-                selectedInvariant.name
+                r.selectedInvariant.name
               }" returned:\n\n${mockRunDetails.error
                 ?.toString()
                 .split("\n")
                 .map((line) => "    " + line)
-                .join("\n")}\n`
-            );
+                .join("\n")}\n`,
+            ];
+
+            expect(consoleErrorLogs).toEqual(expectedMessages);
           }
         ),
         { numRuns: 10 }
@@ -246,69 +253,88 @@ describe("Custom reporter logging", () => {
   });
 
   it("should not log anything on success", () => {
-    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
-
     try {
       fc.assert(
         fc.property(
-          fc.ascii(),
-          fc.constant(false),
-          fc.nat(),
-          fc.nat(),
-          fc.ascii(),
           fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-            outputs: fc.array(fc.ascii()),
+            path: fc.ascii(),
+            failed: fc.constant(false),
+            numRuns: fc.nat(),
+            seed: fc.nat(),
+            contractName: fc.ascii(),
+            selectedFunction: fc.record({
+              name: fc.ascii(),
+              access: fc.ascii(),
+              outputs: fc.array(fc.ascii()),
+            }),
+            functionArgsArb: fc.array(
+              fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
+            ),
+            selectedInvariant: fc.record({
+              name: fc.ascii(),
+              access: fc.ascii(),
+            }),
+            invariantArgsArb: fc.array(
+              fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
+            ),
+            errorMessage: fc.ascii(),
           }),
-          fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
-          fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-          }),
-          fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
-          fc.ascii(),
-          (
-            path,
-            failed,
-            numRuns,
-            seed,
-            contractName,
-            selectedFunction,
-            functionArgsArb,
-            selectedInvariant,
-            invariantArgsArb,
-            errorMessage
-          ) => {
+          (r: {
+            path: string;
+            failed: boolean;
+            numRuns: number;
+            seed: number;
+            contractName: string;
+            selectedFunction: {
+              name: string;
+              access: string;
+              outputs: string[];
+            };
+            functionArgsArb: (string | number | boolean)[];
+            selectedInvariant: {
+              name: string;
+              access: string;
+            };
+            invariantArgsArb: (string | number | boolean)[];
+            errorMessage: string;
+          }) => {
+            const consoleErrorLogs: string[] = [];
+
+            jest
+              .spyOn(console, "error")
+              .mockImplementation((message: string) => {
+                consoleErrorLogs.push(message);
+              });
+
             const mockRunDetails = {
-              path: path,
-              failed: failed,
-              numRuns: numRuns,
-              seed: seed,
+              path: r.path,
+              failed: r.failed,
+              numRuns: r.numRuns,
+              seed: r.seed,
               counterexample: [
                 {
-                  contractName: contractName,
+                  contractName: r.contractName,
                   selectedFunction: {
-                    name: selectedFunction.name,
-                    access: selectedFunction.access,
-                    outputs: selectedFunction.outputs,
+                    name: r.selectedFunction.name,
+                    access: r.selectedFunction.access,
+                    outputs: r.selectedFunction.outputs,
                   },
-                  functionArgsArb: functionArgsArb,
+                  functionArgsArb: r.functionArgsArb,
                   selectedInvariant: {
-                    name: selectedInvariant.name,
-                    access: selectedInvariant.access,
+                    name: r.selectedInvariant.name,
+                    access: r.selectedInvariant.access,
                   },
-                  invariantArgsArb: invariantArgsArb,
+                  invariantArgsArb: r.invariantArgsArb,
                 },
               ],
-              error: new Error(errorMessage),
+              error: new Error(r.errorMessage),
             };
 
             // Act
             reporter(mockRunDetails);
 
             // Assert
-            expect(consoleErrorSpy).not.toHaveBeenCalled();
+            expect(consoleErrorLogs).toEqual([]);
           }
         ),
         { numRuns: 10 }
