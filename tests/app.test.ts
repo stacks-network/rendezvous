@@ -136,6 +136,7 @@ describe("Custom reporter logging", () => {
       jest.restoreAllMocks();
     }
   });
+
   it("should handle cases with a specified path on failure", () => {
     const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
 
@@ -243,6 +244,7 @@ describe("Custom reporter logging", () => {
       jest.restoreAllMocks();
     }
   });
+
   it("should not log anything on success", () => {
     const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation();
 
