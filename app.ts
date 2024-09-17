@@ -601,7 +601,8 @@ export async function main() {
   });
 
   const seed = parseInt(
-    process.argv.find((arg) => arg.startsWith("--seed="))?.split("=")[1]!,
+    process.argv.find((arg) => arg.toLowerCase().startsWith("--seed="))
+      ?.split("=")[1]!,
     10,
   ) || undefined;
   if (seed !== undefined) {
@@ -609,8 +610,9 @@ export async function main() {
   }
 
   const path =
-    process.argv.find((arg) => arg.startsWith("--path="))?.split("=")[1] ||
-    undefined;
+    process.argv.find((arg) => arg.toLowerCase().startsWith("--path="))?.split(
+      "=",
+    )[1] || undefined;
   if (path !== undefined) {
     console.log(`Using path: ${path}`);
   }
