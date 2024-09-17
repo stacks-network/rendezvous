@@ -82,7 +82,7 @@ describe("Custom reporter logging", () => {
                 consoleErrorLogs.push(message);
               });
 
-            const mockRunDetails = {
+            const runDetails = {
               failed: r.failed,
               numRuns: r.numRuns,
               seed: r.seed,
@@ -106,7 +106,7 @@ describe("Custom reporter logging", () => {
             };
 
             // Act
-            reporter(mockRunDetails);
+            reporter(runDetails);
 
             // Assert
             const expectedMessages = [
@@ -122,7 +122,7 @@ describe("Custom reporter logging", () => {
               `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
               `The invariant "${
                 r.selectedInvariant.name
-              }" returned:\n\n${mockRunDetails.error
+              }" returned:\n\n${runDetails.error
                 ?.toString()
                 .split("\n")
                 .map((line) => "    " + line)
@@ -193,7 +193,7 @@ describe("Custom reporter logging", () => {
                 consoleErrorLogs.push(message);
               });
 
-            const mockRunDetails = {
+            const runDetails = {
               path: r.path,
               failed: r.failed,
               numRuns: r.numRuns,
@@ -218,7 +218,7 @@ describe("Custom reporter logging", () => {
             };
 
             // Act
-            reporter(mockRunDetails);
+            reporter(runDetails);
 
             // Assert
             const expectedMessages = [
@@ -235,7 +235,7 @@ describe("Custom reporter logging", () => {
               `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
               `The invariant "${
                 r.selectedInvariant.name
-              }" returned:\n\n${mockRunDetails.error
+              }" returned:\n\n${runDetails.error
                 ?.toString()
                 .split("\n")
                 .map((line) => "    " + line)
@@ -306,7 +306,7 @@ describe("Custom reporter logging", () => {
                 consoleErrorLogs.push(message);
               });
 
-            const mockRunDetails = {
+            const runDetails = {
               path: r.path,
               failed: r.failed,
               numRuns: r.numRuns,
@@ -331,7 +331,7 @@ describe("Custom reporter logging", () => {
             };
 
             // Act
-            reporter(mockRunDetails);
+            reporter(runDetails);
 
             // Assert
             expect(consoleErrorLogs).toEqual([]);
