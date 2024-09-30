@@ -1,0 +1,8 @@
+# KEEPME
+
+This `tmp` directory is used for storing temporary files that are essential to
+our tool's operation but are not meant for permanent storage or version control
+tracking.
+
+Please do not delete this folder. The contents of this folder, except for this
+file, are ignored by Git to prevent clutter in the repository.
