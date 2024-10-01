@@ -516,6 +516,7 @@ export const buildRendezvousData = (
       sutContractSource!,
       invariantContractSource
     );
+
     const rendezvousName = deriveRendezvousName(contractName);
 
     return {
@@ -638,19 +639,20 @@ export async function main() {
     console.log(arg);
   });
 
-  const seed = parseInt(
-    process.argv.find((arg) => arg.toLowerCase().startsWith("--seed="))
-      ?.split("=")[1]!,
-    10,
-  ) || undefined;
+  const seed =
+    parseInt(
+      process.argv
+        .find((arg) => arg.toLowerCase().startsWith("--seed="))
+        ?.split("=")[1]!,
+      10
+    ) || undefined;
   if (seed !== undefined) {
     console.log(`Using seed: ${seed}`);
   }
 
   const path =
-    process.argv.find((arg) => arg.toLowerCase().startsWith("--path="))?.split(
-      "=",
-    )[1] || undefined;
+    process.argv
+      .find((arg) => arg.toLowerCase().startsWith("--path="))
       ?.split("=")[1] || undefined;
   if (path !== undefined) {
     console.log(`Using path: ${path}`);
@@ -668,7 +670,7 @@ export async function main() {
   const manifestPath = manifestDir + "/Clarinet.toml";
   const contractsPath = manifestDir + "/contracts";
 
-  console.log(`Using manifest path: ${manifestPath}`);
+  console.log(`Using manifest path: ${manifestPath}\n`);
 
   // TODO: remove the simnet after completing the migration to clarity-cli.
   const simnet = await initSimnet(manifestPath);
@@ -845,6 +847,8 @@ export async function main() {
 
         const functionCallResultJson = JSON.parse(functionCallResult);
 
+        console.log("Calling function...\n");
+
         if (functionCallResultJson.success) {
           localContext[r.contractName][r.selectedFunction.name]++;
           clarityCliExecute(
@@ -887,7 +891,7 @@ export async function main() {
           })
           .join(" ");
 
-        console.log("\nChecking invariants...");
+        console.log("\nChecking invariants...\n");
 
         const [invariantCallerWallet, invariantCallerAddress] =
           r.invariantCaller;
@@ -923,7 +927,7 @@ export async function main() {
         }
       }
     ),
-    { verbose: true, reporter: reporter, seed: seed, path: path },
+    { verbose: true, reporter: reporter, seed: seed, path: path }
   );
 }
 
