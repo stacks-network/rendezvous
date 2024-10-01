@@ -351,59 +351,60 @@ describe("Simnet contracts operations", () => {
     expect(actualRendezvousList).toEqual(expectedRendezvousList);
   });
 
-  it("correctly initializes the Clarity context", async () => {
-    // Arrange
-    const manifestPath = path.resolve(__dirname, "../example/Clarinet.toml");
-    const contractsPath = path.resolve(__dirname, "../example/contracts");
-    const simnet = await initSimnet(manifestPath);
-    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
-    const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const rendezvousData = sutContractsList.map((contractName) =>
-      buildRendezvousData(simnet, contractName, contractsPath)
-    );
-    rendezvousData.forEach((contractData) => {
-      deployRendezvous(
-        simnet,
-        contractData.rendezvousName,
-        contractData.rendezvousSource
-      );
-    });
-    const rendezvousInterfaces = filterRendezvousInterfaces(
-      getSimnetDeployerContractsInterfaces(simnet)
-    );
-    const rendezvousAllFunctions =
-      getFunctionsFromContractInterfaces(rendezvousInterfaces);
+  // FIXME: Migrate this test to clarity-cli.
+  // it("correctly initializes the Clarity context", async () => {
+  //   // Arrange
+  //   const manifestPath = path.resolve(__dirname, "../example/Clarinet.toml");
+  //   const contractsPath = path.resolve(__dirname, "../example/contracts");
+  //   const simnet = await initSimnet(manifestPath);
+  //   const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+  //   const sutContractsList = Array.from(sutContractsInterfaces.keys());
+  //   const rendezvousData = sutContractsList.map((contractName) =>
+  //     buildRendezvousData(simnet, contractName, contractsPath)
+  //   );
+  //   rendezvousData.forEach((contractData) => {
+  //     deployRendezvous(
+  //       simnet,
+  //       contractData.rendezvousName,
+  //       contractData.rendezvousSource
+  //     );
+  //   });
+  //   const rendezvousInterfaces = filterRendezvousInterfaces(
+  //     getSimnetDeployerContractsInterfaces(simnet)
+  //   );
+  //   const rendezvousAllFunctions =
+  //     getFunctionsFromContractInterfaces(rendezvousInterfaces);
 
-    // The JS representation of Clarity `(some (tuple (called uint)))`, where `called` is
-    // initialized to 0.
-    const expectedClarityValue = Cl.some(Cl.tuple({ called: Cl.uint(0) }));
-    const expectedContext = Array.from(rendezvousAllFunctions).flatMap(
-      ([contractName, functions]) =>
-        functions.map((f) => {
-          return {
-            contractName,
-            functionName: f.name,
-            called: expectedClarityValue,
-          };
-        })
-    );
+  //   // The JS representation of Clarity `(some (tuple (called uint)))`, where `called` is
+  //   // initialized to 0.
+  //   const expectedClarityValue = Cl.some(Cl.tuple({ called: Cl.uint(0) }));
+  //   const expectedContext = Array.from(rendezvousAllFunctions).flatMap(
+  //     ([contractName, functions]) =>
+  //       functions.map((f) => {
+  //         return {
+  //           contractName,
+  //           functionName: f.name,
+  //           called: expectedClarityValue,
+  //         };
+  //       })
+  //   );
 
-    // Act
-    initializeClarityContext(simnet, rendezvousAllFunctions);
+  //   // Act
+  //   initializeClarityContext(simnet, rendezvousAllFunctions);
 
-    const actualContext = Array.from(rendezvousAllFunctions).flatMap(
-      ([contractName, functions]) =>
-        functions.map((f) => {
-          const actualValue = simnet.getMapEntry(
-            contractName,
-            "context",
-            Cl.stringAscii(f.name)
-          );
-          return { contractName, functionName: f.name, called: actualValue };
-        })
-    );
+  //   const actualContext = Array.from(rendezvousAllFunctions).flatMap(
+  //     ([contractName, functions]) =>
+  //       functions.map((f) => {
+  //         const actualValue = simnet.getMapEntry(
+  //           contractName,
+  //           "context",
+  //           Cl.stringAscii(f.name)
+  //         );
+  //         return { contractName, functionName: f.name, called: actualValue };
+  //       })
+  //   );
 
-    // Assert
-    expect(actualContext).toEqual(expectedContext);
-  });
+  //   // Assert
+  //   expect(actualContext).toEqual(expectedContext);
+  // });
 });

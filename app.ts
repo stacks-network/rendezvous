@@ -25,6 +25,16 @@ import {
 import fc from "fast-check";
 import fs from "fs";
 import { reporter } from "./heatstroke";
+import {
+  clarityCliExecute,
+  clarityCliInitialize,
+  clarityCliLaunch,
+  storeBalancesFile,
+  generateClarityCliDataPath,
+  storeContract,
+  stringifyClarityArguments,
+  getDeployerFromBalancesFile,
+} from "./clarityCli";
 
 type BaseType = "int128" | "uint128" | "bool" | "principal";
 type ComplexType =
@@ -537,19 +547,23 @@ export const initializeLocalContext = (
   );
 
 export const initializeClarityContext = (
-  simnet: Simnet,
-  rendezvousSutFunctions: Map<string, ContractInterfaceFunction[]>
+  clarityCliDataPath: string,
+  rendezvousSutFunctions: Map<string, ContractInterfaceFunction[]>,
+  senderAddress: string
 ) =>
   rendezvousSutFunctions.forEach((fns, contractName) => {
     fns.forEach((fn) => {
-      const { result: initialize } = simnet.callPublicFn(
+      const executeUpdateContext = clarityCliExecute(
+        clarityCliDataPath,
         contractName,
         "update-context",
-        [Cl.stringAscii(fn.name), Cl.uint(0)],
-        simnet.deployer
+        senderAddress,
+        stringifyClarityArguments([Cl.stringAscii(fn.name), Cl.uint(0)])
       );
-      const jsonResult = cvToJSON(initialize);
-      if (!jsonResult.value || !jsonResult.success) {
+
+      const jsonResult = JSON.parse(executeUpdateContext);
+
+      if (!jsonResult.output.Bool || !jsonResult.success) {
         throw new Error(
           `Failed to initialize the context for function: ${fn.name}.`
         );
@@ -585,6 +599,27 @@ export const deployRendezvous = (
   }
 };
 
+export const launchRendezvous = (
+  rendezvousIdentifier: string,
+  rendezvousPath: string,
+  clarityCliDataPath: string
+) => {
+  try {
+    return clarityCliLaunch(
+      rendezvousIdentifier,
+      rendezvousPath,
+      clarityCliDataPath
+    );
+  } catch (e: any) {
+    const displayedRendezvousName = rendezvousIdentifier
+      .split(".")[1]
+      .replace("_rendezvous", "");
+    throw new Error(
+      `Something went wrong. Please double check the invariants contract: ${displayedRendezvousName}.invariant.clar:\n${e}`
+    );
+  }
+};
+
 export const getFunctionsListForContract = (
   functionsMap: Map<string, ContractInterfaceFunction[]>,
   contractName: string
@@ -616,6 +651,7 @@ export async function main() {
     process.argv.find((arg) => arg.toLowerCase().startsWith("--path="))?.split(
       "=",
     )[1] || undefined;
+      ?.split("=")[1] || undefined;
   if (path !== undefined) {
     console.log(`Using path: ${path}`);
   }
@@ -634,7 +670,16 @@ export async function main() {
 
   console.log(`Using manifest path: ${manifestPath}`);
 
+  // TODO: remove the simnet after completing the migration to clarity-cli.
   const simnet = await initSimnet(manifestPath);
+
+  const balancesFilePath = storeBalancesFile();
+
+  const clarityCliDeployer = getDeployerFromBalancesFile(balancesFilePath);
+
+  const clarityCliDataPath = generateClarityCliDataPath();
+
+  clarityCliInitialize(balancesFilePath, clarityCliDataPath);
 
   const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
 
@@ -651,6 +696,14 @@ export async function main() {
       contractData.rendezvousName,
       contractData.rendezvousSource
     );
+
+    const rendezvousPath = storeContract(contractData.rendezvousSource);
+    launchRendezvous(
+      contractData.fullContractName,
+      rendezvousPath,
+      clarityCliDataPath
+    );
+
     return contractData.fullContractName;
   });
 
@@ -675,7 +728,11 @@ export async function main() {
   const localContext = initializeLocalContext(rendezvousSutFunctions);
 
   // Initialize the Clarity context.
-  initializeClarityContext(simnet, rendezvousSutFunctions);
+  initializeClarityContext(
+    clarityCliDataPath,
+    rendezvousSutFunctions,
+    clarityCliDeployer
+  );
 
   fc.assert(
     fc.property(
@@ -774,26 +831,31 @@ export async function main() {
           .join(" ");
 
         const [sutCallerWallet, sutCallerAddress] = r.sutCaller;
-        const { result: functionCallResult } = simnet.callPublicFn(
+
+        const stringifiedArguments =
+          stringifyClarityArguments(selectedFunctionArgs);
+
+        const functionCallResult = clarityCliExecute(
+          clarityCliDataPath,
           r.contractName,
           r.selectedFunction.name,
-          selectedFunctionArgs,
-          sutCallerAddress
+          sutCallerAddress,
+          stringifiedArguments
         );
 
-        const functionCallResultJson = cvToJSON(functionCallResult);
+        const functionCallResultJson = JSON.parse(functionCallResult);
 
         if (functionCallResultJson.success) {
           localContext[r.contractName][r.selectedFunction.name]++;
-
-          simnet.callPublicFn(
+          clarityCliExecute(
+            clarityCliDataPath,
             r.contractName,
             "update-context",
-            [
+            clarityCliDeployer,
+            stringifyClarityArguments([
               Cl.stringAscii(r.selectedFunction.name),
               Cl.uint(localContext[r.contractName][r.selectedFunction.name]),
-            ],
-            simnet.deployer
+            ])
           );
 
           console.log(
@@ -829,14 +891,17 @@ export async function main() {
 
         const [invariantCallerWallet, invariantCallerAddress] =
           r.invariantCaller;
-        const { result: invariantCallResult } = simnet.callReadOnlyFn(
+
+        const invariantCallResult = clarityCliExecute(
+          clarityCliDataPath,
           r.contractName,
           r.selectedInvariant.name,
-          selectedInvariantArgs,
-          invariantCallerAddress
+          invariantCallerAddress,
+          stringifyClarityArguments(selectedInvariantArgs)
         );
 
-        const invariantCallResultJson = cvToJSON(invariantCallResult);
+        const invariantCallResultJson = JSON.parse(invariantCallResult);
+        const invariantCallResultValue = invariantCallResultJson.output.Bool;
 
         console.log(
           "🤺 ",
@@ -847,13 +912,13 @@ export async function main() {
         );
         console.log("\n");
 
-        if (!invariantCallResultJson.value) {
+        if (!invariantCallResultValue) {
           throw new Error(
             `Invariant failed for ${getContractNameFromRendezvousName(
               r.contractName
-            )} contract: "${r.selectedInvariant.name}" returned ${
-              invariantCallResultJson.value
-            }`
+            )} contract: "${
+              r.selectedInvariant.name
+            }" returned ${invariantCallResultValue}`
           );
         }
       }
