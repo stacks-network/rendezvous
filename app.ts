@@ -385,7 +385,10 @@ const filterSutFunctions = (
     Array.from(allFunctionsMap, ([contractName, functions]) => [
       contractName,
       functions.filter(
-        (f) => f.access === "public" && f.name !== "update-context"
+        (f) =>
+          f.access === "public" &&
+          f.name !== "update-context" &&
+          !f.name.startsWith("invariant-")
       ),
     ])
   );
@@ -397,7 +400,7 @@ const filterInvariantFunctions = (
     Array.from(allFunctionsMap, ([contractName, functions]) => [
       contractName,
       functions.filter(
-        (f) => f.access === "read_only" && f.name.startsWith("invariant-")
+        (f) => f.access === "public" && f.name.startsWith("invariant-")
       ),
     ])
   );
