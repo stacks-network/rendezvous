@@ -1,33 +1,22 @@
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
 import { ClarityValue, cvToString } from "@stacks/transactions";
 
 /**
  * Initializes the Clarity VM state database with the specified balances file.
  *
- * @param balancesFilePath
- * @param clarityCliDataPath
+ * @param balancesFilePath - The path to the balances file.
+ * @param clarityCliDataPath - The path to the Clarity VM state database.
+ * @param handler - The function to handle the command execution.
  * @returns The output of the `clarity-cli initialize` command.
  */
 export const clarityCliInitialize = (
   balancesFilePath: string,
-  clarityCliDataPath: string
+  clarityCliDataPath: string,
+  handler: (cmd: string) => string
 ) => {
   const cmd = `clarity-cli initialize --testnet ${balancesFilePath} ${clarityCliDataPath}`;
-  try {
-    const result = execSync(cmd, { stdio: "pipe" }).toString().trim();
-
-    // Remove the balances file after initialization. It is no longer needed.
-    fs.unlinkSync(balancesFilePath);
-    return result;
-  } catch (error: any) {
-    return (
-      error.stdout?.toString().trim() ||
-      error.stderr?.toString().trim() ||
-      error.message
-    );
-  }
+  return handler(cmd);
 };
 
 /**
@@ -36,28 +25,17 @@ export const clarityCliInitialize = (
  * @param contractIdentifier - The fully-qualified contract identifier.
  * @param contractPath - The path to the contract source file.
  * @param clarityCliDataPath - The path to the Clarity VM state database.
+ * @param handler - The function to handle the command execution.
  * @returns The output of the clarity-cli launch command.
  */
 export const clarityCliLaunch = (
   contractIdentifier: string,
   contractPath: string,
-  clarityCliDataPath: string
+  clarityCliDataPath: string,
+  handler: (cmd: string) => string
 ): string => {
   const cmd = `clarity-cli launch ${contractIdentifier} ${contractPath} ${clarityCliDataPath}`;
-  try {
-    const result = execSync(cmd, { stdio: "pipe" }).toString().trim();
-
-    // Remove the contract file after launch. It is no longer needed.
-    fs.unlinkSync(contractPath);
-
-    return result;
-  } catch (error: any) {
-    return (
-      error.stdout?.toString().trim() ||
-      error.stderr?.toString().trim() ||
-      error.message
-    );
-  }
+  return handler(cmd);
 };
 
 /**
@@ -68,6 +46,7 @@ export const clarityCliLaunch = (
  * @param functionName - The function to execute.
  * @param senderAddress - The address of the sender.
  * @param args - The stringified arguments to the function.
+ * @param handler - The function to handle the command execution.
  * @returns The output of the clarity-cli execute command.
  */
 export const clarityCliExecute = (
@@ -75,18 +54,11 @@ export const clarityCliExecute = (
   contractIdentifier: string,
   functionName: string,
   senderAddress: string,
-  args: string
+  args: string,
+  handler: (cmd: string) => string
 ): string => {
   const cmd = `clarity-cli execute ${clarityCliDataPath} ${contractIdentifier} ${functionName} ${senderAddress} ${args}`;
-  try {
-    return execSync(cmd, { stdio: "pipe" }).toString().trim();
-  } catch (error: any) {
-    return (
-      error.stdout?.toString().trim() ||
-      error.stderr?.toString().trim() ||
-      error.message
-    );
-  }
+  return handler(cmd);
 };
 
 /**

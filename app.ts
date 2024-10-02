@@ -10,7 +10,6 @@ import {
   bufferCV,
   Cl,
   ClarityValue,
-  cvToJSON,
   intCV,
   listCV,
   optionalCVOf,
@@ -35,6 +34,7 @@ import {
   stringifyClarityArguments,
   getDeployerFromBalancesFile,
 } from "./clarityCli";
+import { execSync } from "child_process";
 
 type BaseType = "int128" | "uint128" | "bool" | "principal";
 type ComplexType =
@@ -559,7 +559,18 @@ export const initializeClarityContext = (
         contractName,
         "update-context",
         senderAddress,
-        stringifyClarityArguments([Cl.stringAscii(fn.name), Cl.uint(0)])
+        stringifyClarityArguments([Cl.stringAscii(fn.name), Cl.uint(0)]),
+        (cmd) => {
+          try {
+            return execSync(cmd, { stdio: "pipe" }).toString().trim();
+          } catch (error: any) {
+            return (
+              error.stdout?.toString().trim() ||
+              error.stderr?.toString().trim() ||
+              error.message
+            );
+          }
+        }
       );
 
       const jsonResult = JSON.parse(executeUpdateContext);
@@ -609,7 +620,23 @@ export const launchRendezvous = (
     return clarityCliLaunch(
       rendezvousIdentifier,
       rendezvousPath,
-      clarityCliDataPath
+      clarityCliDataPath,
+      (cmd) => {
+        try {
+          const result = execSync(cmd, { stdio: "pipe" }).toString().trim();
+
+          // Remove the contract file after launch. It is no longer needed.
+          fs.unlinkSync(rendezvousPath);
+
+          return result;
+        } catch (error: any) {
+          return (
+            error.stdout?.toString().trim() ||
+            error.stderr?.toString().trim() ||
+            error.message
+          );
+        }
+      }
     );
   } catch (e: any) {
     const displayedRendezvousName = rendezvousIdentifier
@@ -681,7 +708,21 @@ export async function main() {
 
   const clarityCliDataPath = generateClarityCliDataPath();
 
-  clarityCliInitialize(balancesFilePath, clarityCliDataPath);
+  clarityCliInitialize(balancesFilePath, clarityCliDataPath, (cmd) => {
+    try {
+      const result = execSync(cmd, { stdio: "pipe" }).toString().trim();
+
+      // Remove the balances file after initialization. It is no longer needed.
+      fs.unlinkSync(balancesFilePath);
+      return result;
+    } catch (error: any) {
+      return (
+        error.stdout?.toString().trim() ||
+        error.stderr?.toString().trim() ||
+        error.message
+      );
+    }
+  });
 
   const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
 
@@ -842,7 +883,18 @@ export async function main() {
           r.contractName,
           r.selectedFunction.name,
           sutCallerAddress,
-          stringifiedArguments
+          stringifiedArguments,
+          (cmd) => {
+            try {
+              return execSync(cmd, { stdio: "pipe" }).toString().trim();
+            } catch (error: any) {
+              return (
+                error.stdout?.toString().trim() ||
+                error.stderr?.toString().trim() ||
+                error.message
+              );
+            }
+          }
         );
 
         const functionCallResultJson = JSON.parse(functionCallResult);
@@ -859,7 +911,18 @@ export async function main() {
             stringifyClarityArguments([
               Cl.stringAscii(r.selectedFunction.name),
               Cl.uint(localContext[r.contractName][r.selectedFunction.name]),
-            ])
+            ]),
+            (cmd) => {
+              try {
+                return execSync(cmd, { stdio: "pipe" }).toString().trim();
+              } catch (error: any) {
+                return (
+                  error.stdout?.toString().trim() ||
+                  error.stderr?.toString().trim() ||
+                  error.message
+                );
+              }
+            }
           );
 
           console.log(
@@ -901,7 +964,18 @@ export async function main() {
           r.contractName,
           r.selectedInvariant.name,
           invariantCallerAddress,
-          stringifyClarityArguments(selectedInvariantArgs)
+          stringifyClarityArguments(selectedInvariantArgs),
+          (cmd) => {
+            try {
+              return execSync(cmd, { stdio: "pipe" }).toString().trim();
+            } catch (error: any) {
+              return (
+                error.stdout?.toString().trim() ||
+                error.stderr?.toString().trim() ||
+                error.message
+              );
+            }
+          }
         );
 
         const invariantCallResultJson = JSON.parse(invariantCallResult);
