@@ -338,12 +338,12 @@ const argToCV = (arg: any, type: ParameterType): ClarityValue => {
  */
 export const getDeployerContractsInterfaces = (
   contractsInterfaces: Map<string, ContractInterface>,
-  deployer: string,
+  deployer: string
 ): Map<string, ContractInterface> =>
   new Map(
     Array.from(contractsInterfaces).filter(
-      ([key]) => key.split(".")[0] === deployer,
-    ),
+      ([key]) => key.split(".")[0] === deployer
+    )
   );
 
 /**
@@ -487,16 +487,16 @@ export const buildRendezvousData = (
   sutContractSource: string,
   deployer: string,
   contractName: string,
-  contractsPath: string,
+  contractsPath: string
 ) => {
   try {
     const invariantContractSource = getInvariantContractSource(
       contractsPath,
-      contractName,
+      contractName
     );
     const rendezvousSource = scheduleRendezvous(
       sutContractSource!,
-      invariantContractSource,
+      invariantContractSource
     );
 
     const rendezvousName = deriveRendezvousName(contractName);
@@ -616,13 +616,13 @@ export const getFunctionsListForContract = (
  */
 const generateSafeTempFilePath = (
   prefix: string,
-  extension: string,
+  extension: string
 ): string => {
   const timestamp = new Date().toISOString().replace(/:/g, "-");
   return path.join(
     __dirname,
     "tmp",
-    `${timestamp}-${process.pid}${prefix}.${extension}`,
+    `${timestamp}-${process.pid}${prefix}.${extension}`
   );
 };
 
@@ -639,19 +639,21 @@ export async function main() {
     console.log(arg);
   });
 
-  const seed = parseInt(
-    process.argv
-      .find((arg) => arg.toLowerCase().startsWith("--seed="))
-      ?.split("=")[1]!,
-    10,
-  ) || undefined;
+  const seed =
+    parseInt(
+      process.argv
+        .find((arg) => arg.toLowerCase().startsWith("--seed="))
+        ?.split("=")[1]!,
+      10
+    ) || undefined;
   if (seed !== undefined) {
     console.log(`Using seed: ${seed}`);
   }
 
-  const replayPath = process.argv
-    .find((arg) => arg.toLowerCase().startsWith("--replayPath="))
-    ?.split("=")[1] || undefined;
+  const replayPath =
+    process.argv
+      .find((arg) => arg.toLowerCase().startsWith("--replayPath="))
+      ?.split("=")[1] || undefined;
   if (replayPath !== undefined) {
     console.log(`Using path: ${replayPath}`);
   }
@@ -674,8 +676,9 @@ export async function main() {
   ]);
   fs.writeFileSync(balancesPath, balancesJson);
 
-  const clarityCliDeployer =
-    JSON.parse(fs.readFileSync(balancesPath, "utf8"))[0].principal;
+  const clarityCliDeployer = JSON.parse(
+    fs.readFileSync(balancesPath, "utf8")
+  )[0].principal;
   const clarityCliDataPath = generateSafeTempFilePath("-clarity-cli-vm", "db");
 
   clarityCliInitialize(balancesPath, clarityCliDataPath, (cmd) => {
@@ -704,7 +707,7 @@ export async function main() {
   const deployer = simnet.deployer;
   const sutContractsInterfaces = getDeployerContractsInterfaces(
     contractsInterfaces,
-    deployer,
+    deployer
   );
 
   // Get all qualified contract names ([deployer].[contract]),
@@ -719,7 +722,7 @@ export async function main() {
       sutContractSource!,
       deployer,
       contractName,
-      contractsPath,
+      contractsPath
     );
   });
 
@@ -729,13 +732,14 @@ export async function main() {
         contractData.rendezvousName,
         contractData.rendezvousSource,
         { clarityVersion: 2 },
-        simnet.deployer,
+        simnet.deployer
       );
     } catch (e: any) {
       throw new Error(
-        `Something went wrong. Please double check the invariants contract: ${
-          contractData.rendezvousName.replace("_rendezvous", "")
-        }.invariant.clar:\n${e}`,
+        `Something went wrong. Please double check the invariants contract: ${contractData.rendezvousName.replace(
+          "_rendezvous",
+          ""
+        )}.invariant.clar:\n${e}`
       );
     }
 
@@ -754,8 +758,8 @@ export async function main() {
   const rendezvousInterfaces = filterRendezvousInterfaces(
     getDeployerContractsInterfaces(
       simnet.getContractsInterfaces(),
-      simnet.deployer,
-    ),
+      simnet.deployer
+    )
   );
 
   const rendezvousAllFunctions =
@@ -1005,7 +1009,7 @@ export async function main() {
         }
       }
     ),
-    { verbose: true, reporter: reporter, seed: seed, path: replayPath },
+    { verbose: true, reporter: reporter, seed: seed, path: replayPath }
   );
 }
 
