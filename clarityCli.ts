@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import { ClarityValue, cvToString } from "@stacks/transactions";
 
 /**
@@ -62,45 +60,6 @@ export const clarityCliExecute = (
 };
 
 /**
- * Generates a unique temporary file path for the Clarity VM state database.
- *
- * @returns The unique clarity-cli data path.
- */
-export const generateClarityCliDataPath = () => {
-  const clarityCliDataPath = generateSafeTempFilePath("-clarity-cli-vm", "db");
-  return clarityCliDataPath;
-};
-
-/**
- * Utility function to store a balances file to a unique temporary file.
- *
- * @returns The path to the stored balances file.
- */
-export const storeBalancesFile = () => {
-  const balancesPath = generateSafeTempFilePath("-clarity-cli-ustx", "json");
-  const balancesJson = JSON.stringify([
-    {
-      principal: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
-      amount: 100000000000000,
-    },
-  ]);
-  fs.writeFileSync(balancesPath, balancesJson);
-  return balancesPath;
-};
-
-/**
- * Utility function to store a contract to a unique temporary file.
- *
- * @param contractCode - The contract code to store.
- * @returns The path to the stored contract file.
- */
-export const storeContract = (contractCode: string) => {
-  const contractPath = generateSafeTempFilePath("-clarity-cli", "clar");
-  fs.writeFileSync(contractPath, contractCode);
-  return contractPath;
-};
-
-/**
  * Utility function to stringify Clarity arguments for `clarity-cli execute`.
  *
  * @param clarityArguments - The Clarity arguments.
@@ -115,32 +74,3 @@ export const stringifyClarityArguments = (clarityArguments: ClarityValue[]) =>
         : `${acc} "${cvToString(arg).replace(/(["\\$`])/g, "\\$1")}"`,
     ""
   );
-
-/**
- * Generates a unique temp file path based on the timestamp and process ID.
- *
- * @param prefix - Prefix to append to the generated filename.
- * @param extension - File extension of the temporary file.
- * @returns A unique file path.
- */
-const generateSafeTempFilePath = (
-  prefix: string,
-  extension: string
-): string => {
-  const timestamp = new Date().toISOString().replace(/:/g, "-");
-  return path.join(
-    __dirname,
-    "tmp",
-    `${timestamp}-${process.pid}${prefix}.${extension}`
-  );
-};
-
-/**
- * Utility function to get the deployer address from the balances file.
- *
- * @param balancesFilePath - The path to the balances file.
- * @returns The deployer address.
- */
-export const getDeployerFromBalancesFile = (balancesFilePath: string) => {
-  return JSON.parse(fs.readFileSync(balancesFilePath, "utf8"))[0].principal;
-};

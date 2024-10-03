@@ -1,6 +1,4 @@
-// Single file (app.ts) is flexible, keeps git history clean. Better early on.
-// Multiple files improve organization, readability, and collaboration as the project grows.
-import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
+import { initSimnet } from "@hirosystems/clarinet-sdk";
 import {
   ContractInterface,
   ContractInterfaceFunction,
@@ -28,12 +26,9 @@ import {
   clarityCliExecute,
   clarityCliInitialize,
   clarityCliLaunch,
-  storeBalancesFile,
-  generateClarityCliDataPath,
-  storeContract,
   stringifyClarityArguments,
-  getDeployerFromBalancesFile,
 } from "./clarityCli";
+import path from "path";
 import { execSync } from "child_process";
 
 type BaseType = "int128" | "uint128" | "bool" | "principal";
@@ -336,18 +331,19 @@ const argToCV = (arg: any, type: ParameterType): ClarityValue => {
 };
 
 /**
- * Get the interfaces of contracts deployed by the specified deployer from the simnet.
- * @param simnet The simnet instance.
- * @param deployer The deployer address.
- * @returns The contracts interfaces.
+ * Get the interfaces of contracts deployed by the specified deployer.
+ * @param contractsInterfaces A map of contract names to their interfaces.
+ * @param deployer The deployer's address.
+ * @returns A map of interfaces for the deployer's contracts.
  */
-export const getSimnetDeployerContractsInterfaces = (
-  simnet: Simnet
+export const getDeployerContractsInterfaces = (
+  contractsInterfaces: Map<string, ContractInterface>,
+  deployer: string,
 ): Map<string, ContractInterface> =>
   new Map(
-    Array.from(simnet.getContractsInterfaces()).filter(
-      ([key]) => key.split(".")[0] === simnet.deployer
-    )
+    Array.from(contractsInterfaces).filter(
+      ([key]) => key.split(".")[0] === deployer,
+    ),
   );
 
 /**
@@ -416,21 +412,6 @@ const filterInvariantFunctions = (
   );
 
 /**
- * Get contract source code from the simnet.
- * @param simnet The simnet instance.
- * @param sutContractName The contract name.
- * @returns The contract source code.
- */
-export const getSimnetContractSource = (
-  simnet: Simnet,
-  sutContractName: string
-) => {
-  if (simnet.getContractSource(sutContractName) === undefined)
-    throw new Error(`Contract ${sutContractName} not found in the network.`);
-  return simnet.getContractSource(sutContractName);
-};
-
-/**
  * Get the invariant contract source code.
  * @param contractsPath The contracts path.
  * @param sutContractName The corresponding contract name.
@@ -496,25 +477,26 @@ export function scheduleRendezvous(
 
 /**
  * Build the Rendezvous data.
- * @param simnet The simnet instance.
+ * @param sutContractSource The SUT contract source.
+ * @param deployer The deployer's address.
  * @param contractName The contract name.
  * @param contractsPath The contracts path.
  * @returns The Rendezvous data.
  */
 export const buildRendezvousData = (
-  simnet: Simnet,
+  sutContractSource: string,
+  deployer: string,
   contractName: string,
-  contractsPath: string
+  contractsPath: string,
 ) => {
   try {
-    const sutContractSource = getSimnetContractSource(simnet, contractName);
     const invariantContractSource = getInvariantContractSource(
       contractsPath,
-      contractName
+      contractName,
     );
     const rendezvousSource = scheduleRendezvous(
       sutContractSource!,
-      invariantContractSource
+      invariantContractSource,
     );
 
     const rendezvousName = deriveRendezvousName(contractName);
@@ -522,7 +504,7 @@ export const buildRendezvousData = (
     return {
       rendezvousName,
       rendezvousSource,
-      fullContractName: `${simnet.deployer}.${rendezvousName}`,
+      fullContractName: `${deployer}.${rendezvousName}`,
     };
   } catch (e: any) {
     throw new Error(`Error processing contract ${contractName}: ${e.message}`);
@@ -583,34 +565,6 @@ export const initializeClarityContext = (
     });
   });
 
-/**
- * Deploy the Rendezvous to the simnet.
- * @param simnet The simnet instance.
- * @param rendezvousName The Rendezvous name.
- * @param rendezvousSource The Rendezvous source code.
- */
-export const deployRendezvous = (
-  simnet: Simnet,
-  rendezvousName: string,
-  rendezvousSource: string
-) => {
-  try {
-    simnet.deployContract(
-      rendezvousName,
-      rendezvousSource,
-      { clarityVersion: 2 },
-      simnet.deployer
-    );
-  } catch (e: any) {
-    throw new Error(
-      `Something went wrong. Please double check the invariants contract: ${rendezvousName.replace(
-        "_rendezvous",
-        ""
-      )}.invariant.clar:\n${e}`
-    );
-  }
-};
-
 export const launchRendezvous = (
   rendezvousIdentifier: string,
   rendezvousPath: string,
@@ -653,6 +607,25 @@ export const getFunctionsListForContract = (
   contractName: string
 ) => functionsMap.get(contractName) || [];
 
+/**
+ * Generates a unique temp file path based on the timestamp and process ID.
+ *
+ * @param prefix - Prefix to append to the generated filename.
+ * @param extension - File extension of the temporary file.
+ * @returns A unique file path.
+ */
+const generateSafeTempFilePath = (
+  prefix: string,
+  extension: string,
+): string => {
+  const timestamp = new Date().toISOString().replace(/:/g, "-");
+  return path.join(
+    __dirname,
+    "tmp",
+    `${timestamp}-${process.pid}${prefix}.${extension}`,
+  );
+};
+
 export async function main() {
   // Get the arguments from the command-line.
   const args = process.argv;
@@ -666,27 +639,25 @@ export async function main() {
     console.log(arg);
   });
 
-  const seed =
-    parseInt(
-      process.argv
-        .find((arg) => arg.toLowerCase().startsWith("--seed="))
-        ?.split("=")[1]!,
-      10
-    ) || undefined;
+  const seed = parseInt(
+    process.argv
+      .find((arg) => arg.toLowerCase().startsWith("--seed="))
+      ?.split("=")[1]!,
+    10,
+  ) || undefined;
   if (seed !== undefined) {
     console.log(`Using seed: ${seed}`);
   }
 
-  const path =
-    process.argv
-      .find((arg) => arg.toLowerCase().startsWith("--path="))
-      ?.split("=")[1] || undefined;
-  if (path !== undefined) {
-    console.log(`Using path: ${path}`);
+  const replayPath = process.argv
+    .find((arg) => arg.toLowerCase().startsWith("--replayPath="))
+    ?.split("=")[1] || undefined;
+  if (replayPath !== undefined) {
+    console.log(`Using path: ${replayPath}`);
   }
 
   // FIXME: Decide if we want to pass only the directory or the full path.
-  const manifestDir = args[2];
+  const manifestDir = args[2] || "./example";
 
   if (!manifestDir) {
     throw new Error(
@@ -694,26 +665,25 @@ export async function main() {
     );
   }
 
-  const manifestPath = manifestDir + "/Clarinet.toml";
-  const contractsPath = manifestDir + "/contracts";
+  const balancesPath = generateSafeTempFilePath("-clarity-cli-ustx", "json");
+  const balancesJson = JSON.stringify([
+    {
+      principal: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
+      amount: 100000000000000,
+    },
+  ]);
+  fs.writeFileSync(balancesPath, balancesJson);
 
-  console.log(`Using manifest path: ${manifestPath}\n`);
+  const clarityCliDeployer =
+    JSON.parse(fs.readFileSync(balancesPath, "utf8"))[0].principal;
+  const clarityCliDataPath = generateSafeTempFilePath("-clarity-cli-vm", "db");
 
-  // TODO: remove the simnet after completing the migration to clarity-cli.
-  const simnet = await initSimnet(manifestPath);
-
-  const balancesFilePath = storeBalancesFile();
-
-  const clarityCliDeployer = getDeployerFromBalancesFile(balancesFilePath);
-
-  const clarityCliDataPath = generateClarityCliDataPath();
-
-  clarityCliInitialize(balancesFilePath, clarityCliDataPath, (cmd) => {
+  clarityCliInitialize(balancesPath, clarityCliDataPath, (cmd) => {
     try {
       const result = execSync(cmd, { stdio: "pipe" }).toString().trim();
 
       // Remove the balances file after initialization. It is no longer needed.
-      fs.unlinkSync(balancesFilePath);
+      fs.unlinkSync(balancesPath);
       return result;
     } catch (error: any) {
       return (
@@ -724,23 +694,54 @@ export async function main() {
     }
   });
 
-  const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+  // TODO: This is a temporary solution until we fully utilize `clarity-cli`.
+  // NOTE: The `simnet` instance SHOULD NOT be used outside of this function.
+  const manifestPath = path.join(manifestDir, "Clarinet.toml");
+  const simnet = await initSimnet(manifestPath);
+  console.info(`Using manifest path: ${manifestPath}`);
 
-  // Get all the contracts from the interfaces.
-  const sutContracts = Array.from(sutContractsInterfaces.keys());
-
-  const rendezvousData = sutContracts.map((contractName) =>
-    buildRendezvousData(simnet, contractName, contractsPath)
+  const contractsInterfaces = simnet.getContractsInterfaces();
+  const deployer = simnet.deployer;
+  const sutContractsInterfaces = getDeployerContractsInterfaces(
+    contractsInterfaces,
+    deployer,
   );
 
-  const rendezvousList = rendezvousData.map((contractData) => {
-    deployRendezvous(
-      simnet,
-      contractData.rendezvousName,
-      contractData.rendezvousSource
-    );
+  // Get all qualified contract names ([deployer].[contract]),
+  // e.g. 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.counter'.
+  const sutContracts = Array.from(sutContractsInterfaces.keys());
 
-    const rendezvousPath = storeContract(contractData.rendezvousSource);
+  const rendezvousData = sutContracts.map((contractName) => {
+    const sutContractSource = simnet.getContractSource(contractName);
+    const deployer = simnet.deployer;
+    const contractsPath = manifestDir + "/contracts";
+    return buildRendezvousData(
+      sutContractSource!,
+      deployer,
+      contractName,
+      contractsPath,
+    );
+  });
+
+  const rendezvousList = rendezvousData.map((contractData) => {
+    try {
+      simnet.deployContract(
+        contractData.rendezvousName,
+        contractData.rendezvousSource,
+        { clarityVersion: 2 },
+        simnet.deployer,
+      );
+    } catch (e: any) {
+      throw new Error(
+        `Something went wrong. Please double check the invariants contract: ${
+          contractData.rendezvousName.replace("_rendezvous", "")
+        }.invariant.clar:\n${e}`,
+      );
+    }
+
+    const rendezvousPath = generateSafeTempFilePath("-clarity-cli", "clar");
+    fs.writeFileSync(rendezvousPath, contractData.rendezvousSource);
+
     launchRendezvous(
       contractData.fullContractName,
       rendezvousPath,
@@ -751,7 +752,10 @@ export async function main() {
   });
 
   const rendezvousInterfaces = filterRendezvousInterfaces(
-    getSimnetDeployerContractsInterfaces(simnet)
+    getDeployerContractsInterfaces(
+      simnet.getContractsInterfaces(),
+      simnet.deployer,
+    ),
   );
 
   const rendezvousAllFunctions =
@@ -1001,7 +1005,7 @@ export async function main() {
         }
       }
     ),
-    { verbose: true, reporter: reporter, seed: seed, path: path }
+    { verbose: true, reporter: reporter, seed: seed, path: replayPath },
   );
 }
 
