@@ -1,5 +1,6 @@
 node_modules
 *.js
+*.js.map
 deployments
 tmp/*
 !tmp/KEEPME

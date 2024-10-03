@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "tsc: build - tsconfig.json",
+      "command": "/bin/bash",
+      "args": [
+        "-c",
+        "source ~/.nvm/nvm.sh && nvm use && ./node_modules/.bin/tsc -p ${workspaceFolder}/tsconfig.json"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
