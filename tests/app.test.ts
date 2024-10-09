@@ -30,8 +30,8 @@ describe("Command-line arguments handling", () => {
     contract-name - The name of the contract to be fuzzed.
   
   Options:
-    --seed - The seed to use for the property-based testing.
-    --path - The path to the contract source code.
+    --seed - The seed to use for the replay functionality.
+    --path - The path to use for the replay functionality.
     --help - Show the help message.
   `;
   const noManifestMessage = `\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.`;

@@ -596,8 +596,8 @@ const printHelp = () => {
     contract-name - The name of the contract to be fuzzed.
   
   Options:
-    --seed - The seed to use for the property-based testing.
-    --path - The path to the contract source code.
+    --seed - The seed to use for the replay functionality.
+    --path - The path to use for the replay functionality.
     --help - Show the help message.
   `;
   console.log(helpMessage);
