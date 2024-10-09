@@ -37,40 +37,20 @@ describe("Command-line arguments handling", () => {
   const noManifestMessage = `\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.`;
   const noContractNameMessage = `\nNo target contract name provided. Please provide the contract name to be fuzzed.`;
 
-  it("returns undefined when manifest path is not provided", async () => {
-    process.argv = ["node", "app.js"];
-    // Suppress console.log output
-    jest.spyOn(console, "log").mockImplementation(() => {});
+  it.each([
+    ["manifest path", ["node", "app.js"]],
+    ["target contract name", ["node", "app.js", "./path/to/clarinet/project"]],
+    ["--help flag", ["node", "app.js", "--help"]],
+  ])(
+    "returns undefined when %s is not provided",
+    async (_testCase: string, argv: string[]) => {
+      process.argv = argv;
 
-    expect(await main()).toBeUndefined();
+      expect(await main()).toBeUndefined();
 
-    process.argv = originalArgv;
-    jest.restoreAllMocks();
-  });
-
-  it("returns undefined when target contract name is not provided", async () => {
-    // Mock process.argv to simulate missing contract name
-    process.argv = ["node", "app.js", "./path/to/clarinet/project"];
-    // Suppress console.log output
-    jest.spyOn(console, "log").mockImplementation(() => {});
-
-    expect(await main()).toBeUndefined();
-
-    process.argv = originalArgv;
-    jest.restoreAllMocks();
-  });
-
-  it("returns undefined when --help is provided", async () => {
-    // Mock process.argv to simulate --help flag
-    process.argv = ["node", "app.js", "--help"];
-    // Suppress console.log output
-    jest.spyOn(console, "log").mockImplementation(() => {});
-
-    expect(await main()).toBeUndefined();
-
-    process.argv = originalArgv;
-    jest.restoreAllMocks();
-  });
+      process.argv = originalArgv;
+    }
+  );
 
   it("logs the help message at the end when --help is specified", async () => {
     process.argv = ["node", "app.js", "--help"];
