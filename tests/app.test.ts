@@ -93,53 +93,38 @@ describe("Command-line arguments handling", () => {
     jest.restoreAllMocks();
   });
 
-  it("logs the no manifest and the help messages when the manifest path is not provided", async () => {
-    process.argv = ["node", "app.js"];
-    const consoleLogs: string[] = [];
-    jest.spyOn(console, "log").mockImplementation((message: string) => {
-      consoleLogs.push(message);
-    });
+  it.each([
+    ["manifest path", ["node", "app.js"], noManifestMessage],
+    [
+      "target contract name",
+      ["node", "app.js", "./path/to/clarinet/project"],
+      noContractNameMessage,
+    ],
+  ])(
+    "logs the info and the help message when the %s is not provided",
+    async (_testCase: string, argv: string[], expected: string) => {
+      process.argv = argv;
+      const consoleLogs: string[] = [];
+      jest.spyOn(console, "log").mockImplementation((message: string) => {
+        consoleLogs.push(message);
+      });
 
-    // Act
-    await main();
+      // Act
+      await main();
 
-    const actualLastLog = consoleLogs[consoleLogs.length - 1];
-    const actualSecondToLastLog = consoleLogs[consoleLogs.length - 2];
+      const actualLastLog = consoleLogs[consoleLogs.length - 1];
+      const actualSecondToLastLog = consoleLogs[consoleLogs.length - 2];
 
-    // Assert
-    const expectedLastLog = helpMessage;
-    const expectedSecondToLastLog = noManifestMessage;
+      // Assert
+      const expectedLastLog = helpMessage;
 
-    expect(actualLastLog).toBe(expectedLastLog);
-    expect(actualSecondToLastLog).toBe(expectedSecondToLastLog);
+      expect(actualLastLog).toBe(expectedLastLog);
+      expect(actualSecondToLastLog).toBe(expected);
 
-    process.argv = originalArgv;
-    jest.restoreAllMocks();
-  });
-
-  it("logs the no contract name and the help messages when the target contract name is not provided", async () => {
-    process.argv = ["node", "app.js", "./path/to/clarinet/project"];
-    const consoleLogs: string[] = [];
-    jest.spyOn(console, "log").mockImplementation((message: string) => {
-      consoleLogs.push(message);
-    });
-
-    // Act
-    await main();
-
-    const actualLastLog = consoleLogs[consoleLogs.length - 1];
-    const actualSecondToLastLog = consoleLogs[consoleLogs.length - 2];
-
-    // Assert
-    const expectedLastLog = helpMessage;
-    const expectedSecondToLastLog = noContractNameMessage;
-
-    expect(actualLastLog).toBe(expectedLastLog);
-    expect(actualSecondToLastLog).toBe(expectedSecondToLastLog);
-
-    process.argv = originalArgv;
-    jest.restoreAllMocks();
-  });
+      process.argv = originalArgv;
+      jest.restoreAllMocks();
+    }
+  );
 });
 
 describe("Successfully schedules rendez-vous", () => {
