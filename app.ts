@@ -587,6 +587,22 @@ export const getFunctionsListForContract = (
   contractName: string
 ) => functionsMap.get(contractName) || [];
 
+const printHelp = () => {
+  const helpMessage = `
+  Usage: ./rv <path-to-clarinet-project> <contract-name> [--seed=<seed>] [--path=<path>]
+  
+  Positional arguments:
+    path-to-clarinet-project - The path to the Clarinet project.
+    contract-name - The name of the contract to be fuzzed.
+  
+  Options:
+    --seed - The seed to use for the property-based testing.
+    --path - The path to the contract source code.
+    --help - Show the help message.
+  `;
+  console.log(helpMessage);
+};
+
 export async function main() {
   // Get the arguments from the command-line.
   const args = process.argv;
@@ -600,13 +616,20 @@ export async function main() {
     console.log(arg);
   });
 
+  if (args.includes("--help")) {
+    printHelp();
+    return;
+  }
+
   // FIXME: Verify that seed and path command-line arguments index is greater
   // than 2. Othewise they will interfere with the manifest directory and the
   // contract name.
   const seed =
     parseInt(
       process.argv
-        .find((arg) => arg.toLowerCase().startsWith("--seed="))
+        .find(
+          (arg, index) => index >= 4 && arg.toLowerCase().startsWith("--seed=")
+        )
         ?.split("=")[1]!,
       10
     ) || undefined;
@@ -616,7 +639,9 @@ export async function main() {
 
   const path =
     process.argv
-      .find((arg) => arg.toLowerCase().startsWith("--path="))
+      .find(
+        (arg, index) => index >= 4 && arg.toLowerCase().startsWith("--path=")
+      )
       ?.split("=")[1] || undefined;
   if (path !== undefined) {
     console.log(`Using path: ${path}`);
@@ -625,20 +650,24 @@ export async function main() {
   // FIXME: Decide if we want to pass only the directory or the full path.
   const manifestDir = args[2];
 
-  if (!manifestDir) {
-    throw new Error(
-      "No path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
+  if (!manifestDir || manifestDir.startsWith("--")) {
+    console.log(
+      "\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
     );
+    printHelp();
+    return;
   }
   const manifestPath = manifestDir + "/Clarinet.toml";
   console.log(`Using manifest path: ${manifestPath}`);
 
   const sutContractName = args[3];
 
-  if (!sutContractName) {
-    throw new Error(
-      "No target contract name provided. Please provide the contract name to be fuzzed."
+  if (!sutContractName || sutContractName.startsWith("--")) {
+    console.log(
+      "\nNo target contract name provided. Please provide the contract name to be fuzzed."
     );
+    printHelp();
+    return;
   }
 
   console.log(`Target contract: ${sutContractName}`);
