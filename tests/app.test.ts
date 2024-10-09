@@ -75,15 +75,15 @@ describe("Command-line arguments handling", () => {
   it("logs the help message at the end when --help is specified", async () => {
     process.argv = ["node", "app.js", "--help"];
 
-    const consoleLogMessages: string[] = [];
+    const consoleLogs: string[] = [];
     jest.spyOn(console, "log").mockImplementation((message: string) => {
-      consoleLogMessages.push(message);
+      consoleLogs.push(message);
     });
 
     // Act
     await main();
 
-    const actual = consoleLogMessages[consoleLogMessages.length - 1];
+    const actual = consoleLogs[consoleLogs.length - 1];
 
     // Assert
     const expected = helpMessage;
@@ -95,17 +95,16 @@ describe("Command-line arguments handling", () => {
 
   it("logs the no manifest and the help messages when the manifest path is not provided", async () => {
     process.argv = ["node", "app.js"];
-    const consoleLogMessages: string[] = [];
+    const consoleLogs: string[] = [];
     jest.spyOn(console, "log").mockImplementation((message: string) => {
-      consoleLogMessages.push(message);
+      consoleLogs.push(message);
     });
 
     // Act
     await main();
 
-    const actualLastLog = consoleLogMessages[consoleLogMessages.length - 1];
-    const actualSecondToLastLog =
-      consoleLogMessages[consoleLogMessages.length - 2];
+    const actualLastLog = consoleLogs[consoleLogs.length - 1];
+    const actualSecondToLastLog = consoleLogs[consoleLogs.length - 2];
 
     // Assert
     const expectedLastLog = helpMessage;
@@ -120,17 +119,16 @@ describe("Command-line arguments handling", () => {
 
   it("logs the no contract name and the help messages when the target contract name is not provided", async () => {
     process.argv = ["node", "app.js", "./path/to/clarinet/project"];
-    const consoleLogMessages: string[] = [];
+    const consoleLogs: string[] = [];
     jest.spyOn(console, "log").mockImplementation((message: string) => {
-      consoleLogMessages.push(message);
+      consoleLogs.push(message);
     });
 
     // Act
     await main();
 
-    const actualLastLog = consoleLogMessages[consoleLogMessages.length - 1];
-    const actualSecondToLastLog =
-      consoleLogMessages[consoleLogMessages.length - 2];
+    const actualLastLog = consoleLogs[consoleLogs.length - 1];
+    const actualSecondToLastLog = consoleLogs[consoleLogs.length - 2];
 
     // Assert
     const expectedLastLog = helpMessage;
