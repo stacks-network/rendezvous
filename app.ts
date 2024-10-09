@@ -621,9 +621,6 @@ export async function main() {
     return;
   }
 
-  // FIXME: Verify that seed and path command-line arguments index is greater
-  // than 2. Othewise they will interfere with the manifest directory and the
-  // contract name.
   const seed =
     parseInt(
       process.argv
