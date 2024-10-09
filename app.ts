@@ -600,22 +600,24 @@ export async function main() {
     console.log(arg);
   });
 
-  const seed = parseInt(
-    process.argv.find((arg) => arg.toLowerCase().startsWith("--seed="))
-      ?.split("=")[1]!,
-    10,
-  ) || undefined;
   // FIXME: Verify that seed and path command-line arguments index is greater
   // than 2. Othewise they will interfere with the manifest directory and the
   // contract name.
+  const seed =
+    parseInt(
+      process.argv
+        .find((arg) => arg.toLowerCase().startsWith("--seed="))
+        ?.split("=")[1]!,
+      10
+    ) || undefined;
   if (seed !== undefined) {
     console.log(`Using seed: ${seed}`);
   }
 
   const path =
-    process.argv.find((arg) => arg.toLowerCase().startsWith("--path="))?.split(
-      "=",
-    )[1] || undefined;
+    process.argv
+      .find((arg) => arg.toLowerCase().startsWith("--path="))
+      ?.split("=")[1] || undefined;
   if (path !== undefined) {
     console.log(`Using path: ${path}`);
   }
@@ -881,7 +883,7 @@ export async function main() {
         }
       }
     ),
-    { verbose: true, reporter: reporter, seed: seed, path: path },
+    { verbose: true, reporter: reporter, seed: seed, path: path }
   );
 }
 
