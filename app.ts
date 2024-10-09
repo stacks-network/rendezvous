@@ -605,6 +605,9 @@ export async function main() {
       ?.split("=")[1]!,
     10,
   ) || undefined;
+  // FIXME: Verify that seed and path command-line arguments index is greater
+  // than 2. Othewise they will interfere with the manifest directory and the
+  // contract name.
   if (seed !== undefined) {
     console.log(`Using seed: ${seed}`);
   }
@@ -625,18 +628,41 @@ export async function main() {
       "No path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
     );
   }
-
   const manifestPath = manifestDir + "/Clarinet.toml";
-  const contractsPath = manifestDir + "/contracts";
-
   console.log(`Using manifest path: ${manifestPath}`);
+
+  const sutContractName = args[3];
+
+  if (!sutContractName) {
+    throw new Error(
+      "No target contract name provided. Please provide the contract name to be fuzzed."
+    );
+  }
+
+  console.log(`Target contract: ${sutContractName}`);
 
   const simnet = await initSimnet(manifestPath);
 
-  const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+  const simnetContractsInterfaces =
+    getSimnetDeployerContractsInterfaces(simnet);
 
   // Get all the contracts from the interfaces.
-  const sutContracts = Array.from(sutContractsInterfaces.keys());
+  const simnetContracts = Array.from(simnetContractsInterfaces.keys());
+
+  const sutContractId = `${simnet.deployer}.${sutContractName}`;
+
+  const sutContracts = simnetContracts.filter(
+    (contract) => contract === sutContractId
+  );
+
+  // Check if the SUT contract is in the network.
+  if (sutContracts.length === 0) {
+    throw new Error(
+      `The "${sutContractName}" contract was not found in the network.`
+    );
+  }
+
+  const contractsPath = manifestDir + "/contracts";
 
   const rendezvousData = sutContracts.map((contractName) =>
     buildRendezvousData(simnet, contractName, contractsPath)
