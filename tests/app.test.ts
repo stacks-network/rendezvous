@@ -20,11 +20,127 @@ import fs from "fs";
 import path from "path";
 import { Cl } from "@stacks/transactions";
 
-describe("Manifest handling", () => {
-  it("throws error when manifest path is not provided", () => {
-    expect(async () => await main()).rejects.toThrow(
-      "No path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
-    );
+describe("Command-line arguments handling", () => {
+  const originalArgv = process.argv;
+  const helpMessage = `
+  Usage: ./rv <path-to-clarinet-project> <contract-name> [--seed=<seed>] [--path=<path>]
+  
+  Positional arguments:
+    path-to-clarinet-project - The path to the Clarinet project.
+    contract-name - The name of the contract to be fuzzed.
+  
+  Options:
+    --seed - The seed to use for the property-based testing.
+    --path - The path to the contract source code.
+    --help - Show the help message.
+  `;
+  const noManifestMessage = `\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.`;
+  const noContractNameMessage = `\nNo target contract name provided. Please provide the contract name to be fuzzed.`;
+
+  it("returns undefined when manifest path is not provided", async () => {
+    process.argv = ["node", "app.js"];
+    // Suppress console.log output
+    jest.spyOn(console, "log").mockImplementation(() => {});
+
+    expect(await main()).toBeUndefined();
+
+    process.argv = originalArgv;
+    jest.restoreAllMocks();
+  });
+
+  it("returns undefined when target contract name is not provided", async () => {
+    // Mock process.argv to simulate missing contract name
+    process.argv = ["node", "app.js", "./path/to/clarinet/project"];
+    // Suppress console.log output
+    jest.spyOn(console, "log").mockImplementation(() => {});
+
+    expect(await main()).toBeUndefined();
+
+    process.argv = originalArgv;
+    jest.restoreAllMocks();
+  });
+
+  it("returns undefined when --help is provided", async () => {
+    // Mock process.argv to simulate --help flag
+    process.argv = ["node", "app.js", "--help"];
+    // Suppress console.log output
+    jest.spyOn(console, "log").mockImplementation(() => {});
+
+    expect(await main()).toBeUndefined();
+
+    process.argv = originalArgv;
+    jest.restoreAllMocks();
+  });
+
+  it("logs the help message at the end when --help is specified", async () => {
+    process.argv = ["node", "app.js", "--help"];
+
+    const consoleLogMessages: string[] = [];
+    jest.spyOn(console, "log").mockImplementation((message: string) => {
+      consoleLogMessages.push(message);
+    });
+
+    // Act
+    await main();
+
+    const actual = consoleLogMessages[consoleLogMessages.length - 1];
+
+    // Assert
+    const expected = helpMessage;
+    expect(actual).toBe(expected);
+
+    process.argv = originalArgv;
+    jest.restoreAllMocks();
+  });
+
+  it("logs the no manifest and the help messages when the manifest path is not provided", async () => {
+    process.argv = ["node", "app.js"];
+    const consoleLogMessages: string[] = [];
+    jest.spyOn(console, "log").mockImplementation((message: string) => {
+      consoleLogMessages.push(message);
+    });
+
+    // Act
+    await main();
+
+    const actualLastLog = consoleLogMessages[consoleLogMessages.length - 1];
+    const actualSecondToLastLog =
+      consoleLogMessages[consoleLogMessages.length - 2];
+
+    // Assert
+    const expectedLastLog = helpMessage;
+    const expectedSecondToLastLog = noManifestMessage;
+
+    expect(actualLastLog).toBe(expectedLastLog);
+    expect(actualSecondToLastLog).toBe(expectedSecondToLastLog);
+
+    process.argv = originalArgv;
+    jest.restoreAllMocks();
+  });
+
+  it("logs the no contract name and the help messages when the target contract name is not provided", async () => {
+    process.argv = ["node", "app.js", "./path/to/clarinet/project"];
+    const consoleLogMessages: string[] = [];
+    jest.spyOn(console, "log").mockImplementation((message: string) => {
+      consoleLogMessages.push(message);
+    });
+
+    // Act
+    await main();
+
+    const actualLastLog = consoleLogMessages[consoleLogMessages.length - 1];
+    const actualSecondToLastLog =
+      consoleLogMessages[consoleLogMessages.length - 2];
+
+    // Assert
+    const expectedLastLog = helpMessage;
+    const expectedSecondToLastLog = noContractNameMessage;
+
+    expect(actualLastLog).toBe(expectedLastLog);
+    expect(actualSecondToLastLog).toBe(expectedSecondToLastLog);
+
+    process.argv = originalArgv;
+    jest.restoreAllMocks();
   });
 });
 
