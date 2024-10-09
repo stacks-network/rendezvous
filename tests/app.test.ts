@@ -105,6 +105,70 @@ describe("Command-line arguments handling", () => {
       jest.restoreAllMocks();
     }
   );
+
+  it.each([
+    [
+      ["manifest path", "contract name"],
+      ["node", "app.js", "example", "counter"],
+      [
+        `Using manifest path: example/Clarinet.toml`,
+        `Target contract: counter`,
+      ],
+    ],
+    [
+      ["manifest path", "contract name", "seed"],
+      ["node", "app.js", "example", "counter", "--seed=123"],
+      [
+        `Using manifest path: example/Clarinet.toml`,
+        `Target contract: counter`,
+        `Using seed: 123`,
+      ],
+    ],
+    [
+      ["manifest path", "contract name", "seed", "path"],
+      ["node", "app.js", "example", "counter", "--seed=123", "--path=84:0"],
+      [
+        `Using manifest path: example/Clarinet.toml`,
+        `Target contract: counter`,
+        `Using seed: 123`,
+        `Using path: 84:0`,
+      ],
+    ],
+    [
+      ["manifest path", "contract name", "path"],
+      ["node", "app.js", "example", "counter", "--path=84:0"],
+      [
+        `Using manifest path: example/Clarinet.toml`,
+        `Target contract: counter`,
+        `Using path: 84:0`,
+      ],
+    ],
+  ])(
+    "logs the correct values when arguments %p are provided",
+    async (_testCase: string[], argv: string[], expectedLogs: string[]) => {
+      process.argv = argv;
+      const consoleLogs: string[] = [];
+      jest.spyOn(console, "log").mockImplementation((message: string) => {
+        consoleLogs.push(message);
+      });
+      jest.spyOn(console, "error").mockImplementation(() => {});
+
+      // Act
+      try {
+        await main();
+      } catch {
+        // Do nothing
+      }
+
+      // Assert
+      expectedLogs.forEach((expectedLog) => {
+        expect(consoleLogs).toContain(expectedLog);
+      });
+
+      process.argv = originalArgv;
+      jest.restoreAllMocks();
+    }
+  );
 });
 
 describe("Successfully schedules rendez-vous", () => {
