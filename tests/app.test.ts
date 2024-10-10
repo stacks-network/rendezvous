@@ -21,7 +21,7 @@ import path from "path";
 import { Cl } from "@stacks/transactions";
 
 describe("Command-line arguments handling", () => {
-  const originalArgv = process.argv;
+  const initialArgv = process.argv;
   const helpMessage = `
   Usage: ./rv <path-to-clarinet-project> <contract-name> [--seed=<seed>] [--path=<path>]
   
@@ -48,7 +48,7 @@ describe("Command-line arguments handling", () => {
 
       expect(await main()).toBeUndefined();
 
-      process.argv = originalArgv;
+      process.argv = initialArgv;
     }
   );
 
@@ -69,7 +69,7 @@ describe("Command-line arguments handling", () => {
     const expected = helpMessage;
     expect(actual).toBe(expected);
 
-    process.argv = originalArgv;
+    process.argv = initialArgv;
     jest.restoreAllMocks();
   });
 
@@ -101,7 +101,7 @@ describe("Command-line arguments handling", () => {
       expect(actualLastLog).toBe(expectedLastLog);
       expect(actualSecondToLastLog).toBe(expected);
 
-      process.argv = originalArgv;
+      process.argv = initialArgv;
       jest.restoreAllMocks();
     }
   );
@@ -165,7 +165,7 @@ describe("Command-line arguments handling", () => {
         expect(consoleLogs).toContain(expectedLog);
       });
 
-      process.argv = originalArgv;
+      process.argv = initialArgv;
       jest.restoreAllMocks();
     }
   );
