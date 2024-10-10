@@ -10,7 +10,7 @@ describe("Custom reporter logging", () => {
             failed: fc.constant(true),
             numRuns: fc.nat(),
             seed: fc.nat(),
-            rendezvousId: fc.ascii(),
+            rendezvousContractId: fc.ascii(),
             selectedFunction: fc.record({
               name: fc.ascii(),
               access: fc.ascii(),
@@ -32,7 +32,7 @@ describe("Custom reporter logging", () => {
             failed: boolean;
             numRuns: number;
             seed: number;
-            rendezvousId: string;
+            rendezvousContractId: string;
             selectedFunction: {
               name: string;
               access: string;
@@ -60,7 +60,7 @@ describe("Custom reporter logging", () => {
               seed: r.seed,
               counterexample: [
                 {
-                  rendezvousId: r.rendezvousId,
+                  rendezvousContractId: r.rendezvousContractId,
                   selectedFunction: {
                     name: r.selectedFunction.name,
                     access: r.selectedFunction.access,
@@ -85,7 +85,7 @@ describe("Custom reporter logging", () => {
               `Error: Property failed after ${r.numRuns} tests.`,
               `Seed : ${r.seed}`,
               `\nCounterexample:`,
-              `- Contract : ${r.rendezvousId}`,
+              `- Contract : ${r.rendezvousContractId}`,
               `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
               `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
               `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`,
@@ -120,7 +120,7 @@ describe("Custom reporter logging", () => {
             failed: fc.constant(true),
             numRuns: fc.nat(),
             seed: fc.nat(),
-            rendezvousId: fc.ascii(),
+            rendezvousContractId: fc.ascii(),
             selectedFunction: fc.record({
               name: fc.ascii(),
               access: fc.ascii(),
@@ -143,7 +143,7 @@ describe("Custom reporter logging", () => {
             failed: boolean;
             numRuns: number;
             seed: number;
-            rendezvousId: string;
+            rendezvousContractId: string;
             selectedFunction: {
               name: string;
               access: string;
@@ -172,7 +172,7 @@ describe("Custom reporter logging", () => {
               seed: r.seed,
               counterexample: [
                 {
-                  rendezvousId: r.rendezvousId,
+                  rendezvousContractId: r.rendezvousContractId,
                   selectedFunction: {
                     name: r.selectedFunction.name,
                     access: r.selectedFunction.access,
@@ -198,7 +198,7 @@ describe("Custom reporter logging", () => {
               `Seed : ${r.seed}`,
               `Path : ${r.path}`,
               `\nCounterexample:`,
-              `- Contract : ${r.rendezvousId}`,
+              `- Contract : ${r.rendezvousContractId}`,
               `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
               `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
               `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`,
@@ -233,7 +233,7 @@ describe("Custom reporter logging", () => {
             failed: fc.constant(false),
             numRuns: fc.nat(),
             seed: fc.nat(),
-            rendezvousId: fc.ascii(),
+            rendezvousContractId: fc.ascii(),
             selectedFunction: fc.record({
               name: fc.ascii(),
               access: fc.ascii(),
@@ -256,7 +256,7 @@ describe("Custom reporter logging", () => {
             failed: boolean;
             numRuns: number;
             seed: number;
-            rendezvousId: string;
+            rendezvousContractId: string;
             selectedFunction: {
               name: string;
               access: string;
@@ -285,7 +285,7 @@ describe("Custom reporter logging", () => {
               seed: r.seed,
               counterexample: [
                 {
-                  rendezvousId: r.rendezvousId,
+                  rendezvousContractId: r.rendezvousContractId,
                   selectedFunction: {
                     name: r.selectedFunction.name,
                     access: r.selectedFunction.access,
