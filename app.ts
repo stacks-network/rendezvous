@@ -24,6 +24,7 @@ import {
 } from "@stacks/transactions";
 import fc from "fast-check";
 import fs from "fs";
+import path from "path";
 import { reporter } from "./heatstroke";
 
 type BaseType = "int128" | "uint128" | "bool" | "principal";
@@ -432,8 +433,10 @@ export const getInvariantContractSource = (
   // Example:
   // - Contract name in the manifest: [contracts.counter]
   // - Contract file name: path = "contracts/counter.clar"
-  const invariantContractName = `${sutContractName.split(".")[1]}.invariants`;
-  const invariantContractPath = `${contractsPath}/${invariantContractName}.clar`;
+  const invariantContractName = `${
+    sutContractName.split(".")[1]
+  }.invariants.clar`;
+  const invariantContractPath = path.join(contractsPath, invariantContractName);
   try {
     return fs.readFileSync(invariantContractPath).toString();
   } catch (e: any) {
@@ -634,14 +637,14 @@ export async function main() {
     console.log(`Using seed: ${seed}`);
   }
 
-  const path =
+  const fcPath =
     process.argv
       .find(
         (arg, index) => index >= 4 && arg.toLowerCase().startsWith("--path=")
       )
       ?.split("=")[1] || undefined;
-  if (path !== undefined) {
-    console.log(`Using path: ${path}`);
+  if (fcPath !== undefined) {
+    console.log(`Using path: ${fcPath}`);
   }
 
   // FIXME: Decide if we want to pass only the directory or the full path.
@@ -654,7 +657,7 @@ export async function main() {
     printHelp();
     return;
   }
-  const manifestPath = manifestDir + "/Clarinet.toml";
+  const manifestPath = path.join(manifestDir, "Clarinet.toml");
   console.log(`Using manifest path: ${manifestPath}`);
 
   const sutContractName = args[3];
@@ -690,7 +693,7 @@ export async function main() {
     );
   }
 
-  const contractsPath = manifestDir + "/contracts";
+  const contractsPath = path.join(manifestDir, "contracts");
 
   const rendezvousData = sutContracts.map((contractName) =>
     buildRendezvousData(simnet, contractName, contractsPath)
@@ -909,7 +912,7 @@ export async function main() {
         }
       }
     ),
-    { verbose: true, reporter: reporter, seed: seed, path: path }
+    { verbose: true, reporter: reporter, seed: seed, path: fcPath }
   );
 }
 
