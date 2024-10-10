@@ -1,32 +1,13 @@
 #!/bin/bash
 
-resolve_path() {
-    echo "$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
-}
-
-if [ ! -z "$1" ]; then
-    manifest_path=$(resolve_path "$1")
-    shift
-else
-    manifest_path=""
-fi
-
-contract_name="$1"
-shift
-
-other_args="$@"
-
-# Navigate to the directory of the script.
-cd "$(dirname "$0")"
-
 # Compile TypeScript files to JavaScript using the project's tsconfig.json.
 echo "Compiling TypeScript files..."
-npx tsc --project tsconfig.json
+npx tsc --project "$(dirname "$0")/tsconfig.json"
 
 # Check if the compilation was successful.
 if [ $? -eq 0 ]; then
     echo "Compilation successful. Starting fuzzing process..."
-    node app.js "$manifest_path" "$contract_name" $other_args
+    node "$(dirname "$0")/app.js" "$@"
 else
     echo "TypeScript compilation failed, please check the errors above."
     exit 1
