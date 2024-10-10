@@ -27,7 +27,7 @@ root
 Run the fuzzer with the following command:
 
 ```
-rv <root>
+rv <root> <target-contract-name>
 ```
 
 This will execute the fuzzing process, attempting to falsify the invariants.
@@ -51,7 +51,7 @@ Here is an example of a Clarity invariant designed to identify a bug in a smart 
 To see how this and other invariants work in action, and to get a broader understanding of their implementation, you can run `rv` against the example Clarinet project:
 
 ```
-rv example
+rv example counter
 ```
 
 ---
