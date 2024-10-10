@@ -34,8 +34,8 @@ export function reporter(runDetails) {
     }
 
     console.error(`\nCounterexample:`);
-    // FIXME: Derive the SUT contract name from rendezvousId.
-    console.error(`- Contract : ${r.rendezvousId}`);
+    // FIXME: Derive the SUT contract name from rendezvousContractId.
+    console.error(`- Contract : ${r.rendezvousContractId}`);
     console.error(
       `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`
     );

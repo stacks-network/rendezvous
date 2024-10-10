@@ -511,7 +511,7 @@ export const buildRendezvousData = (
     return {
       rendezvousName,
       rendezvousSource,
-      rendezvousId: `${simnet.deployer}.${rendezvousName}`,
+      rendezvousContractId: `${simnet.deployer}.${rendezvousName}`,
     };
   } catch (e: any) {
     throw new Error(
@@ -707,7 +707,7 @@ export async function main() {
       contractData.rendezvousName,
       contractData.rendezvousSource
     );
-    return contractData.rendezvousId;
+    return contractData.rendezvousContractId;
   });
 
   const rendezvousInterfaces = filterRendezvousInterfaces(
@@ -737,7 +737,7 @@ export async function main() {
     fc.property(
       fc
         .record({
-          rendezvousId: fc.constantFrom(...rendezvousList),
+          rendezvousContractId: fc.constantFrom(...rendezvousList),
           sutCaller: fc.constantFrom(
             ...new Map(
               [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
@@ -752,24 +752,24 @@ export async function main() {
         .chain((r) => {
           const functions = getFunctionsListForContract(
             rendezvousSutFunctions,
-            r.rendezvousId
+            r.rendezvousContractId
           );
           const invariantFunctions = getFunctionsListForContract(
             rendezvousInvariantFunctions,
-            r.rendezvousId
+            r.rendezvousContractId
           );
 
           if (functions?.length === 0) {
             throw new Error(
               `No public functions found for the "${getContractNameFromRendezvousName(
-                r.rendezvousId
+                r.rendezvousContractId
               )}" contract.`
             );
           }
           if (invariantFunctions?.length === 0) {
             throw new Error(
               `No invariant functions found for the "${getContractNameFromRendezvousName(
-                r.rendezvousId
+                r.rendezvousContractId
               )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
             );
           }
@@ -831,7 +831,7 @@ export async function main() {
 
         const [sutCallerWallet, sutCallerAddress] = r.sutCaller;
         const { result: functionCallResult } = simnet.callPublicFn(
-          r.rendezvousId,
+          r.rendezvousContractId,
           r.selectedFunction.name,
           selectedFunctionArgs,
           sutCallerAddress
@@ -840,14 +840,16 @@ export async function main() {
         const functionCallResultJson = cvToJSON(functionCallResult);
 
         if (functionCallResultJson.success) {
-          localContext[r.rendezvousId][r.selectedFunction.name]++;
+          localContext[r.rendezvousContractId][r.selectedFunction.name]++;
 
           simnet.callPublicFn(
-            r.rendezvousId,
+            r.rendezvousContractId,
             "update-context",
             [
               Cl.stringAscii(r.selectedFunction.name),
-              Cl.uint(localContext[r.rendezvousId][r.selectedFunction.name]),
+              Cl.uint(
+                localContext[r.rendezvousContractId][r.selectedFunction.name]
+              ),
             ],
             simnet.deployer
           );
@@ -855,7 +857,7 @@ export async function main() {
           console.log(
             " ✔ ",
             sutCallerWallet,
-            getContractNameFromRendezvousName(r.rendezvousId),
+            getContractNameFromRendezvousName(r.rendezvousContractId),
             r.selectedFunction.name,
             printedFunctionArgs
           );
@@ -863,7 +865,7 @@ export async function main() {
           console.log(
             " ✗ ",
             sutCallerWallet,
-            getContractNameFromRendezvousName(r.rendezvousId),
+            getContractNameFromRendezvousName(r.rendezvousContractId),
             r.selectedFunction.name,
             printedFunctionArgs
           );
@@ -886,7 +888,7 @@ export async function main() {
         const [invariantCallerWallet, invariantCallerAddress] =
           r.invariantCaller;
         const { result: invariantCallResult } = simnet.callReadOnlyFn(
-          r.rendezvousId,
+          r.rendezvousContractId,
           r.selectedInvariant.name,
           selectedInvariantArgs,
           invariantCallerAddress
@@ -897,7 +899,7 @@ export async function main() {
         console.log(
           "🤺 ",
           invariantCallerWallet,
-          getContractNameFromRendezvousName(r.rendezvousId),
+          getContractNameFromRendezvousName(r.rendezvousContractId),
           r.selectedInvariant.name,
           printedInvariantArgs
         );
@@ -906,7 +908,7 @@ export async function main() {
         if (!invariantCallResultJson.value) {
           throw new Error(
             `Invariant failed for ${getContractNameFromRendezvousName(
-              r.rendezvousId
+              r.rendezvousContractId
             )} contract: "${r.selectedInvariant.name}" returned ${
               invariantCallResultJson.value
             }`
