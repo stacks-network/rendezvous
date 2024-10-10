@@ -45,14 +45,13 @@ describe("Command-line arguments handling", () => {
     "returns undefined when %s is not provided",
     async (_testCase: string, argv: string[]) => {
       process.argv = argv;
-
       expect(await main()).toBeUndefined();
-
       process.argv = initialArgv;
     }
   );
 
   it("logs the help message at the end when --help is specified", async () => {
+    // Arrange
     process.argv = ["node", "app.js", "--help"];
 
     const consoleLogs: string[] = [];
@@ -83,6 +82,7 @@ describe("Command-line arguments handling", () => {
   ])(
     "logs the info and the help message when the %s is not provided",
     async (_testCase: string, argv: string[], expected: string) => {
+      // Arrange
       process.argv = argv;
       const consoleLogs: string[] = [];
       jest.spyOn(console, "log").mockImplementation((message: string) => {
@@ -146,6 +146,7 @@ describe("Command-line arguments handling", () => {
   ])(
     "logs the correct values when arguments %p are provided",
     async (_testCase: string[], argv: string[], expectedLogs: string[]) => {
+      // Arrange
       process.argv = argv;
       const consoleLogs: string[] = [];
       jest.spyOn(console, "log").mockImplementation((message: string) => {
@@ -157,7 +158,7 @@ describe("Command-line arguments handling", () => {
       try {
         await main();
       } catch {
-        // Do nothing
+        // Do nothing.
       }
 
       // Assert
