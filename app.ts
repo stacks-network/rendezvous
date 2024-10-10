@@ -47,7 +47,7 @@ type ParameterType = BaseType | ComplexType;
  * - The value is the count of times the SUT function has been invoked.
  */
 type LocalContext = {
-  [contractName: string]: {
+  [contractId: string]: {
     [functionName: string]: number;
   };
 };
@@ -350,8 +350,8 @@ export const filterRendezvousInterfaces = (
   contractsInterfaces: Map<string, ContractInterface>
 ) =>
   new Map(
-    Array.from(contractsInterfaces).filter(([contractName]) =>
-      contractName.endsWith("_rendezvous")
+    Array.from(contractsInterfaces).filter(([contractId]) =>
+      contractId.endsWith("_rendezvous")
     )
   );
 
@@ -364,8 +364,8 @@ export const getFunctionsFromContractInterfaces = (
   contractsInterfaces: Map<string, ContractInterface>
 ): Map<string, ContractInterfaceFunction[]> =>
   new Map(
-    Array.from(contractsInterfaces, ([contractName, contractInterface]) => [
-      contractName,
+    Array.from(contractsInterfaces, ([contractId, contractInterface]) => [
+      contractId,
       contractInterface.functions,
     ])
   );
@@ -383,8 +383,8 @@ const filterSutFunctions = (
   allFunctionsMap: Map<string, ContractInterfaceFunction[]>
 ) =>
   new Map(
-    Array.from(allFunctionsMap, ([contractName, functions]) => [
-      contractName,
+    Array.from(allFunctionsMap, ([contractId, functions]) => [
+      contractId,
       functions.filter(
         (f) => f.access === "public" && f.name !== "update-context"
       ),
@@ -395,8 +395,8 @@ const filterInvariantFunctions = (
   allFunctionsMap: Map<string, ContractInterfaceFunction[]>
 ) =>
   new Map(
-    Array.from(allFunctionsMap, ([contractName, functions]) => [
-      contractName,
+    Array.from(allFunctionsMap, ([contractId, functions]) => [
+      contractId,
       functions.filter(
         (f) => f.access === "read_only" && f.name.startsWith("invariant-")
       ),
@@ -406,27 +406,27 @@ const filterInvariantFunctions = (
 /**
  * Get contract source code from the simnet.
  * @param simnet The simnet instance.
- * @param sutContractName The contract name.
+ * @param sutContractId The contract name.
  * @returns The contract source code.
  */
 export const getSimnetContractSource = (
   simnet: Simnet,
-  sutContractName: string
+  sutContractId: string
 ) => {
-  if (simnet.getContractSource(sutContractName) === undefined)
-    throw new Error(`Contract ${sutContractName} not found in the network.`);
-  return simnet.getContractSource(sutContractName);
+  if (simnet.getContractSource(sutContractId) === undefined)
+    throw new Error(`Contract ${sutContractId} not found in the network.`);
+  return simnet.getContractSource(sutContractId);
 };
 
 /**
  * Get the invariant contract source code.
  * @param contractsPath The contracts path.
- * @param sutContractName The corresponding contract name.
+ * @param sutContractId The corresponding contract name.
  * @returns The invariant contract source code.
  */
 export const getInvariantContractSource = (
   contractsPath: string,
-  sutContractName: string
+  sutContractId: string
 ) => {
   // FIXME: Here, we can encounter a failure if the contract file name is
   // not the same as the contract name in the manifest.
@@ -434,7 +434,7 @@ export const getInvariantContractSource = (
   // - Contract name in the manifest: [contracts.counter]
   // - Contract file name: path = "contracts/counter.clar"
   const invariantContractName = `${
-    sutContractName.split(".")[1]
+    sutContractId.split(".")[1]
   }.invariants.clar`;
   const invariantContractPath = path.join(contractsPath, invariantContractName);
   try {
@@ -442,7 +442,7 @@ export const getInvariantContractSource = (
   } catch (e: any) {
     throw new Error(
       `Error retrieving the corresponding invariant contract for the "${
-        sutContractName.split(".")[1]
+        sutContractId.split(".")[1]
       }" contract. ${e.message}`
     );
   }
@@ -450,11 +450,11 @@ export const getInvariantContractSource = (
 
 /**
  * Derive the Rendezvous name.
- * @param contract The contract name.
+ * @param contractId The contract name.
  * @returns The Rendezvous name.
  */
-export const deriveRendezvousName = (contract: string) =>
-  `${contract.split(".")[1]}_rendezvous`;
+export const deriveRendezvousName = (contractId: string) =>
+  `${contractId.split(".")[1]}_rendezvous`;
 
 /**
  * Get the contract name from the Rendezvous name.
@@ -487,34 +487,36 @@ export function scheduleRendezvous(
 /**
  * Build the Rendezvous data.
  * @param simnet The simnet instance.
- * @param contractName The contract name.
+ * @param contractId The contract name.
  * @param contractsPath The contracts path.
  * @returns The Rendezvous data.
  */
 export const buildRendezvousData = (
   simnet: Simnet,
-  contractName: string,
+  contractId: string,
   contractsPath: string
 ) => {
   try {
-    const sutContractSource = getSimnetContractSource(simnet, contractName);
+    const sutContractSource = getSimnetContractSource(simnet, contractId);
     const invariantContractSource = getInvariantContractSource(
       contractsPath,
-      contractName
+      contractId
     );
     const rendezvousSource = scheduleRendezvous(
       sutContractSource!,
       invariantContractSource
     );
-    const rendezvousName = deriveRendezvousName(contractName);
+    const rendezvousName = deriveRendezvousName(contractId);
 
     return {
       rendezvousName,
       rendezvousSource,
-      fullContractName: `${simnet.deployer}.${rendezvousName}`,
+      rendezvousId: `${simnet.deployer}.${rendezvousName}`,
     };
   } catch (e: any) {
-    throw new Error(`Error processing contract ${contractName}: ${e.message}`);
+    throw new Error(
+      `Error processing contract ${contractId.split(".")[1]}: ${e.message}`
+    );
   }
 };
 
@@ -529,8 +531,8 @@ export const initializeLocalContext = (
 ): LocalContext =>
   Object.fromEntries(
     Array.from(rendezvousSutFunctions.entries()).map(
-      ([contractName, functions]) => [
-        contractName,
+      ([contractId, functions]) => [
+        contractId,
         Object.fromEntries(functions.map((f) => [f.name, 0])),
       ]
     )
@@ -540,10 +542,10 @@ export const initializeClarityContext = (
   simnet: Simnet,
   rendezvousSutFunctions: Map<string, ContractInterfaceFunction[]>
 ) =>
-  rendezvousSutFunctions.forEach((fns, contractName) => {
+  rendezvousSutFunctions.forEach((fns, contractId) => {
     fns.forEach((fn) => {
       const { result: initialize } = simnet.callPublicFn(
-        contractName,
+        contractId,
         "update-context",
         [Cl.stringAscii(fn.name), Cl.uint(0)],
         simnet.deployer
@@ -587,8 +589,8 @@ export const deployRendezvous = (
 
 export const getFunctionsListForContract = (
   functionsMap: Map<string, ContractInterfaceFunction[]>,
-  contractName: string
-) => functionsMap.get(contractName) || [];
+  contractId: string
+) => functionsMap.get(contractId) || [];
 
 const printHelp = () => {
   const helpMessage = `
@@ -678,16 +680,16 @@ export async function main() {
     getSimnetDeployerContractsInterfaces(simnet);
 
   // Get all the contracts from the interfaces.
-  const simnetContracts = Array.from(simnetContractsInterfaces.keys());
+  const simnetContractIds = Array.from(simnetContractsInterfaces.keys());
 
   const sutContractId = `${simnet.deployer}.${sutContractName}`;
 
-  const sutContracts = simnetContracts.filter(
+  const sutContractIds = simnetContractIds.filter(
     (contract) => contract === sutContractId
   );
 
   // Check if the SUT contract is in the network.
-  if (sutContracts.length === 0) {
+  if (sutContractIds.length === 0) {
     throw new Error(
       `The "${sutContractName}" contract was not found in the network.`
     );
@@ -695,8 +697,8 @@ export async function main() {
 
   const contractsPath = path.join(manifestDir, "contracts");
 
-  const rendezvousData = sutContracts.map((contractName) =>
-    buildRendezvousData(simnet, contractName, contractsPath)
+  const rendezvousData = sutContractIds.map((contractId) =>
+    buildRendezvousData(simnet, contractId, contractsPath)
   );
 
   const rendezvousList = rendezvousData.map((contractData) => {
@@ -705,7 +707,7 @@ export async function main() {
       contractData.rendezvousName,
       contractData.rendezvousSource
     );
-    return contractData.fullContractName;
+    return contractData.rendezvousId;
   });
 
   const rendezvousInterfaces = filterRendezvousInterfaces(
@@ -731,11 +733,13 @@ export async function main() {
   // Initialize the Clarity context.
   initializeClarityContext(simnet, rendezvousSutFunctions);
 
+  console.log(":::", rendezvousList);
+
   fc.assert(
     fc.property(
       fc
         .record({
-          contractName: fc.constantFrom(...rendezvousList),
+          rendezvousId: fc.constantFrom(...rendezvousList),
           sutCaller: fc.constantFrom(
             ...new Map(
               [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
@@ -750,24 +754,24 @@ export async function main() {
         .chain((r) => {
           const functions = getFunctionsListForContract(
             rendezvousSutFunctions,
-            r.contractName
+            r.rendezvousId
           );
           const invariantFunctions = getFunctionsListForContract(
             rendezvousInvariantFunctions,
-            r.contractName
+            r.rendezvousId
           );
 
           if (functions?.length === 0) {
             throw new Error(
               `No public functions found for the "${getContractNameFromRendezvousName(
-                r.contractName
+                r.rendezvousId
               )}" contract.`
             );
           }
           if (invariantFunctions?.length === 0) {
             throw new Error(
               `No invariant functions found for the "${getContractNameFromRendezvousName(
-                r.contractName
+                r.rendezvousId
               )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
             );
           }
@@ -829,7 +833,7 @@ export async function main() {
 
         const [sutCallerWallet, sutCallerAddress] = r.sutCaller;
         const { result: functionCallResult } = simnet.callPublicFn(
-          r.contractName,
+          r.rendezvousId,
           r.selectedFunction.name,
           selectedFunctionArgs,
           sutCallerAddress
@@ -838,14 +842,14 @@ export async function main() {
         const functionCallResultJson = cvToJSON(functionCallResult);
 
         if (functionCallResultJson.success) {
-          localContext[r.contractName][r.selectedFunction.name]++;
+          localContext[r.rendezvousId][r.selectedFunction.name]++;
 
           simnet.callPublicFn(
-            r.contractName,
+            r.rendezvousId,
             "update-context",
             [
               Cl.stringAscii(r.selectedFunction.name),
-              Cl.uint(localContext[r.contractName][r.selectedFunction.name]),
+              Cl.uint(localContext[r.rendezvousId][r.selectedFunction.name]),
             ],
             simnet.deployer
           );
@@ -853,7 +857,7 @@ export async function main() {
           console.log(
             " ✔ ",
             sutCallerWallet,
-            getContractNameFromRendezvousName(r.contractName),
+            getContractNameFromRendezvousName(r.rendezvousId),
             r.selectedFunction.name,
             printedFunctionArgs
           );
@@ -861,7 +865,7 @@ export async function main() {
           console.log(
             " ✗ ",
             sutCallerWallet,
-            getContractNameFromRendezvousName(r.contractName),
+            getContractNameFromRendezvousName(r.rendezvousId),
             r.selectedFunction.name,
             printedFunctionArgs
           );
@@ -884,7 +888,7 @@ export async function main() {
         const [invariantCallerWallet, invariantCallerAddress] =
           r.invariantCaller;
         const { result: invariantCallResult } = simnet.callReadOnlyFn(
-          r.contractName,
+          r.rendezvousId,
           r.selectedInvariant.name,
           selectedInvariantArgs,
           invariantCallerAddress
@@ -895,7 +899,7 @@ export async function main() {
         console.log(
           "🤺 ",
           invariantCallerWallet,
-          getContractNameFromRendezvousName(r.contractName),
+          getContractNameFromRendezvousName(r.rendezvousId),
           r.selectedInvariant.name,
           printedInvariantArgs
         );
@@ -904,7 +908,7 @@ export async function main() {
         if (!invariantCallResultJson.value) {
           throw new Error(
             `Invariant failed for ${getContractNameFromRendezvousName(
-              r.contractName
+              r.rendezvousId
             )} contract: "${r.selectedInvariant.name}" returned ${
               invariantCallResultJson.value
             }`

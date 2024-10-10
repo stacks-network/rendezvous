@@ -359,7 +359,7 @@ describe("Simnet contracts operations", () => {
       return {
         rendezvousName,
         rendezvousSource,
-        fullContractName: `${simnet.deployer}.${rendezvousName}`,
+        rendezvousId: `${simnet.deployer}.${rendezvousName}`,
       };
     });
 
@@ -403,7 +403,7 @@ describe("Simnet contracts operations", () => {
     // Check if all expected Rendezvous contracts are present in the result
     rendezvousData.forEach((contractData) => {
       expect(actualSimnetContractsListAfterDeploy).toContain(
-        contractData.fullContractName
+        contractData.rendezvousId
       );
     });
 
@@ -481,7 +481,7 @@ describe("Simnet contracts operations", () => {
           contractData.rendezvousName,
           contractData.rendezvousSource
         );
-        return contractData.fullContractName;
+        return contractData.rendezvousId;
       })
       .sort();
 
