@@ -34,30 +34,30 @@ export function reporter(runDetails) {
     }
 
     console.error(`\nCounterexample:`);
-    console.error(`- Contract : ${r.contractName}`);
+    // FIXME: Derive the SUT contract name from rendezvousId.
+    console.error(`- Contract : ${r.rendezvousId}`);
     console.error(
-      `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
+      `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`
     );
     console.error(`- Arguments: ${JSON.stringify(r.functionArgsArb)}`);
     console.error(`- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`);
     console.error(
-      `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`,
+      `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`
     );
     console.error(`- Arguments: ${JSON.stringify(r.invariantArgsArb)}`);
 
     console.error(
-      `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
+      `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`
     );
 
-    const formattedError =
-      `The invariant "${r.selectedInvariant.name}" returned:\n\n${
-        runDetails.error
-          ?.toString()
-          .split("\n")
-          // @ts-ignore
-          .map((line) => "    " + line)
-          .join("\n")
-      }\n`;
+    const formattedError = `The invariant "${
+      r.selectedInvariant.name
+    }" returned:\n\n${runDetails.error
+      ?.toString()
+      .split("\n")
+      // @ts-ignore
+      .map((line) => "    " + line)
+      .join("\n")}\n`;
 
     console.error(formattedError);
   }
