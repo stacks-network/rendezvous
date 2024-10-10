@@ -733,8 +733,6 @@ export async function main() {
   // Initialize the Clarity context.
   initializeClarityContext(simnet, rendezvousSutFunctions);
 
-  console.log(":::", rendezvousList);
-
   fc.assert(
     fc.property(
       fc
