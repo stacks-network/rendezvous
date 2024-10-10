@@ -1,5 +1,6 @@
 import fc from "fast-check";
 import { reporter } from "../heatstroke";
+import { getContractNameFromRendezvousName } from "../app";
 
 describe("Custom reporter logging", () => {
   it("handles cases with missing path on failure", () => {
@@ -10,7 +11,7 @@ describe("Custom reporter logging", () => {
             failed: fc.constant(true),
             numRuns: fc.nat(),
             seed: fc.nat(),
-            rendezvousContractId: fc.ascii(),
+            contractName: fc.ascii(),
             selectedFunction: fc.record({
               name: fc.ascii(),
               access: fc.ascii(),
@@ -32,7 +33,7 @@ describe("Custom reporter logging", () => {
             failed: boolean;
             numRuns: number;
             seed: number;
-            rendezvousContractId: string;
+            contractName: string;
             selectedFunction: {
               name: string;
               access: string;
@@ -54,13 +55,15 @@ describe("Custom reporter logging", () => {
                 consoleErrorLogs.push(message);
               });
 
+            const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_rendezvous`;
+
             const runDetails = {
               failed: r.failed,
               numRuns: r.numRuns,
               seed: r.seed,
               counterexample: [
                 {
-                  rendezvousContractId: r.rendezvousContractId,
+                  rendezvousContractId: rendezvousContractId,
                   selectedFunction: {
                     name: r.selectedFunction.name,
                     access: r.selectedFunction.access,
@@ -85,7 +88,9 @@ describe("Custom reporter logging", () => {
               `Error: Property failed after ${r.numRuns} tests.`,
               `Seed : ${r.seed}`,
               `\nCounterexample:`,
-              `- Contract : ${r.rendezvousContractId}`,
+              `- Contract : ${getContractNameFromRendezvousName(
+                rendezvousContractId
+              )}`,
               `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
               `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
               `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`,
@@ -120,7 +125,7 @@ describe("Custom reporter logging", () => {
             failed: fc.constant(true),
             numRuns: fc.nat(),
             seed: fc.nat(),
-            rendezvousContractId: fc.ascii(),
+            contractName: fc.ascii(),
             selectedFunction: fc.record({
               name: fc.ascii(),
               access: fc.ascii(),
@@ -143,7 +148,7 @@ describe("Custom reporter logging", () => {
             failed: boolean;
             numRuns: number;
             seed: number;
-            rendezvousContractId: string;
+            contractName: string;
             selectedFunction: {
               name: string;
               access: string;
@@ -158,6 +163,7 @@ describe("Custom reporter logging", () => {
             errorMessage: string;
           }) => {
             const consoleErrorLogs: string[] = [];
+            const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_rendezvous`;
 
             jest
               .spyOn(console, "error")
@@ -172,7 +178,7 @@ describe("Custom reporter logging", () => {
               seed: r.seed,
               counterexample: [
                 {
-                  rendezvousContractId: r.rendezvousContractId,
+                  rendezvousContractId: rendezvousContractId,
                   selectedFunction: {
                     name: r.selectedFunction.name,
                     access: r.selectedFunction.access,
@@ -198,7 +204,9 @@ describe("Custom reporter logging", () => {
               `Seed : ${r.seed}`,
               `Path : ${r.path}`,
               `\nCounterexample:`,
-              `- Contract : ${r.rendezvousContractId}`,
+              `- Contract : ${getContractNameFromRendezvousName(
+                rendezvousContractId
+              )}`,
               `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
               `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
               `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`,
@@ -233,7 +241,7 @@ describe("Custom reporter logging", () => {
             failed: fc.constant(false),
             numRuns: fc.nat(),
             seed: fc.nat(),
-            rendezvousContractId: fc.ascii(),
+            contractName: fc.ascii(),
             selectedFunction: fc.record({
               name: fc.ascii(),
               access: fc.ascii(),
@@ -256,7 +264,7 @@ describe("Custom reporter logging", () => {
             failed: boolean;
             numRuns: number;
             seed: number;
-            rendezvousContractId: string;
+            contractName: string;
             selectedFunction: {
               name: string;
               access: string;
@@ -271,6 +279,7 @@ describe("Custom reporter logging", () => {
             errorMessage: string;
           }) => {
             const consoleErrorLogs: string[] = [];
+            const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_rendezvous`;
 
             jest
               .spyOn(console, "error")
@@ -285,7 +294,7 @@ describe("Custom reporter logging", () => {
               seed: r.seed,
               counterexample: [
                 {
-                  rendezvousContractId: r.rendezvousContractId,
+                  rendezvousContractId: rendezvousContractId,
                   selectedFunction: {
                     name: r.selectedFunction.name,
                     access: r.selectedFunction.access,

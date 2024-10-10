@@ -22,6 +22,9 @@
  * @property runDetails.path - The path to reproduce the failing test.
  * @property runDetails.error - The error thrown during the test.
  */
+
+import { getContractNameFromRendezvousName } from "./app";
+
 // @ts-ignore
 export function reporter(runDetails) {
   if (runDetails.failed) {
@@ -34,8 +37,11 @@ export function reporter(runDetails) {
     }
 
     console.error(`\nCounterexample:`);
-    // FIXME: Derive the SUT contract name from rendezvousContractId.
-    console.error(`- Contract : ${r.rendezvousContractId}`);
+    console.error(
+      `- Contract : ${getContractNameFromRendezvousName(
+        r.rendezvousContractId
+      )}`
+    );
     console.error(
       `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`
     );
