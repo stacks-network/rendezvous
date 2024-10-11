@@ -24,7 +24,7 @@ import {
 } from "@stacks/transactions";
 import fc from "fast-check";
 import fs from "fs";
-import path from "path";
+import { join } from "path";
 import { reporter } from "./heatstroke";
 
 type BaseType = "int128" | "uint128" | "bool" | "principal";
@@ -436,7 +436,7 @@ export const getInvariantContractSource = (
   const invariantContractName = `${
     sutContractId.split(".")[1]
   }.invariants.clar`;
-  const invariantContractPath = path.join(contractsPath, invariantContractName);
+  const invariantContractPath = join(contractsPath, invariantContractName);
   try {
     return fs.readFileSync(invariantContractPath).toString();
   } catch (e: any) {
@@ -639,14 +639,14 @@ export async function main() {
     console.log(`Using seed: ${seed}`);
   }
 
-  const fcPath =
+  const path =
     process.argv
       .find(
         (arg, index) => index >= 4 && arg.toLowerCase().startsWith("--path=")
       )
       ?.split("=")[1] || undefined;
-  if (fcPath !== undefined) {
-    console.log(`Using path: ${fcPath}`);
+  if (path !== undefined) {
+    console.log(`Using path: ${path}`);
   }
 
   // FIXME: Decide if we want to pass only the directory or the full path.
@@ -659,7 +659,7 @@ export async function main() {
     printHelp();
     return;
   }
-  const manifestPath = path.join(manifestDir, "Clarinet.toml");
+  const manifestPath = join(manifestDir, "Clarinet.toml");
   console.log(`Using manifest path: ${manifestPath}`);
 
   const sutContractName = args[3];
@@ -695,7 +695,7 @@ export async function main() {
     );
   }
 
-  const contractsPath = path.join(manifestDir, "contracts");
+  const contractsPath = join(manifestDir, "contracts");
 
   const rendezvousData = sutContractIds.map((contractId) =>
     buildRendezvousData(simnet, contractId, contractsPath)
@@ -916,7 +916,7 @@ export async function main() {
         }
       }
     ),
-    { verbose: true, reporter: reporter, seed: seed, path: fcPath }
+    { verbose: true, reporter: reporter, seed: seed, path: path }
   );
 }
 

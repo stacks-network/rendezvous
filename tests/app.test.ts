@@ -17,7 +17,7 @@ import {
 } from "../app";
 import fc from "fast-check";
 import fs from "fs";
-import path from "path";
+import { resolve } from "path";
 import { Cl } from "@stacks/transactions";
 
 describe("Command-line arguments handling", () => {
@@ -240,8 +240,8 @@ describe("Successfully schedules rendez-vous", () => {
 describe("File stream operations", () => {
   it("retrieves the invariant contract source", async () => {
     // Arrange
-    const manifestPath = path.resolve(__dirname, "../example/Clarinet.toml");
-    const contractsPath = path.resolve(__dirname, "../example/contracts");
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
+    const contractsPath = resolve(__dirname, "../example/contracts");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
@@ -272,7 +272,7 @@ describe("Simnet contracts operations", () => {
   // For now, we'll use the one we have.
   it("retrieves the contracts from the simnet", async () => {
     // Arrange
-    const manifestPath = path.resolve(__dirname, "../example/Clarinet.toml");
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const expectedDeployerContracts = new Map(
       Array.from(simnet.getContractsInterfaces()).filter(
@@ -290,7 +290,7 @@ describe("Simnet contracts operations", () => {
 
   it("retrieves the contract source from the simnet", async () => {
     // Arrange
-    const manifestPath = path.resolve(__dirname, "../example/Clarinet.toml");
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
@@ -310,7 +310,7 @@ describe("Simnet contracts operations", () => {
 
   it("retrieves the contract functions from the simnet", async () => {
     // Arrange
-    const manifestPath = path.resolve(__dirname, "../example/Clarinet.toml");
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
@@ -338,8 +338,8 @@ describe("Simnet contracts operations", () => {
 
   it("retrieves Rendezvous contracts data", async () => {
     // Arrange
-    const manifestPath = path.resolve(__dirname, "../example/Clarinet.toml");
-    const contractsPath = path.resolve(__dirname, "../example/contracts");
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
+    const contractsPath = resolve(__dirname, "../example/contracts");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
@@ -374,8 +374,8 @@ describe("Simnet contracts operations", () => {
 
   it("deploys Rendezvous contracts to the simnet", async () => {
     // Arrange
-    const manifestPath = path.resolve(__dirname, "../example/Clarinet.toml");
-    const contractsPath = path.resolve(__dirname, "../example/contracts");
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
+    const contractsPath = resolve(__dirname, "../example/contracts");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
@@ -415,7 +415,7 @@ describe("Simnet contracts operations", () => {
 
   it("extracts the functions from the contract interfaces", async () => {
     // Arrange
-    const manifestPath = path.resolve(__dirname, "../example/Clarinet.toml");
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const expectedAllFunctionsMap = new Map(
@@ -439,7 +439,7 @@ describe("Simnet contracts operations", () => {
 
   it("correctly initializes the local context for a given functions map", async () => {
     // Arrange
-    const manifestPath = path.resolve(__dirname, "../example/Clarinet.toml");
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsAllFunctions = getFunctionsFromContractInterfaces(
@@ -466,8 +466,8 @@ describe("Simnet contracts operations", () => {
 
   it("correctly filters the Rendezvous contracts interfaces", async () => {
     // Arrange
-    const manifestPath = path.resolve(__dirname, "../example/Clarinet.toml");
-    const contractsPath = path.resolve(__dirname, "../example/contracts");
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
+    const contractsPath = resolve(__dirname, "../example/contracts");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
@@ -497,8 +497,8 @@ describe("Simnet contracts operations", () => {
 
   it("correctly initializes the Clarity context", async () => {
     // Arrange
-    const manifestPath = path.resolve(__dirname, "../example/Clarinet.toml");
-    const contractsPath = path.resolve(__dirname, "../example/contracts");
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
+    const contractsPath = resolve(__dirname, "../example/contracts");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
