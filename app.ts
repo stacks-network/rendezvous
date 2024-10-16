@@ -593,8 +593,8 @@ export const getFunctionsListForContract = (
   contractId: string
 ) => functionsMap.get(contractId) || [];
 
-const logger = (log: string) => {
-  console.log(log);
+const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
+  console[logLevel](log);
 };
 
 const helpMessage = `
@@ -612,7 +612,7 @@ const helpMessage = `
 
 export async function main() {
   const radio = new EventEmitter();
-  radio.on("logMessage", (log) => logger(log));
+  radio.on("logMessage", (log, level = "log") => logger(log, level));
   // Get the arguments from the command-line.
   const args = process.argv;
 
