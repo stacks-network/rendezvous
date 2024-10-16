@@ -26,6 +26,7 @@ import fc from "fast-check";
 import fs from "fs";
 import { join } from "path";
 import { reporter } from "./heatstroke";
+import { EventEmitter } from "events";
 
 type BaseType = "int128" | "uint128" | "bool" | "principal";
 type ComplexType =
@@ -592,8 +593,11 @@ export const getFunctionsListForContract = (
   contractId: string
 ) => functionsMap.get(contractId) || [];
 
-const printHelp = () => {
-  const helpMessage = `
+const logger = (log: string) => {
+  console.log(log);
+};
+
+const helpMessage = `
   Usage: ./rv <path-to-clarinet-project> <contract-name> [--seed=<seed>] [--path=<path>]
   
   Positional arguments:
@@ -605,10 +609,10 @@ const printHelp = () => {
     --path - The path to use for the replay functionality.
     --help - Show the help message.
   `;
-  console.log(helpMessage);
-};
 
 export async function main() {
+  const radio = new EventEmitter();
+  radio.on("dataSurge", (log) => logger(log));
   // Get the arguments from the command-line.
   const args = process.argv;
   // 0: NodeJs path.
@@ -622,7 +626,7 @@ export async function main() {
   });
 
   if (args.includes("--help")) {
-    printHelp();
+    radio.emit("dataSurge", helpMessage);
     return;
   }
 
@@ -636,7 +640,7 @@ export async function main() {
       10
     ) || undefined;
   if (seed !== undefined) {
-    console.log(`Using seed: ${seed}`);
+    radio.emit("dataSurge", `Using seed: ${seed}`);
   }
 
   const path =
@@ -646,33 +650,35 @@ export async function main() {
       )
       ?.split("=")[1] || undefined;
   if (path !== undefined) {
-    console.log(`Using path: ${path}`);
+    radio.emit("dataSurge", `Using path: ${path}`);
   }
 
   // FIXME: Decide if we want to pass only the directory or the full path.
   const manifestDir = args[2];
 
   if (!manifestDir || manifestDir.startsWith("--")) {
-    console.log(
+    radio.emit(
+      "dataSurge",
       "\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
     );
-    printHelp();
+    radio.emit("dataSurge", helpMessage);
     return;
   }
   const manifestPath = join(manifestDir, "Clarinet.toml");
-  console.log(`Using manifest path: ${manifestPath}`);
+  radio.emit("dataSurge", `Using manifest path: ${manifestPath}`);
 
   const sutContractName = args[3];
 
   if (!sutContractName || sutContractName.startsWith("--")) {
-    console.log(
+    radio.emit(
+      "dataSurge",
       "\nNo target contract name provided. Please provide the contract name to be fuzzed."
     );
-    printHelp();
+    radio.emit("dataSurge", helpMessage);
     return;
   }
 
-  console.log(`Target contract: ${sutContractName}`);
+  radio.emit("dataSurge", `Target contract: ${sutContractName}`);
 
   const simnet = await initSimnet(manifestPath);
 
@@ -854,20 +860,18 @@ export async function main() {
             simnet.deployer
           );
 
-          console.log(
-            " ✔ ",
-            sutCallerWallet,
-            getContractNameFromRendezvousName(r.rendezvousContractId),
-            r.selectedFunction.name,
-            printedFunctionArgs
+          radio.emit(
+            "dataSurge",
+            ` ✔ ${sutCallerWallet} ${getContractNameFromRendezvousName(
+              r.rendezvousContractId
+            )} ${r.selectedFunction.name} ${printedFunctionArgs}`
           );
         } else {
-          console.log(
-            " ✗ ",
-            sutCallerWallet,
-            getContractNameFromRendezvousName(r.rendezvousContractId),
-            r.selectedFunction.name,
-            printedFunctionArgs
+          radio.emit(
+            "dataSurge",
+            ` ✗ ${sutCallerWallet} ${getContractNameFromRendezvousName(
+              r.rendezvousContractId
+            )} ${r.selectedFunction.name} ${printedFunctionArgs}`
           );
         }
 
@@ -883,7 +887,7 @@ export async function main() {
           })
           .join(" ");
 
-        console.log("\nChecking invariants...");
+        radio.emit("dataSurge", "\nChecking invariants...");
 
         const [invariantCallerWallet, invariantCallerAddress] =
           r.invariantCaller;
@@ -896,14 +900,12 @@ export async function main() {
 
         const invariantCallResultJson = cvToJSON(invariantCallResult);
 
-        console.log(
-          "🤺 ",
-          invariantCallerWallet,
-          getContractNameFromRendezvousName(r.rendezvousContractId),
-          r.selectedInvariant.name,
-          printedInvariantArgs
+        radio.emit(
+          "dataSurge",
+          `🤺 ${invariantCallerWallet} ${getContractNameFromRendezvousName(
+            r.rendezvousContractId
+          )} ${r.selectedInvariant.name} ${printedInvariantArgs} \n`
         );
-        console.log("\n");
 
         if (!invariantCallResultJson.value) {
           throw new Error(
