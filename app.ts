@@ -612,12 +612,12 @@ const helpMessage = `
 
 export async function main() {
   const radio = new EventEmitter();
-  radio.on("dataSurge", (log) => logger(log));
+  radio.on("logMessage", (log) => logger(log));
   // Get the arguments from the command-line.
   const args = process.argv;
 
   if (args.includes("--help")) {
-    radio.emit("dataSurge", helpMessage);
+    radio.emit("logMessage", helpMessage);
     return;
   }
 
@@ -631,7 +631,7 @@ export async function main() {
       10
     ) || undefined;
   if (seed !== undefined) {
-    radio.emit("dataSurge", `Using seed: ${seed}`);
+    radio.emit("logMessage", `Using seed: ${seed}`);
   }
 
   const path =
@@ -641,7 +641,7 @@ export async function main() {
       )
       ?.split("=")[1] || undefined;
   if (path !== undefined) {
-    radio.emit("dataSurge", `Using path: ${path}`);
+    radio.emit("logMessage", `Using path: ${path}`);
   }
 
   // FIXME: Decide if we want to pass only the directory or the full path.
@@ -649,27 +649,27 @@ export async function main() {
 
   if (!manifestDir || manifestDir.startsWith("--")) {
     radio.emit(
-      "dataSurge",
+      "logMessage",
       "\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
     );
-    radio.emit("dataSurge", helpMessage);
+    radio.emit("logMessage", helpMessage);
     return;
   }
   const manifestPath = join(manifestDir, "Clarinet.toml");
-  radio.emit("dataSurge", `Using manifest path: ${manifestPath}`);
+  radio.emit("logMessage", `Using manifest path: ${manifestPath}`);
 
   const sutContractName = args[3];
 
   if (!sutContractName || sutContractName.startsWith("--")) {
     radio.emit(
-      "dataSurge",
+      "logMessage",
       "\nNo target contract name provided. Please provide the contract name to be fuzzed."
     );
-    radio.emit("dataSurge", helpMessage);
+    radio.emit("logMessage", helpMessage);
     return;
   }
 
-  radio.emit("dataSurge", `Target contract: ${sutContractName}`);
+  radio.emit("logMessage", `Target contract: ${sutContractName}`);
 
   const simnet = await initSimnet(manifestPath);
 
@@ -852,14 +852,14 @@ export async function main() {
           );
 
           radio.emit(
-            "dataSurge",
+            "logMessage",
             ` ✔ ${sutCallerWallet} ${getContractNameFromRendezvousName(
               r.rendezvousContractId
             )} ${r.selectedFunction.name} ${printedFunctionArgs}`
           );
         } else {
           radio.emit(
-            "dataSurge",
+            "logMessage",
             ` ✗ ${sutCallerWallet} ${getContractNameFromRendezvousName(
               r.rendezvousContractId
             )} ${r.selectedFunction.name} ${printedFunctionArgs}`
@@ -878,7 +878,7 @@ export async function main() {
           })
           .join(" ");
 
-        radio.emit("dataSurge", "\nChecking invariants...");
+        radio.emit("logMessage", "\nChecking invariants...");
 
         const [invariantCallerWallet, invariantCallerAddress] =
           r.invariantCaller;
@@ -892,7 +892,7 @@ export async function main() {
         const invariantCallResultJson = cvToJSON(invariantCallResult);
 
         radio.emit(
-          "dataSurge",
+          "logMessage",
           `🤺 ${invariantCallerWallet} ${getContractNameFromRendezvousName(
             r.rendezvousContractId
           )} ${r.selectedInvariant.name} ${printedInvariantArgs} \n`
