@@ -615,15 +615,6 @@ export async function main() {
   radio.on("dataSurge", (log) => logger(log));
   // Get the arguments from the command-line.
   const args = process.argv;
-  // 0: NodeJs path.
-  // 1: app.js path.
-  // 2: command-line arg 1.
-  // 3: command-line arg 2.
-  // 4: command-line arg 3.
-  // ...
-  args.forEach((arg) => {
-    console.log(arg);
-  });
 
   if (args.includes("--help")) {
     radio.emit("dataSurge", helpMessage);
