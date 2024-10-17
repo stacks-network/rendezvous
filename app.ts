@@ -612,7 +612,9 @@ const helpMessage = `
 
 export async function main() {
   const radio = new EventEmitter();
-  radio.on("logMessage", (log, level = "log") => logger(log, level));
+  radio.on("logMessage", (log) => logger(log));
+  radio.on("logFailure", (log) => logger(log, "error"));
+
   // Get the arguments from the command-line.
   const args = process.argv;
 
@@ -729,6 +731,10 @@ export async function main() {
 
   // Initialize the Clarity context.
   initializeClarityContext(simnet, rendezvousSutFunctions);
+
+  const radioReporter = (runDetails: any) => {
+    reporter(runDetails, radio);
+  };
 
   fc.assert(
     fc.property(
@@ -909,7 +915,7 @@ export async function main() {
         }
       }
     ),
-    { verbose: true, reporter: reporter, seed: seed, path: path }
+    { verbose: true, reporter: radioReporter, seed: seed, path: path },
   );
 }
 
