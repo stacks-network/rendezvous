@@ -23,36 +23,37 @@
  * @property runDetails.error - The error thrown during the test.
  */
 
+import { EventEmitter } from "events";
 import { getContractNameFromRendezvousName } from "./app";
 
 // @ts-ignore
-export function reporter(runDetails) {
+export function reporter(runDetails, radio: EventEmitter) {
   if (runDetails.failed) {
     const r = runDetails.counterexample[0];
 
-    console.error(`Error: Property failed after ${runDetails.numRuns} tests.`);
-    console.error(`Seed : ${runDetails.seed}`);
+    radio.emit("logFailure", `Error: Property failed after ${runDetails.numRuns} tests.`);
+    radio.emit("logFailure", `Seed : ${runDetails.seed}`);
     if (runDetails.path) {
-      console.error(`Path : ${runDetails.path}`);
+      radio.emit("logFailure", `Path : ${runDetails.path}`);
     }
 
-    console.error(`\nCounterexample:`);
-    console.error(
+    radio.emit("logFailure", `\nCounterexample:`);
+    radio.emit("logFailure",
       `- Contract : ${getContractNameFromRendezvousName(
         r.rendezvousContractId
       )}`
     );
-    console.error(
+    radio.emit("logFailure",
       `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`
     );
-    console.error(`- Arguments: ${JSON.stringify(r.functionArgsArb)}`);
-    console.error(`- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`);
-    console.error(
+    radio.emit("logFailure", `- Arguments: ${JSON.stringify(r.functionArgsArb)}`);
+    radio.emit("logFailure", `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`);
+    radio.emit("logFailure",
       `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`
     );
-    console.error(`- Arguments: ${JSON.stringify(r.invariantArgsArb)}`);
+    radio.emit("logFailure", `- Arguments: ${JSON.stringify(r.invariantArgsArb)}`);
 
-    console.error(
+    radio.emit("logFailure",
       `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`
     );
 
@@ -65,6 +66,6 @@ export function reporter(runDetails) {
       .map((line) => "    " + line)
       .join("\n")}\n`;
 
-    console.error(formattedError);
+    radio.emit("logFailure", formattedError);
   }
 }
