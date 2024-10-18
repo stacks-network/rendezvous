@@ -23,7 +23,7 @@ import { Cl } from "@stacks/transactions";
 describe("Command-line arguments handling", () => {
   const initialArgv = process.argv;
   const helpMessage = `
-  Usage: ./rv <path-to-clarinet-project> <contract-name> [--strategy=<strategy>] [--seed=<seed>] [--path=<path>]
+  Usage: ./rv <path-to-clarinet-project> <contract-name> [--type=<type>] [--seed=<seed>] [--path=<path>]
   
   Positional arguments:
     path-to-clarinet-project - The path to the Clarinet project.
@@ -32,7 +32,7 @@ describe("Command-line arguments handling", () => {
   Options:
     --seed - The seed to use for the replay functionality.
     --path - The path to use for the replay functionality.
-    --strategy - The strategy to use for the testing. Possible values: test, invariant. Default: invariant.
+    --type - The type to use for exercising the contracts. Possible values: test, invariant. Default: invariant.
     --help - Show the help message.
   `;
   const noManifestMessage = `\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.`;
