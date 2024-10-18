@@ -598,7 +598,7 @@ const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
 };
 
 const helpMessage = `
-  Usage: ./rv <path-to-clarinet-project> <contract-name> [--strategy=<strategy>] [--seed=<seed>] [--path=<path>]
+  Usage: ./rv <path-to-clarinet-project> <contract-name> [--type=<type>] [--seed=<seed>] [--path=<path>]
   
   Positional arguments:
     path-to-clarinet-project - The path to the Clarinet project.
@@ -607,7 +607,7 @@ const helpMessage = `
   Options:
     --seed - The seed to use for the replay functionality.
     --path - The path to use for the replay functionality.
-    --strategy - The strategy to use for the testing. Possible values: test, invariant. Default: invariant.
+    --type - The type to use for exercising the contracts. Possible values: test, invariant. Default: invariant.
     --help - Show the help message.
   `;
 
@@ -643,12 +643,12 @@ export async function main() {
     radio.emit("logMessage", `Using path: ${path}`);
   }
 
-  const strategy = parseOptionalCommandLineArgument("strategy") || "invariant";
+  const type = parseOptionalCommandLineArgument("type") || "invariant";
 
-  if (strategy !== "invariant" && strategy !== "test") {
+  if (type !== "invariant" && type !== "test") {
     radio.emit(
       "logFailure",
-      `Invalid strategy: ${strategy}. Possible values: test, invariant.`
+      `Invalid type of testing: ${type}. Possible values: test, invariant.`
     );
     radio.emit("logMessage", helpMessage);
     return;
@@ -704,9 +704,9 @@ export async function main() {
 
   const contractsPath = join(manifestDir, "contracts");
 
-  // This is the junction where the magic happens. The proper testing strategy
-  // will start based on the default or user-provided strategy.
-  if (strategy === "invariant") {
+  // This is the junction where the magic happens. The type of testing
+  // will start based on the default or user-provided testing type.
+  if (type === "invariant") {
     const rendezvousData = sutContractIds.map((contractId) =>
       buildRendezvousData(simnet, contractId, contractsPath)
     );
@@ -749,7 +749,7 @@ export async function main() {
 
     radio.emit(
       "logMessage",
-      `Starting invariant testing strategy for the ${sutContractName} contract...\n`
+      `Starting invariant testing type for the ${sutContractName} contract...\n`
     );
     fc.assert(
       fc.property(
