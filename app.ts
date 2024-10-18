@@ -598,7 +598,7 @@ const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
 };
 
 const helpMessage = `
-  Usage: ./rv <path-to-clarinet-project> <contract-name> [--seed=<seed>] [--path=<path>]
+  Usage: ./rv <path-to-clarinet-project> <contract-name> [--strategy=<strategy>] [--seed=<seed>] [--path=<path>]
   
   Positional arguments:
     path-to-clarinet-project - The path to the Clarinet project.
@@ -607,8 +607,17 @@ const helpMessage = `
   Options:
     --seed - The seed to use for the replay functionality.
     --path - The path to use for the replay functionality.
+    --strategy - The strategy to use for the testing. Possible values: test, invariant. Default: invariant.
     --help - Show the help message.
   `;
+
+const parseOptionalCommandLineArgument = (argName: string) => {
+  return process.argv
+    .find(
+      (arg, index) => index >= 4 && arg.toLowerCase().startsWith(`--${argName}`)
+    )
+    ?.split("=")[1];
+};
 
 export async function main() {
   const radio = new EventEmitter();
@@ -624,26 +633,25 @@ export async function main() {
   }
 
   const seed =
-    parseInt(
-      process.argv
-        .find(
-          (arg, index) => index >= 4 && arg.toLowerCase().startsWith("--seed=")
-        )
-        ?.split("=")[1]!,
-      10
-    ) || undefined;
+    parseInt(parseOptionalCommandLineArgument("seed")!, 10) || undefined;
   if (seed !== undefined) {
     radio.emit("logMessage", `Using seed: ${seed}`);
   }
 
-  const path =
-    process.argv
-      .find(
-        (arg, index) => index >= 4 && arg.toLowerCase().startsWith("--path=")
-      )
-      ?.split("=")[1] || undefined;
+  const path = parseOptionalCommandLineArgument("path") || undefined;
   if (path !== undefined) {
     radio.emit("logMessage", `Using path: ${path}`);
+  }
+
+  const strategy = parseOptionalCommandLineArgument("strategy") || "invariant";
+
+  if (strategy !== "invariant" && strategy !== "test") {
+    radio.emit(
+      "logFailure",
+      `Invalid strategy: ${strategy}. Possible values: test, invariant.`
+    );
+    radio.emit("logMessage", helpMessage);
+    return;
   }
 
   // FIXME: Decide if we want to pass only the directory or the full path.
@@ -696,227 +704,236 @@ export async function main() {
 
   const contractsPath = join(manifestDir, "contracts");
 
-  const rendezvousData = sutContractIds.map((contractId) =>
-    buildRendezvousData(simnet, contractId, contractsPath)
-  );
-
-  const rendezvousList = rendezvousData.map((contractData) => {
-    deployRendezvous(
-      simnet,
-      contractData.rendezvousName,
-      contractData.rendezvousSource
+  // This is the junction where the magic happens. The proper testing strategy
+  // will start based on the default or user-provided strategy.
+  if (strategy === "invariant") {
+    const rendezvousData = sutContractIds.map((contractId) =>
+      buildRendezvousData(simnet, contractId, contractsPath)
     );
-    return contractData.rendezvousContractId;
-  });
 
-  const rendezvousInterfaces = filterRendezvousInterfaces(
-    getSimnetDeployerContractsInterfaces(simnet)
-  );
+    const rendezvousList = rendezvousData.map((contractData) => {
+      deployRendezvous(
+        simnet,
+        contractData.rendezvousName,
+        contractData.rendezvousSource
+      );
+      return contractData.rendezvousContractId;
+    });
 
-  const rendezvousAllFunctions =
-    getFunctionsFromContractInterfaces(rendezvousInterfaces);
+    const rendezvousInterfaces = filterRendezvousInterfaces(
+      getSimnetDeployerContractsInterfaces(simnet)
+    );
 
-  // A map where the keys are the Rendezvous names and the values
-  // are arrays of their SUT (System Under Test) functions.
-  const rendezvousSutFunctions = filterSutFunctions(rendezvousAllFunctions);
+    const rendezvousAllFunctions =
+      getFunctionsFromContractInterfaces(rendezvousInterfaces);
 
-  // A map where the keys are the Rendezvous names and the values
-  // are arrays of their invariant functions.
-  const rendezvousInvariantFunctions = filterInvariantFunctions(
-    rendezvousAllFunctions
-  );
+    // A map where the keys are the Rendezvous names and the values
+    // are arrays of their SUT (System Under Test) functions.
+    const rendezvousSutFunctions = filterSutFunctions(rendezvousAllFunctions);
 
-  // Initialize the local context.
-  const localContext = initializeLocalContext(rendezvousSutFunctions);
+    // A map where the keys are the Rendezvous names and the values
+    // are arrays of their invariant functions.
+    const rendezvousInvariantFunctions = filterInvariantFunctions(
+      rendezvousAllFunctions
+    );
 
-  // Initialize the Clarity context.
-  initializeClarityContext(simnet, rendezvousSutFunctions);
+    // Initialize the local context.
+    const localContext = initializeLocalContext(rendezvousSutFunctions);
 
-  const radioReporter = (runDetails: any) => {
-    reporter(runDetails, radio);
-  };
+    // Initialize the Clarity context.
+    initializeClarityContext(simnet, rendezvousSutFunctions);
 
-  fc.assert(
-    fc.property(
-      fc
-        .record({
-          rendezvousContractId: fc.constantFrom(...rendezvousList),
-          sutCaller: fc.constantFrom(
-            ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
-          ),
-          invariantCaller: fc.constantFrom(
-            ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
-          ),
-        })
-        .chain((r) => {
-          const functions = getFunctionsListForContract(
-            rendezvousSutFunctions,
-            r.rendezvousContractId
-          );
-          const invariantFunctions = getFunctionsListForContract(
-            rendezvousInvariantFunctions,
-            r.rendezvousContractId
-          );
+    const radioReporter = (runDetails: any) => {
+      reporter(runDetails, radio);
+    };
 
-          if (functions?.length === 0) {
-            throw new Error(
-              `No public functions found for the "${getContractNameFromRendezvousName(
-                r.rendezvousContractId
-              )}" contract.`
+    radio.emit(
+      "logMessage",
+      `Starting invariant testing strategy for the ${sutContractName} contract...\n`
+    );
+    fc.assert(
+      fc.property(
+        fc
+          .record({
+            rendezvousContractId: fc.constantFrom(...rendezvousList),
+            sutCaller: fc.constantFrom(
+              ...new Map(
+                [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+              ).entries()
+            ),
+            invariantCaller: fc.constantFrom(
+              ...new Map(
+                [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+              ).entries()
+            ),
+          })
+          .chain((r) => {
+            const functions = getFunctionsListForContract(
+              rendezvousSutFunctions,
+              r.rendezvousContractId
             );
-          }
-          if (invariantFunctions?.length === 0) {
-            throw new Error(
-              `No invariant functions found for the "${getContractNameFromRendezvousName(
-                r.rendezvousContractId
-              )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
+            const invariantFunctions = getFunctionsListForContract(
+              rendezvousInvariantFunctions,
+              r.rendezvousContractId
             );
-          }
-          const functionArbitrary = fc.constantFrom(
-            ...(functions as ContractInterfaceFunction[])
-          );
-          // FIXME: For invariants, we have to be able to select a random
-          // number of them (zero or more).
-          const invariantFunctionArbitrary = fc.constantFrom(
-            ...(invariantFunctions as ContractInterfaceFunction[])
-          );
 
-          return fc
-            .record({
-              selectedFunction: functionArbitrary,
-              selectedInvariant: invariantFunctionArbitrary,
-            })
-            .map((selectedFunctions) => ({ ...r, ...selectedFunctions }));
-        })
-        .chain((r) => {
-          const functionArgsArb = functionToArbitrary(
+            if (functions?.length === 0) {
+              throw new Error(
+                `No public functions found for the "${getContractNameFromRendezvousName(
+                  r.rendezvousContractId
+                )}" contract.`
+              );
+            }
+            if (invariantFunctions?.length === 0) {
+              throw new Error(
+                `No invariant functions found for the "${getContractNameFromRendezvousName(
+                  r.rendezvousContractId
+                )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
+              );
+            }
+            const functionArbitrary = fc.constantFrom(
+              ...(functions as ContractInterfaceFunction[])
+            );
+            // FIXME: For invariants, we have to be able to select a random
+            // number of them (zero or more).
+            const invariantFunctionArbitrary = fc.constantFrom(
+              ...(invariantFunctions as ContractInterfaceFunction[])
+            );
+
+            return fc
+              .record({
+                selectedFunction: functionArbitrary,
+                selectedInvariant: invariantFunctionArbitrary,
+              })
+              .map((selectedFunctions) => ({ ...r, ...selectedFunctions }));
+          })
+          .chain((r) => {
+            const functionArgsArb = functionToArbitrary(
+              r.selectedFunction,
+              Array.from(simnet.getAccounts().values())
+            );
+
+            const invariantArgsArb = functionToArbitrary(
+              r.selectedInvariant,
+              Array.from(simnet.getAccounts().values())
+            );
+
+            return fc
+              .record({
+                functionArgsArb: fc.tuple(...functionArgsArb),
+                invariantArgsArb: fc.tuple(...invariantArgsArb),
+              })
+              .map((args) => ({ ...r, ...args }));
+          }),
+        (r) => {
+          const selectedFunctionArgs = argsToCV(
             r.selectedFunction,
-            Array.from(simnet.getAccounts().values())
+            r.functionArgsArb
           );
-
-          const invariantArgsArb = functionToArbitrary(
+          const selectedInvariantArgs = argsToCV(
             r.selectedInvariant,
-            Array.from(simnet.getAccounts().values())
+            r.invariantArgsArb
           );
 
-          return fc
-            .record({
-              functionArgsArb: fc.tuple(...functionArgsArb),
-              invariantArgsArb: fc.tuple(...invariantArgsArb),
+          const printedFunctionArgs = r.functionArgsArb
+            .map((arg) => {
+              try {
+                return typeof arg === "object"
+                  ? JSON.stringify(arg)
+                  : arg.toString();
+              } catch {
+                return "[Circular]";
+              }
             })
-            .map((args) => ({ ...r, ...args }));
-        }),
-      (r) => {
-        const selectedFunctionArgs = argsToCV(
-          r.selectedFunction,
-          r.functionArgsArb
-        );
-        const selectedInvariantArgs = argsToCV(
-          r.selectedInvariant,
-          r.invariantArgsArb
-        );
+            .join(" ");
 
-        const printedFunctionArgs = r.functionArgsArb
-          .map((arg) => {
-            try {
-              return typeof arg === "object"
-                ? JSON.stringify(arg)
-                : arg.toString();
-            } catch {
-              return "[Circular]";
-            }
-          })
-          .join(" ");
+          const [sutCallerWallet, sutCallerAddress] = r.sutCaller;
 
-        const [sutCallerWallet, sutCallerAddress] = r.sutCaller;
-        const { result: functionCallResult } = simnet.callPublicFn(
-          r.rendezvousContractId,
-          r.selectedFunction.name,
-          selectedFunctionArgs,
-          sutCallerAddress
-        );
-
-        const functionCallResultJson = cvToJSON(functionCallResult);
-
-        if (functionCallResultJson.success) {
-          localContext[r.rendezvousContractId][r.selectedFunction.name]++;
-
-          simnet.callPublicFn(
+          const { result: functionCallResult } = simnet.callPublicFn(
             r.rendezvousContractId,
-            "update-context",
-            [
-              Cl.stringAscii(r.selectedFunction.name),
-              Cl.uint(
-                localContext[r.rendezvousContractId][r.selectedFunction.name]
-              ),
-            ],
-            simnet.deployer
+            r.selectedFunction.name,
+            selectedFunctionArgs,
+            sutCallerAddress
           );
+
+          const functionCallResultJson = cvToJSON(functionCallResult);
+
+          if (functionCallResultJson.success) {
+            localContext[r.rendezvousContractId][r.selectedFunction.name]++;
+
+            simnet.callPublicFn(
+              r.rendezvousContractId,
+              "update-context",
+              [
+                Cl.stringAscii(r.selectedFunction.name),
+                Cl.uint(
+                  localContext[r.rendezvousContractId][r.selectedFunction.name]
+                ),
+              ],
+              simnet.deployer
+            );
+
+            radio.emit(
+              "logMessage",
+              ` ✔ ${sutCallerWallet} ${getContractNameFromRendezvousName(
+                r.rendezvousContractId
+              )} ${r.selectedFunction.name} ${printedFunctionArgs}\n`
+            );
+          } else {
+            radio.emit(
+              "logMessage",
+              ` ✗ ${sutCallerWallet} ${getContractNameFromRendezvousName(
+                r.rendezvousContractId
+              )} ${r.selectedFunction.name} ${printedFunctionArgs}\n`
+            );
+          }
+
+          const printedInvariantArgs = r.invariantArgsArb
+            .map((arg) => {
+              try {
+                return typeof arg === "object"
+                  ? JSON.stringify(arg)
+                  : arg.toString();
+              } catch {
+                return "[Circular]";
+              }
+            })
+            .join(" ");
+
+          radio.emit("logMessage", "Checking invariants...\n");
+
+          const [invariantCallerWallet, invariantCallerAddress] =
+            r.invariantCaller;
+          const { result: invariantCallResult } = simnet.callReadOnlyFn(
+            r.rendezvousContractId,
+            r.selectedInvariant.name,
+            selectedInvariantArgs,
+            invariantCallerAddress
+          );
+
+          const invariantCallResultJson = cvToJSON(invariantCallResult);
 
           radio.emit(
             "logMessage",
-            ` ✔ ${sutCallerWallet} ${getContractNameFromRendezvousName(
+            `🤺 ${invariantCallerWallet} ${getContractNameFromRendezvousName(
               r.rendezvousContractId
-            )} ${r.selectedFunction.name} ${printedFunctionArgs}`
+            )} ${r.selectedInvariant.name} ${printedInvariantArgs}\n`
           );
-        } else {
-          radio.emit(
-            "logMessage",
-            ` ✗ ${sutCallerWallet} ${getContractNameFromRendezvousName(
-              r.rendezvousContractId
-            )} ${r.selectedFunction.name} ${printedFunctionArgs}`
-          );
+
+          if (!invariantCallResultJson.value) {
+            throw new Error(
+              `Invariant failed for ${getContractNameFromRendezvousName(
+                r.rendezvousContractId
+              )} contract: "${r.selectedInvariant.name}" returned ${
+                invariantCallResultJson.value
+              }`
+            );
+          }
         }
-
-        const printedInvariantArgs = r.invariantArgsArb
-          .map((arg) => {
-            try {
-              return typeof arg === "object"
-                ? JSON.stringify(arg)
-                : arg.toString();
-            } catch {
-              return "[Circular]";
-            }
-          })
-          .join(" ");
-
-        radio.emit("logMessage", "\nChecking invariants...");
-
-        const [invariantCallerWallet, invariantCallerAddress] =
-          r.invariantCaller;
-        const { result: invariantCallResult } = simnet.callReadOnlyFn(
-          r.rendezvousContractId,
-          r.selectedInvariant.name,
-          selectedInvariantArgs,
-          invariantCallerAddress
-        );
-
-        const invariantCallResultJson = cvToJSON(invariantCallResult);
-
-        radio.emit(
-          "logMessage",
-          `🤺 ${invariantCallerWallet} ${getContractNameFromRendezvousName(
-            r.rendezvousContractId
-          )} ${r.selectedInvariant.name} ${printedInvariantArgs} \n`
-        );
-
-        if (!invariantCallResultJson.value) {
-          throw new Error(
-            `Invariant failed for ${getContractNameFromRendezvousName(
-              r.rendezvousContractId
-            )} contract: "${r.selectedInvariant.name}" returned ${
-              invariantCallResultJson.value
-            }`
-          );
-        }
-      }
-    ),
-    { verbose: true, reporter: radioReporter, seed: seed, path: path },
-  );
+      ),
+      { verbose: true, reporter: radioReporter, seed: seed, path: path }
+    );
+  }
 }
 
 if (require.main === module) {
