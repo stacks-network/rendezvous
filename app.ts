@@ -1090,7 +1090,9 @@ export async function main() {
 
       // A map where the keys are the Rendezvous names and the values
       // are arrays of their invariant functions.
-      const testFunctions = filterTestFunctions(testContractsAllFunctions);
+      const testContractsTestFunctions = filterTestFunctions(
+        testContractsAllFunctions
+      );
 
       // TODO: Reporter needed. We can either add a conditional to the existing
       // reporter or create a new one.
@@ -1116,7 +1118,7 @@ export async function main() {
             })
             .chain((r) => {
               const testFunctionsList = getFunctionsListForContract(
-                testFunctions,
+                testContractsTestFunctions,
                 r.testContractId
               );
 
