@@ -14,6 +14,11 @@ import {
   initializeClarityContext,
   initializeLocalContext,
   main,
+  deriveTestContractName,
+  getTestsContractSource,
+  buildTestData,
+  deployTestContract,
+  filterTestContractsInterfaces,
 } from "../app";
 import fc from "fast-check";
 import fs from "fs";
@@ -114,6 +119,7 @@ describe("Command-line arguments handling", () => {
       [
         `Using manifest path: example/Clarinet.toml`,
         `Target contract: counter`,
+        `Starting invariant testing type for the counter contract...\n`,
       ],
     ],
     [
@@ -123,6 +129,7 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: example/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
+        `Starting invariant testing type for the counter contract...\n`,
       ],
     ],
     [
@@ -133,6 +140,7 @@ describe("Command-line arguments handling", () => {
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
+        `Starting invariant testing type for the counter contract...\n`,
       ],
     ],
     [
@@ -142,6 +150,63 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: example/Clarinet.toml`,
         `Target contract: counter`,
         `Using path: 84:0`,
+        `Starting invariant testing type for the counter contract...\n`,
+      ],
+    ],
+    [
+      ["manifest path", "contract name", "type=invariant"],
+      ["node", "app.js", "example", "counter", "--type=invariant"],
+      [
+        `Using manifest path: example/Clarinet.toml`,
+        `Target contract: counter`,
+        `Starting invariant testing type for the counter contract...\n`,
+      ],
+    ],
+    [
+      ["manifest path", "contract name", "type=test"],
+      ["node", "app.js", "example", "counter", "--type=test"],
+      [
+        `Using manifest path: example/Clarinet.toml`,
+        `Target contract: counter`,
+        `Starting property testing type for the counter contract...\n`,
+      ],
+    ],
+    [
+      ["manifest path", "contract name", "seed", "path", "type=test"],
+      [
+        "node",
+        "app.js",
+        "example",
+        "counter",
+        "--seed=123",
+        "--path=84:0",
+        "--type=test",
+      ],
+      [
+        `Using manifest path: example/Clarinet.toml`,
+        `Target contract: counter`,
+        `Using seed: 123`,
+        `Using path: 84:0`,
+        `Starting property testing type for the counter contract...\n`,
+      ],
+    ],
+    [
+      ["manifest path", "contract name", "seed", "path", "type=invariant"],
+      [
+        "node",
+        "app.js",
+        "example",
+        "counter",
+        "--seed=123",
+        "--path=84:0",
+        "--type=test",
+      ],
+      [
+        `Using manifest path: example/Clarinet.toml`,
+        `Target contract: counter`,
+        `Using seed: 123`,
+        `Using path: 84:0`,
+        `Starting property testing type for the counter contract...\n`,
       ],
     ],
   ])(
@@ -215,6 +280,26 @@ describe("Successfully schedules rendez-vous", () => {
     );
   });
 
+  it("generates test contract name", () => {
+    const addressCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const contractNameCharset =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    fc.assert(
+      // Arrange
+      fc.property(
+        fc.stringOf(fc.constantFrom(...addressCharset)),
+        fc.stringOf(fc.constantFrom(...contractNameCharset)),
+        (address, contractName) => {
+          // Act
+          const actual = deriveTestContractName(`${address}.${contractName}`);
+          // Assert
+          const expected = `${contractName}_tests`;
+          expect(actual).toBe(expected);
+        }
+      )
+    );
+  });
+
   it("gets contract name from Rendezvous contract name", () => {
     const addressCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     const contractNameCharset =
@@ -265,6 +350,28 @@ describe("File stream operations", () => {
     expect(actualInvariantContractSources).toEqual(
       expectedInvariantContractSources
     );
+  });
+
+  it("retrieves the test contract source", async () => {
+    // Arrange
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
+    const contractsPath = resolve(__dirname, "../example/contracts");
+    const simnet = await initSimnet(manifestPath);
+    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+    const sutContractsList = Array.from(sutContractsInterfaces.keys());
+    const expectedTestContractSources = sutContractsList.map((contractName) => {
+      const testContractName = `${contractName.split(".")[1]}.tests`;
+      const testContractPath = `${contractsPath}/${testContractName}.clar`;
+      return fs.readFileSync(testContractPath).toString();
+    });
+
+    // Act
+    const actualTestContractSources = sutContractsList.map((contractName) =>
+      getTestsContractSource(contractsPath, contractName)
+    );
+
+    // Assert
+    expect(actualTestContractSources).toEqual(expectedTestContractSources);
   });
 });
 
@@ -373,6 +480,38 @@ describe("Simnet contracts operations", () => {
     expect(actualRendezvousData).toEqual(expectedRendezvousData);
   });
 
+  it("retrieves test contracts data", async () => {
+    // Arrange
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
+    const contractsPath = resolve(__dirname, "../example/contracts");
+    const simnet = await initSimnet(manifestPath);
+    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+    const sutContractsList = Array.from(sutContractsInterfaces.keys());
+
+    const expectedTestContractsData = sutContractsList.map((contractId) => {
+      const testContractName = deriveTestContractName(contractId);
+
+      const testsContractSource = getTestsContractSource(
+        contractsPath,
+        contractId
+      );
+
+      return {
+        testContractName,
+        testsContractSource,
+        testsContractId: `${simnet.deployer}.${testContractName}`,
+      };
+    });
+
+    // Act
+    const actualTestsContractsData = sutContractsList.map((contractName) =>
+      buildTestData(simnet, contractName, contractsPath)
+    );
+
+    // Assert
+    expect(actualTestsContractsData).toEqual(expectedTestContractsData);
+  });
+
   it("deploys Rendezvous contracts to the simnet", async () => {
     // Arrange
     const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
@@ -409,6 +548,47 @@ describe("Simnet contracts operations", () => {
     });
 
     // Ensure there are exactly double the number of original contracts (pre-deployment and Rendezvous)
+    expect(actualSimnetContractsListAfterDeploy).toHaveLength(
+      2 * sutContractsList.length
+    );
+  });
+
+  it("deploys test contracts to the simnet", async () => {
+    // Arrange
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
+    const contractsPath = resolve(__dirname, "../example/contracts");
+    const simnet = await initSimnet(manifestPath);
+    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+    const sutContractsList = Array.from(sutContractsInterfaces.keys());
+    const testContractsData = sutContractsList.map((contractName) =>
+      buildTestData(simnet, contractName, contractsPath)
+    );
+
+    // Act
+    testContractsData.forEach((contractData) => {
+      deployTestContract(
+        simnet,
+        contractData.testContractName,
+        contractData.testsContractSource
+      );
+    });
+
+    // Re-fetch contract interfaces to check after deployment
+    const actualSimnetContractsInterfacesAfterDeploy =
+      getSimnetDeployerContractsInterfaces(simnet);
+    const actualSimnetContractsListAfterDeploy = Array.from(
+      actualSimnetContractsInterfacesAfterDeploy.keys()
+    );
+
+    // Assert
+    // Check if all expected test contracts are present in the result
+    testContractsData.forEach((contractData) => {
+      expect(actualSimnetContractsListAfterDeploy).toContain(
+        contractData.testsContractId
+      );
+    });
+
+    // Ensure there are exactly double the number of original contracts (pre-deployment and test)
     expect(actualSimnetContractsListAfterDeploy).toHaveLength(
       2 * sutContractsList.length
     );
@@ -494,6 +674,39 @@ describe("Simnet contracts operations", () => {
 
     // Assert
     expect(actualRendezvousList).toEqual(expectedRendezvousList);
+  });
+
+  it("correctly filters the test contracts interfaces", async () => {
+    // Arrange
+    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
+    const contractsPath = resolve(__dirname, "../example/contracts");
+    const simnet = await initSimnet(manifestPath);
+    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+    const sutContractsList = Array.from(sutContractsInterfaces.keys());
+    const testContractsData = sutContractsList.map((contractName) =>
+      buildTestData(simnet, contractName, contractsPath)
+    );
+    const expectedTestContractsList = testContractsData
+      .map((contractData) => {
+        deployTestContract(
+          simnet,
+          contractData.testContractName,
+          contractData.testsContractSource
+        );
+        return contractData.testsContractId;
+      })
+      .sort();
+
+    // Act
+    const testContractsInterfaces = filterTestContractsInterfaces(
+      getSimnetDeployerContractsInterfaces(simnet)
+    );
+    const actualTestContractsList = Array.from(
+      testContractsInterfaces.keys()
+    ).sort();
+
+    // Assert
+    expect(actualTestContractsList).toEqual(expectedTestContractsList);
   });
 
   it("correctly initializes the Clarity context", async () => {

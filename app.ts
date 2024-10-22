@@ -357,6 +357,20 @@ export const filterRendezvousInterfaces = (
   );
 
 /**
+ * Filter the test contracts interfaces from the contracts interfaces map.
+ * @param contractsInterfaces The contracts interfaces map.
+ * @returns The test contracts interfaces.
+ */
+export const filterTestContractsInterfaces = (
+  contractsInterfaces: Map<string, ContractInterface>
+) =>
+  new Map(
+    Array.from(contractsInterfaces).filter(([contractId]) =>
+      contractId.endsWith("_tests")
+    )
+  );
+
+/**
  * Get the functions from the smart contract interfaces.
  * @param contractsInterfaces The smart contract interfaces map.
  * @returns A map containing the contracts functions.
@@ -400,6 +414,18 @@ const filterInvariantFunctions = (
       contractId,
       functions.filter(
         (f) => f.access === "read_only" && f.name.startsWith("invariant-")
+      ),
+    ])
+  );
+
+const filterTestFunctions = (
+  allFunctionsMap: Map<string, ContractInterfaceFunction[]>
+) =>
+  new Map(
+    Array.from(allFunctionsMap, ([contractId, functions]) => [
+      contractId,
+      functions.filter(
+        (f) => f.access === "public" && f.name.startsWith("test-")
       ),
     ])
   );
@@ -450,12 +476,48 @@ export const getInvariantContractSource = (
 };
 
 /**
+ * Get the tests contract source code.
+ * @param contractsPath The contracts path.
+ * @param sutContractId The corresponding contract identifier.
+ * @returns The tests contract source code.
+ */
+export const getTestsContractSource = (
+  contractsPath: string,
+  sutContractId: string
+) => {
+  // FIXME: Here, we can encounter a failure if the contract file name is
+  // not the same as the contract name in the manifest.
+  // Example:
+  // - Contract name in the manifest: [contracts.counter]
+  // - Contract file name: path = "contracts/counter.clar"
+  const testsContractName = `${sutContractId.split(".")[1]}.tests.clar`;
+  const testsContractPath = join(contractsPath, testsContractName);
+  try {
+    return fs.readFileSync(testsContractPath).toString();
+  } catch (e: any) {
+    throw new Error(
+      `Error retrieving the test contract for the "${
+        sutContractId.split(".")[1]
+      }" contract. ${e.message}`
+    );
+  }
+};
+
+/**
  * Derive the Rendezvous name.
  * @param contractId The contract name.
  * @returns The Rendezvous name.
  */
 export const deriveRendezvousName = (contractId: string) =>
   `${contractId.split(".")[1]}_rendezvous`;
+
+/**
+ * Derive the test contract name.
+ * @param contractId The contract identifier.
+ * @returns The test contract name.
+ */
+export const deriveTestContractName = (contractId: string) =>
+  `${contractId.split(".")[1]}_tests`;
 
 /**
  * Get the contract name from the Rendezvous name.
@@ -517,6 +579,41 @@ export const buildRendezvousData = (
   } catch (e: any) {
     throw new Error(
       `Error processing contract ${contractId.split(".")[1]}: ${e.message}`
+    );
+  }
+};
+
+/**
+ * Build the test contract data.
+ * @param simnet The simnet instance.
+ * @param contractId The contract identifier.
+ * @param contractsPath The contracts path.
+ * @returns The test contract data representing an object. The returned object
+ * contains the test contract name, the test contract source code, and the test
+ * contract identifier. This data is used to deploy the test contract to the
+ * simnet in a later step.
+ */
+export const buildTestData = (
+  simnet: Simnet,
+  contractId: string,
+  contractsPath: string
+) => {
+  const testContractName = deriveTestContractName(contractId);
+
+  try {
+    const testsContractSource = getTestsContractSource(
+      contractsPath,
+      contractId
+    );
+
+    return {
+      testContractName,
+      testsContractSource,
+      testsContractId: `${simnet.deployer}.${testContractName}`,
+    };
+  } catch (e: any) {
+    throw new Error(
+      `Error processing test contract ${testContractName}: ${e.message}`
     );
   }
 };
@@ -584,6 +681,34 @@ export const deployRendezvous = (
         "_rendezvous",
         ""
       )}.invariant.clar:\n${e}`
+    );
+  }
+};
+
+/**
+ * Deploy the test contract to the simnet.
+ * @param simnet The simnet instance.
+ * @param testContractName The test contract name.
+ * @param testContractSource The test contract source code.
+ */
+export const deployTestContract = (
+  simnet: Simnet,
+  testContractName: string,
+  testContractSource: string
+) => {
+  try {
+    simnet.deployContract(
+      testContractName,
+      testContractSource,
+      { clarityVersion: 2 },
+      simnet.deployer
+    );
+  } catch (e: any) {
+    throw new Error(
+      `Something went wrong. Please double check the tests contract: ${testContractName.replace(
+        "_tests",
+        ""
+      )}.tests.clar:\n${e}`
     );
   }
 };
@@ -936,6 +1061,154 @@ export async function main() {
         ),
         { verbose: true, reporter: radioReporter, seed: seed, path: path }
       );
+      break;
+    }
+    case "test": {
+      const testData = sutContractIds.map((contractId) =>
+        buildTestData(simnet, contractId, contractsPath)
+      );
+
+      const testContractsList = testData.map((contractData) => {
+        deployTestContract(
+          simnet,
+          contractData.testContractName,
+          contractData.testsContractSource
+        );
+        return contractData.testsContractId;
+      });
+
+      const testContractsInterfaces = filterTestContractsInterfaces(
+        getSimnetDeployerContractsInterfaces(simnet)
+      );
+
+      const testContractsAllFunctions = getFunctionsFromContractInterfaces(
+        testContractsInterfaces
+      );
+
+      // A map where the keys are the Rendezvous names and the values
+      // are arrays of their invariant functions.
+      const testFunctions = filterTestFunctions(testContractsAllFunctions);
+
+      // TODO: Reporter needed. We can either add a conditional to the existing
+      // reporter or create a new one.
+      const _radioReporter = (runDetails: any) => {
+        reporter(runDetails, radio);
+      };
+
+      radio.emit(
+        "logMessage",
+        `Starting property testing type for the ${sutContractName} contract...\n`
+      );
+
+      fc.assert(
+        fc.property(
+          fc
+            .record({
+              testContractId: fc.constantFrom(...testContractsList),
+              sutCaller: fc.constantFrom(
+                ...new Map(
+                  [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+                ).entries()
+              ),
+            })
+            .chain((r) => {
+              const testFunctionsList = getFunctionsListForContract(
+                testFunctions,
+                r.testContractId
+              );
+
+              if (testFunctionsList?.length === 0) {
+                throw new Error(
+                  `No test functions found for the "${getContractNameFromRendezvousName(
+                    r.testContractId
+                  )}" contract.`
+                );
+              }
+              const testFunctionArbitrary = fc.constantFrom(
+                ...(testFunctionsList as ContractInterfaceFunction[])
+              );
+
+              return fc
+                .record({
+                  selectedTestFunction: testFunctionArbitrary,
+                })
+                .map((selectedTestFunction) => ({
+                  ...r,
+                  ...selectedTestFunction,
+                }));
+            })
+            .chain((r) => {
+              const functionArgsArb = functionToArbitrary(
+                r.selectedTestFunction,
+                Array.from(simnet.getAccounts().values())
+              );
+
+              return fc
+                .record({
+                  functionArgsArb: fc.tuple(...functionArgsArb),
+                })
+                .map((args) => ({ ...r, ...args }));
+            }),
+          (r) => {
+            const selectedTestFunctionArgs = argsToCV(
+              r.selectedTestFunction,
+              r.functionArgsArb
+            );
+
+            const printedTestFunctionArgs = r.functionArgsArb
+              .map((arg) => {
+                try {
+                  return typeof arg === "object"
+                    ? JSON.stringify(arg)
+                    : arg.toString();
+                } catch {
+                  return "[Circular]";
+                }
+              })
+              .join(" ");
+
+            const [testCallerWallet, testCallerAddress] = r.sutCaller;
+            const { result: testFunctionCallResult } = simnet.callPublicFn(
+              r.testContractId,
+              r.selectedTestFunction.name,
+              selectedTestFunctionArgs,
+              testCallerAddress
+            );
+
+            const testFunctionCallResultJson = cvToJSON(testFunctionCallResult);
+
+            if (
+              testFunctionCallResultJson.success &&
+              testFunctionCallResultJson.value.value === true
+            ) {
+              radio.emit(
+                "logMessage",
+                ` ✔ ${testCallerWallet} ${getContractNameFromRendezvousName(
+                  r.testContractId
+                )} ${r.selectedTestFunction.name} ${printedTestFunctionArgs}\n`
+              );
+            } else {
+              radio.emit(
+                "logMessage",
+                ` ✗ ${testCallerWallet} ${getContractNameFromRendezvousName(
+                  r.testContractId
+                )} ${r.selectedTestFunction.name} ${printedTestFunctionArgs}\n`
+              );
+              throw new Error(
+                `Test failed for ${getContractNameFromRendezvousName(
+                  r.testContractId
+                )} contract: "${r.selectedTestFunction.name}" returned ${
+                  testFunctionCallResultJson.value.value
+                }`
+              );
+            }
+          }
+        ),
+        // TODO: Reporter needed. We can either add a conditional to the existing
+        // reporter or create a new one.
+        { verbose: true, seed: seed, path: path }
+      );
+      break;
     }
   }
 }
