@@ -332,18 +332,16 @@ describe("File stream operations", () => {
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
     const expectedInvariantContractSources = sutContractsList.map(
-      (contractName) => {
-        const invariantContractName = `${
-          contractName.split(".")[1]
-        }.invariants`;
+      (contractId) => {
+        const invariantContractName = `${contractId.split(".")[1]}.invariants`;
         const invariantContractPath = `${contractsPath}/${invariantContractName}.clar`;
         return fs.readFileSync(invariantContractPath).toString();
       }
     );
 
     // Act
-    const actualInvariantContractSources = sutContractsList.map(
-      (contractName) => getInvariantContractSource(contractsPath, contractName)
+    const actualInvariantContractSources = sutContractsList.map((contractId) =>
+      getInvariantContractSource(contractsPath, contractId)
     );
 
     // Assert
@@ -359,15 +357,15 @@ describe("File stream operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const expectedTestContractSources = sutContractsList.map((contractName) => {
-      const testContractName = `${contractName.split(".")[1]}.tests`;
+    const expectedTestContractSources = sutContractsList.map((contractId) => {
+      const testContractName = `${contractId.split(".")[1]}.tests`;
       const testContractPath = `${contractsPath}/${testContractName}.clar`;
       return fs.readFileSync(testContractPath).toString();
     });
 
     // Act
-    const actualTestContractSources = sutContractsList.map((contractName) =>
-      getTestsContractSource(contractsPath, contractName)
+    const actualTestContractSources = sutContractsList.map((contractId) =>
+      getTestsContractSource(contractsPath, contractId)
     );
 
     // Assert
@@ -403,13 +401,13 @@ describe("Simnet contracts operations", () => {
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
 
-    const expectedContractSources = sutContractsList.map((contractName) =>
-      simnet.getContractSource(contractName)
+    const expectedContractSources = sutContractsList.map((contractId) =>
+      simnet.getContractSource(contractId)
     );
 
     // Act
-    const actualContractSources = sutContractsList.map((contractName) =>
-      getSimnetContractSource(simnet, contractName)
+    const actualContractSources = sutContractsList.map((contractId) =>
+      getSimnetContractSource(simnet, contractId)
     );
 
     // Assert
@@ -423,21 +421,18 @@ describe("Simnet contracts operations", () => {
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
     const allFunctionsMap = new Map(
-      Array.from(
-        sutContractsInterfaces,
-        ([contractName, contractInterface]) => [
-          contractName,
-          contractInterface.functions,
-        ]
-      )
+      Array.from(sutContractsInterfaces, ([contractId, contractInterface]) => [
+        contractId,
+        contractInterface.functions,
+      ])
     );
     const expectedContractFunctionsList = sutContractsList.map(
-      (contractName) => allFunctionsMap.get(contractName) || []
+      (contractId) => allFunctionsMap.get(contractId) || []
     );
 
     // Act
-    const actualContractFunctionsList = sutContractsList.map((contractName) =>
-      getFunctionsListForContract(allFunctionsMap, contractName)
+    const actualContractFunctionsList = sutContractsList.map((contractId) =>
+      getFunctionsListForContract(allFunctionsMap, contractId)
     );
 
     // Assert
@@ -452,17 +447,17 @@ describe("Simnet contracts operations", () => {
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
 
-    const expectedRendezvousData = sutContractsList.map((contractName) => {
-      const sutContractSource = getSimnetContractSource(simnet, contractName);
+    const expectedRendezvousData = sutContractsList.map((contractId) => {
+      const sutContractSource = getSimnetContractSource(simnet, contractId);
       const invariantContractSource = getInvariantContractSource(
         contractsPath,
-        contractName
+        contractId
       );
       const rendezvousSource = scheduleRendezvous(
         sutContractSource!,
         invariantContractSource
       );
-      const rendezvousName = deriveRendezvousName(contractName);
+      const rendezvousName = deriveRendezvousName(contractId);
 
       return {
         rendezvousName,
@@ -472,8 +467,8 @@ describe("Simnet contracts operations", () => {
     });
 
     // Act
-    const actualRendezvousData = sutContractsList.map((contractName) =>
-      buildRendezvousData(simnet, contractName, contractsPath)
+    const actualRendezvousData = sutContractsList.map((contractId) =>
+      buildRendezvousData(simnet, contractId, contractsPath)
     );
 
     // Assert
@@ -504,8 +499,8 @@ describe("Simnet contracts operations", () => {
     });
 
     // Act
-    const actualTestsContractsData = sutContractsList.map((contractName) =>
-      buildTestData(simnet, contractName, contractsPath)
+    const actualTestsContractsData = sutContractsList.map((contractId) =>
+      buildTestData(simnet, contractId, contractsPath)
     );
 
     // Assert
@@ -519,8 +514,8 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const rendezvousData = sutContractsList.map((contractName) =>
-      buildRendezvousData(simnet, contractName, contractsPath)
+    const rendezvousData = sutContractsList.map((contractId) =>
+      buildRendezvousData(simnet, contractId, contractsPath)
     );
 
     // Act
@@ -560,8 +555,8 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const testContractsData = sutContractsList.map((contractName) =>
-      buildTestData(simnet, contractName, contractsPath)
+    const testContractsData = sutContractsList.map((contractId) =>
+      buildTestData(simnet, contractId, contractsPath)
     );
 
     // Act
@@ -600,13 +595,10 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const expectedAllFunctionsMap = new Map(
-      Array.from(
-        sutContractsInterfaces,
-        ([contractName, contractInterface]) => [
-          contractName,
-          contractInterface.functions,
-        ]
-      )
+      Array.from(sutContractsInterfaces, ([contractId, contractInterface]) => [
+        contractId,
+        contractInterface.functions,
+      ])
     );
 
     // Act
@@ -629,8 +621,8 @@ describe("Simnet contracts operations", () => {
 
     const expectedInitialContext = Object.fromEntries(
       Array.from(sutContractsAllFunctions.entries()).map(
-        ([contractName, functions]) => [
-          contractName,
+        ([contractId, functions]) => [
+          contractId,
           Object.fromEntries(functions.map((f) => [f.name, 0])),
         ]
       )
@@ -652,8 +644,8 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const rendezvousData = sutContractsList.map((contractName) =>
-      buildRendezvousData(simnet, contractName, contractsPath)
+    const rendezvousData = sutContractsList.map((contractId) =>
+      buildRendezvousData(simnet, contractId, contractsPath)
     );
     const expectedRendezvousList = rendezvousData
       .map((contractData) => {
@@ -683,8 +675,8 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const testContractsData = sutContractsList.map((contractName) =>
-      buildTestData(simnet, contractName, contractsPath)
+    const testContractsData = sutContractsList.map((contractId) =>
+      buildTestData(simnet, contractId, contractsPath)
     );
     const expectedTestContractsList = testContractsData
       .map((contractData) => {
@@ -716,8 +708,8 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const rendezvousData = sutContractsList.map((contractName) =>
-      buildRendezvousData(simnet, contractName, contractsPath)
+    const rendezvousData = sutContractsList.map((contractId) =>
+      buildRendezvousData(simnet, contractId, contractsPath)
     );
     rendezvousData.forEach((contractData) => {
       deployRendezvous(
@@ -736,10 +728,10 @@ describe("Simnet contracts operations", () => {
     // initialized to 0.
     const expectedClarityValue = Cl.some(Cl.tuple({ called: Cl.uint(0) }));
     const expectedContext = Array.from(rendezvousAllFunctions).flatMap(
-      ([contractName, functions]) =>
+      ([contractId, functions]) =>
         functions.map((f) => {
           return {
-            contractName,
+            contractId,
             functionName: f.name,
             called: expectedClarityValue,
           };
@@ -750,14 +742,18 @@ describe("Simnet contracts operations", () => {
     initializeClarityContext(simnet, rendezvousAllFunctions);
 
     const actualContext = Array.from(rendezvousAllFunctions).flatMap(
-      ([contractName, functions]) =>
+      ([contractId, functions]) =>
         functions.map((f) => {
           const actualValue = simnet.getMapEntry(
-            contractName,
+            contractId,
             "context",
             Cl.stringAscii(f.name)
           );
-          return { contractName, functionName: f.name, called: actualValue };
+          return {
+            contractId,
+            functionName: f.name,
+            called: actualValue,
+          };
         })
     );
 

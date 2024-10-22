@@ -43,7 +43,7 @@ type ParameterType = BaseType | ComplexType;
 /**
  * LocalContext is a data structure used to track the number of times each SUT
  * function is called for every contract. It is a nested map where:
- * - The outer key is the contract name.
+ * - The outer key is the contract identifier.
  * - The inner key is the SUT function name within the contract.
  * - The value is the count of times the SUT function has been invoked.
  */
@@ -433,7 +433,7 @@ const filterTestFunctions = (
 /**
  * Get contract source code from the simnet.
  * @param simnet The simnet instance.
- * @param sutContractId The contract name.
+ * @param sutContractId The contract identifier.
  * @returns The contract source code.
  */
 export const getSimnetContractSource = (
@@ -448,7 +448,7 @@ export const getSimnetContractSource = (
 /**
  * Get the invariant contract source code.
  * @param contractsPath The contracts path.
- * @param sutContractId The corresponding contract name.
+ * @param sutContractId The corresponding contract identifier.
  * @returns The invariant contract source code.
  */
 export const getInvariantContractSource = (
@@ -458,7 +458,7 @@ export const getInvariantContractSource = (
   // FIXME: Here, we can encounter a failure if the contract file name is
   // not the same as the contract name in the manifest.
   // Example:
-  // - Contract name in the manifest: [contracts.counter]
+  // - Contract name in the manifest: [contracts.counter-xyz]
   // - Contract file name: path = "contracts/counter.clar"
   const invariantContractName = `${
     sutContractId.split(".")[1]
@@ -485,10 +485,10 @@ export const getTestsContractSource = (
   contractsPath: string,
   sutContractId: string
 ) => {
-  // FIXME: Here, we can encounter a failure if the contract file name is
-  // not the same as the contract name in the manifest.
+  // FIXME: Here, we can encounter a failure if the contract file name does
+  // not match the contract name in the manifest.
   // Example:
-  // - Contract name in the manifest: [contracts.counter]
+  // - Contract name in the manifest: [contracts.counter-xyz]
   // - Contract file name: path = "contracts/counter.clar"
   const testsContractName = `${sutContractId.split(".")[1]}.tests.clar`;
   const testsContractPath = join(contractsPath, testsContractName);
@@ -505,7 +505,7 @@ export const getTestsContractSource = (
 
 /**
  * Derive the Rendezvous name.
- * @param contractId The contract name.
+ * @param contractId The contract identifier.
  * @returns The Rendezvous name.
  */
 export const deriveRendezvousName = (contractId: string) =>
@@ -550,9 +550,12 @@ export function scheduleRendezvous(
 /**
  * Build the Rendezvous data.
  * @param simnet The simnet instance.
- * @param contractId The contract name.
+ * @param contractId The contract identifier.
  * @param contractsPath The contracts path.
- * @returns The Rendezvous data.
+ * @returns The Rendezvous data representing an object. The returned object
+ * contains the Rendezvous name, the Rendezvous source code, and the Rendezvous
+ * contract identifier. This data is used to deploy the Rendezvous to the simnet
+ * in a later step.
  */
 export const buildRendezvousData = (
   simnet: Simnet,
