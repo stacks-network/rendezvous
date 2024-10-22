@@ -260,7 +260,7 @@ describe("Successfully schedules rendez-vous", () => {
     );
   });
 
-  it("generates Rendezvous contract name", () => {
+  it("derives the Rendezvous contract name", () => {
     const addressCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     const contractNameCharset =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -280,7 +280,7 @@ describe("Successfully schedules rendez-vous", () => {
     );
   });
 
-  it("generates test contract name", () => {
+  it("derives the test contract name", () => {
     const addressCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     const contractNameCharset =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -568,7 +568,7 @@ describe("Simnet contracts operations", () => {
       );
     });
 
-    // Re-fetch contract interfaces to check after deployment
+    // Re-fetch contract interfaces to check after deployment.
     const actualSimnetContractsInterfacesAfterDeploy =
       getSimnetDeployerContractsInterfaces(simnet);
     const actualSimnetContractsListAfterDeploy = Array.from(
@@ -576,14 +576,15 @@ describe("Simnet contracts operations", () => {
     );
 
     // Assert
-    // Check if all expected test contracts are present in the result
+    // Check if all expected test contracts are present in the result.
     testContractsData.forEach((contractData) => {
       expect(actualSimnetContractsListAfterDeploy).toContain(
         contractData.testsContractId
       );
     });
 
-    // Ensure there are exactly double the number of original contracts (pre-deployment and test)
+    // Ensure there are exactly double the number of
+    // original contracts (pre-deployment and test).
     expect(actualSimnetContractsListAfterDeploy).toHaveLength(
       2 * sutContractsList.length
     );
