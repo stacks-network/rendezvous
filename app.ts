@@ -520,12 +520,12 @@ export const deriveTestContractName = (contractId: string) =>
   `${contractId.split(".")[1]}_tests`;
 
 /**
- * Get the contract name from the Rendezvous name.
- * @param rendezvousName The Rendezvous name.
+ * Get the contract name from the Rendezvous identifier.
+ * @param rendezvousId The Rendezvous contract identifier.
  * @returns The contract name.
  */
-export const getContractNameFromRendezvousName = (rendezvousName: string) =>
-  rendezvousName.split(".")[1].replace("_rendezvous", "");
+export const getContractNameFromRendezvousId = (rendezvousId: string) =>
+  rendezvousId.split(".")[1].replace("_rendezvous", "");
 
 export function scheduleRendezvous(
   contract: string,
@@ -828,14 +828,14 @@ const runInvariantTesting = (
 
           if (functions?.length === 0) {
             throw new Error(
-              `No public functions found for the "${getContractNameFromRendezvousName(
+              `No public functions found for the "${getContractNameFromRendezvousId(
                 r.rendezvousContractId
               )}" contract.`
             );
           }
           if (invariantFunctions?.length === 0) {
             throw new Error(
-              `No invariant functions found for the "${getContractNameFromRendezvousName(
+              `No invariant functions found for the "${getContractNameFromRendezvousId(
                 r.rendezvousContractId
               )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
             );
@@ -924,14 +924,14 @@ const runInvariantTesting = (
 
           radio.emit(
             "logMessage",
-            ` ✔ ${sutCallerWallet} ${getContractNameFromRendezvousName(
+            ` ✔ ${sutCallerWallet} ${getContractNameFromRendezvousId(
               r.rendezvousContractId
             )} ${r.selectedFunction.name} ${printedFunctionArgs}\n`
           );
         } else {
           radio.emit(
             "logMessage",
-            ` ✗ ${sutCallerWallet} ${getContractNameFromRendezvousName(
+            ` ✗ ${sutCallerWallet} ${getContractNameFromRendezvousId(
               r.rendezvousContractId
             )} ${r.selectedFunction.name} ${printedFunctionArgs}\n`
           );
@@ -964,14 +964,14 @@ const runInvariantTesting = (
 
         radio.emit(
           "logMessage",
-          `🤺 ${invariantCallerWallet} ${getContractNameFromRendezvousName(
+          `🤺 ${invariantCallerWallet} ${getContractNameFromRendezvousId(
             r.rendezvousContractId
           )} ${r.selectedInvariant.name} ${printedInvariantArgs}\n`
         );
 
         if (!invariantCallResultJson.value) {
           throw new Error(
-            `Invariant failed for ${getContractNameFromRendezvousName(
+            `Invariant failed for ${getContractNameFromRendezvousId(
               r.rendezvousContractId
             )} contract: "${r.selectedInvariant.name}" returned ${
               invariantCallResultJson.value
@@ -1112,23 +1112,21 @@ const runPropertyTesting = (
         ) {
           radio.emit(
             "logMessage",
-            ` ✔ ${testCallerWallet} ${getContractNameFromRendezvousName(
-              r.testContractId
-            )} ${r.selectedTestFunction.name} ${printedTestFunctionArgs}\n`
+            ` ✔ ${testCallerWallet} ${r.testContractId.split(".")[1]} ${
+              r.selectedTestFunction.name
+            } ${printedTestFunctionArgs}\n`
           );
         } else {
           radio.emit(
             "logMessage",
-            ` ✗ ${testCallerWallet} ${getContractNameFromRendezvousName(
-              r.testContractId
-            )} ${r.selectedTestFunction.name} ${printedTestFunctionArgs}\n`
+            ` ✗ ${testCallerWallet} ${r.testContractId.split(".")[1]} ${
+              r.selectedTestFunction.name
+            } ${printedTestFunctionArgs}\n`
           );
           throw new Error(
-            `Test failed for ${getContractNameFromRendezvousName(
-              r.testContractId
-            )} contract: "${r.selectedTestFunction.name}" returned ${
-              testFunctionCallResultJson.value.value
-            }`
+            `Test failed for ${r.testContractId.split(".")[1]} contract: "${
+              r.selectedTestFunction.name
+            }" returned ${testFunctionCallResultJson.value.value}`
           );
         }
       }

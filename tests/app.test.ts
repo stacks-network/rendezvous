@@ -5,7 +5,7 @@ import {
   filterRendezvousInterfaces,
   buildRendezvousData,
   deriveRendezvousName,
-  getContractNameFromRendezvousName,
+  getContractNameFromRendezvousId,
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
   getInvariantContractSource,
@@ -310,10 +310,10 @@ describe("Successfully schedules rendez-vous", () => {
         fc.stringOf(fc.constantFrom(...addressCharset)),
         fc.stringOf(fc.constantFrom(...contractNameCharset)),
         (address, contractName) => {
-          const rendezvousName = `${address}.${contractName}_rendezvous`;
+          const rendezvousId = `${address}.${contractName}_rendezvous`;
 
           // Act
-          const actual = getContractNameFromRendezvousName(rendezvousName);
+          const actual = getContractNameFromRendezvousId(rendezvousId);
 
           // Assert
           expect(actual).toBe(contractName);
