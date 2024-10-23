@@ -24,7 +24,7 @@
  */
 
 import { EventEmitter } from "events";
-import { getContractNameFromRendezvousName } from "./app";
+import { getContractNameFromRendezvousId } from "./app";
 
 export function reporter(
   //@ts-ignore
@@ -50,7 +50,7 @@ export function reporter(
         radio.emit("logFailure", `\nCounterexample:`);
         radio.emit(
           "logFailure",
-          `- Contract : ${getContractNameFromRendezvousName(
+          `- Contract : ${getContractNameFromRendezvousId(
             r.rendezvousContractId
           )}`
         );

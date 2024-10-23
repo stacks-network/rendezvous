@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { reporter } from "../heatstroke";
-import { getContractNameFromRendezvousName } from "../app";
+import { getContractNameFromRendezvousId } from "../app";
 import { EventEmitter } from "events";
 
 describe("Custom reporter logging", () => {
@@ -86,7 +86,7 @@ describe("Custom reporter logging", () => {
             `Error: Property failed after ${r.numRuns} tests.`,
             `Seed : ${r.seed}`,
             `\nCounterexample:`,
-            `- Contract : ${getContractNameFromRendezvousName(
+            `- Contract : ${getContractNameFromRendezvousId(
               rendezvousContractId
             )}`,
             `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
@@ -197,7 +197,7 @@ describe("Custom reporter logging", () => {
             `Seed : ${r.seed}`,
             `Path : ${r.path}`,
             `\nCounterexample:`,
-            `- Contract : ${getContractNameFromRendezvousName(
+            `- Contract : ${getContractNameFromRendezvousId(
               rendezvousContractId
             )}`,
             `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
