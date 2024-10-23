@@ -8,7 +8,7 @@ Rendezvous `rv` is a Clarity fuzzer designed to cut through your smart contract'
 
 ### Inspiration
 
-The `rv` fuzzer is inspired by the paper _"Testing the Hard Stuff and Staying Sane"_ by John Hughes[^1]. It helps ensure your smart contracts are robust. To do this, you'll need Clarity invariants that define the essential properties your contracts must always meet.
+The `rv` fuzzer, inspired by John Hughes' paper _"Testing the Hard Stuff and Staying Sane"_[^1], ensures contract robustness with Clarity invariants and tests.
 
 ### Example Directory Structure
 
@@ -18,6 +18,7 @@ root
 ├── contracts
 │   ├── contract.clar
 │   ├── contract.invariants.clar
+│   ├── contract.tests.clar
 └── settings
     └── Devnet.toml
 ```
@@ -27,16 +28,46 @@ root
 Run the fuzzer with the following command:
 
 ```
-rv <root> <target-contract-name>
+rv <path-to-clarinet-project> <contract-name>
 ```
 
-This will execute the fuzzing process, attempting to falsify the invariants.
+This will execute the fuzzing process, attempting to falsify invariants or tests.
+
+**Options:**
+- `--seed` – The seed to use for the replay functionality.
+- `--path` – The path to use for the replay functionality.
+- `--type` – The type to use for exercising the contracts.
+              `test` or `invariant` (default: `invariant`)
+
 
 ---
 
-### Example
+### Example (`--type=test`)
 
-Here is an example of a Clarity invariant designed to identify a bug in a smart contract:
+Here's an example of a test that checks reversing a list twice returns the original:
+
+```clarity
+(define-public (test-reverse-list (seq (list 127 uint)))
+  (begin
+    (asserts!
+      (is-eq seq
+        (contract-call? .reverse reverse-uint
+          (contract-call? .reverse reverse-uint seq)))
+      (err u999))
+    (ok true)))
+```
+
+You can run property-based tests using `rv` with the following command:
+
+```
+rv example reverse --type=test
+```
+
+---
+
+### Example (`--type=invariant`)
+
+Here's a Clarity invariant to detect a bug in the example counter contract:
 
 ```clarity
 (define-read-only (invariant-counter-gt-zero)
@@ -48,10 +79,10 @@ Here is an example of a Clarity invariant designed to identify a bug in a smart 
         true)))
 ```
 
-To see how this and other invariants work in action, and to get a broader understanding of their implementation, you can run `rv` against the example Clarinet project:
+You can run invariant tests using `rv` with the following command:
 
 ```
-rv example counter
+rv example counter --type=invariant
 ```
 
 ---
