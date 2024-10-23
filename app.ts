@@ -727,11 +727,11 @@ const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
 
 const helpMessage = `
   Usage: ./rv <path-to-clarinet-project> <contract-name> [--type=<type>] [--seed=<seed>] [--path=<path>]
-  
+
   Positional arguments:
     path-to-clarinet-project - The path to the Clarinet project.
     contract-name - The name of the contract to be fuzzed.
-  
+
   Options:
     --seed - The seed to use for the replay functionality.
     --path - The path to use for the replay functionality.
@@ -798,7 +798,7 @@ const checkInvariants = (
 
   radio.emit(
     "logMessage",
-    `Starting invariant testing type for the ${sutContractName} contract...\n`
+    `\nStarting invariant testing type for the ${sutContractName} contract...`
   );
   fc.assert(
     fc.property(
@@ -924,16 +924,16 @@ const checkInvariants = (
 
           radio.emit(
             "logMessage",
-            ` ✔ ${sutCallerWallet} ${getContractNameFromRendezvousId(
+            `✔  ${sutCallerWallet} ${getContractNameFromRendezvousId(
               r.rendezvousContractId
-            )} ${r.selectedFunction.name} ${printedFunctionArgs}\n`
+            )} ${r.selectedFunction.name} ${printedFunctionArgs}`
           );
         } else {
           radio.emit(
             "logMessage",
             ` ✗ ${sutCallerWallet} ${getContractNameFromRendezvousId(
               r.rendezvousContractId
-            )} ${r.selectedFunction.name} ${printedFunctionArgs}\n`
+            )} ${r.selectedFunction.name} ${printedFunctionArgs}`
           );
         }
 
@@ -949,7 +949,7 @@ const checkInvariants = (
           })
           .join(" ");
 
-        radio.emit("logMessage", "Checking invariants...\n");
+        radio.emit("logMessage", "\nChecking invariants...");
 
         const [invariantCallerWallet, invariantCallerAddress] =
           r.invariantCaller;
@@ -966,7 +966,7 @@ const checkInvariants = (
           "logMessage",
           `🤺 ${invariantCallerWallet} ${getContractNameFromRendezvousId(
             r.rendezvousContractId
-          )} ${r.selectedInvariant.name} ${printedInvariantArgs}\n`
+          )} ${r.selectedInvariant.name} ${printedInvariantArgs}`
         );
 
         if (!invariantCallResultJson.value) {
@@ -1028,7 +1028,7 @@ const checkProperties = (
 
   radio.emit(
     "logMessage",
-    `Starting property testing type for the ${sutContractName} contract...\n`
+    `\nStarting property testing type for the ${sutContractName} contract...`
   );
 
   fc.assert(
@@ -1112,16 +1112,16 @@ const checkProperties = (
         ) {
           radio.emit(
             "logMessage",
-            ` ✔ ${testCallerWallet} ${r.testContractId.split(".")[1]} ${
+            ` ✔  ${testCallerWallet} ${r.testContractId.split(".")[1]} ${
               r.selectedTestFunction.name
-            } ${printedTestFunctionArgs}\n`
+            } ${printedTestFunctionArgs}`
           );
         } else {
           radio.emit(
             "logMessage",
-            ` ✗ ${testCallerWallet} ${r.testContractId.split(".")[1]} ${
+            ` ✗  ${testCallerWallet} ${r.testContractId.split(".")[1]} ${
               r.selectedTestFunction.name
-            } ${printedTestFunctionArgs}\n`
+            } ${printedTestFunctionArgs}`
           );
           throw new Error(
             `Test failed for ${r.testContractId.split(".")[1]} contract: "${
