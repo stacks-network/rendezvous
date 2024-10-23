@@ -26,46 +26,110 @@
 import { EventEmitter } from "events";
 import { getContractNameFromRendezvousName } from "./app";
 
-// @ts-ignore
-export function reporter(runDetails, radio: EventEmitter) {
+export function reporter(
+  //@ts-ignore
+  runDetails,
+  radio: EventEmitter,
+  type: "invariant" | "test"
+) {
   if (runDetails.failed) {
+    // Report general run data.
     const r = runDetails.counterexample[0];
 
-    radio.emit("logFailure", `Error: Property failed after ${runDetails.numRuns} tests.`);
+    radio.emit(
+      "logFailure",
+      `Error: Property failed after ${runDetails.numRuns} tests.`
+    );
     radio.emit("logFailure", `Seed : ${runDetails.seed}`);
     if (runDetails.path) {
       radio.emit("logFailure", `Path : ${runDetails.path}`);
     }
+    switch (type) {
+      case "invariant": {
+        // Report specific run data for the invariant testing type.
+        radio.emit("logFailure", `\nCounterexample:`);
+        radio.emit(
+          "logFailure",
+          `- Contract : ${getContractNameFromRendezvousName(
+            r.rendezvousContractId
+          )}`
+        );
+        radio.emit(
+          "logFailure",
+          `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`
+        );
+        radio.emit(
+          "logFailure",
+          `- Arguments: ${JSON.stringify(r.functionArgsArb)}`
+        );
+        radio.emit(
+          "logFailure",
+          `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`
+        );
+        radio.emit(
+          "logFailure",
+          `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`
+        );
+        radio.emit(
+          "logFailure",
+          `- Arguments: ${JSON.stringify(r.invariantArgsArb)}`
+        );
 
-    radio.emit("logFailure", `\nCounterexample:`);
-    radio.emit("logFailure",
-      `- Contract : ${getContractNameFromRendezvousName(
-        r.rendezvousContractId
-      )}`
-    );
-    radio.emit("logFailure",
-      `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`
-    );
-    radio.emit("logFailure", `- Arguments: ${JSON.stringify(r.functionArgsArb)}`);
-    radio.emit("logFailure", `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`);
-    radio.emit("logFailure",
-      `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`
-    );
-    radio.emit("logFailure", `- Arguments: ${JSON.stringify(r.invariantArgsArb)}`);
+        radio.emit(
+          "logFailure",
+          `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`
+        );
 
-    radio.emit("logFailure",
-      `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`
-    );
+        const formattedError = `The invariant "${
+          r.selectedInvariant.name
+        }" returned:\n\n${runDetails.error
+          ?.toString()
+          .split("\n")
+          // @ts-ignore
+          .map((line) => "    " + line)
+          .join("\n")}\n`;
 
-    const formattedError = `The invariant "${
-      r.selectedInvariant.name
-    }" returned:\n\n${runDetails.error
-      ?.toString()
-      .split("\n")
-      // @ts-ignore
-      .map((line) => "    " + line)
-      .join("\n")}\n`;
+        radio.emit("logFailure", formattedError);
 
-    radio.emit("logFailure", formattedError);
+        break;
+      }
+      case "test": {
+        // Report specific run data for the property testing type.
+        radio.emit("logFailure", `\nCounterexample:`);
+        radio.emit(
+          "logFailure",
+          `- Test Contract : ${r.testContractId.split(".")[1]}`
+        );
+        radio.emit(
+          "logFailure",
+          `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`
+        );
+        radio.emit(
+          "logFailure",
+          `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`
+        );
+        radio.emit(
+          "logFailure",
+          `- Outputs       : ${JSON.stringify(r.selectedTestFunction.outputs)}`
+        );
+
+        radio.emit(
+          "logFailure",
+          `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`
+        );
+
+        const formattedError = `The test function "${
+          r.selectedTestFunction.name
+        }" returned:\n\n${runDetails.error
+          ?.toString()
+          .split("\n")
+          // @ts-ignore
+          .map((line) => "    " + line)
+          .join("\n")}\n`;
+
+        radio.emit("logFailure", formattedError);
+        break;
+      }
+    }
   }
 }

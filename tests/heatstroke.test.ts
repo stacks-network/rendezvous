@@ -4,7 +4,7 @@ import { getContractNameFromRendezvousName } from "../app";
 import { EventEmitter } from "events";
 
 describe("Custom reporter logging", () => {
-  it("handles cases with missing path on failure", () => {
+  it("handles cases with missing path on failure for invariant testing type", () => {
     fc.assert(
       fc.property(
         fc.record({
@@ -79,7 +79,7 @@ describe("Custom reporter logging", () => {
           };
 
           // Act
-          reporter(runDetails, radio);
+          reporter(runDetails, radio, "invariant");
 
           // Assert
           const expectedMessages = [
@@ -111,7 +111,7 @@ describe("Custom reporter logging", () => {
     );
   });
 
-  it("handles cases with a specified path on failure", () => {
+  it("handles cases with a specified path on failure for invariant testing type", () => {
     fc.assert(
       fc.property(
         fc.record({
@@ -189,7 +189,7 @@ describe("Custom reporter logging", () => {
           };
 
           // Act
-          reporter(runDetails, radio);
+          reporter(runDetails, radio, "invariant");
 
           // Assert
           const expectedMessages = [
@@ -223,7 +223,7 @@ describe("Custom reporter logging", () => {
     );
   });
 
-  it("does not log anything on success", () => {
+  it("does not log anything on success for invariant testing type", () => {
     fc.assert(
       fc.property(
         fc.record({
@@ -301,11 +301,260 @@ describe("Custom reporter logging", () => {
           };
 
           // Act
-          reporter(runDetails, radio);
+          reporter(runDetails, radio, "invariant");
 
           // Assert
           expect(emittedErrorLogs).toEqual([]);
           radio.removeAllListeners();
+        }
+      ),
+      { numRuns: 10 }
+    );
+  });
+
+  it("handles cases with missing path on failure for property testing type", () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          failed: fc.constant(true),
+          numRuns: fc.nat(),
+          seed: fc.nat(),
+          contractName: fc.ascii(),
+          selectedTestFunction: fc.record({
+            name: fc.ascii(),
+            access: fc.ascii(),
+            outputs: fc.array(fc.ascii()),
+          }),
+          functionArgsArb: fc.array(
+            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
+          ),
+          errorMessage: fc.ascii(),
+        }),
+        (r: {
+          failed: boolean;
+          numRuns: number;
+          seed: number;
+          contractName: string;
+          selectedTestFunction: {
+            name: string;
+            access: string;
+            outputs: string[];
+          };
+          functionArgsArb: (string | number | boolean)[];
+          errorMessage: string;
+        }) => {
+          const emittedErrorLogs: string[] = [];
+          const radio = new EventEmitter();
+          const testContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_tests`;
+
+          radio.on("logFailure", (message: string) => {
+            emittedErrorLogs.push(message);
+          });
+
+          const runDetails = {
+            failed: r.failed,
+            numRuns: r.numRuns,
+            seed: r.seed,
+            counterexample: [
+              {
+                testContractId: testContractId,
+                selectedTestFunction: {
+                  name: r.selectedTestFunction.name,
+                  access: r.selectedTestFunction.access,
+                  outputs: r.selectedTestFunction.outputs,
+                },
+                functionArgsArb: r.functionArgsArb,
+              },
+            ],
+            error: new Error(r.errorMessage),
+          };
+
+          // Act
+          reporter(runDetails, radio, "test");
+
+          // Assert
+          const expectedMessages = [
+            `Error: Property failed after ${r.numRuns} tests.`,
+            `Seed : ${r.seed}`,
+            `\nCounterexample:`,
+            `- Test Contract : ${testContractId.split(".")[1]}`,
+            `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
+            `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`,
+            `- Outputs       : ${JSON.stringify(
+              r.selectedTestFunction.outputs
+            )}`,
+            `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
+            `The test function "${
+              r.selectedTestFunction.name
+            }" returned:\n\n${runDetails.error
+              ?.toString()
+              .split("\n")
+              .map((line) => "    " + line)
+              .join("\n")}\n`,
+          ];
+
+          expect(emittedErrorLogs).toEqual(expectedMessages);
+        }
+      ),
+      { numRuns: 10 }
+    );
+  });
+
+  it("handles cases with a specified path on failure for property testing type", () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          path: fc.ascii(),
+          failed: fc.constant(true),
+          numRuns: fc.nat(),
+          seed: fc.nat(),
+          contractName: fc.ascii(),
+          selectedTestFunction: fc.record({
+            name: fc.ascii(),
+            access: fc.ascii(),
+            outputs: fc.array(fc.ascii()),
+          }),
+          functionArgsArb: fc.array(
+            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
+          ),
+          errorMessage: fc.ascii(),
+        }),
+        (r: {
+          path: string;
+          failed: boolean;
+          numRuns: number;
+          seed: number;
+          contractName: string;
+          selectedTestFunction: {
+            name: string;
+            access: string;
+            outputs: string[];
+          };
+          functionArgsArb: (string | number | boolean)[];
+          errorMessage: string;
+        }) => {
+          const emittedErrorLogs: string[] = [];
+          const radio = new EventEmitter();
+          const testContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_tests`;
+
+          radio.on("logFailure", (message: string) => {
+            emittedErrorLogs.push(message);
+          });
+
+          const runDetails = {
+            path: r.path,
+            failed: r.failed,
+            numRuns: r.numRuns,
+            seed: r.seed,
+            counterexample: [
+              {
+                testContractId: testContractId,
+                selectedTestFunction: {
+                  name: r.selectedTestFunction.name,
+                  access: r.selectedTestFunction.access,
+                  outputs: r.selectedTestFunction.outputs,
+                },
+                functionArgsArb: r.functionArgsArb,
+              },
+            ],
+            error: new Error(r.errorMessage),
+          };
+
+          // Act
+          reporter(runDetails, radio, "test");
+
+          // Assert
+          const expectedMessages = [
+            `Error: Property failed after ${r.numRuns} tests.`,
+            `Seed : ${r.seed}`,
+            `Path : ${r.path}`,
+            `\nCounterexample:`,
+            `- Test Contract : ${testContractId.split(".")[1]}`,
+            `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
+            `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`,
+            `- Outputs       : ${JSON.stringify(
+              r.selectedTestFunction.outputs
+            )}`,
+            `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
+            `The test function "${
+              r.selectedTestFunction.name
+            }" returned:\n\n${runDetails.error
+              ?.toString()
+              .split("\n")
+              .map((line) => "    " + line)
+              .join("\n")}\n`,
+          ];
+
+          expect(emittedErrorLogs).toEqual(expectedMessages);
+        }
+      ),
+      { numRuns: 10 }
+    );
+  });
+
+  it("does not log anything on success for property testing type", () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          failed: fc.constant(false),
+          numRuns: fc.nat(),
+          seed: fc.nat(),
+          contractName: fc.ascii(),
+          selectedTestFunction: fc.record({
+            name: fc.ascii(),
+            access: fc.ascii(),
+            outputs: fc.array(fc.ascii()),
+          }),
+          functionArgsArb: fc.array(
+            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
+          ),
+          errorMessage: fc.ascii(),
+        }),
+        (r: {
+          failed: boolean;
+          numRuns: number;
+          seed: number;
+          contractName: string;
+          selectedTestFunction: {
+            name: string;
+            access: string;
+            outputs: string[];
+          };
+          functionArgsArb: (string | number | boolean)[];
+          errorMessage: string;
+        }) => {
+          const emittedErrorLogs: string[] = [];
+          const radio = new EventEmitter();
+          const testContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_tests`;
+
+          radio.on("logFailure", (message: string) => {
+            emittedErrorLogs.push(message);
+          });
+
+          const runDetails = {
+            failed: r.failed,
+            numRuns: r.numRuns,
+            seed: r.seed,
+            counterexample: [
+              {
+                testContractId: testContractId,
+                selectedTestFunction: {
+                  name: r.selectedTestFunction.name,
+                  access: r.selectedTestFunction.access,
+                  outputs: r.selectedTestFunction.outputs,
+                },
+                functionArgsArb: r.functionArgsArb,
+              },
+            ],
+            error: new Error(r.errorMessage),
+          };
+
+          // Act
+          reporter(runDetails, radio, "test");
+
+          // Assert
+
+          expect(emittedErrorLogs).toEqual([]);
         }
       ),
       { numRuns: 10 }

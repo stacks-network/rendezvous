@@ -793,7 +793,7 @@ const runInvariantTesting = (
   initializeClarityContext(simnet, rendezvousSutFunctions);
 
   const radioReporter = (runDetails: any) => {
-    reporter(runDetails, radio);
+    reporter(runDetails, radio, "invariant");
   };
 
   radio.emit(
@@ -1022,8 +1022,8 @@ const runPropertyTesting = (
 
   // TODO: Reporter needed. We can either add a conditional to the existing
   // reporter or create a new one.
-  const _radioReporter = (runDetails: any) => {
-    reporter(runDetails, radio);
+  const radioReporter = (runDetails: any) => {
+    reporter(runDetails, radio, "test");
   };
 
   radio.emit(
@@ -1137,7 +1137,7 @@ const runPropertyTesting = (
     ),
     // TODO: Reporter needed. We can either add a conditional to the existing
     // reporter or create a new one.
-    { verbose: true, seed: seed, path: path }
+    { verbose: true, reporter: radioReporter, seed: seed, path: path }
   );
 };
 
