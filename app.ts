@@ -924,14 +924,14 @@ const checkInvariants = (
 
           radio.emit(
             "logMessage",
-            `✔  ${sutCallerWallet} ${getContractNameFromRendezvousId(
+            ` ✔  ${sutCallerWallet} ${getContractNameFromRendezvousId(
               r.rendezvousContractId
             )} ${r.selectedFunction.name} ${printedFunctionArgs}`
           );
         } else {
           radio.emit(
             "logMessage",
-            ` ✗ ${sutCallerWallet} ${getContractNameFromRendezvousId(
+            ` ✗  ${sutCallerWallet} ${getContractNameFromRendezvousId(
               r.rendezvousContractId
             )} ${r.selectedFunction.name} ${printedFunctionArgs}`
           );
@@ -964,7 +964,7 @@ const checkInvariants = (
 
         radio.emit(
           "logMessage",
-          `🤺 ${invariantCallerWallet} ${getContractNameFromRendezvousId(
+          `🤺  ${invariantCallerWallet} ${getContractNameFromRendezvousId(
             r.rendezvousContractId
           )} ${r.selectedInvariant.name} ${printedInvariantArgs}`
         );
