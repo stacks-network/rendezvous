@@ -747,7 +747,7 @@ const parseOptionalCommandLineArgument = (argName: string) => {
     ?.split("=")[1];
 };
 
-const runInvariantTesting = (
+const checkInvariants = (
   simnet: Simnet,
   contractsPath: string,
   sutContractName: string,
@@ -984,7 +984,7 @@ const runInvariantTesting = (
   );
 };
 
-const runPropertyTesting = (
+const checkProperties = (
   simnet: Simnet,
   contractsPath: string,
   sutContractName: string,
@@ -1226,7 +1226,7 @@ export async function main() {
   // will start based on the default or user-provided testing type.
   switch (type) {
     case "invariant": {
-      runInvariantTesting(
+      checkInvariants(
         simnet,
         contractsPath,
         sutContractName,
@@ -1238,7 +1238,7 @@ export async function main() {
       break;
     }
     case "test": {
-      runPropertyTesting(
+      checkProperties(
         simnet,
         contractsPath,
         sutContractName,
