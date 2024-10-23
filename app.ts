@@ -1050,9 +1050,7 @@ const runPropertyTesting = (
 
           if (testFunctionsList?.length === 0) {
             throw new Error(
-              `No test functions found for the "${getContractNameFromRendezvousName(
-                r.testContractId
-              )}" contract.`
+              `No test functions found for the "${sutContractName}" contract.`
             );
           }
           const testFunctionArbitrary = fc.constantFrom(
