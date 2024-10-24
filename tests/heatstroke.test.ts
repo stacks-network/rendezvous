@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { reporter } from "../heatstroke";
-import { getContractNameFromRendezvousId } from "../app";
+import { getContractNameFromRendezvousId } from "../invariant";
 import { EventEmitter } from "events";
 
 describe("Custom reporter logging", () => {
