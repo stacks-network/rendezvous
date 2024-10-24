@@ -24,7 +24,7 @@
  */
 
 import { EventEmitter } from "events";
-import { getContractNameFromRendezvousId } from "./app";
+import { getContractNameFromRendezvousId } from "./invariant";
 
 export function reporter(
   //@ts-ignore
