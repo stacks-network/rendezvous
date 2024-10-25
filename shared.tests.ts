@@ -3,13 +3,13 @@ import {
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
   getSimnetDeployerContractsInterfaces,
-} from "../shared";
+} from "./shared";
 import { resolve } from "path";
 
 describe("Simnet contracts operations", () => {
   it("retrieves the contracts from the simnet", async () => {
     // Arrange
-    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
+    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const expectedDeployerContracts = new Map(
       Array.from(simnet.getContractsInterfaces()).filter(
@@ -27,7 +27,7 @@ describe("Simnet contracts operations", () => {
 
   it("retrieves the contract functions from the simnet", async () => {
     // Arrange
-    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
+    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
@@ -52,7 +52,7 @@ describe("Simnet contracts operations", () => {
 
   it("extracts the functions from the contract interfaces", async () => {
     // Arrange
-    const manifestPath = resolve(__dirname, "../example/Clarinet.toml");
+    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const expectedAllFunctionsMap = new Map(
