@@ -64,7 +64,7 @@ export const getFunctionsFromContractInterfaces = (
 export const getFunctionsListForContract = (
   functionsMap: Map<string, ContractInterfaceFunction[]>,
   contractId: string
-) => functionsMap.get(contractId) || [];
+): ContractInterfaceFunction[] => functionsMap.get(contractId) || [];
 
 /** For a given function, dynamically generate fast-check arbitraries.
  * @param fn ContractInterfaceFunction
