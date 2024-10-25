@@ -47,8 +47,9 @@ export const checkProperties = (
     testContractsInterfaces
   );
 
-  // A map where the keys are the test contract identifiers and the values
-  // are arrays of their invariant functions.
+  // A map where the keys are the test contract identifiers and the values are
+  // arrays of their test functions. This map will be used to access the test
+  // functions for each test contract in the property-based testing routine.
   const testContractsTestFunctions = filterTestFunctions(
     testContractsAllFunctions
   );
