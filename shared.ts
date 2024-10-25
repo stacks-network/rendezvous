@@ -280,8 +280,6 @@ const complexTypesToCV: ComplexTypesToCV = {
   },
 };
 
-const baseTypes: BaseType[] = ["int128", "uint128", "bool", "principal"];
-
 const isBaseType = (type: ParameterType): type is BaseType => {
-  return baseTypes.includes(type as BaseType);
+  return ["int128", "uint128", "bool", "principal"].includes(type as BaseType);
 };
