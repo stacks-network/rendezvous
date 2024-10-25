@@ -47,12 +47,14 @@ export const checkInvariants = (
   const rendezvousAllFunctions =
     getFunctionsFromContractInterfaces(rendezvousInterfaces);
 
-  // A map where the keys are the Rendezvous names and the values
-  // are arrays of their SUT (System Under Test) functions.
+  // A map where the keys are the Rendezvous identifiers and the values are
+  // arrays of their SUT (System Under Test) functions. This map will be used
+  // to access the SUT functions for each Rendezvous contract afterwards.
   const rendezvousSutFunctions = filterSutFunctions(rendezvousAllFunctions);
 
-  // A map where the keys are the Rendezvous names and the values
-  // are arrays of their invariant functions.
+  // A map where the keys are the Rendezvous identifiers and the values are
+  // arrays of their invariant functions. This map will be used to access the
+  // invariant functions for each Rendezvous contract afterwards.
   const rendezvousInvariantFunctions = filterInvariantFunctions(
     rendezvousAllFunctions
   );
