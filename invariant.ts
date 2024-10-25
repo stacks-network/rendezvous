@@ -63,14 +63,15 @@ export const checkInvariants = (
   // Set up context in simnet by initializing state for SUT.
   initializeClarityContext(simnet, rendezvousSutFunctions);
 
-  const radioReporter = (runDetails: any) => {
-    reporter(runDetails, radio, "invariant");
-  };
-
   radio.emit(
     "logMessage",
     `\nStarting invariant testing type for the ${sutContractName} contract...`
   );
+
+  const radioReporter = (runDetails: any) => {
+    reporter(runDetails, radio, "invariant");
+  };
+
   fc.assert(
     fc.property(
       fc

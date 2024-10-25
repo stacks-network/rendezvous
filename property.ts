@@ -53,14 +53,14 @@ export const checkProperties = (
     testContractsAllFunctions
   );
 
-  const radioReporter = (runDetails: any) => {
-    reporter(runDetails, radio, "test");
-  };
-
   radio.emit(
     "logMessage",
     `\nStarting property testing type for the ${sutContractName} contract...`
   );
+
+  const radioReporter = (runDetails: any) => {
+    reporter(runDetails, radio, "test");
+  };
 
   fc.assert(
     fc.property(
