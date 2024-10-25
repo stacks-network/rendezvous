@@ -148,10 +148,11 @@ describe("Simnet contracts operations", () => {
       .sort();
 
     // Act
-    const rendezvousInterfaces = filterRendezvousInterfaces(
-      getSimnetDeployerContractsInterfaces(simnet)
-    );
-    const actualRendezvousList = Array.from(rendezvousInterfaces.keys()).sort();
+    const actualRendezvousList = Array.from(
+      filterRendezvousInterfaces(
+        getSimnetDeployerContractsInterfaces(simnet)
+      ).keys()
+    ).sort();
 
     // Assert
     expect(actualRendezvousList).toEqual(expectedRendezvousList);
@@ -202,11 +203,9 @@ describe("Simnet contracts operations", () => {
           contractData.rendezvousSource
         );
       });
-    const rendezvousInterfaces = filterRendezvousInterfaces(
-      getSimnetDeployerContractsInterfaces(simnet)
+    const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
+      filterRendezvousInterfaces(getSimnetDeployerContractsInterfaces(simnet))
     );
-    const rendezvousAllFunctions =
-      getFunctionsFromContractInterfaces(rendezvousInterfaces);
 
     // The JS representation of Clarity `(some (tuple (called uint)))`, where `called` is
     // initialized to 0.
