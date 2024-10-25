@@ -57,10 +57,10 @@ export const checkInvariants = (
     rendezvousAllFunctions
   );
 
-  // Initialize the local context.
+  // Set up local context to track SUT function call counts.
   const localContext = initializeLocalContext(rendezvousSutFunctions);
 
-  // Initialize the Clarity context.
+  // Set up context in simnet by initializing state for SUT.
   initializeClarityContext(simnet, rendezvousSutFunctions);
 
   const radioReporter = (runDetails: any) => {
