@@ -31,7 +31,8 @@ import {
 import { Simnet } from "@hirosystems/clarinet-sdk";
 
 /**
- * Get the interfaces of contracts deployed by the specified deployer from the simnet.
+ * Get the interfaces of contracts deployed by the specified deployer from the
+ * simnet.
  * @param simnet The simnet instance.
  * @param deployer The deployer address.
  * @returns The contracts interfaces.
@@ -188,9 +189,9 @@ const charSet =
 
 /**
  * Convert function arguments to Clarity values.
- * @param fn ContractFunction
- * @param args Array of arguments
- * @returns Array of Clarity values
+ * @param fn ContractFunction.
+ * @param args Array of arguments.
+ * @returns Array of Clarity values.
  */
 export const argsToCV = (fn: ContractInterfaceFunction, args: any[]) => {
   return fn.args.map((arg, i) => argToCV(args[i], arg.type as ParameterType));
@@ -198,13 +199,13 @@ export const argsToCV = (fn: ContractInterfaceFunction, args: any[]) => {
 
 /**
  * Convert a function argument to a Clarity value.
- * @param arg Generated argument
- * @param type Argument type (base or complex)
- * @returns Clarity value
+ * @param arg Generated argument.
+ * @param type Argument type (base or complex).
+ * @returns Clarity value.
  */
 const argToCV = (arg: any, type: ParameterType): ClarityValue => {
   if (isBaseType(type)) {
-    // Base type
+    // Base type.
     switch (type) {
       case "int128":
         return baseTypesToCV.int128(arg as number);
@@ -218,7 +219,7 @@ const argToCV = (arg: any, type: ParameterType): ClarityValue => {
         throw new Error(`Unsupported base type: ${type}`);
     }
   } else {
-    // Complex type
+    // Complex type.
     if ("buffer" in type) {
       return complexTypesToCV.buffer(arg);
     } else if ("string-ascii" in type) {

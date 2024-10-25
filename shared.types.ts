@@ -15,7 +15,7 @@ import {
 } from "@stacks/transactions";
 import fc from "fast-check";
 
-// Types used for Clarity Value conversion
+// Types used for Clarity Value conversion.
 
 export type ResponseStatus = "ok" | "error";
 
@@ -43,7 +43,7 @@ export type ComplexTypesToCV = {
   ) => ReturnType<typeof responseOkCV | typeof responseErrorCV>;
 };
 
-// Types used for argument generation
+// Types used for argument generation.
 
 export type BaseType = "int128" | "uint128" | "bool" | "principal";
 
