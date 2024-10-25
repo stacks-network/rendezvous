@@ -1,5 +1,3 @@
-// Single file (app.ts) is flexible, keeps git history clean. Better early on.
-// Multiple files improve organization, readability, and collaboration as the project grows.
 import { initSimnet } from "@hirosystems/clarinet-sdk";
 import { join } from "path";
 import { EventEmitter } from "events";
@@ -25,10 +23,10 @@ const helpMessage = `
     --help - Show the help message.
   `;
 
-const parseOptionalCommandLineArgument = (argName: string) => {
+const parseOptionalArgument = (argName: string) => {
   return process.argv
     .find(
-      (arg, index) => index >= 4 && arg.toLowerCase().startsWith(`--${argName}`)
+      (arg, idx) => idx >= 4 && arg.toLowerCase().startsWith(`--${argName}`)
     )
     ?.split("=")[1];
 };
@@ -38,27 +36,23 @@ export async function main() {
   radio.on("logMessage", (log) => logger(log));
   radio.on("logFailure", (log) => logger(log, "error"));
 
-  // Get the arguments from the command-line.
   const args = process.argv;
-
   if (args.includes("--help")) {
     radio.emit("logMessage", helpMessage);
     return;
   }
 
-  const seed =
-    parseInt(parseOptionalCommandLineArgument("seed")!, 10) || undefined;
+  const seed = parseInt(parseOptionalArgument("seed")!, 10) || undefined;
   if (seed !== undefined) {
     radio.emit("logMessage", `Using seed: ${seed}`);
   }
 
-  const path = parseOptionalCommandLineArgument("path") || undefined;
+  const path = parseOptionalArgument("path") || undefined;
   if (path !== undefined) {
     radio.emit("logMessage", `Using path: ${path}`);
   }
 
-  const type = parseOptionalCommandLineArgument("type") || "invariant";
-
+  const type = parseOptionalArgument("type") || "invariant";
   if (type !== "invariant" && type !== "test") {
     radio.emit(
       "logFailure",
@@ -69,7 +63,6 @@ export async function main() {
   }
 
   const manifestDir = args[2];
-
   if (!manifestDir || manifestDir.startsWith("--")) {
     radio.emit(
       "logMessage",
@@ -78,11 +71,11 @@ export async function main() {
     radio.emit("logMessage", helpMessage);
     return;
   }
+
   const manifestPath = join(manifestDir, "Clarinet.toml");
   radio.emit("logMessage", `Using manifest path: ${manifestPath}`);
 
   const sutContractName = args[3];
-
   if (!sutContractName || sutContractName.startsWith("--")) {
     radio.emit(
       "logMessage",
@@ -91,24 +84,17 @@ export async function main() {
     radio.emit("logMessage", helpMessage);
     return;
   }
-
   radio.emit("logMessage", `Target contract: ${sutContractName}`);
 
   const simnet = await initSimnet(manifestPath);
 
-  const simnetContractsInterfaces =
-    getSimnetDeployerContractsInterfaces(simnet);
-
-  // Get all the contracts from the interfaces.
-  const simnetContractIds = Array.from(simnetContractsInterfaces.keys());
-
-  const sutContractId = `${simnet.deployer}.${sutContractName}`;
-
-  const sutContractIds = simnetContractIds.filter(
-    (contract) => contract === sutContractId
+  const sutContractIds = Array.from(
+    getSimnetDeployerContractsInterfaces(simnet).keys()
+  ).filter(
+    (deployedContract) =>
+      deployedContract === `${simnet.deployer}.${sutContractName}`
   );
 
-  // Check if the SUT contract is in the network.
   if (sutContractIds.length === 0) {
     throw new Error(
       `The "${sutContractName}" contract was not found in the network.`
@@ -117,8 +103,9 @@ export async function main() {
 
   const contractsPath = join(manifestDir, "contracts");
 
-  // This is the junction where the magic happens. The type of testing
-  // will start based on the default or user-provided testing type.
+  // Select the testing routine based on `type`.
+  // If "invariant", call `checkInvariants` to verify contract invariants.
+  // If "test", call `checkProperties` for property-based testing.
   switch (type) {
     case "invariant": {
       checkInvariants(
@@ -132,6 +119,7 @@ export async function main() {
       );
       break;
     }
+
     case "test": {
       checkProperties(
         simnet,
