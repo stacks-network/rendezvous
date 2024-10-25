@@ -133,10 +133,10 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const rendezvousData = sutContractsList.map((contractId) =>
-      buildRendezvousData(simnet, contractId, contractsPath)
-    );
-    const expectedRendezvousList = rendezvousData
+    const expectedRendezvousList = sutContractsList
+      .map((contractId) =>
+        buildRendezvousData(simnet, contractId, contractsPath)
+      )
       .map((contractData) => {
         deployRendezvous(
           simnet,
@@ -191,16 +191,17 @@ describe("Simnet contracts operations", () => {
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const rendezvousData = sutContractsList.map((contractId) =>
-      buildRendezvousData(simnet, contractId, contractsPath)
-    );
-    rendezvousData.forEach((contractData) => {
-      deployRendezvous(
-        simnet,
-        contractData.rendezvousName,
-        contractData.rendezvousSource
-      );
-    });
+    sutContractsList
+      .map((contractId) =>
+        buildRendezvousData(simnet, contractId, contractsPath)
+      )
+      .forEach((contractData) => {
+        deployRendezvous(
+          simnet,
+          contractData.rendezvousName,
+          contractData.rendezvousSource
+        );
+      });
     const rendezvousInterfaces = filterRendezvousInterfaces(
       getSimnetDeployerContractsInterfaces(simnet)
     );

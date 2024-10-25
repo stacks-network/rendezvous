@@ -27,18 +27,16 @@ export const checkInvariants = (
   path: string | undefined,
   radio: EventEmitter
 ) => {
-  const rendezvousData = sutContractIds.map((contractId) =>
-    buildRendezvousData(simnet, contractId, contractsPath)
-  );
-
-  const rendezvousList = rendezvousData.map((contractData) => {
-    deployRendezvous(
-      simnet,
-      contractData.rendezvousName,
-      contractData.rendezvousSource
-    );
-    return contractData.rendezvousContractId;
-  });
+  const rendezvousList = sutContractIds
+    .map((contractId) => buildRendezvousData(simnet, contractId, contractsPath))
+    .map((contractData) => {
+      deployRendezvous(
+        simnet,
+        contractData.rendezvousName,
+        contractData.rendezvousSource
+      );
+      return contractData.rendezvousContractId;
+    });
 
   const rendezvousInterfaces = filterRendezvousInterfaces(
     getSimnetDeployerContractsInterfaces(simnet)
