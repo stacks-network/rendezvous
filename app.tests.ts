@@ -1,4 +1,4 @@
-import { main } from "../app";
+import { main } from "./app";
 
 describe("Command-line arguments handling", () => {
   const initialArgv = process.argv;
