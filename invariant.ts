@@ -38,12 +38,9 @@ export const checkInvariants = (
       return contractData.rendezvousContractId;
     });
 
-  const rendezvousInterfaces = filterRendezvousInterfaces(
-    getSimnetDeployerContractsInterfaces(simnet)
+  const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
+    filterRendezvousInterfaces(getSimnetDeployerContractsInterfaces(simnet))
   );
-
-  const rendezvousAllFunctions =
-    getFunctionsFromContractInterfaces(rendezvousInterfaces);
 
   // A map where the keys are the Rendezvous identifiers and the values are
   // arrays of their SUT (System Under Test) functions. This map will be used
