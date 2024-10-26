@@ -39,7 +39,6 @@ This will execute the fuzzing process, attempting to falsify invariants or tests
 - `--type` – The type to use for exercising the contracts.
               `test` or `invariant` (default: `invariant`)
 
-
 ---
 
 ### Example (`--type=test`)
