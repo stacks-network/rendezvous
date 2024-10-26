@@ -2,8 +2,6 @@
 ;; Originally copied from https://github.com/PromptECO/clarity-sequence/blob/
 ;; 6552b9a89d6d6983cdf5fef85b19f35eca299ee0/contracts/reverse/reverse7.clar.
 
-(define-constant max-len (- (pow 2 7) 1))
-
 (define-private (reverse-redx-integer-list
                  (item int)
                  (seq (list 127 int)))
