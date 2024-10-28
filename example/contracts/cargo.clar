@@ -43,6 +43,14 @@
     (unwrap! (map-get? shipments shipment-id) {status: "Does not exist"})
 )
 
+;; This function retrieves shipment information in an optional format. It was
+;; added because the original `get-shipment` function returns a default tuple
+;; if the shipment is not found, making it difficult to verify a missing
+;; shipment in test cases.
+(define-read-only (get-shipment-optional (shipment-id uint))
+    (map-get? shipments shipment-id)    
+)
+
 (define-read-only (get-last-shipment-id)
     (var-get last-shipment-id)
 )
