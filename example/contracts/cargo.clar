@@ -1,18 +1,15 @@
-;; cargo
-;; a simple decentralized shipment tracker
+;; This is a simple decentralized shipment tracker contract. Originally copied
+;; from https://github.com/kenrogers/cargo/. In its first implementation, the
+;; contract had a bug that didn't update the last-shipment-id variable when
+;; creating a new shipment. This bug is fixed in the current implementation.
+;; It is a great example to demonstrate RendezVous testing in action.
 
-;; constants
 (define-constant err-shipment-not-found (err u100))
 (define-constant err-tx-sender-unauthorized (err u101))
 
-;; data maps and vars
 (define-data-var last-shipment-id uint u0)
 (define-map shipments uint {location: (string-ascii 25), status: (string-ascii 25), shipper: principal, receiver: principal})
 
-;; private functions
-;;
-
-;; public functions
 (define-public (create-new-shipment (starting-location (string-ascii 25)) (receiver principal))
     (let
         (
@@ -20,8 +17,10 @@
         )
         ;; #[filter(starting-location, receiver)]
         (map-set shipments new-shipment-id {location: starting-location, status: "In Transit", shipper: tx-sender, receiver: receiver})
-        ;; The following line fixes the bug in the original code.
-        ;; (var-set last-shipment-id new-shipment-id)
+
+        ;; The following line fixes the bug in the original implementation.
+        ;; Comment out this line to re-introduce the bug.
+        (var-set last-shipment-id new-shipment-id)
         (ok "Shipment created successfully")
     )
 )
@@ -40,7 +39,6 @@
     )
 )
 
-;; read only functions
 (define-read-only (get-shipment (shipment-id uint))
     (unwrap! (map-get? shipments shipment-id) {status: "Does not exist"})
 )
