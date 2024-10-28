@@ -2,7 +2,6 @@
 ;; from https://github.com/kenrogers/cargo/. In its first implementation, the
 ;; contract had a bug that didn't update the last-shipment-id variable when
 ;; creating a new shipment. This bug is fixed in the current implementation.
-;; It is a great example to demonstrate RendezVous testing in action.
 
 (define-constant err-shipment-not-found (err u100))
 (define-constant err-tx-sender-unauthorized (err u101))
