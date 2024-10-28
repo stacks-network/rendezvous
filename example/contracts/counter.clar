@@ -12,18 +12,22 @@
   (var-get counter)
 )
 
-;; (define-public (increment)
-;;   (ok (var-set counter (+ (var-get counter) u1)))
-;; )
-
 (define-public (increment)
-  (let ((current-counter (var-get counter)))
-    (if (> current-counter u1000) ;; Introduce a bug for large values.
-      (ok (var-set counter u0))   ;; Reset counter to zero if it exceeds 1000.
-      (ok (var-set counter (+ current-counter u1)))
-    )
-  )
+  (ok (var-set counter (+ (var-get counter) u1)))
 )
+
+;; This version of the increment function intentionally introduces a bug for
+;; demonstration purposes. Replace the current increment function with the
+;; code below to observe RendezVous testing in action.
+
+;; (define-public (increment)
+;;   (let ((current-counter (var-get counter)))
+;;     (if (> current-counter u1000) ;; Introduce a bug for large values.
+;;       (ok (var-set counter u0))   ;; Reset counter to zero if it exceeds 1000.
+;;       (ok (var-set counter (+ current-counter u1)))
+;;     )
+;;   )
+;; )
 
 (define-public (decrement)
   (let ((current-counter (var-get counter)))
