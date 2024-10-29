@@ -52,7 +52,7 @@ export async function main() {
     radio.emit("logMessage", `Using path: ${path}`);
   }
 
-  const type = parseOptionalArgument("type") || "invariant";
+  const type = parseOptionalArgument("type")?.toLowerCase() || "invariant";
   if (type !== "invariant" && type !== "test") {
     radio.emit(
       "logFailure",
