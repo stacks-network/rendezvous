@@ -68,7 +68,7 @@ export const checkProperties = (
       fc
         .record({
           testContractId: fc.constantFrom(...testContractsList),
-          sutCaller: fc.constantFrom(
+          testCaller: fc.constantFrom(
             ...new Map(
               [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
             ).entries()
@@ -128,7 +128,7 @@ export const checkProperties = (
           })
           .join(" ");
 
-        const [testCallerWallet, testCallerAddress] = r.sutCaller;
+        const [testCallerWallet, testCallerAddress] = r.testCaller;
         const { result: testFunctionCallResult } = simnet.callPublicFn(
           r.testContractId,
           r.selectedTestFunction.name,
