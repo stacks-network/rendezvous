@@ -62,6 +62,7 @@ export function reporter(
           "logFailure",
           `- Arguments: ${JSON.stringify(r.functionArgsArb)}`
         );
+        radio.emit("logFailure", `- Caller   : ${r.sutCaller[0]}`);
         radio.emit(
           "logFailure",
           `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`
@@ -74,6 +75,7 @@ export function reporter(
           "logFailure",
           `- Arguments: ${JSON.stringify(r.invariantArgsArb)}`
         );
+        radio.emit("logFailure", `- Caller   : ${r.invariantCaller[0]}`);
 
         radio.emit(
           "logFailure",
@@ -108,6 +110,7 @@ export function reporter(
           "logFailure",
           `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`
         );
+        radio.emit("logFailure", `- Caller        : ${r.testCaller[0]}`);
         radio.emit(
           "logFailure",
           `- Outputs       : ${JSON.stringify(r.selectedTestFunction.outputs)}`

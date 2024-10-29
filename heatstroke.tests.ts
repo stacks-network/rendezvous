@@ -2,9 +2,14 @@ import fc from "fast-check";
 import { reporter } from "./heatstroke";
 import { getContractNameFromRendezvousId } from "./invariant";
 import { EventEmitter } from "events";
+import { resolve } from "path";
+import { initSimnet } from "@hirosystems/clarinet-sdk";
 
 describe("Custom reporter logging", () => {
-  it("handles cases with missing path on failure for invariant testing type", () => {
+  it("handles cases with missing path on failure for invariant testing type", async () => {
+    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    const simnet = await initSimnet(manifestPath);
+
     fc.assert(
       fc.property(
         fc.record({
@@ -28,6 +33,16 @@ describe("Custom reporter logging", () => {
             fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
           ),
           errorMessage: fc.ascii(),
+          sutCaller: fc.constantFrom(
+            ...new Map(
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+            ).entries()
+          ),
+          invariantCaller: fc.constantFrom(
+            ...new Map(
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+            ).entries()
+          ),
         }),
         (r: {
           failed: boolean;
@@ -46,6 +61,8 @@ describe("Custom reporter logging", () => {
           };
           invariantArgsArb: (string | number | boolean)[];
           errorMessage: string;
+          sutCaller: [string, string];
+          invariantCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
@@ -73,6 +90,8 @@ describe("Custom reporter logging", () => {
                   access: r.selectedInvariant.access,
                 },
                 invariantArgsArb: r.invariantArgsArb,
+                sutCaller: r.sutCaller,
+                invariantCaller: r.invariantCaller,
               },
             ],
             error: new Error(r.errorMessage),
@@ -91,9 +110,11 @@ describe("Custom reporter logging", () => {
             )}`,
             `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
             `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
+            `- Caller   : ${r.sutCaller[0]}`,
             `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`,
             `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`,
             `- Arguments: ${JSON.stringify(r.invariantArgsArb)}`,
+            `- Caller   : ${r.invariantCaller[0]}`,
             `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
             `The invariant "${
               r.selectedInvariant.name
@@ -111,7 +132,10 @@ describe("Custom reporter logging", () => {
     );
   });
 
-  it("handles cases with a specified path on failure for invariant testing type", () => {
+  it("handles cases with a specified path on failure for invariant testing type", async () => {
+    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    const simnet = await initSimnet(manifestPath);
+
     fc.assert(
       fc.property(
         fc.record({
@@ -136,6 +160,16 @@ describe("Custom reporter logging", () => {
             fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
           ),
           errorMessage: fc.ascii(),
+          sutCaller: fc.constantFrom(
+            ...new Map(
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+            ).entries()
+          ),
+          invariantCaller: fc.constantFrom(
+            ...new Map(
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+            ).entries()
+          ),
         }),
         (r: {
           path: string;
@@ -155,6 +189,8 @@ describe("Custom reporter logging", () => {
           };
           invariantArgsArb: (string | number | boolean)[];
           errorMessage: string;
+          sutCaller: [string, string];
+          invariantCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
@@ -183,6 +219,8 @@ describe("Custom reporter logging", () => {
                   access: r.selectedInvariant.access,
                 },
                 invariantArgsArb: r.invariantArgsArb,
+                sutCaller: r.sutCaller,
+                invariantCaller: r.invariantCaller,
               },
             ],
             error: new Error(r.errorMessage),
@@ -202,9 +240,11 @@ describe("Custom reporter logging", () => {
             )}`,
             `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
             `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
+            `- Caller   : ${r.sutCaller[0]}`,
             `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`,
             `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`,
             `- Arguments: ${JSON.stringify(r.invariantArgsArb)}`,
+            `- Caller   : ${r.invariantCaller[0]}`,
             `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
             `The invariant "${
               r.selectedInvariant.name
@@ -223,7 +263,10 @@ describe("Custom reporter logging", () => {
     );
   });
 
-  it("does not log anything on success for invariant testing type", () => {
+  it("does not log anything on success for invariant testing type", async () => {
+    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    const simnet = await initSimnet(manifestPath);
+
     fc.assert(
       fc.property(
         fc.record({
@@ -248,6 +291,16 @@ describe("Custom reporter logging", () => {
             fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
           ),
           errorMessage: fc.ascii(),
+          sutCaller: fc.constantFrom(
+            ...new Map(
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+            ).entries()
+          ),
+          invariantCaller: fc.constantFrom(
+            ...new Map(
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+            ).entries()
+          ),
         }),
         (r: {
           path: string;
@@ -267,6 +320,8 @@ describe("Custom reporter logging", () => {
           };
           invariantArgsArb: (string | number | boolean)[];
           errorMessage: string;
+          sutCaller: [string, string];
+          invariantCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
@@ -295,6 +350,8 @@ describe("Custom reporter logging", () => {
                   access: r.selectedInvariant.access,
                 },
                 invariantArgsArb: r.invariantArgsArb,
+                sutCaller: r.sutCaller,
+                invariantCaller: r.invariantCaller,
               },
             ],
             error: new Error(r.errorMessage),
@@ -312,7 +369,10 @@ describe("Custom reporter logging", () => {
     );
   });
 
-  it("handles cases with missing path on failure for property testing type", () => {
+  it("handles cases with missing path on failure for property testing type", async () => {
+    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    const simnet = await initSimnet(manifestPath);
+
     fc.assert(
       fc.property(
         fc.record({
@@ -329,6 +389,11 @@ describe("Custom reporter logging", () => {
             fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
           ),
           errorMessage: fc.ascii(),
+          testCaller: fc.constantFrom(
+            ...new Map(
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+            ).entries()
+          ),
         }),
         (r: {
           failed: boolean;
@@ -342,6 +407,7 @@ describe("Custom reporter logging", () => {
           };
           functionArgsArb: (string | number | boolean)[];
           errorMessage: string;
+          testCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
@@ -364,6 +430,7 @@ describe("Custom reporter logging", () => {
                   outputs: r.selectedTestFunction.outputs,
                 },
                 functionArgsArb: r.functionArgsArb,
+                testCaller: r.testCaller,
               },
             ],
             error: new Error(r.errorMessage),
@@ -380,6 +447,7 @@ describe("Custom reporter logging", () => {
             `- Test Contract : ${testContractId.split(".")[1]}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
             `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`,
+            `- Caller        : ${r.testCaller[0]}`,
             `- Outputs       : ${JSON.stringify(
               r.selectedTestFunction.outputs
             )}`,
@@ -400,7 +468,10 @@ describe("Custom reporter logging", () => {
     );
   });
 
-  it("handles cases with a specified path on failure for property testing type", () => {
+  it("handles cases with a specified path on failure for property testing type", async () => {
+    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    const simnet = await initSimnet(manifestPath);
+
     fc.assert(
       fc.property(
         fc.record({
@@ -418,6 +489,11 @@ describe("Custom reporter logging", () => {
             fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
           ),
           errorMessage: fc.ascii(),
+          testCaller: fc.constantFrom(
+            ...new Map(
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+            ).entries()
+          ),
         }),
         (r: {
           path: string;
@@ -432,6 +508,7 @@ describe("Custom reporter logging", () => {
           };
           functionArgsArb: (string | number | boolean)[];
           errorMessage: string;
+          testCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
@@ -455,6 +532,7 @@ describe("Custom reporter logging", () => {
                   outputs: r.selectedTestFunction.outputs,
                 },
                 functionArgsArb: r.functionArgsArb,
+                testCaller: r.testCaller,
               },
             ],
             error: new Error(r.errorMessage),
@@ -472,6 +550,7 @@ describe("Custom reporter logging", () => {
             `- Test Contract : ${testContractId.split(".")[1]}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
             `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`,
+            `- Caller        : ${r.testCaller[0]}`,
             `- Outputs       : ${JSON.stringify(
               r.selectedTestFunction.outputs
             )}`,
@@ -492,7 +571,10 @@ describe("Custom reporter logging", () => {
     );
   });
 
-  it("does not log anything on success for property testing type", () => {
+  it("does not log anything on success for property testing type", async () => {
+    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    const simnet = await initSimnet(manifestPath);
+
     fc.assert(
       fc.property(
         fc.record({
@@ -509,6 +591,11 @@ describe("Custom reporter logging", () => {
             fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
           ),
           errorMessage: fc.ascii(),
+          testCaller: fc.constantFrom(
+            ...new Map(
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+            ).entries()
+          ),
         }),
         (r: {
           failed: boolean;
@@ -522,6 +609,7 @@ describe("Custom reporter logging", () => {
           };
           functionArgsArb: (string | number | boolean)[];
           errorMessage: string;
+          testCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
@@ -544,6 +632,7 @@ describe("Custom reporter logging", () => {
                   outputs: r.selectedTestFunction.outputs,
                 },
                 functionArgsArb: r.functionArgsArb,
+                testCaller: r.testCaller,
               },
             ],
             error: new Error(r.errorMessage),
