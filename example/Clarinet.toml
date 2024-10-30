@@ -3,14 +3,17 @@ name = "example"
 telemetry = false
 cache_dir = "./.cache"
 
+[contracts.cargo]
+path = "contracts/cargo.clar"
+
 [contracts.counter]
 path = "contracts/counter.clar"
 
 [contracts.reverse]
 path = "contracts/reverse.clar"
 
-[contracts.cargo]
-path = "contracts/cargo.clar"
+[contracts.slice]
+path = "contracts/slice.clar"
 
 [repl.analysis]
 passes = ["check_checker"]

@@ -228,6 +228,44 @@ describe("Command-line arguments handling", () => {
       ],
     ],
     [
+      ["manifest path", "contract name = reverse", "seed", "path", "type=test"],
+      [
+        "node",
+        "app.js",
+        "example",
+        "reverse",
+        "--seed=123",
+        "--path=84:0",
+        "--type=test",
+      ],
+      [
+        `Using manifest path: example/Clarinet.toml`,
+        `Target contract: reverse`,
+        `Using seed: 123`,
+        `Using path: 84:0`,
+        `\nStarting property testing type for the reverse contract...`,
+      ],
+    ],
+    [
+      ["manifest path", "contract name = slice", "seed", "path", "type=test"],
+      [
+        "node",
+        "app.js",
+        "example",
+        "slice",
+        "--seed=123",
+        "--path=84:0",
+        "--type=test",
+      ],
+      [
+        `Using manifest path: example/Clarinet.toml`,
+        `Target contract: slice`,
+        `Using seed: 123`,
+        `Using path: 84:0`,
+        `\nStarting property testing type for the slice contract...`,
+      ],
+    ],
+    [
       [
         "manifest path",
         "contract name",
