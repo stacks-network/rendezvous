@@ -5,10 +5,8 @@
 
 (define-public (test-slice-list-int (seq (list 127 int)) (skip int) (n int))
   (if
-    ;; Early return if the input is invalid.
-    (or
-      (not (and (<= 0 n) (<= n 127)))
-      (not (and (<= 0 skip) (<= skip 127))))
+    ;; Early return if the preliminary function returns false.
+    (not (can-test-slice-list-int seq skip n))
     (ok true)
     (let (
         (result (contract-call? .slice slice seq skip n))
