@@ -217,6 +217,33 @@ export const checkProperties = (
           .join(" ");
 
         const [testCallerWallet, testCallerAddress] = r.testCaller;
+
+        const preliminaryFunctionName = testContractsPairedFunctions
+          .get(r.testContractId)!
+          .get(r.selectedTestFunction.name);
+
+        let discarded = false;
+
+        // If a preliminary function is defined, call it first to determine if
+        // the test function can be executed. If the preliminary function call
+        // returns false, we will still call the test function but emit a log
+        // that the test was discarded.
+        if (preliminaryFunctionName !== undefined) {
+          const { result: preliminaryFunctionCallResult } =
+            simnet.callReadOnlyFn(
+              r.testContractId,
+              preliminaryFunctionName,
+              selectedTestFunctionArgs,
+              testCallerAddress
+            );
+
+          const jsonPreliminaryFunctionCallResult = cvToJSON(
+            preliminaryFunctionCallResult
+          );
+
+          discarded = jsonPreliminaryFunctionCallResult.value === false;
+        }
+
         const { result: testFunctionCallResult } = simnet.callPublicFn(
           r.testContractId,
           r.selectedTestFunction.name,
