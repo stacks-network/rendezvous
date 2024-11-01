@@ -25,6 +25,7 @@
 
 import { EventEmitter } from "events";
 import { getContractNameFromRendezvousId } from "./invariant";
+import { green } from "ansicolor";
 
 export function reporter(
   //@ts-ignore
@@ -134,5 +135,14 @@ export function reporter(
         break;
       }
     }
+  } else {
+    radio.emit(
+      "logMessage",
+      green(
+        `\nOK, ${
+          type === "invariant" ? "invariants" : "properties"
+        } passed after ${runDetails.numRuns} runs.`
+      )
+    );
   }
 }
