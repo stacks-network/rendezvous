@@ -71,6 +71,26 @@ export const checkProperties = (
     ])
   );
 
+  // Pair each test function with its corresponding preliminary function. When
+  // a test function is selected, Rendezvous will first call its preliminary
+  // function, if available, to validate that the generated test arguments are
+  // meaningful. This way, we are reducing the risk of false positives in test
+  // results.
+  const testContractsPairedFunctions = new Map(
+    Array.from(testContractsTestFunctions, ([contractId, functions]) => [
+      contractId,
+      new Map(
+        functions.map((f) => {
+          const preliminaryFunction = testContractsPreliminaryFunctions
+            .get(contractId)
+            ?.find((pf) => pf.name === `can-${f.name}`);
+
+          return [f.name, preliminaryFunction?.name];
+        })
+      ),
+    ])
+  );
+
   const radioReporter = (runDetails: any) => {
     reporter(runDetails, radio, "test");
   };
