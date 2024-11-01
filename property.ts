@@ -16,7 +16,7 @@ import {
   getFunctionsListForContract,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
-import { red } from "ansicolor";
+import { green, red, yellow } from "ansicolor";
 
 export const checkProperties = (
   simnet: Simnet,
@@ -244,6 +244,8 @@ export const checkProperties = (
           discarded = jsonPreliminaryFunctionCallResult.value === false;
         }
 
+        // FIXME: Decide if we should call the test function even if the
+        // preliminary function returns false (discarded).
         const { result: testFunctionCallResult } = simnet.callPublicFn(
           r.testContractId,
           r.selectedTestFunction.name,
@@ -259,16 +261,20 @@ export const checkProperties = (
         ) {
           radio.emit(
             "logMessage",
-            ` ✔  ${testCallerWallet} ${r.testContractId.split(".")[1]} ${
+            ` ${
+              discarded ? yellow("[WARN]") : green("[PASS]")
+            }  ${testCallerWallet} ${r.testContractId.split(".")[1]} ${
               r.selectedTestFunction.name
-            } ${printedTestFunctionArgs}`
+            } ${printedTestFunctionArgs} ${discarded ? `(discarded)` : ""}`
           );
         } else {
           radio.emit(
             "logMessage",
-            ` ✗  ${testCallerWallet} ${r.testContractId.split(".")[1]} ${
+            ` ${
+              discarded ? yellow("[WARN]") : red("[FAIL]")
+            }  ${testCallerWallet} ${r.testContractId.split(".")[1]} ${
               r.selectedTestFunction.name
-            } ${printedTestFunctionArgs}`
+            } ${printedTestFunctionArgs} ${discarded ? `(discarded)` : ""}`
           );
           throw new Error(
             `Test failed for ${r.testContractId.split(".")[1]} contract: "${
