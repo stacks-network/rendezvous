@@ -16,6 +16,7 @@ import {
   getFunctionsListForContract,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
+import { red } from "ansicolor";
 
 export const checkProperties = (
   simnet: Simnet,
@@ -90,6 +91,61 @@ export const checkProperties = (
       ),
     ])
   );
+
+  let preliminaryFunctionError = false;
+
+  // If preliminary functions are available, verify they follow the remaining rules:
+  // - Their parameters must match those of the test function.
+  // - Their return type must be boolean.
+  testContractsPairedFunctions.forEach((pairedMap, contractId) => {
+    pairedMap.forEach((preliminaryFunctionName, testFunctionName) => {
+      if (preliminaryFunctionName) {
+        const testFunction = testContractsTestFunctions
+          .get(contractId)
+          ?.find((f) => f.name === testFunctionName);
+        const preliminaryFunction = testContractsPreliminaryFunctions
+          .get(contractId)
+          ?.find((f) => f.name === preliminaryFunctionName);
+
+        if (testFunction && preliminaryFunction) {
+          const paramsMatch =
+            JSON.stringify(testFunction.args) ===
+            JSON.stringify(preliminaryFunction.args);
+          const returnTypeIsBoolean =
+            preliminaryFunction.outputs.type === "bool";
+
+          if (!paramsMatch) {
+            radio.emit(
+              "logFailure",
+              red(
+                `\n[FAIL] Parameter mismatch for preliminary function "${preliminaryFunctionName}" in contract "${deriveTestContractName(
+                  sutContractIds[0]
+                )}".`
+              )
+            );
+            preliminaryFunctionError = true;
+            return;
+          }
+          if (!returnTypeIsBoolean) {
+            radio.emit(
+              "logFailure",
+              red(
+                `\n[FAIL] Return type must be boolean for preliminary function "${preliminaryFunctionName}" in contract "${deriveTestContractName(
+                  sutContractIds[0]
+                )}".`
+              )
+            );
+            preliminaryFunctionError = true;
+            return;
+          }
+        }
+      }
+    });
+  });
+
+  if (preliminaryFunctionError) {
+    return;
+  }
 
   const radioReporter = (runDetails: any) => {
     reporter(runDetails, radio, "test");
