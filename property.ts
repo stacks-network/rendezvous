@@ -59,6 +59,18 @@ export const checkProperties = (
     `\nStarting property testing type for the ${sutContractName} contract...`
   );
 
+  // Search for preliminary functions, for each test function. This map will
+  // be used to pair the test functions with their corresponding preliminary
+  // functions.
+  const testContractsPreliminaryFunctions = new Map(
+    Array.from(testContractsAllFunctions, ([contractId, functions]) => [
+      contractId,
+      functions.filter(
+        (f) => f.access === "read_only" && f.name.startsWith("can-")
+      ),
+    ])
+  );
+
   const radioReporter = (runDetails: any) => {
     reporter(runDetails, radio, "test");
   };
