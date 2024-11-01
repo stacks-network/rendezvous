@@ -17,6 +17,7 @@
   "dependencies": {
     "@hirosystems/clarinet-sdk": "^2.7.0",
     "@stacks/transactions": "^6.16.1",
+    "ansicolor": "^2.0.3",
     "fast-check": "^3.20.0",
     "typescript": "^5.5.4"
   },
