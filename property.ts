@@ -244,43 +244,48 @@ export const checkProperties = (
           discarded = jsonPreliminaryFunctionCallResult.value === false;
         }
 
-        // FIXME: Decide if we should call the test function even if the
-        // preliminary function returns false (discarded).
-        const { result: testFunctionCallResult } = simnet.callPublicFn(
-          r.testContractId,
-          r.selectedTestFunction.name,
-          selectedTestFunctionArgs,
-          testCallerAddress
-        );
-
-        const testFunctionCallResultJson = cvToJSON(testFunctionCallResult);
-
-        if (
-          testFunctionCallResultJson.success &&
-          testFunctionCallResultJson.value.value === true
-        ) {
+        if (discarded) {
           radio.emit(
             "logMessage",
-            ` ${
-              discarded ? yellow("[WARN]") : green("[PASS]")
-            }  ${testCallerWallet} ${r.testContractId.split(".")[1]} ${
+            ` ${yellow("[WARN]")}  ${testCallerWallet} ${
+              r.testContractId.split(".")[1]
+            } ${
               r.selectedTestFunction.name
-            } ${printedTestFunctionArgs} ${discarded ? `(discarded)` : ""}`
+            } ${printedTestFunctionArgs} (discarded)`
           );
         } else {
-          radio.emit(
-            "logMessage",
-            ` ${
-              discarded ? yellow("[WARN]") : red("[FAIL]")
-            }  ${testCallerWallet} ${r.testContractId.split(".")[1]} ${
-              r.selectedTestFunction.name
-            } ${printedTestFunctionArgs} ${discarded ? `(discarded)` : ""}`
+          const { result: testFunctionCallResult } = simnet.callPublicFn(
+            r.testContractId,
+            r.selectedTestFunction.name,
+            selectedTestFunctionArgs,
+            testCallerAddress
           );
-          throw new Error(
-            `Test failed for ${r.testContractId.split(".")[1]} contract: "${
-              r.selectedTestFunction.name
-            }" returned ${testFunctionCallResultJson.value.value}`
-          );
+
+          const testFunctionCallResultJson = cvToJSON(testFunctionCallResult);
+
+          if (
+            testFunctionCallResultJson.success &&
+            testFunctionCallResultJson.value.value === true
+          ) {
+            radio.emit(
+              "logMessage",
+              ` ${green("[PASS]")}  ${testCallerWallet} ${
+                r.testContractId.split(".")[1]
+              } ${r.selectedTestFunction.name} ${printedTestFunctionArgs}`
+            );
+          } else {
+            radio.emit(
+              "logMessage",
+              ` ${red("[FAIL]")}  ${testCallerWallet} ${
+                r.testContractId.split(".")[1]
+              } ${r.selectedTestFunction.name} ${printedTestFunctionArgs}`
+            );
+            throw new Error(
+              `Test failed for ${r.testContractId.split(".")[1]} contract: "${
+                r.selectedTestFunction.name
+              }" returned ${testFunctionCallResultJson.value.value}`
+            );
+          }
         }
       }
     ),
