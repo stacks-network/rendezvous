@@ -4,31 +4,28 @@
 (define-constant ERR_ASSERTION_FAILED_3 (err 3))
 
 (define-public (test-slice-list-int (seq (list 127 int)) (skip int) (n int))
-  (if
-    ;; Early return if the preliminary function returns false.
-    (not (can-test-slice-list-int seq skip n))
-    (ok true)
-    (let (
-        (result (contract-call? .slice slice seq skip n))
-      )
+  (let (
+      (result (contract-call? .slice slice seq skip n))
+    )
+    (if
+      ;; Case 1: If skip > length of seq, result should be an empty list.
+      (> (to-uint skip) (len seq))
+      (asserts! (is-eq result (list )) ERR_ASSERTION_FAILED_1)
       (if
-        ;; Case 1: If skip > length of seq, result should be an empty list.
-        (> (to-uint skip) (len seq))
-        (asserts! (is-eq result (list )) ERR_ASSERTION_FAILED_1)
-        (if
-          ;; Case 2: If n > length of seq - skip, result length should be
-          ;; length of seq - skip.
-          (>
-            (to-uint n)
+        ;; Case 2: If n > length of seq - skip, result length should be
+        ;; length of seq - skip.
+        (>
+          (to-uint n)
+          (- (len seq) (to-uint skip)))
+        (asserts!
+          (is-eq
+            (len result)
             (- (len seq) (to-uint skip)))
-          (asserts!
-            (is-eq
-              (len result)
-              (- (len seq) (to-uint skip)))
-            ERR_ASSERTION_FAILED_2)
-          ;; Case 3: If n <= length of seq - skip, result length should be n.
-          (asserts! (is-eq (len result) (to-uint n)) ERR_ASSERTION_FAILED_3)))
-      (ok true))))
+          ERR_ASSERTION_FAILED_2)
+        ;; Case 3: If n <= length of seq - skip, result length should be n.
+        (asserts! (is-eq (len result) (to-uint n)) ERR_ASSERTION_FAILED_3)))
+    (ok true)))
+
 
 ;; If a property test is conditional (https://www.cse.chalmers.se/~rjmh/
 ;; QuickCheck/manual_body.html#6), it requires a preliminary function to check
@@ -46,8 +43,8 @@
 ;; be able to customize generated argument values based on the preliminary
 ;; function's result.
 (define-read-only (can-test-slice-list-int (seq (list 127 int))
-                                                   (skip int)
-                                                   (n int))
+                                           (skip int)
+                                           (n int))
   (and
     (and (<= 0 n) (<= n 127))
     (and (<= 0 skip) (<= skip 127))))
