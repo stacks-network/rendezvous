@@ -102,7 +102,7 @@ describe("Custom reporter logging", () => {
 
           // Assert
           const expectedMessages = [
-            `Error: Property failed after ${r.numRuns} tests.`,
+            `\nError: Property failed after ${r.numRuns} tests.`,
             `Seed : ${r.seed}`,
             `\nCounterexample:`,
             `- Contract : ${getContractNameFromRendezvousId(
@@ -231,7 +231,7 @@ describe("Custom reporter logging", () => {
 
           // Assert
           const expectedMessages = [
-            `Error: Property failed after ${r.numRuns} tests.`,
+            `\nError: Property failed after ${r.numRuns} tests.`,
             `Seed : ${r.seed}`,
             `Path : ${r.path}`,
             `\nCounterexample:`,
@@ -441,7 +441,7 @@ describe("Custom reporter logging", () => {
 
           // Assert
           const expectedMessages = [
-            `Error: Property failed after ${r.numRuns} tests.`,
+            `\nError: Property failed after ${r.numRuns} tests.`,
             `Seed : ${r.seed}`,
             `\nCounterexample:`,
             `- Test Contract : ${testContractId.split(".")[1]}`,
@@ -543,7 +543,7 @@ describe("Custom reporter logging", () => {
 
           // Assert
           const expectedMessages = [
-            `Error: Property failed after ${r.numRuns} tests.`,
+            `\nError: Property failed after ${r.numRuns} tests.`,
             `Seed : ${r.seed}`,
             `Path : ${r.path}`,
             `\nCounterexample:`,

@@ -39,7 +39,7 @@ export function reporter(
 
     radio.emit(
       "logFailure",
-      `Error: Property failed after ${runDetails.numRuns} tests.`
+      `\nError: Property failed after ${runDetails.numRuns} tests.`
     );
     radio.emit("logFailure", `Seed : ${runDetails.seed}`);
     if (runDetails.path) {
@@ -141,7 +141,7 @@ export function reporter(
       green(
         `\nOK, ${
           type === "invariant" ? "invariants" : "properties"
-        } passed after ${runDetails.numRuns} runs.`
+        } passed after ${runDetails.numRuns} runs.\n`
       )
     );
   }
