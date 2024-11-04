@@ -39,9 +39,7 @@
 ;; - It must return a boolean indicating whether the inputs are valid.
 ;; 
 ;; Rendezvous will first call the preliminary function; if it returns false, a
-;; warning will be logged. In the future, with config file support, users will
-;; be able to customize generated argument values based on the preliminary
-;; function's result.
+;; warning will be logged.
 (define-read-only (can-test-slice-list-int (seq (list 127 int))
                                            (skip int)
                                            (n int))
