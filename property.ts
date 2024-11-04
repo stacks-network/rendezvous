@@ -16,7 +16,7 @@ import {
   getFunctionsListForContract,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
-import { green, red, yellow } from "ansicolor";
+import { dim, green, red, underline, yellow } from "ansicolor";
 
 export const checkProperties = (
   simnet: Simnet,
@@ -247,11 +247,11 @@ export const checkProperties = (
         if (discarded) {
           radio.emit(
             "logMessage",
-            ` ${yellow("[WARN]")}  ${testCallerWallet} ${
+            ` ${yellow("[WARN]")}  ${dim(testCallerWallet)} ${
               r.testContractId.split(".")[1]
-            } ${
-              r.selectedTestFunction.name
-            } ${printedTestFunctionArgs} (discarded)`
+            } ${underline(r.selectedTestFunction.name)} ${dim(
+              printedTestFunctionArgs
+            )}`
           );
         } else {
           const { result: testFunctionCallResult } = simnet.callPublicFn(
@@ -269,16 +269,20 @@ export const checkProperties = (
           ) {
             radio.emit(
               "logMessage",
-              ` ${green("[PASS]")}  ${testCallerWallet} ${
+              ` ${green("[PASS]")}  ${dim(testCallerWallet)} ${
                 r.testContractId.split(".")[1]
-              } ${r.selectedTestFunction.name} ${printedTestFunctionArgs}`
+              } ${underline(
+                r.selectedTestFunction.name
+              )} ${printedTestFunctionArgs}`
             );
           } else {
             radio.emit(
               "logMessage",
-              ` ${red("[FAIL]")}  ${testCallerWallet} ${
+              ` ${red("[FAIL]")}  ${dim(testCallerWallet)} ${
                 r.testContractId.split(".")[1]
-              } ${r.selectedTestFunction.name} ${printedTestFunctionArgs}`
+              } ${underline(
+                r.selectedTestFunction.name
+              )} ${printedTestFunctionArgs}`
             );
             throw new Error(
               `Test failed for ${r.testContractId.split(".")[1]} contract: "${
