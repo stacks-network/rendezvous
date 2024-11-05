@@ -60,10 +60,10 @@ export const checkProperties = (
     `\nStarting property testing type for the ${sutContractName} contract...`
   );
 
-  // Search for preliminary functions, for each test function. This map will
-  // be used to pair the test functions with their corresponding preliminary
+  // Search for discard functions, for each test function. This map will
+  // be used to pair the test functions with their corresponding discard
   // functions.
-  const testContractsPreliminaryFunctions = new Map(
+  const testContractsDiscardFunctions = new Map(
     Array.from(testContractsAllFunctions, ([contractId, functions]) => [
       contractId,
       functions.filter(
@@ -72,8 +72,8 @@ export const checkProperties = (
     ])
   );
 
-  // Pair each test function with its corresponding preliminary function. When
-  // a test function is selected, Rendezvous will first call its preliminary
+  // Pair each test function with its corresponding discard function. When a
+  // test function is selected, Rendezvous will first call its discard
   // function, if available, to validate that the generated test arguments are
   // meaningful. This way, we are reducing the risk of false positives in test
   // results.
@@ -82,60 +82,60 @@ export const checkProperties = (
       contractId,
       new Map(
         functions.map((f) => {
-          const preliminaryFunction = testContractsPreliminaryFunctions
+          const discardFunction = testContractsDiscardFunctions
             .get(contractId)
             ?.find((pf) => pf.name === `can-${f.name}`);
 
-          return [f.name, preliminaryFunction?.name];
+          return [f.name, discardFunction?.name];
         })
       ),
     ])
   );
 
-  let preliminaryFunctionError = false;
+  let discardFunctionError = false;
 
-  // If preliminary functions are available, verify they follow the remaining rules:
+  // If discard functions are available, verify they follow the remaining
+  // rules:
   // - Their parameters must match those of the test function.
   // - Their return type must be boolean.
   testContractsPairedFunctions.forEach((pairedMap, contractId) => {
-    pairedMap.forEach((preliminaryFunctionName, testFunctionName) => {
-      if (preliminaryFunctionName) {
+    pairedMap.forEach((discardFunctionName, testFunctionName) => {
+      if (discardFunctionName) {
         const testFunction = testContractsTestFunctions
           .get(contractId)
           ?.find((f) => f.name === testFunctionName);
-        const preliminaryFunction = testContractsPreliminaryFunctions
+        const discardFunction = testContractsDiscardFunctions
           .get(contractId)
-          ?.find((f) => f.name === preliminaryFunctionName);
+          ?.find((f) => f.name === discardFunctionName);
 
-        if (testFunction && preliminaryFunction) {
+        if (testFunction && discardFunction) {
           const paramsMatch =
             JSON.stringify(testFunction.args) ===
-            JSON.stringify(preliminaryFunction.args);
-          const returnTypeIsBoolean =
-            preliminaryFunction.outputs.type === "bool";
+            JSON.stringify(discardFunction.args);
+          const returnTypeIsBoolean = discardFunction.outputs.type === "bool";
 
           if (!paramsMatch) {
             radio.emit(
               "logFailure",
               red(
-                `\n[FAIL] Parameter mismatch for preliminary function "${preliminaryFunctionName}" in contract "${deriveTestContractName(
+                `\n[FAIL] Parameter mismatch for discard function "${discardFunctionName}" in contract "${deriveTestContractName(
                   sutContractIds[0]
                 )}".`
               )
             );
-            preliminaryFunctionError = true;
+            discardFunctionError = true;
             return;
           }
           if (!returnTypeIsBoolean) {
             radio.emit(
               "logFailure",
               red(
-                `\n[FAIL] Return type must be boolean for preliminary function "${preliminaryFunctionName}" in contract "${deriveTestContractName(
+                `\n[FAIL] Return type must be boolean for discard function "${discardFunctionName}" in contract "${deriveTestContractName(
                   sutContractIds[0]
                 )}".`
               )
             );
-            preliminaryFunctionError = true;
+            discardFunctionError = true;
             return;
           }
         }
@@ -143,7 +143,7 @@ export const checkProperties = (
     });
   });
 
-  if (preliminaryFunctionError) {
+  if (discardFunctionError) {
     return;
   }
 
@@ -218,30 +218,27 @@ export const checkProperties = (
 
         const [testCallerWallet, testCallerAddress] = r.testCaller;
 
-        const preliminaryFunctionName = testContractsPairedFunctions
+        const discardFunctionName = testContractsPairedFunctions
           .get(r.testContractId)!
           .get(r.selectedTestFunction.name);
 
         let discarded = false;
 
-        // If a preliminary function is defined, call it first to determine if
-        // the test function can be executed. If the preliminary function call
-        // returns false, we will still call the test function but emit a log
-        // that the test was discarded.
-        if (preliminaryFunctionName !== undefined) {
-          const { result: preliminaryFunctionCallResult } =
-            simnet.callReadOnlyFn(
-              r.testContractId,
-              preliminaryFunctionName,
-              selectedTestFunctionArgs,
-              testCallerAddress
-            );
-
-          const jsonPreliminaryFunctionCallResult = cvToJSON(
-            preliminaryFunctionCallResult
+        // If a discard function is defined, call it first to determine if the
+        // test function can be executed.
+        if (discardFunctionName !== undefined) {
+          const { result: discardFunctionCallResult } = simnet.callReadOnlyFn(
+            r.testContractId,
+            discardFunctionName,
+            selectedTestFunctionArgs,
+            testCallerAddress
           );
 
-          discarded = jsonPreliminaryFunctionCallResult.value === false;
+          const jsonDiscardFunctionCallResult = cvToJSON(
+            discardFunctionCallResult
+          );
+
+          discarded = jsonDiscardFunctionCallResult.value === false;
         }
 
         if (discarded) {

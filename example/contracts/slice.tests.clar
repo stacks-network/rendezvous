@@ -26,19 +26,14 @@
         (asserts! (is-eq (len result) (to-uint n)) ERR_ASSERTION_FAILED_3)))
     (ok true)))
 
-;; If a property test is conditional (https://www.cse.chalmers.se/~rjmh/
-;; QuickCheck/manual_body.html#6), it requires a preliminary function to check
-;; the input validity before running the test.
-;; 
-;; The preliminary function must follow these rules:
-;; - It must have read-only access.
-;; - Its name should match the property test function's name, prefixed with
-;;   "can-".
-;; - Its parameters should mirror those of the property test function.
-;; - It must return a boolean indicating whether the inputs are valid.
-;; 
-;; Rendezvous will first call the preliminary function; if it returns false, a
-;; warning will be logged.
+;; Some tests, like 'test-slice-list-int', are valid only for specific inputs.
+;; Rendezvous generates a wide range of inputs, which may include values that
+;; are unsuitable for these tests.
+;; To skip the test when inputs are invalid, define a 'discard' function:
+;; - It must be read-only.
+;; - Its name should match the property test function's, prefixed with "can-".
+;; - Its parameters should mirror those of the property test.
+;; - It must return a boolean indicating if the inputs are invalid.
 (define-read-only (can-test-slice-list-int (seq (list 127 int))
                                            (skip int)
                                            (n int))
