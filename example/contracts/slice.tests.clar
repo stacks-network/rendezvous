@@ -26,7 +26,6 @@
         (asserts! (is-eq (len result) (to-uint n)) ERR_ASSERTION_FAILED_3)))
     (ok true)))
 
-
 ;; If a property test is conditional (https://www.cse.chalmers.se/~rjmh/
 ;; QuickCheck/manual_body.html#6), it requires a preliminary function to check
 ;; the input validity before running the test.
