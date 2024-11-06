@@ -74,9 +74,7 @@ export const checkProperties = (
 
   // Pair each test function with its corresponding discard function. When a
   // test function is selected, Rendezvous will first call its discard
-  // function, if available, to validate that the generated test arguments are
-  // meaningful. This way, we are reducing the risk of false positives in test
-  // results.
+  // function, to allow or prevent the property test from running.
   const testContractsPairedFunctions = new Map(
     Array.from(testContractsTestFunctions, ([contractId, functions]) => [
       contractId,
