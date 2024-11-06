@@ -186,24 +186,13 @@ export const checkProperties = (
           .get(r.testContractId)!
           .get(r.selectedTestFunction.name);
 
-        let discarded = false;
-
-        // If a discard function is defined, call it first to determine if the
-        // test function can be executed.
-        if (discardFunctionName !== undefined) {
-          const { result: discardFunctionCallResult } = simnet.callReadOnlyFn(
-            r.testContractId,
-            discardFunctionName,
-            selectedTestFunctionArgs,
-            testCallerAddress
-          );
-
-          const jsonDiscardFunctionCallResult = cvToJSON(
-            discardFunctionCallResult
-          );
-
-          discarded = jsonDiscardFunctionCallResult.value === false;
-        }
+        const discarded = isTestDiscarded(
+          discardFunctionName,
+          selectedTestFunctionArgs,
+          r.testContractId,
+          simnet,
+          testCallerAddress
+        );
 
         if (discarded) {
           radio.emit(
@@ -382,6 +371,34 @@ const filterTestFunctions = (
       ),
     ])
   );
+
+/**
+ * Check if the test function has to be discarded.
+ * @param discardFunctionName The discard function name.
+ * @param selectedTestFunctionArgs The generated test function arguments.
+ * @param contractId The contract identifier.
+ * @param simnet The simnet instance.
+ * @param selectedCaller The selected caller.
+ * @returns A boolean indicating if the test function has to be discarded.
+ */
+const isTestDiscarded = (
+  discardFunctionName: string | undefined,
+  selectedTestFunctionArgs: any[],
+  contractId: string,
+  simnet: Simnet,
+  selectedCaller: string
+) => {
+  if (!discardFunctionName) return false;
+
+  const { result: discardFunctionCallResult } = simnet.callReadOnlyFn(
+    contractId,
+    discardFunctionName,
+    selectedTestFunctionArgs,
+    selectedCaller
+  );
+  const jsonDiscardFunctionCallResult = cvToJSON(discardFunctionCallResult);
+  return jsonDiscardFunctionCallResult.value === false;
+};
 
 /**
  * Validate the discard function, ensuring that its parameters match the test
