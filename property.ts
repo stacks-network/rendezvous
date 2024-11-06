@@ -90,57 +90,24 @@ export const checkProperties = (
     ])
   );
 
-  let discardFunctionError = false;
+  const hasDiscardFunctionErrors = Array.from(
+    testContractsPairedFunctions
+  ).some(([contractId, pairedMap]) =>
+    Array.from(pairedMap).some(([testFunctionName, discardFunctionName]) =>
+      discardFunctionName
+        ? !validateDiscardFunction(
+            contractId,
+            discardFunctionName,
+            testFunctionName,
+            testContractsDiscardFunctions,
+            testContractsTestFunctions,
+            radio
+          )
+        : false
+    )
+  );
 
-  // If discard functions are available, further verify:
-  // - Parameters match those of the test function.
-  // - Return type is boolean.
-  testContractsPairedFunctions.forEach((pairedMap, contractId) => {
-    pairedMap.forEach((discardFunctionName, testFunctionName) => {
-      if (discardFunctionName) {
-        const testFunction = testContractsTestFunctions
-          .get(contractId)
-          ?.find((f) => f.name === testFunctionName);
-        const discardFunction = testContractsDiscardFunctions
-          .get(contractId)
-          ?.find((f) => f.name === discardFunctionName);
-
-        if (testFunction && discardFunction) {
-          const paramsMatch =
-            JSON.stringify(testFunction.args) ===
-            JSON.stringify(discardFunction.args);
-          const returnTypeIsBoolean = discardFunction.outputs.type === "bool";
-
-          if (!paramsMatch) {
-            radio.emit(
-              "logFailure",
-              red(
-                `\n[FAIL] Parameter mismatch for discard function "${discardFunctionName}" in contract "${deriveTestContractName(
-                  sutContractIds[0]
-                )}".`
-              )
-            );
-            discardFunctionError = true;
-            return;
-          }
-          if (!returnTypeIsBoolean) {
-            radio.emit(
-              "logFailure",
-              red(
-                `\n[FAIL] Return type must be boolean for discard function "${discardFunctionName}" in contract "${deriveTestContractName(
-                  sutContractIds[0]
-                )}".`
-              )
-            );
-            discardFunctionError = true;
-            return;
-          }
-        }
-      }
-    });
-  });
-
-  if (discardFunctionError) {
+  if (hasDiscardFunctionErrors) {
     return;
   }
 
@@ -415,3 +382,89 @@ const filterTestFunctions = (
       ),
     ])
   );
+
+/**
+ * Validate the discard function, ensuring that its parameters match the test
+ * function's parameters and that its return type is boolean.
+ * @param contractId The contract identifier.
+ * @param discardFunctionName The discard function name.
+ * @param testFunctionName The test function name.
+ * @param testContractsDiscardFunctions The discard functions map.
+ * @param testContractsTestFunctions The test functions map.
+ * @param radio The radio event emitter.
+ * @returns A boolean indicating if the discard function passes the checks.
+ */
+const validateDiscardFunction = (
+  contractId: string,
+  discardFunctionName: string,
+  testFunctionName: string,
+  testContractsDiscardFunctions: Map<string, ContractInterfaceFunction[]>,
+  testContractsTestFunctions: Map<string, ContractInterfaceFunction[]>,
+  radio: EventEmitter
+) => {
+  const testFunction = testContractsTestFunctions
+    .get(contractId)
+    ?.find((f) => f.name === testFunctionName);
+  const discardFunction = testContractsDiscardFunctions
+    .get(contractId)
+    ?.find((f) => f.name === discardFunctionName);
+
+  if (!testFunction || !discardFunction) return false;
+
+  if (!isParamsMatch(testFunction, discardFunction)) {
+    radio.emit(
+      "logFailure",
+      red(
+        `\nError: Parameter mismatch for discard function "${discardFunctionName}" in contract "${
+          contractId.split(".")[1]
+        }".\n`
+      )
+    );
+    return false;
+  }
+
+  if (!isReturnTypeBoolean(discardFunction)) {
+    radio.emit(
+      "logFailure",
+      red(
+        `\nError: Return type must be boolean for discard function "${discardFunctionName}" in contract "${
+          contractId.split(".")[1]
+        }".\n`
+      )
+    );
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Verify if the test function parameters match the discard function
+ * parameters.
+ * @param testFunction The test function's interface.
+ * @param discardFunction The discard function's interface.
+ * @returns A boolean indicating if the parameters match.
+ */
+const isParamsMatch = (
+  testFunction: ContractInterfaceFunction,
+  discardFunction: ContractInterfaceFunction
+) => {
+  const sortedTestFunctionArgs = [...testFunction.args].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+  const sortedDiscardFunctionArgs = [...discardFunction.args].sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
+  return (
+    JSON.stringify(sortedTestFunctionArgs) ===
+    JSON.stringify(sortedDiscardFunctionArgs)
+  );
+};
+
+/**
+ * Verify if the discard function's return type is boolean.
+ * @param discardFunction The discard function's interface.
+ * @returns A boolean indicating if the return type is boolean.
+ */
+const isReturnTypeBoolean = (discardFunction: ContractInterfaceFunction) =>
+  discardFunction.outputs.type === "bool";
