@@ -30,10 +30,10 @@
 ;; Rendezvous generates a wide range of inputs, which may include values that
 ;; are unsuitable for these tests.
 ;; To skip the test when inputs are invalid, define a 'discard' function:
-;; - It must be read-only.
-;; - Its name should match the property test function's, prefixed with "can-".
-;; - Its parameters should mirror those of the property test.
-;; - It must return a boolean indicating if the inputs are invalid.
+;; - Must be read-only.
+;; - Name should match the property test function's, prefixed with "can-".
+;; - Parameters should mirror those of the property test.
+;; - Returns true only if inputs are valid, allowing the test to run.
 (define-read-only (can-test-slice-list-int (seq (list 127 int))
                                            (skip int)
                                            (n int))
