@@ -92,10 +92,9 @@ export const checkProperties = (
 
   let discardFunctionError = false;
 
-  // If discard functions are available, verify they follow the remaining
-  // rules:
-  // - Their parameters must match those of the test function.
-  // - Their return type must be boolean.
+  // If discard functions are available, further verify:
+  // - Parameters match those of the test function.
+  // - Return type is boolean.
   testContractsPairedFunctions.forEach((pairedMap, contractId) => {
     pairedMap.forEach((discardFunctionName, testFunctionName) => {
       if (discardFunctionName) {
