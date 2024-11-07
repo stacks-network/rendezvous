@@ -5,11 +5,19 @@ import {
   deriveTestContractName,
   filterTestContractsInterfaces,
   getTestsContractSource,
+  isParamsMatch,
+  isReturnTypeBoolean,
 } from "./property";
 import { getSimnetDeployerContractsInterfaces } from "./shared";
 import { resolve } from "path";
 import fs from "fs";
 import fc from "fast-check";
+import {
+  ContractInterfaceFunction,
+  ContractInterfaceFunctionAccess,
+  ContractInterfaceFunctionArg,
+  ContractInterfaceFunctionOutput,
+} from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
 
 describe("File stream operations", () => {
   it("retrieves the test contract source", async () => {
@@ -163,5 +171,202 @@ describe("Simnet contracts operations", () => {
 
     // Assert
     expect(actualTestContractsList).toEqual(expectedTestContractsList);
+  });
+});
+
+describe("Test discarding related operations", () => {
+  it("boolean output checker returns true when the function's output is boolean", () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          fnName: fc.string(),
+          access: fc.constant("read_only"),
+          args: fc.array(
+            fc.record({
+              name: fc.string(),
+              type: fc.constantFrom("int128", "uint128", "bool", "principal"),
+            })
+          ),
+          outputs: fc.record({ type: fc.constant("bool") }),
+        }),
+        (r: {
+          fnName: string;
+          access: string;
+          args: { name: string; type: string }[];
+          outputs: { type: string };
+        }) => {
+          const discardFunctionInterface: ContractInterfaceFunction = {
+            name: r.fnName,
+            access: r.access as ContractInterfaceFunctionAccess,
+            args: r.args as ContractInterfaceFunctionArg[],
+            outputs: r.outputs as ContractInterfaceFunctionOutput,
+          };
+          const actual = isReturnTypeBoolean(discardFunctionInterface);
+          expect(actual).toBe(true);
+        }
+      )
+    );
+  });
+
+  it("boolean output checker returns false when the function's output is non-boolean", () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          fnName: fc.string(),
+          access: fc.constant("read_only"),
+          args: fc.array(
+            fc.record({
+              name: fc.string(),
+              type: fc.constantFrom("int128", "uint128", "bool", "principal"),
+            })
+          ),
+          outputs: fc.record({
+            type: fc.constantFrom("int128", "uint128", "principal"),
+          }),
+        }),
+        (r: {
+          fnName: string;
+          access: string;
+          args: { name: string; type: string }[];
+          outputs: { type: string };
+        }) => {
+          const discardFunctionInterface: ContractInterfaceFunction = {
+            name: r.fnName,
+            access: r.access as ContractInterfaceFunctionAccess,
+            args: r.args as ContractInterfaceFunctionArg[],
+            outputs: r.outputs as ContractInterfaceFunctionOutput,
+          };
+          const actual = isReturnTypeBoolean(discardFunctionInterface);
+          expect(actual).toBe(false);
+        }
+      )
+    );
+  });
+
+  it("param matcher returns true when two functions have the same parameters", () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          fnName: fc.string(),
+          access: fc.constant("read_only"),
+          args: fc.array(
+            fc.record({
+              name: fc.string(),
+              type: fc.constantFrom("int128", "uint128", "bool", "principal"),
+            })
+          ),
+          outputs: fc.record({ type: fc.constant("bool") }),
+        }),
+        (r: {
+          fnName: string;
+          access: string;
+          args: { name: string; type: string }[];
+          outputs: { type: string };
+        }) => {
+          const testFunctionInterface: ContractInterfaceFunction = {
+            name: r.fnName,
+            access: r.access as ContractInterfaceFunctionAccess,
+            args: r.args as ContractInterfaceFunctionArg[],
+            outputs: r.outputs as ContractInterfaceFunctionOutput,
+          };
+          const discardFunctionInterface: ContractInterfaceFunction = {
+            name: r.fnName,
+            access: r.access as ContractInterfaceFunctionAccess,
+            args: r.args as ContractInterfaceFunctionArg[],
+            outputs: r.outputs as ContractInterfaceFunctionOutput,
+          };
+          const actual = isParamsMatch(
+            testFunctionInterface,
+            discardFunctionInterface
+          );
+          expect(actual).toBe(true);
+        }
+      )
+    );
+  });
+
+  it("param matcher returns false when two functions have different parameters", () => {
+    fc.assert(
+      fc.property(
+        fc
+          .record({
+            testFn: fc.record({
+              fnName: fc.string(),
+              access: fc.constant("read_only"),
+              args: fc.array(
+                fc.record({
+                  name: fc.string(),
+                  type: fc.constantFrom(
+                    "int128",
+                    "uint128",
+                    "bool",
+                    "principal"
+                  ),
+                })
+              ),
+              outputs: fc.record({ type: fc.constant("bool") }),
+            }),
+            discardFn: fc.record({
+              fnName: fc.string(),
+              access: fc.constant("read_only"),
+              args: fc.array(
+                fc.record({
+                  name: fc.string(),
+                  type: fc.constantFrom(
+                    "int128",
+                    "uint128",
+                    "bool",
+                    "principal"
+                  ),
+                })
+              ),
+              outputs: fc.record({ type: fc.constant("bool") }),
+            }),
+          })
+          .filter(
+            (r) =>
+              JSON.stringify(
+                [...r.testFn.args].sort((a, b) => a.name.localeCompare(b.name))
+              ) !==
+              JSON.stringify(
+                [...r.discardFn.args].sort((a, b) =>
+                  a.name.localeCompare(b.name)
+                )
+              )
+          ),
+        (r: {
+          testFn: {
+            fnName: string;
+            access: string;
+            args: { name: string; type: string }[];
+            outputs: { type: string };
+          };
+          discardFn: {
+            fnName: string;
+            access: string;
+            args: { name: string; type: string }[];
+            outputs: { type: string };
+          };
+        }) => {
+          const testFunctionInterface: ContractInterfaceFunction = {
+            name: r.testFn.fnName,
+            access: r.testFn.access as ContractInterfaceFunctionAccess,
+            args: r.testFn.args as ContractInterfaceFunctionArg[],
+            outputs: r.testFn.outputs as ContractInterfaceFunctionOutput,
+          };
+          const discardFunctionInterface: ContractInterfaceFunction = {
+            name: r.discardFn.fnName,
+            access: r.discardFn.access as ContractInterfaceFunctionAccess,
+            args: r.discardFn.args as ContractInterfaceFunctionArg[],
+            outputs: r.discardFn.outputs as ContractInterfaceFunctionOutput,
+          };
+          const actual = isParamsMatch(
+            testFunctionInterface,
+            discardFunctionInterface
+          );
+          expect(actual).toBe(false);
+        }
+      )
+    );
   });
 });
