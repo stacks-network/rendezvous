@@ -462,7 +462,7 @@ const validateDiscardFunction = (
  * @param discardFunction The discard function's interface.
  * @returns A boolean indicating if the parameters match.
  */
-const isParamsMatch = (
+export const isParamsMatch = (
   testFunction: ContractInterfaceFunction,
   discardFunction: ContractInterfaceFunction
 ) => {
@@ -483,5 +483,6 @@ const isParamsMatch = (
  * @param discardFunction The discard function's interface.
  * @returns A boolean indicating if the return type is boolean.
  */
-const isReturnTypeBoolean = (discardFunction: ContractInterfaceFunction) =>
-  discardFunction.outputs.type === "bool";
+export const isReturnTypeBoolean = (
+  discardFunction: ContractInterfaceFunction
+) => discardFunction.outputs.type === "bool";
