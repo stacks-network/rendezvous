@@ -138,11 +138,9 @@ export function reporter(
   } else {
     radio.emit(
       "logMessage",
-      green(
         `\nOK, ${
           type === "invariant" ? "invariants" : "properties"
         } passed after ${runDetails.numRuns} runs.\n`
-      )
     );
   }
 }
