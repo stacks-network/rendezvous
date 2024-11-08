@@ -28,7 +28,7 @@
 
 ;; Some tests, like 'test-slice-list-int', are valid only for specific inputs.
 ;; Rendezvous generates a wide range of inputs, which may include values that
-;; are unsuitable for these tests.
+;; are unsuitable for those tests.
 ;; To skip the test when inputs are invalid, define a 'discard' function:
 ;; - Must be read-only.
 ;; - Name should match the property test function's, prefixed with "can-".
