@@ -197,7 +197,7 @@ export const checkProperties = (
         if (discarded) {
           radio.emit(
             "logMessage",
-            ` ${yellow("[WARN]")}  ${dim(testCallerWallet)} ${
+            `${yellow("[WARN]")} ${dim(testCallerWallet)} ${
               r.testContractId.split(".")[1]
             } ${underline(r.selectedTestFunction.name)} ${dim(
               printedTestFunctionArgs
@@ -219,7 +219,7 @@ export const checkProperties = (
           ) {
             radio.emit(
               "logMessage",
-              ` ${green("[PASS]")}  ${dim(testCallerWallet)} ${
+              `${green("[PASS]")} ${dim(testCallerWallet)} ${
                 r.testContractId.split(".")[1]
               } ${underline(
                 r.selectedTestFunction.name
@@ -228,7 +228,7 @@ export const checkProperties = (
           } else {
             radio.emit(
               "logMessage",
-              ` ${red("[FAIL]")}  ${dim(testCallerWallet)} ${
+              `${red("[FAIL]")} ${dim(testCallerWallet)} ${
                 r.testContractId.split(".")[1]
               } ${underline(
                 r.selectedTestFunction.name
