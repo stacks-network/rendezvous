@@ -5,6 +5,7 @@ import {
   functionToArbitrary,
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
+  getSimnetContractSource,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
 import {
@@ -457,21 +458,6 @@ export const initializeClarityContext = (
       }
     });
   });
-
-/**
- * Get contract source code from the simnet.
- * @param simnet The simnet instance.
- * @param sutContractId The contract identifier.
- * @returns The contract source code.
- */
-export const getSimnetContractSource = (
-  simnet: Simnet,
-  sutContractId: string
-) => {
-  if (simnet.getContractSource(sutContractId) === undefined)
-    throw new Error(`Contract ${sutContractId} not found in the network.`);
-  return simnet.getContractSource(sutContractId);
-};
 
 /**
  * Get the contract name from the Rendezvous identifier.
