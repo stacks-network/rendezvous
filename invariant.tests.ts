@@ -6,13 +6,13 @@ import {
   filterRendezvousInterfaces,
   getContractNameFromRendezvousId,
   getInvariantContractSource,
-  getSimnetContractSource,
   initializeClarityContext,
   initializeLocalContext,
   scheduleRendezvous,
 } from "./invariant";
 import {
   getFunctionsFromContractInterfaces,
+  getSimnetContractSource,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
 import { resolve } from "path";

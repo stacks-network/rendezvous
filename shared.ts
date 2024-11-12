@@ -31,6 +31,21 @@ import {
 import { Simnet } from "@hirosystems/clarinet-sdk";
 
 /**
+ * Get contract source code from the simnet.
+ * @param simnet The simnet instance.
+ * @param sutContractId The contract identifier.
+ * @returns The contract source code.
+ */
+export const getSimnetContractSource = (
+  simnet: Simnet,
+  sutContractId: string
+) => {
+  if (simnet.getContractSource(sutContractId) === undefined)
+    throw new Error(`Contract ${sutContractId} not found in the network.`);
+  return simnet.getContractSource(sutContractId);
+};
+
+/**
  * Get the interfaces of contracts deployed by the specified deployer from the
  * simnet.
  * @param simnet The simnet instance.
