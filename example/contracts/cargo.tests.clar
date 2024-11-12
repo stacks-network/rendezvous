@@ -7,16 +7,12 @@
                                          (receiver principal))
   (let
     (
-      (shipment-id-before (contract-call? .cargo get-last-shipment-id))
+      (shipment-id-before (get-last-shipment-id))
       ;; Call create-new-shipment and check the last shipment ID incremented
       ;; by 1.
       (result
         (unwrap!
-          (contract-call?
-            .cargo
-            create-new-shipment
-            starting-location
-            receiver)
+          (create-new-shipment starting-location receiver)
           ERR_CONTRACT_CALL_FAILED))
     )
     (asserts!
@@ -28,15 +24,15 @@
                                           (receiver principal))
   (let
     (
-      (shipment-id-before (contract-call? .cargo get-last-shipment-id))
+      (shipment-id-before (get-last-shipment-id))
     )
     (unwrap!
-      (contract-call? .cargo create-new-shipment starting-location receiver)
+      (create-new-shipment starting-location receiver)
       ERR_CONTRACT_CALL_FAILED)
     ;; Verify the last shipment ID is incremented by 1.
     (asserts!
       (is-eq
-        (contract-call? .cargo get-last-shipment-id)
+        (get-last-shipment-id)
         (+ shipment-id-before u1))
       ERR_ASSERTION_FAILED)
     (ok true)))
@@ -48,20 +44,12 @@
     (
       (create-result
         (unwrap!
-          (contract-call?
-            .cargo
-            create-new-shipment
-            starting-location
-            receiver)
+          (create-new-shipment starting-location receiver)
           ERR_CONTRACT_CALL_FAILED))
-      (shipment-id (contract-call? .cargo get-last-shipment-id))
+      (shipment-id (get-last-shipment-id))
       (update-result
         (unwrap!
-          (contract-call?
-            .cargo
-            update-shipment
-            shipment-id
-            new-location)
+          (update-shipment shipment-id new-location)
           ERR_CONTRACT_CALL_FAILED))
       (updated-shipment
         (default-to
@@ -71,7 +59,7 @@
             shipper: tx-sender,
             receiver: tx-sender
         }
-        (contract-call? .cargo get-shipment-optional shipment-id)))
+        (get-shipment-optional shipment-id)))
     )
     ;; Verify the location is updated.
     (asserts!
@@ -87,19 +75,12 @@
     (
       (create-result
         (unwrap!
-          (contract-call?
-            .cargo
-            create-new-shipment
-            starting-location
-            receiver)
+          (create-new-shipment starting-location receiver)
           ERR_CONTRACT_CALL_FAILED))
-      (shipment-id (contract-call? .cargo get-last-shipment-id))
+      (shipment-id (get-last-shipment-id))
       (retrieved-shipment
         (unwrap!
-          (contract-call?
-            .cargo
-            get-shipment-optional
-            shipment-id)
+          (get-shipment-optional shipment-id)
           ERR_SHIPMENT_NOT_FOUND))
     )
     ;; Verify the location is correct.

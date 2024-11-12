@@ -5,7 +5,7 @@
 
 (define-public (test-slice-list-int (seq (list 127 int)) (skip int) (n int))
   (let (
-      (result (contract-call? .slice slice seq skip n))
+      (result (slice seq skip n))
     )
     (if
       ;; Case 1: If skip > length of seq, result should be an empty list.
@@ -49,7 +49,7 @@
       (not (and (<= 0 skip) (<= skip 127))))
     (ok true)
     (let (
-        (result (contract-call? .slice slice-uint seq skip n))
+        (result (slice-uint seq skip n))
       )
       (if
         ;; Case 1: If skip > length of seq, result should be an empty list.
@@ -78,7 +78,7 @@
       (not (and (<= 0 skip) (<= skip 127))))
     (ok true)
     (let (
-        (result (contract-call? .slice slice-bool seq skip n))
+        (result (slice-bool seq skip n))
       )
       (if
         ;; Case 1: If skip > length of seq, result should be an empty list.
@@ -107,7 +107,7 @@
       (not (and (<= 0 skip) (<= skip 127))))
     (ok true)
     (let (
-        (result (contract-call? .slice slice-buff seq skip n))
+        (result (slice-buff seq skip n))
       )
       (if
         ;; Case 1: If skip > length of seq, result should be an empty list.
@@ -136,7 +136,7 @@
       (not (and (<= 0 skip) (<= skip 127))))
     (ok true)
     (let (
-        (result (contract-call? .slice slice-string seq skip n))
+        (result (slice-string seq skip n))
       )
       (if
         ;; Case 1: If skip > length of seq, result should be an empty string.
@@ -163,7 +163,7 @@
       (not (and (<= 0 skip) (<= skip 127))))
     (ok true)
     (let (
-        (result (contract-call? .slice slice-ascii seq skip n))
+        (result (slice-ascii seq skip n))
       )
       (if
         ;; Case 1: If skip > length of seq, result should be an empty string.
