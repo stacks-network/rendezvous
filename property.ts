@@ -14,6 +14,7 @@ import {
   functionToArbitrary,
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
+  getSimnetContractSource,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
 import { dim, green, red, underline, yellow } from "ansicolor";
@@ -27,18 +28,16 @@ export const checkProperties = (
   path: string | undefined,
   radio: EventEmitter
 ) => {
-  const testData = sutContractIds.map((contractId) =>
-    buildTestData(simnet, contractId, contractsPath)
-  );
-
-  const testContractsList = testData.map((contractData) => {
-    deployTestContract(
-      simnet,
-      contractData.testContractName,
-      contractData.testsContractSource
-    );
-    return contractData.testsContractId;
-  });
+  const testContractBundlesList = sutContractIds
+    .map((contractId) => buildTestBundleData(simnet, contractId, contractsPath))
+    .map((contractData) => {
+      deployTestContract(
+        simnet,
+        contractData.testBundleContractName,
+        contractData.testBundleContractSource
+      );
+      return contractData.testBundleContractId;
+    });
 
   const testContractsInterfaces = filterTestContractsInterfaces(
     getSimnetDeployerContractsInterfaces(simnet)
@@ -119,7 +118,7 @@ export const checkProperties = (
     fc.property(
       fc
         .record({
-          testContractId: fc.constantFrom(...testContractsList),
+          testContractId: fc.constantFrom(...testContractBundlesList),
           testCaller: fc.constantFrom(
             ...new Map(
               [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
@@ -293,27 +292,28 @@ export const getTestsContractSource = (
  * contract identifier. This data is used to deploy the test contract to the
  * simnet in a later step.
  */
-export const buildTestData = (
+export const buildTestBundleData = (
   simnet: Simnet,
   contractId: string,
   contractsPath: string
 ) => {
-  const testContractName = deriveTestContractName(contractId);
-
   try {
+    const sutContractSource = getSimnetContractSource(simnet, contractId);
     const testsContractSource = getTestsContractSource(
       contractsPath,
       contractId
     );
+    const testBundleContractSource = `${sutContractSource}\n\n${testsContractSource}`;
+    const testBundleContractName = deriveTestContractName(contractId);
 
     return {
-      testContractName,
-      testsContractSource,
-      testsContractId: `${simnet.deployer}.${testContractName}`,
+      testBundleContractName,
+      testBundleContractSource,
+      testBundleContractId: `${simnet.deployer}.${testBundleContractName}`,
     };
   } catch (e: any) {
     throw new Error(
-      `Error processing test contract ${testContractName}: ${e.message}`
+      `Error processing contract ${contractId.split(".")[1]}: ${e.message}`
     );
   }
 };

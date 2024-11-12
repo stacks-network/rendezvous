@@ -1,6 +1,6 @@
 import { initSimnet } from "@hirosystems/clarinet-sdk";
 import {
-  buildTestData,
+  buildTestBundleData,
   deployTestContract,
   deriveTestContractName,
   filterTestContractsInterfaces,
@@ -8,7 +8,10 @@ import {
   isParamsMatch,
   isReturnTypeBoolean,
 } from "./property";
-import { getSimnetDeployerContractsInterfaces } from "./shared";
+import {
+  getSimnetContractSource,
+  getSimnetDeployerContractsInterfaces,
+} from "./shared";
 import { resolve } from "path";
 import fs from "fs";
 import fc from "fast-check";
@@ -75,23 +78,24 @@ describe("Simnet contracts operations", () => {
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
 
     const expectedTestContractsData = sutContractsList.map((contractId) => {
-      const testContractName = deriveTestContractName(contractId);
-
+      const sutContractSource = getSimnetContractSource(simnet, contractId);
       const testsContractSource = getTestsContractSource(
         contractsPath,
         contractId
       );
+      const testBundleContractSource = `${sutContractSource}\n\n${testsContractSource}`;
+      const testBundleContractName = deriveTestContractName(contractId);
 
       return {
-        testContractName,
-        testsContractSource,
-        testsContractId: `${simnet.deployer}.${testContractName}`,
+        testBundleContractName,
+        testBundleContractSource,
+        testBundleContractId: `${simnet.deployer}.${testBundleContractName}`,
       };
     });
 
     // Act
     const actualTestsContractsData = sutContractsList.map((contractId) =>
-      buildTestData(simnet, contractId, contractsPath)
+      buildTestBundleData(simnet, contractId, contractsPath)
     );
 
     // Assert
@@ -106,15 +110,15 @@ describe("Simnet contracts operations", () => {
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
     const testContractsData = sutContractsList.map((contractId) =>
-      buildTestData(simnet, contractId, contractsPath)
+      buildTestBundleData(simnet, contractId, contractsPath)
     );
 
     // Act
     testContractsData.forEach((contractData) => {
       deployTestContract(
         simnet,
-        contractData.testContractName,
-        contractData.testsContractSource
+        contractData.testBundleContractName,
+        contractData.testBundleContractSource
       );
     });
 
@@ -129,7 +133,7 @@ describe("Simnet contracts operations", () => {
     // Check if all expected test contracts are present in the result.
     testContractsData.forEach((contractData) => {
       expect(actualSimnetContractsListAfterDeploy).toContain(
-        contractData.testsContractId
+        contractData.testBundleContractId
       );
     });
 
@@ -148,16 +152,16 @@ describe("Simnet contracts operations", () => {
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
     const testContractsData = sutContractsList.map((contractId) =>
-      buildTestData(simnet, contractId, contractsPath)
+      buildTestBundleData(simnet, contractId, contractsPath)
     );
     const expectedTestContractsList = testContractsData
       .map((contractData) => {
         deployTestContract(
           simnet,
-          contractData.testContractName,
-          contractData.testsContractSource
+          contractData.testBundleContractName,
+          contractData.testBundleContractSource
         );
-        return contractData.testsContractId;
+        return contractData.testBundleContractId;
       })
       .sort();
 
