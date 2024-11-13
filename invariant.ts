@@ -265,7 +265,13 @@ export const checkInvariants = (
         }
       }
     ),
-    { verbose: true, reporter: radioReporter, seed: seed, path: path, numRuns: runs }
+    {
+      verbose: true,
+      reporter: radioReporter,
+      seed: seed,
+      path: path,
+      numRuns: runs,
+    }
   );
 };
 
