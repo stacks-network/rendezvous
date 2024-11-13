@@ -10,7 +10,7 @@ const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
 };
 
 const helpMessage = `
-  Usage: ./rv <path-to-clarinet-project> <contract-name> [--type=<type>] [--seed=<seed>] [--path=<path>]
+  Usage: ./rv <path-to-clarinet-project> <contract-name> [--type=<type>] [--seed=<seed>] [--path=<path>] [--runs=<runs>]
 
   Positional arguments:
     path-to-clarinet-project - The path to the Clarinet project.
@@ -20,6 +20,7 @@ const helpMessage = `
     --seed - The seed to use for the replay functionality.
     --path - The path to use for the replay functionality.
     --type - The type to use for exercising the contracts. Possible values: test, invariant. Default: invariant.
+    --runs - The runs to use for iterating over the tests. Default: 100.
     --help - Show the help message.
   `;
 
@@ -60,6 +61,11 @@ export async function main() {
     );
     radio.emit("logMessage", helpMessage);
     return;
+  }
+
+  const runs = parseInt(parseOptionalArgument("runs")!, 10) || undefined;
+  if (runs !== undefined) {
+    radio.emit("logMessage", `Using runs: ${runs}`);
   }
 
   const manifestDir = args[2];
@@ -115,6 +121,7 @@ export async function main() {
         sutContractIds,
         seed,
         path,
+        runs,
         radio
       );
       break;
@@ -128,6 +135,7 @@ export async function main() {
         sutContractIds,
         seed,
         path,
+        runs,
         radio
       );
       break;

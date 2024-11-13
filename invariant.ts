@@ -27,6 +27,7 @@ export const checkInvariants = (
   sutContractIds: string[],
   seed: number | undefined,
   path: string | undefined,
+  runs: number | undefined,
   radio: EventEmitter
 ) => {
   const rendezvousList = sutContractIds
@@ -264,7 +265,7 @@ export const checkInvariants = (
         }
       }
     ),
-    { verbose: true, reporter: radioReporter, seed: seed, path: path }
+    { verbose: true, reporter: radioReporter, seed: seed, path: path, numRuns: runs }
   );
 };
 

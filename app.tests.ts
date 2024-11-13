@@ -3,7 +3,7 @@ import { main } from "./app";
 describe("Command-line arguments handling", () => {
   const initialArgv = process.argv;
   const helpMessage = `
-  Usage: ./rv <path-to-clarinet-project> <contract-name> [--type=<type>] [--seed=<seed>] [--path=<path>]
+  Usage: ./rv <path-to-clarinet-project> <contract-name> [--type=<type>] [--seed=<seed>] [--path=<path>] [--runs=<runs>]
 
   Positional arguments:
     path-to-clarinet-project - The path to the Clarinet project.
@@ -13,6 +13,7 @@ describe("Command-line arguments handling", () => {
     --seed - The seed to use for the replay functionality.
     --path - The path to use for the replay functionality.
     --type - The type to use for exercising the contracts. Possible values: test, invariant. Default: invariant.
+    --runs - The runs to use for iterating over the tests. Default: 100.
     --help - Show the help message.
   `;
   const noManifestMessage = `\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.`;
@@ -119,12 +120,34 @@ describe("Command-line arguments handling", () => {
       ],
     ],
     [
+      ["manifest path", "contract name", "seed", "path"],
+      ["node", "app.js", "example", "counter", "--runs=10"],
+      [
+        `Using manifest path: example/Clarinet.toml`,
+        `Target contract: counter`,
+        `Using runs: 10`,
+        `\nStarting invariant testing type for the counter contract...`,
+      ],
+    ],
+    [
       ["manifest path", "contract name", "path"],
       ["node", "app.js", "example", "counter", "--path=84:0"],
       [
         `Using manifest path: example/Clarinet.toml`,
         `Target contract: counter`,
         `Using path: 84:0`,
+        `\nStarting invariant testing type for the counter contract...`,
+      ],
+    ],
+    [
+      ["manifest path", "contract name", "seed", "path"],
+      ["node", "app.js", "example", "counter", "--seed=123", "--path=84:0", "--runs=10"],
+      [
+        `Using manifest path: example/Clarinet.toml`,
+        `Target contract: counter`,
+        `Using seed: 123`,
+        `Using path: 84:0`,
+        `Using runs: 10`,
         `\nStarting invariant testing type for the counter contract...`,
       ],
     ],

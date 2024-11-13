@@ -26,6 +26,7 @@ export const checkProperties = (
   sutContractIds: string[],
   seed: number | undefined,
   path: string | undefined,
+  runs: number | undefined,
   radio: EventEmitter
 ) => {
   const testContractBundlesList = sutContractIds
@@ -242,7 +243,7 @@ export const checkProperties = (
         }
       }
     ),
-    { verbose: true, reporter: radioReporter, seed: seed, path: path }
+    { verbose: true, reporter: radioReporter, seed: seed, path: path, numRuns: runs }
   );
 };
 
