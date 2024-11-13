@@ -308,8 +308,8 @@ export const buildTestBundleData = (
     const testBundleContractName = deriveTestContractName(contractId);
 
     // In property testing, the SUT contract and its test contract are bundled
-    // together. Unlike invariants with "rendezvous data," the test bundle
-    // does not have a context.
+    // together. Unlike invariants with rendezvous "data" (context), test bundle
+    // does not have such a context.
     return {
       testBundleContractName,
       testBundleContractSource,
