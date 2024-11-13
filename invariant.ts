@@ -18,7 +18,7 @@ import { reporter } from "./heatstroke";
 import { join } from "path";
 import fc from "fast-check";
 import fs from "fs";
-import { dim, green, inverse, red } from "ansicolor";
+import { dim, green, inverse, red, underline } from "ansicolor";
 
 export const checkInvariants = (
   simnet: Simnet,
@@ -195,20 +195,18 @@ export const checkInvariants = (
 
           radio.emit(
             "logMessage",
-            `${green("[PASS]")} ${dim(
-              sutCallerWallet
-            )} ${getContractNameFromRendezvousId(r.rendezvousContractId)} ${
-              r.selectedFunction.name
-            } ${printedFunctionArgs}`
+            `       ${dim(sutCallerWallet)} ${getContractNameFromRendezvousId(
+              r.rendezvousContractId
+            )} ${underline(r.selectedFunction.name)} ${printedFunctionArgs}`
           );
         } else {
           radio.emit(
             "logMessage",
-            `${red("[FAIL]")} ${dim(
-              sutCallerWallet
-            )} ${getContractNameFromRendezvousId(r.rendezvousContractId)} ${
-              r.selectedFunction.name
-            } ${printedFunctionArgs}`
+            dim(
+              `       ${sutCallerWallet} ${getContractNameFromRendezvousId(
+                r.rendezvousContractId
+              )} ${underline(r.selectedFunction.name)} ${printedFunctionArgs}`
+            )
           );
         }
 
@@ -238,26 +236,22 @@ export const checkInvariants = (
         if (invariantCallResultJson.value === true) {
           radio.emit(
             "logMessage",
-            inverse(
-              `${green("[PASS]")} ${dim(
-                invariantCallerWallet
-              )} ${getContractNameFromRendezvousId(r.rendezvousContractId)} ${
-                r.selectedInvariant.name
-              } ${printedInvariantArgs}`
-            )
+            `${green("[PASS]")} ${dim(
+              invariantCallerWallet
+            )} ${getContractNameFromRendezvousId(
+              r.rendezvousContractId
+            )} ${underline(r.selectedInvariant.name)} ${printedInvariantArgs}`
           );
         }
 
         if (!invariantCallResultJson.value) {
           radio.emit(
             "logMessage",
-            inverse(
-              `${red("[FAIL]")} ${dim(
-                invariantCallerWallet
-              )} ${getContractNameFromRendezvousId(r.rendezvousContractId)} ${
-                r.selectedInvariant.name
-              } ${printedInvariantArgs}`
-            )
+            `${red(
+              "[FAIL]"
+            )} ${invariantCallerWallet} ${getContractNameFromRendezvousId(
+              r.rendezvousContractId
+            )} ${underline(r.selectedInvariant.name)} ${printedInvariantArgs}`
           );
 
           throw new Error(
