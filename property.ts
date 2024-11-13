@@ -283,13 +283,14 @@ export const getTestsContractSource = (
 };
 
 /**
- * Build the test contract data.
+ * Build the test bundle data. The test bundle is the combination of the sut
+ * and its corresponding property-based tests contract.
  * @param simnet The simnet instance.
  * @param contractId The contract identifier.
  * @param contractsPath The contracts path.
- * @returns The test contract data representing an object. The returned object
- * contains the test contract name, the test contract source code, and the test
- * contract identifier. This data is used to deploy the test contract to the
+ * @returns The test bundle data representing an object. The returned object
+ * contains the test bundle name, the test bundle source code, and the test
+ * bundle identifier. This data is used to deploy the test bundle to the
  * simnet in a later step.
  */
 export const buildTestBundleData = (
@@ -306,6 +307,9 @@ export const buildTestBundleData = (
     const testBundleContractSource = `${sutContractSource}\n\n${testsContractSource}`;
     const testBundleContractName = deriveTestContractName(contractId);
 
+    // In property testing, the SUT contract and its test contract are bundled
+    // together. Unlike invariants with "rendezvous data," the test bundle
+    // does not have a context.
     return {
       testBundleContractName,
       testBundleContractSource,
