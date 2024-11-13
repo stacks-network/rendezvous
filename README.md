@@ -50,8 +50,8 @@ Here's an example of a test that checks reversing a list twice returns the origi
   (begin
     (asserts!
       (is-eq seq
-        (contract-call? .reverse reverse-uint
-          (contract-call? .reverse reverse-uint seq)))
+        (reverse-uint
+          (reverse-uint seq)))
       (err u999))
     (ok true)))
 ```
