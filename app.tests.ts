@@ -141,7 +141,15 @@ describe("Command-line arguments handling", () => {
     ],
     [
       ["manifest path", "contract name", "seed", "path"],
-      ["node", "app.js", "example", "counter", "--seed=123", "--path=84:0", "--runs=10"],
+      [
+        "node",
+        "app.js",
+        "example",
+        "counter",
+        "--seed=123",
+        "--path=84:0",
+        "--runs=10",
+      ],
       [
         `Using manifest path: example/Clarinet.toml`,
         `Target contract: counter`,
