@@ -36,6 +36,8 @@ This will execute the fuzzing process, attempting to falsify invariants or tests
 **Options:**
 - `--seed` – The seed to use for the replay functionality.
 - `--path` – The path to use for the replay functionality.
+- `--runs` – The number of test iterations to use for exercising the contracts.
+              (default: `100`)
 - `--type` – The type to use for exercising the contracts.
               `test` or `invariant` (default: `invariant`)
 
