@@ -3,10 +3,6 @@ import { EventEmitter } from "events";
 import { join } from "path";
 import fs from "fs";
 import fc from "fast-check";
-import {
-  ContractInterface,
-  ContractInterfaceFunction,
-} from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
 import { cvToJSON } from "@stacks/transactions";
 import { reporter } from "./heatstroke";
 import {
@@ -18,6 +14,10 @@ import {
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
 import { dim, green, red, underline, yellow } from "ansicolor";
+import {
+  ContractInterfaceFunction,
+  IContractInterface,
+} from "@hirosystems/clarinet-sdk-wasm";
 
 export const checkProperties = (
   simnet: Simnet,
@@ -372,7 +372,7 @@ export const deployTestContract = (
  * @returns The test contracts interfaces.
  */
 export const filterTestContractsInterfaces = (
-  contractsInterfaces: Map<string, ContractInterface>
+  contractsInterfaces: Map<string, IContractInterface>
 ) =>
   new Map(
     Array.from(contractsInterfaces).filter(([contractId]) =>

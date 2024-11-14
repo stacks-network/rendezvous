@@ -20,7 +20,7 @@ import {
   ContractInterfaceFunctionAccess,
   ContractInterfaceFunctionArg,
   ContractInterfaceFunctionOutput,
-} from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
+} from "@hirosystems/clarinet-sdk-wasm";
 
 describe("File stream operations", () => {
   it("retrieves the test contract source", async () => {

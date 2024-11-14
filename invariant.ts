@@ -8,10 +8,6 @@ import {
   getSimnetContractSource,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
-import {
-  ContractInterface,
-  ContractInterfaceFunction,
-} from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
 import { LocalContext } from "./invariant.types";
 import { Cl, cvToJSON } from "@stacks/transactions";
 import { reporter } from "./heatstroke";
@@ -19,6 +15,10 @@ import { join } from "path";
 import fc from "fast-check";
 import fs from "fs";
 import { dim, green, inverse, red, underline } from "ansicolor";
+import {
+  ContractInterfaceFunction,
+  IContractInterface,
+} from "@hirosystems/clarinet-sdk-wasm";
 
 export const checkInvariants = (
   simnet: Simnet,
@@ -413,7 +413,7 @@ export const deployRendezvous = (
  * @returns The Rendezvous interfaces.
  */
 export const filterRendezvousInterfaces = (
-  contractsInterfaces: Map<string, ContractInterface>
+  contractsInterfaces: Map<string, IContractInterface>
 ) =>
   new Map(
     Array.from(contractsInterfaces).filter(([contractId]) =>

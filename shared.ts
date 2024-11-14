@@ -1,7 +1,3 @@
-import {
-  ContractInterface,
-  ContractInterfaceFunction,
-} from "@hirosystems/clarinet-sdk/dist/esm/contractInterface";
 import fc from "fast-check";
 import {
   BaseType,
@@ -29,6 +25,10 @@ import {
   uintCV,
 } from "@stacks/transactions";
 import { Simnet } from "@hirosystems/clarinet-sdk";
+import {
+  ContractInterfaceFunction,
+  IContractInterface,
+} from "@hirosystems/clarinet-sdk-wasm";
 
 /**
  * Get contract source code from the simnet.
@@ -54,7 +54,7 @@ export const getSimnetContractSource = (
  */
 export const getSimnetDeployerContractsInterfaces = (
   simnet: Simnet
-): Map<string, ContractInterface> =>
+): Map<string, IContractInterface> =>
   new Map(
     Array.from(simnet.getContractsInterfaces()).filter(
       ([key]) => key.split(".")[0] === simnet.deployer
@@ -67,7 +67,7 @@ export const getSimnetDeployerContractsInterfaces = (
  * @returns A map containing the contracts functions.
  */
 export const getFunctionsFromContractInterfaces = (
-  contractsInterfaces: Map<string, ContractInterface>
+  contractsInterfaces: Map<string, IContractInterface>
 ): Map<string, ContractInterfaceFunction[]> =>
   new Map(
     Array.from(contractsInterfaces, ([contractId, contractInterface]) => [
