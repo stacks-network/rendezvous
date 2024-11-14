@@ -204,28 +204,39 @@ export const checkProperties = (
             )}`
           );
         } else {
-          const { result: testFunctionCallResult } = simnet.callPublicFn(
-            r.testContractId,
-            r.selectedTestFunction.name,
-            selectedTestFunctionArgs,
-            testCallerAddress
-          );
-
-          const testFunctionCallResultJson = cvToJSON(testFunctionCallResult);
-
-          if (
-            testFunctionCallResultJson.success &&
-            testFunctionCallResultJson.value.value === true
-          ) {
-            radio.emit(
-              "logMessage",
-              `${green("[PASS]")} ${dim(testCallerWallet)} ${
-                r.testContractId.split(".")[1]
-              } ${underline(
-                r.selectedTestFunction.name
-              )} ${printedTestFunctionArgs}`
+          try {
+            // If the function call results in a runtime error, the error will
+            // be caught and logged as a test failure in the catch block.
+            const { result: testFunctionCallResult } = simnet.callPublicFn(
+              r.testContractId,
+              r.selectedTestFunction.name,
+              selectedTestFunctionArgs,
+              testCallerAddress
             );
-          } else {
+
+            const testFunctionCallResultJson = cvToJSON(testFunctionCallResult);
+
+            if (
+              testFunctionCallResultJson.success &&
+              testFunctionCallResultJson.value.value === true
+            ) {
+              radio.emit(
+                "logMessage",
+                `${green("[PASS]")} ${dim(testCallerWallet)} ${
+                  r.testContractId.split(".")[1]
+                } ${underline(
+                  r.selectedTestFunction.name
+                )} ${printedTestFunctionArgs}`
+              );
+            } else {
+              throw new Error(
+                `Test failed for ${r.testContractId.split(".")[1]} contract: "${
+                  r.selectedTestFunction.name
+                }" returned ${testFunctionCallResultJson.value.value}`
+              );
+            }
+          } catch (error: any) {
+            // Capture the error and log the test failure.
             radio.emit(
               "logMessage",
               `${red("[FAIL]")} ${dim(testCallerWallet)} ${
@@ -234,11 +245,9 @@ export const checkProperties = (
                 r.selectedTestFunction.name
               )} ${printedTestFunctionArgs}`
             );
-            throw new Error(
-              `Test failed for ${r.testContractId.split(".")[1]} contract: "${
-                r.selectedTestFunction.name
-              }" returned ${testFunctionCallResultJson.value.value}`
-            );
+
+            // Re-throw the error to be caught by fast-check.
+            throw error;
           }
         }
       }
