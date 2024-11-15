@@ -6,6 +6,10 @@
 
 Rendezvous `rv` is a Clarity fuzzer designed to cut through your smart contract's defenses with precision. Uncover vulnerabilities with unmatched power and intensity. Get ready to meet your contract's vulnerabilities head-on.
 
+### Prerequisites
+
+- **Node.js**: Requires LTS version 20.18.0. Other versions may work, but they are untested.
+
 ### Inspiration
 
 The `rv` fuzzer, inspired by John Hughes' paper _"Testing the Hard Stuff and Staying Sane"_[^1], ensures contract robustness with Clarity invariants and tests.
