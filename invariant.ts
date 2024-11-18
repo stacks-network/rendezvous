@@ -170,37 +170,51 @@ export const checkInvariants = (
 
         const [sutCallerWallet, sutCallerAddress] = r.sutCaller;
 
-        const { result: functionCallResult } = simnet.callPublicFn(
-          r.rendezvousContractId,
-          r.selectedFunction.name,
-          selectedFunctionArgs,
-          sutCallerAddress
-        );
-
-        const functionCallResultJson = cvToJSON(functionCallResult);
-
-        if (functionCallResultJson.success) {
-          localContext[r.rendezvousContractId][r.selectedFunction.name]++;
-
-          simnet.callPublicFn(
+        try {
+          const { result: functionCallResult } = simnet.callPublicFn(
             r.rendezvousContractId,
-            "update-context",
-            [
-              Cl.stringAscii(r.selectedFunction.name),
-              Cl.uint(
-                localContext[r.rendezvousContractId][r.selectedFunction.name]
-              ),
-            ],
-            simnet.deployer
+            r.selectedFunction.name,
+            selectedFunctionArgs,
+            sutCallerAddress
           );
 
-          radio.emit(
-            "logMessage",
-            `       ${dim(sutCallerWallet)} ${getContractNameFromRendezvousId(
-              r.rendezvousContractId
-            )} ${underline(r.selectedFunction.name)} ${printedFunctionArgs}`
-          );
-        } else {
+          const functionCallResultJson = cvToJSON(functionCallResult);
+
+          if (functionCallResultJson.success) {
+            localContext[r.rendezvousContractId][r.selectedFunction.name]++;
+
+            simnet.callPublicFn(
+              r.rendezvousContractId,
+              "update-context",
+              [
+                Cl.stringAscii(r.selectedFunction.name),
+                Cl.uint(
+                  localContext[r.rendezvousContractId][r.selectedFunction.name]
+                ),
+              ],
+              simnet.deployer
+            );
+
+            radio.emit(
+              "logMessage",
+              `       ${dim(sutCallerWallet)} ${getContractNameFromRendezvousId(
+                r.rendezvousContractId
+              )} ${underline(r.selectedFunction.name)} ${printedFunctionArgs}`
+            );
+          } else {
+            radio.emit(
+              "logMessage",
+              dim(
+                `       ${sutCallerWallet} ${getContractNameFromRendezvousId(
+                  r.rendezvousContractId
+                )} ${underline(r.selectedFunction.name)} ${printedFunctionArgs}`
+              )
+            );
+          }
+        } catch (error: any) {
+          // If the function call fails with a runtime error, log a dimmed
+          // message. Since the public function result is ignored, there's
+          // no need to throw an error.
           radio.emit(
             "logMessage",
             dim(
@@ -225,27 +239,41 @@ export const checkInvariants = (
 
         const [invariantCallerWallet, invariantCallerAddress] =
           r.invariantCaller;
-        const { result: invariantCallResult } = simnet.callReadOnlyFn(
-          r.rendezvousContractId,
-          r.selectedInvariant.name,
-          selectedInvariantArgs,
-          invariantCallerAddress
-        );
 
-        const invariantCallResultJson = cvToJSON(invariantCallResult);
-
-        if (invariantCallResultJson.value === true) {
-          radio.emit(
-            "logMessage",
-            `${green("[PASS]")} ${dim(
-              invariantCallerWallet
-            )} ${getContractNameFromRendezvousId(
-              r.rendezvousContractId
-            )} ${underline(r.selectedInvariant.name)} ${printedInvariantArgs}`
+        try {
+          const { result: invariantCallResult } = simnet.callReadOnlyFn(
+            r.rendezvousContractId,
+            r.selectedInvariant.name,
+            selectedInvariantArgs,
+            invariantCallerAddress
           );
-        }
 
-        if (!invariantCallResultJson.value) {
+          const invariantCallResultJson = cvToJSON(invariantCallResult);
+
+          if (invariantCallResultJson.value === true) {
+            radio.emit(
+              "logMessage",
+              `${green("[PASS]")} ${dim(
+                invariantCallerWallet
+              )} ${getContractNameFromRendezvousId(
+                r.rendezvousContractId
+              )} ${underline(r.selectedInvariant.name)} ${printedInvariantArgs}`
+            );
+          }
+
+          if (!invariantCallResultJson.value) {
+            throw new Error(
+              `Invariant failed for ${getContractNameFromRendezvousId(
+                r.rendezvousContractId
+              )} contract: "${r.selectedInvariant.name}" returned ${
+                invariantCallResultJson.value
+              }`
+            );
+          }
+        } catch (error: any) {
+          // Handle both negative results from the invariant function and
+          // general runtime failures. Focus is on capturing the invariant
+          // function's result, including any runtime errors it caused.
           radio.emit(
             "logMessage",
             `${red(
@@ -255,13 +283,8 @@ export const checkInvariants = (
             )} ${underline(r.selectedInvariant.name)} ${printedInvariantArgs}`
           );
 
-          throw new Error(
-            `Invariant failed for ${getContractNameFromRendezvousId(
-              r.rendezvousContractId
-            )} contract: "${r.selectedInvariant.name}" returned ${
-              invariantCallResultJson.value
-            }`
-          );
+          // Re-throw the error for fast-check to catch and process.
+          throw error;
         }
       }
     ),
