@@ -246,7 +246,7 @@ export const checkProperties = (
               )} ${printedTestFunctionArgs}`
             );
 
-            // Re-throw the error to be caught by fast-check.
+            // Re-throw the error for fast-check to catch and process.
             throw error;
           }
         }
