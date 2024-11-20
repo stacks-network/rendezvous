@@ -216,7 +216,21 @@ export const checkProperties = (
 
             const testFunctionCallResultJson = cvToJSON(testFunctionCallResult);
 
-            if (
+            const discardedInPlace =
+              testFunctionCallResultJson.success === true &&
+              testFunctionCallResultJson.value.value === false;
+
+            if (discardedInPlace) {
+              radio.emit(
+                "logMessage",
+                `${yellow("[WARN]")} ${dim(testCallerWallet)} ${
+                  r.testContractId.split(".")[1]
+                } ${underline(r.selectedTestFunction.name)} ${dim(
+                  printedTestFunctionArgs
+                )}`
+              );
+            } else if (
+              !discardedInPlace &&
               testFunctionCallResultJson.success &&
               testFunctionCallResultJson.value.value === true
             ) {
