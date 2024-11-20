@@ -216,9 +216,9 @@ export const checkProperties = (
 
             const testFunctionCallResultJson = cvToJSON(testFunctionCallResult);
 
-            const discardedInPlace =
-              testFunctionCallResultJson.success === true &&
-              testFunctionCallResultJson.value.value === false;
+            const discardedInPlace = isTestDiscardedInPlace(
+              testFunctionCallResultJson
+            );
 
             if (discardedInPlace) {
               radio.emit(
@@ -405,6 +405,10 @@ const filterTestFunctions = (
       ),
     ])
   );
+
+export const isTestDiscardedInPlace = (testFunctionCallResultJson: any) =>
+  testFunctionCallResultJson.success === true &&
+  testFunctionCallResultJson.value.value === false;
 
 /**
  * Check if the test function has to be discarded.

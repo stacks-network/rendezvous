@@ -7,6 +7,7 @@ import {
   getTestsContractSource,
   isParamsMatch,
   isReturnTypeBoolean,
+  isTestDiscardedInPlace,
 } from "./property";
 import {
   getSimnetContractSource,
@@ -21,6 +22,7 @@ import {
   ContractInterfaceFunctionArg,
   ContractInterfaceFunctionOutput,
 } from "@hirosystems/clarinet-sdk-wasm";
+import { cvToJSON } from "@stacks/transactions";
 
 describe("File stream operations", () => {
   it("retrieves the test contract source", async () => {
@@ -372,5 +374,61 @@ describe("Test discarding related operations", () => {
         }
       )
     );
+  });
+
+  it("in place discard function returns true if the function call result is (ok false)", async () => {
+    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+
+    const simnet = await initSimnet(manifestPath);
+
+    simnet.deployContract(
+      "contract",
+      "(define-public (discarded-fn) (ok false))",
+      { clarityVersion: 2 },
+      simnet.deployer
+    );
+
+    const { result: functionCallResult } = simnet.callPublicFn(
+      "contract",
+      "discarded-fn",
+      [],
+      simnet.deployer
+    );
+
+    const functionCallResultJson = cvToJSON(functionCallResult);
+
+    // Act
+    const dircardedInPlace = isTestDiscardedInPlace(functionCallResultJson);
+
+    // Assert
+    expect(dircardedInPlace).toBe(true);
+  });
+
+  it("in place discard function returns false if the function call result is (ok true)", async () => {
+    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+
+    const simnet = await initSimnet(manifestPath);
+
+    simnet.deployContract(
+      "contract",
+      "(define-public (not-discarded-fn) (ok true))",
+      { clarityVersion: 2 },
+      simnet.deployer
+    );
+
+    const { result: functionCallResult } = simnet.callPublicFn(
+      "contract",
+      "not-discarded-fn",
+      [],
+      simnet.deployer
+    );
+
+    const functionCallResultJson = cvToJSON(functionCallResult);
+
+    // Act
+    const dircardedInPlace = isTestDiscardedInPlace(functionCallResultJson);
+
+    // Assert
+    expect(dircardedInPlace).toBe(false);
   });
 });
