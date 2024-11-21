@@ -3,7 +3,13 @@ import { join } from "path";
 import { EventEmitter } from "events";
 import { checkProperties } from "./property";
 import { checkInvariants } from "./invariant";
-import { getSimnetDeployerContractsInterfaces } from "./shared";
+import {
+  buildRendezvousData,
+  deployRendezvous,
+  filterRendezvousInterfaces,
+  getFunctionsFromContractInterfaces,
+  getSimnetDeployerContractsInterfaces,
+} from "./shared";
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
@@ -109,6 +115,21 @@ export async function main() {
 
   const contractsPath = join(manifestDir, "contracts");
 
+  const rendezvousList = sutContractIds
+    .map((contractId) => buildRendezvousData(simnet, contractId, contractsPath))
+    .map((contractData) => {
+      deployRendezvous(
+        simnet,
+        contractData.rendezvousName,
+        contractData.rendezvousSource
+      );
+      return contractData.rendezvousContractId;
+    });
+
+  const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
+    filterRendezvousInterfaces(getSimnetDeployerContractsInterfaces(simnet))
+  );
+
   // Select the testing routine based on `type`.
   // If "invariant", call `checkInvariants` to verify contract invariants.
   // If "test", call `checkProperties` for property-based testing.
@@ -117,8 +138,8 @@ export async function main() {
       checkInvariants(
         simnet,
         contractsPath,
-        sutContractName,
-        sutContractIds,
+        rendezvousList,
+        rendezvousAllFunctions,
         seed,
         path,
         runs,
@@ -131,8 +152,8 @@ export async function main() {
       checkProperties(
         simnet,
         contractsPath,
-        sutContractName,
-        sutContractIds,
+        rendezvousList,
+        rendezvousAllFunctions,
         seed,
         path,
         runs,
