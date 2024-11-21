@@ -1,3 +1,20 @@
+;; The idea of having tests side by side to the contract is to ensure that
+;; they are treated as first-class citizens.
+;; Each invariant is a read-only function that starts with "invariant-".
+;; Each property test is a public function that starts with "test-".
+
+;; Invariants
+
+(define-read-only (invariant-counter-gt-zero)
+  (let
+      ((increment-num-calls (default-to u0 (get called (map-get? context "increment"))))
+       (decrement-num-calls (default-to u0 (get called (map-get? context "decrement")))))
+    (if (> increment-num-calls decrement-num-calls)
+        (> (var-get counter) u0)
+        true)))
+
+;; Properties
+
 ;; This test catches the bug in the counter contract.
 (define-public (test-increment)
   (let ((counter-before (get-counter)))
