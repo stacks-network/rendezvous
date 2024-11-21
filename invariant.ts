@@ -2,13 +2,8 @@ import { Simnet } from "@hirosystems/clarinet-sdk";
 import { EventEmitter } from "events";
 import {
   argsToCV,
-  buildRendezvousData,
-  deployRendezvous,
-  filterRendezvousInterfaces,
   functionToArbitrary,
-  getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
-  getSimnetDeployerContractsInterfaces,
 } from "./shared";
 import { LocalContext } from "./invariant.types";
 import { Cl, cvToJSON } from "@stacks/transactions";
@@ -19,29 +14,14 @@ import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
 
 export const checkInvariants = (
   simnet: Simnet,
-  contractsPath: string,
   sutContractName: string,
-  sutContractIds: string[],
+  rendezvousList: string[],
+  rendezvousAllFunctions: Map<string, ContractInterfaceFunction[]>,
   seed: number | undefined,
   path: string | undefined,
   runs: number | undefined,
   radio: EventEmitter
 ) => {
-  const rendezvousList = sutContractIds
-    .map((contractId) => buildRendezvousData(simnet, contractId, contractsPath))
-    .map((contractData) => {
-      deployRendezvous(
-        simnet,
-        contractData.rendezvousName,
-        contractData.rendezvousSource
-      );
-      return contractData.rendezvousContractId;
-    });
-
-  const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
-    filterRendezvousInterfaces(getSimnetDeployerContractsInterfaces(simnet))
-  );
-
   // A map where the keys are the Rendezvous identifiers and the values are
   // arrays of their SUT (System Under Test) functions. This map will be used
   // to access the SUT functions for each Rendezvous contract afterwards.

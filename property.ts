@@ -5,47 +5,27 @@ import { cvToJSON } from "@stacks/transactions";
 import { reporter } from "./heatstroke";
 import {
   argsToCV,
-  buildRendezvousData,
-  deployRendezvous,
-  filterRendezvousInterfaces,
   functionToArbitrary,
-  getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
-  getSimnetDeployerContractsInterfaces,
 } from "./shared";
 import { dim, green, red, underline, yellow } from "ansicolor";
 import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
 
 export const checkProperties = (
   simnet: Simnet,
-  contractsPath: string,
   sutContractName: string,
-  sutContractIds: string[],
+  rendezvousList: string[],
+  rendezvousAllFunctions: Map<string, ContractInterfaceFunction[]>,
   seed: number | undefined,
   path: string | undefined,
   runs: number | undefined,
   radio: EventEmitter
 ) => {
-  const rendezvousList = sutContractIds
-    .map((contractId) => buildRendezvousData(simnet, contractId, contractsPath))
-    .map((contractData) => {
-      deployRendezvous(
-        simnet,
-        contractData.rendezvousName,
-        contractData.rendezvousSource
-      );
-      return contractData.rendezvousContractId;
-    });
-
-  const testContractsAllFunctions = getFunctionsFromContractInterfaces(
-    filterRendezvousInterfaces(getSimnetDeployerContractsInterfaces(simnet))
-  );
-
   // A map where the keys are the test contract identifiers and the values are
   // arrays of their test functions. This map will be used to access the test
   // functions for each test contract in the property-based testing routine.
   const testContractsTestFunctions = filterTestFunctions(
-    testContractsAllFunctions
+    rendezvousAllFunctions
   );
 
   radio.emit(
@@ -57,7 +37,7 @@ export const checkProperties = (
   // be used to pair the test functions with their corresponding discard
   // functions.
   const testContractsDiscardFunctions = new Map(
-    Array.from(testContractsAllFunctions, ([contractId, functions]) => [
+    Array.from(rendezvousAllFunctions, ([contractId, functions]) => [
       contractId,
       functions.filter(
         (f) => f.access === "read_only" && f.name.startsWith("can-")
