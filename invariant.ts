@@ -2,23 +2,20 @@ import { Simnet } from "@hirosystems/clarinet-sdk";
 import { EventEmitter } from "events";
 import {
   argsToCV,
+  buildRendezvousData,
+  deployRendezvous,
+  filterRendezvousInterfaces,
   functionToArbitrary,
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
-  getSimnetContractSource,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
 import { LocalContext } from "./invariant.types";
 import { Cl, cvToJSON } from "@stacks/transactions";
 import { reporter } from "./heatstroke";
-import { join } from "path";
 import fc from "fast-check";
-import fs from "fs";
-import { dim, green, inverse, red, underline } from "ansicolor";
-import {
-  ContractInterfaceFunction,
-  IContractInterface,
-} from "@hirosystems/clarinet-sdk-wasm";
+import { dim, green, red, underline } from "ansicolor";
+import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
 
 export const checkInvariants = (
   simnet: Simnet,
@@ -297,152 +294,6 @@ export const checkInvariants = (
     }
   );
 };
-
-/**
- * Get the invariant contract source code.
- * @param contractsPath The contracts path.
- * @param sutContractId The corresponding contract identifier.
- * @returns The invariant contract source code.
- */
-export const getInvariantContractSource = (
-  contractsPath: string,
-  sutContractId: string
-) => {
-  // FIXME: Here, we can encounter a failure if the contract file name is
-  // not the same as the contract name in the manifest.
-  // Example:
-  // - Contract name in the manifest: [contracts.counter-xyz]
-  // - Contract file name: path = "contracts/counter.clar"
-  const invariantContractName = `${
-    sutContractId.split(".")[1]
-  }.invariants.clar`;
-  const invariantContractPath = join(contractsPath, invariantContractName);
-  try {
-    return fs.readFileSync(invariantContractPath).toString();
-  } catch (e: any) {
-    throw new Error(
-      `Error retrieving the corresponding invariant contract for the "${
-        sutContractId.split(".")[1]
-      }" contract. ${e.message}`
-    );
-  }
-};
-
-/**
- * Schedule a Rendezvous between the System Under Test (`SUT`) and the
- * invariants.
- * @param contract The SUT contract source code.
- * @param invariants The invariants contract source code.
- * @returns The Rendezvous source code.
- */
-export function scheduleRendezvous(
-  contract: string,
-  invariants: string
-): string {
-  /**
-   * The context is like the secret sauce for a successful rendez-vous. It can
-   * totally change the conversation from "meh" to "wow" and set the mood for
-   * a legendary chat. Handle with care!
-   */
-  const context = `(define-map context (string-ascii 100) {
-    called: uint
-    ;; other data
-  })
-
-  (define-public (update-context (function-name (string-ascii 100)) (called uint))
-    (ok (map-set context function-name {called: called})))`;
-
-  return `${contract}\n\n${context}\n\n${invariants}`;
-}
-
-/**
- * Derive the Rendezvous name.
- * @param contractId The contract identifier.
- * @returns The Rendezvous name.
- */
-export const deriveRendezvousName = (contractId: string) =>
-  `${contractId.split(".")[1]}_rendezvous`;
-
-/**
- * Build the Rendezvous data.
- * @param simnet The simnet instance.
- * @param contractId The contract identifier.
- * @param contractsPath The contracts path.
- * @returns The Rendezvous data representing an object. The returned object
- * contains the Rendezvous name, the Rendezvous source code, and the Rendezvous
- * contract identifier. This data is used to deploy the Rendezvous to the simnet
- * in a later step.
- */
-export const buildRendezvousData = (
-  simnet: Simnet,
-  contractId: string,
-  contractsPath: string
-) => {
-  try {
-    const sutContractSource = getSimnetContractSource(simnet, contractId);
-    const invariantContractSource = getInvariantContractSource(
-      contractsPath,
-      contractId
-    );
-    const rendezvousSource = scheduleRendezvous(
-      sutContractSource!,
-      invariantContractSource
-    );
-    const rendezvousName = deriveRendezvousName(contractId);
-
-    return {
-      rendezvousName,
-      rendezvousSource,
-      rendezvousContractId: `${simnet.deployer}.${rendezvousName}`,
-    };
-  } catch (e: any) {
-    throw new Error(
-      `Error processing contract ${contractId.split(".")[1]}: ${e.message}`
-    );
-  }
-};
-
-/**
- * Deploy the Rendezvous to the simnet.
- * @param simnet The simnet instance.
- * @param rendezvousName The Rendezvous name.
- * @param rendezvousSource The Rendezvous source code.
- */
-export const deployRendezvous = (
-  simnet: Simnet,
-  rendezvousName: string,
-  rendezvousSource: string
-) => {
-  try {
-    simnet.deployContract(
-      rendezvousName,
-      rendezvousSource,
-      { clarityVersion: 2 },
-      simnet.deployer
-    );
-  } catch (e: any) {
-    throw new Error(
-      `Something went wrong. Please double check the invariants contract: ${rendezvousName.replace(
-        "_rendezvous",
-        ""
-      )}.invariant.clar:\n${e}`
-    );
-  }
-};
-
-/**
- * Filter the Rendezvous interfaces from the contracts interfaces map.
- * @param contractsInterfaces The contracts interfaces map.
- * @returns The Rendezvous interfaces.
- */
-export const filterRendezvousInterfaces = (
-  contractsInterfaces: Map<string, IContractInterface>
-) =>
-  new Map(
-    Array.from(contractsInterfaces).filter(([contractId]) =>
-      contractId.endsWith("_rendezvous")
-    )
-  );
 
 /**
  * Initialize the local context, setting the number of times each function

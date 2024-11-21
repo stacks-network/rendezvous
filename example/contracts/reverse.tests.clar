@@ -1,3 +1,7 @@
+;; Invariants
+
+;; Properties
+
 (define-constant ERR_ASSERTION_FAILED (err 1))
 
 (define-public (test-reverse (seq (list 127 int)))

@@ -1,3 +1,7 @@
+;; Invariants
+
+;; Properties
+
 (define-constant ERR_CONTRACT_CALL_FAILED (err 0))
 (define-constant ERR_ASSERTION_FAILED_1 (err 1))
 (define-constant ERR_ASSERTION_FAILED_2 (err 2))

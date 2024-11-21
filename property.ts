@@ -1,23 +1,20 @@
 import { Simnet } from "@hirosystems/clarinet-sdk";
 import { EventEmitter } from "events";
-import { join } from "path";
-import fs from "fs";
 import fc from "fast-check";
 import { cvToJSON } from "@stacks/transactions";
 import { reporter } from "./heatstroke";
 import {
   argsToCV,
+  buildRendezvousData,
+  deployRendezvous,
+  filterRendezvousInterfaces,
   functionToArbitrary,
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
-  getSimnetContractSource,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
 import { dim, green, red, underline, yellow } from "ansicolor";
-import {
-  ContractInterfaceFunction,
-  IContractInterface,
-} from "@hirosystems/clarinet-sdk-wasm";
+import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
 
 export const checkProperties = (
   simnet: Simnet,
@@ -29,23 +26,19 @@ export const checkProperties = (
   runs: number | undefined,
   radio: EventEmitter
 ) => {
-  const testContractBundlesList = sutContractIds
-    .map((contractId) => buildTestBundleData(simnet, contractId, contractsPath))
+  const rendezvousList = sutContractIds
+    .map((contractId) => buildRendezvousData(simnet, contractId, contractsPath))
     .map((contractData) => {
-      deployTestContract(
+      deployRendezvous(
         simnet,
-        contractData.testBundleContractName,
-        contractData.testBundleContractSource
+        contractData.rendezvousName,
+        contractData.rendezvousSource
       );
-      return contractData.testBundleContractId;
+      return contractData.rendezvousContractId;
     });
 
-  const testContractsInterfaces = filterTestContractsInterfaces(
-    getSimnetDeployerContractsInterfaces(simnet)
-  );
-
   const testContractsAllFunctions = getFunctionsFromContractInterfaces(
-    testContractsInterfaces
+    filterRendezvousInterfaces(getSimnetDeployerContractsInterfaces(simnet))
   );
 
   // A map where the keys are the test contract identifiers and the values are
@@ -119,7 +112,7 @@ export const checkProperties = (
     fc.property(
       fc
         .record({
-          testContractId: fc.constantFrom(...testContractBundlesList),
+          testContractId: fc.constantFrom(...rendezvousList),
           testCaller: fc.constantFrom(
             ...new Map(
               [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
@@ -275,124 +268,6 @@ export const checkProperties = (
     }
   );
 };
-
-/**
- * Derive the test contract name.
- * @param contractId The contract identifier.
- * @returns The test contract name.
- */
-export const deriveTestContractName = (contractId: string) =>
-  `${contractId.split(".")[1]}_tests`;
-
-/**
- * Get the tests contract source code.
- * @param contractsPath The contracts path.
- * @param sutContractId The corresponding contract identifier.
- * @returns The tests contract source code.
- */
-export const getTestsContractSource = (
-  contractsPath: string,
-  sutContractId: string
-) => {
-  // FIXME: Here, we can encounter a failure if the contract file name does
-  // not match the contract name in the manifest.
-  // Example:
-  // - Contract name in the manifest: [contracts.counter-xyz]
-  // - Contract file name: path = "contracts/counter.clar"
-  const testsContractName = `${sutContractId.split(".")[1]}.tests.clar`;
-  const testsContractPath = join(contractsPath, testsContractName);
-  try {
-    return fs.readFileSync(testsContractPath).toString();
-  } catch (e: any) {
-    throw new Error(
-      `Error retrieving the test contract for the "${
-        sutContractId.split(".")[1]
-      }" contract. ${e.message}`
-    );
-  }
-};
-
-/**
- * Build the test bundle data. The test bundle is the combination of the sut
- * and its corresponding property-based tests contract.
- * @param simnet The simnet instance.
- * @param contractId The contract identifier.
- * @param contractsPath The contracts path.
- * @returns The test bundle data representing an object. The returned object
- * contains the test bundle name, the test bundle source code, and the test
- * bundle identifier. This data is used to deploy the test bundle to the
- * simnet in a later step.
- */
-export const buildTestBundleData = (
-  simnet: Simnet,
-  contractId: string,
-  contractsPath: string
-) => {
-  try {
-    const sutContractSource = getSimnetContractSource(simnet, contractId);
-    const testsContractSource = getTestsContractSource(
-      contractsPath,
-      contractId
-    );
-    const testBundleContractSource = `${sutContractSource}\n\n${testsContractSource}`;
-    const testBundleContractName = deriveTestContractName(contractId);
-
-    // In property testing, the SUT contract and its test contract are bundled
-    // together. Unlike invariants with rendezvous "data" (context), test bundle
-    // does not have such a context.
-    return {
-      testBundleContractName,
-      testBundleContractSource,
-      testBundleContractId: `${simnet.deployer}.${testBundleContractName}`,
-    };
-  } catch (e: any) {
-    throw new Error(
-      `Error processing contract ${contractId.split(".")[1]}: ${e.message}`
-    );
-  }
-};
-
-/**
- * Deploy the test contract to the simnet.
- * @param simnet The simnet instance.
- * @param testContractName The test contract name.
- * @param testContractSource The test contract source code.
- */
-export const deployTestContract = (
-  simnet: Simnet,
-  testContractName: string,
-  testContractSource: string
-) => {
-  try {
-    simnet.deployContract(
-      testContractName,
-      testContractSource,
-      { clarityVersion: 2 },
-      simnet.deployer
-    );
-  } catch (e: any) {
-    throw new Error(
-      `Something went wrong. Please double check the tests contract: ${testContractName.replace(
-        "_tests",
-        ""
-      )}.tests.clar:\n${e}`
-    );
-  }
-};
-
-/**
- * Filter the test contracts interfaces from the contracts interfaces map.
- * @param contractsInterfaces The contracts interfaces map.
- * @returns The test contracts interfaces.
- */
-export const filterTestContractsInterfaces = (
-  contractsInterfaces: Map<string, IContractInterface>
-) =>
-  new Map(
-    Array.from(contractsInterfaces).filter(([contractId]) =>
-      contractId.endsWith("_tests")
-    )
-  );
 
 const filterTestFunctions = (
   allFunctionsMap: Map<string, ContractInterfaceFunction[]>
