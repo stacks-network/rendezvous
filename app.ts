@@ -49,6 +49,40 @@ export async function main() {
     return;
   }
 
+  const manifestDir = args[2];
+  if (!manifestDir || manifestDir.startsWith("--")) {
+    radio.emit(
+      "logMessage",
+      "\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
+    );
+    radio.emit("logMessage", helpMessage);
+    return;
+  }
+
+  const sutContractName = args[3];
+  if (!sutContractName || sutContractName.startsWith("--")) {
+    radio.emit(
+      "logMessage",
+      "\nNo target contract name provided. Please provide the contract name to be fuzzed."
+    );
+    radio.emit("logMessage", helpMessage);
+    return;
+  }
+
+  const type = args[4]?.toLowerCase();
+  if (!type || type.startsWith("--") || !["test", "invariant"].includes(type)) {
+    radio.emit(
+      "logMessage",
+      "\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant."
+    );
+    radio.emit("logMessage", helpMessage);
+    return;
+  }
+
+  const manifestPath = join(manifestDir, "Clarinet.toml");
+  radio.emit("logMessage", `Using manifest path: ${manifestPath}`);
+  radio.emit("logMessage", `Target contract: ${sutContractName}`);
+
   const seed = parseInt(parseOptionalArgument("seed")!, 10) || undefined;
   if (seed !== undefined) {
     radio.emit("logMessage", `Using seed: ${seed}`);
@@ -62,39 +96,6 @@ export async function main() {
   const runs = parseInt(parseOptionalArgument("runs")!, 10) || undefined;
   if (runs !== undefined) {
     radio.emit("logMessage", `Using runs: ${runs}`);
-  }
-
-  const manifestDir = args[2];
-  if (!manifestDir || manifestDir.startsWith("--")) {
-    radio.emit(
-      "logMessage",
-      "\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
-    );
-    radio.emit("logMessage", helpMessage);
-    return;
-  }
-
-  const manifestPath = join(manifestDir, "Clarinet.toml");
-  radio.emit("logMessage", `Using manifest path: ${manifestPath}`);
-
-  const sutContractName = args[3];
-  if (!sutContractName || sutContractName.startsWith("--")) {
-    radio.emit(
-      "logMessage",
-      "\nNo target contract name provided. Please provide the contract name to be fuzzed."
-    );
-    radio.emit("logMessage", helpMessage);
-    return;
-  }
-  radio.emit("logMessage", `Target contract: ${sutContractName}`);
-
-  const type = args[4]?.toLowerCase();
-  if (!type || type.startsWith("--") || !["test", "invariant"].includes(type)) {
-    radio.emit(
-      "logMessage",
-      "\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant."
-    );
-    radio.emit("logMessage", helpMessage);
   }
 
   const simnet = await initSimnet(manifestPath);
