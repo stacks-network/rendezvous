@@ -137,7 +137,7 @@ export async function main() {
     case "invariant": {
       checkInvariants(
         simnet,
-        contractsPath,
+        sutContractName,
         rendezvousList,
         rendezvousAllFunctions,
         seed,
@@ -151,7 +151,7 @@ export async function main() {
     case "test": {
       checkProperties(
         simnet,
-        contractsPath,
+        sutContractName,
         rendezvousList,
         rendezvousAllFunctions,
         seed,
