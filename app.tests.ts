@@ -90,11 +90,25 @@ describe("Command-line arguments handling", () => {
 
   it.each([
     [
+      ["no command-line arguments"],
+      ["node", "app.js"],
+      [
+        `\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.`,
+        helpMessage,
+      ],
+    ],
+    [
+      ["manifest path"],
+      ["node", "app.js", "example"],
+      [
+        `\nNo target contract name provided. Please provide the contract name to be fuzzed.`,
+        helpMessage,
+      ],
+    ],
+    [
       ["manifest path", "contract name"],
       ["node", "app.js", "example", "counter"],
       [
-        `Using manifest path: example/Clarinet.toml`,
-        `Target contract: counter`,
         `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
         helpMessage,
       ],
@@ -103,9 +117,6 @@ describe("Command-line arguments handling", () => {
       ["manifest path", "contract name", "seed"],
       ["node", "app.js", "example", "counter", "--seed=123"],
       [
-        `Using manifest path: example/Clarinet.toml`,
-        `Target contract: counter`,
-        `Using seed: 123`,
         `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
         helpMessage,
       ],
@@ -114,10 +125,6 @@ describe("Command-line arguments handling", () => {
       ["manifest path", "contract name", "seed", "path"],
       ["node", "app.js", "example", "counter", "--seed=123", "--path=84:0"],
       [
-        `Using manifest path: example/Clarinet.toml`,
-        `Target contract: counter`,
-        `Using seed: 123`,
-        `Using path: 84:0`,
         `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
         helpMessage,
       ],
@@ -126,9 +133,6 @@ describe("Command-line arguments handling", () => {
       ["manifest path", "contract name", "runs"],
       ["node", "app.js", "example", "counter", "--runs=10"],
       [
-        `Using manifest path: example/Clarinet.toml`,
-        `Target contract: counter`,
-        `Using runs: 10`,
         `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
         helpMessage,
       ],
@@ -137,9 +141,6 @@ describe("Command-line arguments handling", () => {
       ["manifest path", "contract name", "path"],
       ["node", "app.js", "example", "counter", "--path=84:0"],
       [
-        `Using manifest path: example/Clarinet.toml`,
-        `Target contract: counter`,
-        `Using path: 84:0`,
         `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
         helpMessage,
       ],
@@ -156,11 +157,6 @@ describe("Command-line arguments handling", () => {
         "--runs=10",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
-        `Target contract: counter`,
-        `Using seed: 123`,
-        `Using path: 84:0`,
-        `Using runs: 10`,
         `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
         helpMessage,
       ],
