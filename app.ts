@@ -16,16 +16,16 @@ const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
 };
 
 const helpMessage = `
-  Usage: ./rv <path-to-clarinet-project> <contract-name> [--type=<type>] [--seed=<seed>] [--path=<path>] [--runs=<runs>]
+  Usage: ./rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--path=<path>] [--runs=<runs>]
 
   Positional arguments:
     path-to-clarinet-project - The path to the Clarinet project.
     contract-name - The name of the contract to be fuzzed.
+    type - The type to use for exercising the contracts. Possible values: test, invariant.
 
   Options:
     --seed - The seed to use for the replay functionality.
     --path - The path to use for the replay functionality.
-    --type - The type to use for exercising the contracts. Possible values: test, invariant. Default: invariant.
     --runs - The runs to use for iterating over the tests. Default: 100.
     --help - Show the help message.
   `;
@@ -59,16 +59,6 @@ export async function main() {
     radio.emit("logMessage", `Using path: ${path}`);
   }
 
-  const type = parseOptionalArgument("type")?.toLowerCase() || "invariant";
-  if (type !== "invariant" && type !== "test") {
-    radio.emit(
-      "logFailure",
-      `Invalid type of testing: ${type}. Possible values: test, invariant.`
-    );
-    radio.emit("logMessage", helpMessage);
-    return;
-  }
-
   const runs = parseInt(parseOptionalArgument("runs")!, 10) || undefined;
   if (runs !== undefined) {
     radio.emit("logMessage", `Using runs: ${runs}`);
@@ -97,6 +87,15 @@ export async function main() {
     return;
   }
   radio.emit("logMessage", `Target contract: ${sutContractName}`);
+
+  const type = args[4]?.toLowerCase();
+  if (!type || type.startsWith("--") || !["test", "invariant"].includes(type)) {
+    radio.emit(
+      "logMessage",
+      "\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant."
+    );
+    radio.emit("logMessage", helpMessage);
+  }
 
   const simnet = await initSimnet(manifestPath);
 
@@ -133,6 +132,7 @@ export async function main() {
   // Select the testing routine based on `type`.
   // If "invariant", call `checkInvariants` to verify contract invariants.
   // If "test", call `checkProperties` for property-based testing.
+  // If `type` is not provided, call both functions.
   switch (type) {
     case "invariant": {
       checkInvariants(
