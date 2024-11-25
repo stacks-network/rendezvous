@@ -327,8 +327,9 @@ export const getContractNameFromRendezvousId = (rendezvousId: string) =>
  * contract functions.
  *
  * The SUT functions are the ones that have `public` access since they are
- * capable of changing the contract state.
- * @param allFunctionsMap The map containing all the functions for each contract.
+ * capable of changing the contract state, and they are not test functions.
+ * @param allFunctionsMap The map containing all the functions for each
+ * contract.
  * @returns A map containing only the SUT functions for each contract.
  */
 const filterSutFunctions = (
@@ -338,7 +339,10 @@ const filterSutFunctions = (
     Array.from(allFunctionsMap, ([contractId, functions]) => [
       contractId,
       functions.filter(
-        (f) => f.access === "public" && f.name !== "update-context"
+        (f) =>
+          f.access === "public" &&
+          f.name !== "update-context" &&
+          !f.name.startsWith("test-")
       ),
     ])
   );
