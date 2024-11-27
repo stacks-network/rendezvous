@@ -137,7 +137,7 @@ describe("Simnet contracts operations", () => {
       );
     });
 
-    // Re-fetch contract interfaces to check after deployment
+    // Re-fetch contract interfaces to check after deployment.
     const actualSimnetContractsInterfacesAfterDeploy =
       getSimnetDeployerContractsInterfaces(simnet);
     const actualSimnetContractsListAfterDeploy = Array.from(
@@ -145,14 +145,14 @@ describe("Simnet contracts operations", () => {
     );
 
     // Assert
-    // Check if all expected Rendezvous contracts are present in the result
+    // Check if all expected Rendezvous contracts are present in the result.
     rendezvousData.forEach((contractData) => {
       expect(actualSimnetContractsListAfterDeploy).toContain(
         contractData.rendezvousContractId
       );
     });
 
-    // Ensure there are exactly double the number of original contracts (pre-deployment and Rendezvous)
+    // Ensure there are exactly double the number of original contracts (pre-deployment and Rendezvous).
     expect(actualSimnetContractsListAfterDeploy).toHaveLength(
       2 * sutContractsList.length
     );
