@@ -341,9 +341,8 @@ export function scheduleRendezvous(
   invariants: string
 ): string {
   /**
-   * The context is like the secret sauce for a successful rendezvous. It can
-   * totally change the conversation from "meh" to "wow" and set the mood for
-   * a legendary chat. Handle with care!
+   * The `context` map tracks how many times each function has been called.
+   * This data can be useful for invariant tests to check behavior over time.
    */
   const context = `(define-map context (string-ascii 100) {
     called: uint
