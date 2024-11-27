@@ -235,7 +235,7 @@ describe("File stream operations", () => {
   });
 });
 
-describe("Successfully schedules rendez-vous", () => {
+describe("Successfully schedules rendezvous", () => {
   const context = `(define-map context (string-ascii 100) {
     called: uint
     ;; other data

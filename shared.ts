@@ -341,7 +341,7 @@ export function scheduleRendezvous(
   invariants: string
 ): string {
   /**
-   * The context is like the secret sauce for a successful rendez-vous. It can
+   * The context is like the secret sauce for a successful rendezvous. It can
    * totally change the conversation from "meh" to "wow" and set the mood for
    * a legendary chat. Handle with care!
    */
