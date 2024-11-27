@@ -1,5 +1,3 @@
-;; Invariants
-
 ;; Properties
 
 (define-constant ERR_CONTRACT_CALL_FAILED (err 0))
