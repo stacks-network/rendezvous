@@ -36,13 +36,13 @@ rv <path-to-clarinet-project> <contract-name> <type>
 
 This will execute the fuzzing process, attempting to falsify invariants or tests.
 
-**Arguments:**
+**Positional arguments:**
 
-- `path-to-clarinet-project` - The path to the root directory of the Clarinet project.
-- `contract-name` - The name of the contract to be tested, as defined in Clarinet.toml.
-- `type` - The type of test to run. Options:
-  - `test` - Runs property-based tests.
-  - `invariant` - Runs invariant testing.
+- `path-to-clarinet-project` - Path to the root directory of the Clarinet project (where Clarinet.toml exists).
+- `contract-name` - Name of the contract to test, per Clarinet.toml.
+- `type` - Type of test to run. Options:
+  - `test` - Run property-based tests.
+  - `invariant` - Run invariant tests.
 
 **Options:**
 
