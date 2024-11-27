@@ -1,5 +1,3 @@
-;; Invariants
-
 ;; Properties
 
 (define-constant ERR_ASSERTION_FAILED (err 1))
