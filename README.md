@@ -21,7 +21,6 @@ root
 ├── Clarinet.toml
 ├── contracts
 │   ├── contract.clar
-│   ├── contract.invariants.clar
 │   ├── contract.tests.clar
 └── settings
     └── Devnet.toml
@@ -32,22 +31,29 @@ root
 Run the fuzzer with the following command:
 
 ```
-rv <path-to-clarinet-project> <contract-name>
+rv <path-to-clarinet-project> <contract-name> <type>
 ```
 
 This will execute the fuzzing process, attempting to falsify invariants or tests.
 
+**Arguments:**
+
+- `path-to-clarinet-project` - The path to the root directory of the Clarinet project.
+- `contract-name` - The name of the contract to be tested, as defined in Clarinet.toml.
+- `type` - The type of test to run. Options:
+  - `test` - Runs property-based tests.
+  - `invariant` - Runs invariant testing.
+
 **Options:**
+
 - `--seed` – The seed to use for the replay functionality.
 - `--path` – The path to use for the replay functionality.
 - `--runs` – The number of test iterations to use for exercising the contracts.
-              (default: `100`)
-- `--type` – The type to use for exercising the contracts.
-              `test` or `invariant` (default: `invariant`)
+  (default: `100`)
 
 ---
 
-### Example (`--type=test`)
+### Example (`test`)
 
 Here's an example of a test that checks reversing a list twice returns the original:
 
@@ -65,12 +71,12 @@ Here's an example of a test that checks reversing a list twice returns the origi
 You can run property-based tests using `rv` with the following command:
 
 ```
-rv example reverse --type=test
+rv example reverse test
 ```
 
 ---
 
-### Example (`--type=invariant`)
+### Example (`invariant`)
 
 Here's a Clarity invariant to detect a bug in the example counter contract:
 
@@ -87,7 +93,7 @@ Here's a Clarity invariant to detect a bug in the example counter contract:
 You can run invariant tests using `rv` with the following command:
 
 ```
-rv example counter --type=invariant
+rv example counter invariant
 ```
 
 ---
