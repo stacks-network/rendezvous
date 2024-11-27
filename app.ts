@@ -133,7 +133,6 @@ export async function main() {
   // Select the testing routine based on `type`.
   // If "invariant", call `checkInvariants` to verify contract invariants.
   // If "test", call `checkProperties` for property-based testing.
-  // If `type` is not provided, call both functions.
   switch (type) {
     case "invariant": {
       checkInvariants(
