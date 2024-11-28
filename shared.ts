@@ -385,12 +385,13 @@ export const buildRendezvousData = (
       sutContractSource!,
       testContractSource
     );
-    const rendezvousName = deriveRendezvousName(contractId);
+    const rendezvousFileName = deriveRendezvousName(contractId);
 
     return {
-      rendezvousName,
-      rendezvousSource,
-      rendezvousContractId: `${simnet.deployer}.${rendezvousName}`,
+      rendezvousFileName: rendezvousFileName,
+      rendezvousSource: rendezvousSource,
+      rendezvousContractId: contractId,
+      rendezvousContractName: contractId.split(".")[1],
     };
   } catch (e: any) {
     throw new Error(
