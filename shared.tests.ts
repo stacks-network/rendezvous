@@ -1,9 +1,7 @@
 import { initSimnet } from "@hirosystems/clarinet-sdk";
 import {
   buildRendezvousData,
-  deployRendezvous,
   deriveRendezvousName,
-  filterRendezvousInterfaces,
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
   getSimnetContractSource,
@@ -99,12 +97,12 @@ describe("Simnet contracts operations", () => {
         sutContractSource!,
         invariantContractSource
       );
-      const rendezvousName = deriveRendezvousName(contractId);
 
       return {
-        rendezvousName,
+        rendezvousFileName: deriveRendezvousName(contractId),
         rendezvousSource,
-        rendezvousContractId: `${simnet.deployer}.${rendezvousName}`,
+        rendezvousContractId: contractId,
+        rendezvousContractName: contractId.split(".")[1],
       };
     });
 
@@ -115,79 +113,6 @@ describe("Simnet contracts operations", () => {
 
     // Assert
     expect(actualRendezvousData).toEqual(expectedRendezvousData);
-  });
-
-  it("deploys Rendezvous contracts to the simnet", async () => {
-    // Arrange
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
-    const contractsPath = resolve(__dirname, "./example/contracts");
-    const simnet = await initSimnet(manifestPath);
-    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
-    const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const rendezvousData = sutContractsList.map((contractId) =>
-      buildRendezvousData(simnet, contractId, contractsPath)
-    );
-
-    // Act
-    rendezvousData.forEach((contractData) => {
-      deployRendezvous(
-        simnet,
-        contractData.rendezvousName,
-        contractData.rendezvousSource
-      );
-    });
-
-    // Re-fetch contract interfaces to check after deployment.
-    const actualSimnetContractsInterfacesAfterDeploy =
-      getSimnetDeployerContractsInterfaces(simnet);
-    const actualSimnetContractsListAfterDeploy = Array.from(
-      actualSimnetContractsInterfacesAfterDeploy.keys()
-    );
-
-    // Assert
-    // Check if all expected Rendezvous contracts are present in the result.
-    rendezvousData.forEach((contractData) => {
-      expect(actualSimnetContractsListAfterDeploy).toContain(
-        contractData.rendezvousContractId
-      );
-    });
-
-    // Ensure there are exactly double the number of original contracts (pre-deployment and Rendezvous).
-    expect(actualSimnetContractsListAfterDeploy).toHaveLength(
-      2 * sutContractsList.length
-    );
-  });
-
-  it("correctly filters the Rendezvous contracts interfaces", async () => {
-    // Arrange
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
-    const contractsPath = resolve(__dirname, "./example/contracts");
-    const simnet = await initSimnet(manifestPath);
-    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
-    const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const expectedRendezvousList = sutContractsList
-      .map((contractId) =>
-        buildRendezvousData(simnet, contractId, contractsPath)
-      )
-      .map((contractData) => {
-        deployRendezvous(
-          simnet,
-          contractData.rendezvousName,
-          contractData.rendezvousSource
-        );
-        return contractData.rendezvousContractId;
-      })
-      .sort();
-
-    // Act
-    const actualRendezvousList = Array.from(
-      filterRendezvousInterfaces(
-        getSimnetDeployerContractsInterfaces(simnet)
-      ).keys()
-    ).sort();
-
-    // Assert
-    expect(actualRendezvousList).toEqual(expectedRendezvousList);
   });
 
   it("retrieves the contract source from the simnet", async () => {
