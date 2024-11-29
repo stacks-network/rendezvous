@@ -30,21 +30,31 @@ import {
   IContractInterface,
 } from "@hirosystems/clarinet-sdk-wasm";
 import { join } from "path";
-import fs from "fs";
+import fs, { readFileSync } from "fs";
+import { ClarinetToml } from "./app.types";
 
 /**
  * Get contract source code from the simnet.
- * @param simnet The simnet instance.
- * @param sutContractId The contract identifier.
+ * @param clarinetToml The parsed Clarinet.toml file.
+ * @param manifestDir The relative path to the manifest directory.
+ * @param sutContractName The target contract name.
  * @returns The contract source code.
  */
-export const getSimnetContractSource = (
-  simnet: Simnet,
-  sutContractId: string
+export const getClarinetTomlContractSource = (
+  clarinetToml: ClarinetToml,
+  manifestDir: string,
+  sutContractName: string
 ) => {
-  if (simnet.getContractSource(sutContractId) === undefined)
-    throw new Error(`Contract ${sutContractId} not found in the network.`);
-  return simnet.getContractSource(sutContractId);
+  const contractInfo = clarinetToml.contracts[sutContractName];
+  if (contractInfo == undefined) {
+    throw new Error(
+      `Contract ${sutContractName} not found in the Clarinet.toml.`
+    );
+  }
+  return readFileSync(join(manifestDir, contractInfo.path)).toString();
+  // if (simnet.getContractSource(sutContractId) === undefined)
+  //   throw new Error(`Contract ${sutContractId} not found in the network.`);
+  // return simnet.getContractSource(sutContractId);
 };
 
 /**
@@ -302,29 +312,27 @@ const isBaseType = (type: ParameterType): type is BaseType => {
 };
 
 /**
- * Get the invariant contract source code.
- * @param contractsPath The contracts path.
- * @param sutContractId The corresponding contract identifier.
- * @returns The invariant contract source code.
+ * Get the test contract source code.
+ * @param contractsPath The relative path to the contracts directory.
+ * @param sutContractName The target contract name.
+ * @returns The test contract source code.
  */
 export const getTestContractSource = (
   contractsPath: string,
-  sutContractId: string
+  sutContractName: string
 ) => {
   // FIXME: Here, we can encounter a failure if the contract file name is
   // not the same as the contract name in the manifest.
   // Example:
   // - Contract name in the manifest: [contracts.counter-xyz]
   // - Contract file name: path = "contracts/counter.clar"
-  const testContractName = `${sutContractId.split(".")[1]}.tests.clar`;
+  const testContractName = `${sutContractName}.tests.clar`;
   const testContractPath = join(contractsPath, testContractName);
   try {
     return fs.readFileSync(testContractPath).toString();
   } catch (e: any) {
     throw new Error(
-      `Error retrieving the corresponding invariant contract for the "${
-        sutContractId.split(".")[1]
-      }" contract. ${e.message}`
+      `Error retrieving the corresponding test contract for the "${sutContractName}" contract. ${e.message}`
     );
   }
 };
@@ -356,88 +364,44 @@ export function scheduleRendezvous(
 }
 
 /**
- * Derive the Rendezvous name.
- * @param contractId The contract identifier.
- * @returns The Rendezvous name.
- */
-export const deriveRendezvousName = (contractId: string) =>
-  `${contractId.split(".")[1]}_rendezvous`;
-
-/**
  * Build the Rendezvous data.
- * @param simnet The simnet instance.
- * @param contractId The contract identifier.
+ * @param clarinetToml The parsed Clarinet.toml file.
+ * @param contractName The contract name.
+ * @param manifestDir The relative path to the manifest directory.
  * @param contractsPath The contracts path.
  * @returns The Rendezvous data representing an object. The returned object
- * contains the Rendezvous name, the Rendezvous source code, and the Rendezvous
- * contract identifier. This data is used to deploy the Rendezvous to the simnet
- * in a later step.
+ * contains the Rendezvous source code and the Rendezvous contract name.
  */
 export const buildRendezvousData = (
-  simnet: Simnet,
-  contractId: string,
+  clarinetToml: ClarinetToml,
+  contractName: string,
+  manifestDir: string,
   contractsPath: string
 ) => {
   try {
-    const sutContractSource = getSimnetContractSource(simnet, contractId);
-    const testContractSource = getTestContractSource(contractsPath, contractId);
+    const sutContractSource = getClarinetTomlContractSource(
+      clarinetToml,
+      manifestDir,
+      contractName
+    );
+
+    const testContractSource = getTestContractSource(
+      contractsPath,
+      contractName
+    );
+
     const rendezvousSource = scheduleRendezvous(
       sutContractSource!,
       testContractSource
     );
-    const rendezvousFileName = deriveRendezvousName(contractId);
 
     return {
-      rendezvousFileName: rendezvousFileName,
       rendezvousSource: rendezvousSource,
-      rendezvousContractId: contractId,
-      rendezvousContractName: contractId.split(".")[1],
+      rendezvousContractName: contractName,
     };
   } catch (e: any) {
     throw new Error(
-      `Error processing contract ${contractId.split(".")[1]}: ${e.message}`
+      `Error processing contract ${contractName.split(".")[1]}: ${e.message}`
     );
   }
 };
-
-/**
- * Deploy the Rendezvous to the simnet.
- * @param simnet The simnet instance.
- * @param rendezvousName The Rendezvous name.
- * @param rendezvousSource The Rendezvous source code.
- */
-export const deployRendezvous = (
-  simnet: Simnet,
-  rendezvousName: string,
-  rendezvousSource: string
-) => {
-  try {
-    simnet.deployContract(
-      rendezvousName,
-      rendezvousSource,
-      { clarityVersion: 2 },
-      simnet.deployer
-    );
-  } catch (e: any) {
-    throw new Error(
-      `Something went wrong. Please double check the invariants contract: ${rendezvousName.replace(
-        "_rendezvous",
-        ""
-      )}.invariant.clar:\n${e}`
-    );
-  }
-};
-
-/**
- * Filter the Rendezvous interfaces from the contracts interfaces map.
- * @param contractsInterfaces The contracts interfaces map.
- * @returns The Rendezvous interfaces.
- */
-export const filterRendezvousInterfaces = (
-  contractsInterfaces: Map<string, IContractInterface>
-) =>
-  new Map(
-    Array.from(contractsInterfaces).filter(([contractId]) =>
-      contractId.endsWith("_rendezvous")
-    )
-  );

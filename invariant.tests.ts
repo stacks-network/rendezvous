@@ -1,42 +1,10 @@
 import { initSimnet } from "@hirosystems/clarinet-sdk";
-import { initializeClarityContext, initializeLocalContext } from "./invariant";
+import { initializeLocalContext } from "./invariant";
 import {
-  buildRendezvousData,
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
-  getTestContractSource,
 } from "./shared";
 import { resolve } from "path";
-import fs from "fs";
-import { Cl } from "@stacks/transactions";
-
-describe("File stream operations", () => {
-  it("retrieves the invariant contract source", async () => {
-    // Arrange
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
-    const contractsPath = resolve(__dirname, "./example/contracts");
-    const simnet = await initSimnet(manifestPath);
-    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
-    const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const expectedInvariantContractSources = sutContractsList.map(
-      (contractId) => {
-        const invariantContractName = `${contractId.split(".")[1]}.tests`;
-        const invariantContractPath = `${contractsPath}/${invariantContractName}.clar`;
-        return fs.readFileSync(invariantContractPath).toString();
-      }
-    );
-
-    // Act
-    const actualInvariantContractSources = sutContractsList.map((contractId) =>
-      getTestContractSource(contractsPath, contractId)
-    );
-
-    // Assert
-    expect(actualInvariantContractSources).toEqual(
-      expectedInvariantContractSources
-    );
-  });
-});
 
 describe("Simnet contracts operations", () => {
   it("correctly initializes the local context for a given functions map", async () => {

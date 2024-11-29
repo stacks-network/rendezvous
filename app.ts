@@ -8,8 +8,10 @@ import {
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
-import toml, { JsonMap } from "@iarna/toml";
+import { readFileSync } from "fs";
+import toml from "@iarna/toml";
+import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
+import { ClarinetToml } from "./app.types";
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
@@ -49,6 +51,7 @@ export async function main() {
     return;
   }
 
+  /** The relative path to the Clarinet project.*/
   const manifestDir = args[2];
   if (!manifestDir || manifestDir.startsWith("--")) {
     radio.emit(
@@ -59,6 +62,7 @@ export async function main() {
     return;
   }
 
+  /** The target contract name. */
   const sutContractName = args[3];
   if (!sutContractName || sutContractName.startsWith("--")) {
     radio.emit(
@@ -79,6 +83,7 @@ export async function main() {
     return;
   }
 
+  /** The relative path to `Clarinet.toml`. */
   const manifestPath = join(manifestDir, "Clarinet.toml");
   radio.emit("logMessage", `Using manifest path: ${manifestPath}`);
   radio.emit("logMessage", `Target contract: ${sutContractName}`);
@@ -98,62 +103,15 @@ export async function main() {
     radio.emit("logMessage", `Using runs: ${runs}`);
   }
 
-  const initialSimnet = await initSimnet(manifestPath);
+  // Parse the Clarinet.toml file. Its contents are used to deploy contracts
+  // to the simnet, with the combined contract source overwriting the target
+  // contract's source in a later step.
+  const clarinetToml = toml.parse(
+    readFileSync(manifestPath, { encoding: "utf-8" })
+  ) as ClarinetToml;
 
-  // FIXME: Get all the contracts and not only the deployer ones. This way the
-  // requirement contracts could be tested as well.
-  // e.g.: we want to test a contract that is already deployed on testnet.
-  const initialSimnetContracts = Array.from(
-    // FIXME: simnet.getContractInterfaces().keys()
-    getSimnetDeployerContractsInterfaces(initialSimnet).keys()
-  );
-
-  const sutContractIds = initialSimnetContracts.filter(
-    // FIXME: Allow any contract from the environment to be tested. To do this,
-    // we need to pass the FQN of the contract and remove the default deployer
-    // address.
-    (deployedContract) =>
-      deployedContract === `${initialSimnet.deployer}.${sutContractName}`
-  );
-
-  if (sutContractIds.length === 0) {
-    throw new Error(
-      `The "${sutContractName}" contract was not found in the network.`
-    );
-  }
-
-  const contractsPath = join(manifestDir, "contracts");
-
-  // The following steps replace the target contract with the combined one and
-  // re-initialize the simnet with the updated manifest. This turns the tests
-  // into real first class citizens of the target contract.
-
-  // 1. Combine the contract with its tests.
-  const rendezvousData = sutContractIds.map((contractId) =>
-    buildRendezvousData(initialSimnet, contractId, contractsPath)
-  );
-
-  // 2. Create a temporary directory and write the combined contract to a
-  // file. The simnet will use this temporary file for the target contract.
-  const tmpDir = join(manifestDir, "tmp");
-  mkdirSync(tmpDir, { recursive: true });
-
-  const tmpRendezvousPaths = rendezvousData.map((contractData) => {
-    const tmpRendezvousPath = join(
-      tmpDir,
-      `${contractData.rendezvousFileName}.clar`
-    );
-    writeFileSync(tmpRendezvousPath, contractData.rendezvousSource);
-    return join("tmp", `${contractData.rendezvousFileName}.clar`);
-  });
-
-  // 3. Parse the Clarinet.toml. The target contract's path will be replaced
-  // with the temporary file path in the next step.
-  const clarinetToml = toml.parse(readFileSync(manifestPath, "utf-8")) as {
-    project: object;
-    contracts: { [key: string]: { path: string; epoch?: number | string } };
-  };
-
+  // Stringify the epoch to 2 decimal places for `2.05`. Otherwise, stringify
+  // to 1 decimal place.
   if (clarinetToml.contracts) {
     for (const key in clarinetToml.contracts) {
       const epoch = clarinetToml.contracts[key].epoch ?? undefined;
@@ -167,29 +125,120 @@ export async function main() {
     }
   }
 
-  // 4. Update the target contract entry in Clarinet.toml with the temporary
-  // file path.
-  rendezvousData
-    .map((contractData, index) => ({
-      rendezvousContractName: contractData.rendezvousContractName,
-      rendezvousContractTmpPath: tmpRendezvousPaths[index],
-    }))
-    .forEach(({ rendezvousContractName, rendezvousContractTmpPath }) => {
-      clarinetToml.contracts[rendezvousContractName]["path"] =
-        rendezvousContractTmpPath;
-    });
+  /** The list of the contracts names found in the Clarinet.toml */
+  const manifestContracts = Array.from(Object.keys(clarinetToml.contracts));
 
-  // 5. Save the modified Clarinet.toml to a temporary file. This is required
-  // for initializing the simnet with the updated manifest.
-  const tmpTomlPath = join(manifestDir, "Clarinet-tmp.toml");
-  writeFileSync(tmpTomlPath, toml.stringify(clarinetToml as JsonMap));
+  /** The filtered list of SUT contract names */
+  const sutContractNames = manifestContracts.filter(
+    (contractName) => contractName === sutContractName
+  );
 
-  // 6. Initialize the simnet using the updated Clarinet.toml file.
-  const simnet = await initSimnet(tmpTomlPath);
+  if (sutContractNames.length === 0) {
+    throw new Error(
+      `The "${sutContractName}" contract was not found in the network.`
+    );
+  }
 
-  // 7. Clean up by removing the temporary directory and Clarinet.toml file.
-  rmSync(tmpTomlPath, { force: true });
-  rmSync(tmpDir, { recursive: true, force: true });
+  /** The relative path to the contracts directory. */
+  const contractsPath = join(manifestDir, "contracts");
+
+  // Combine the contract with its tests. The combined contract will overwrite
+  // the target contract in the simnet.
+  const rendezvousData = sutContractNames.map((contractId) =>
+    buildRendezvousData(clarinetToml, contractId, manifestDir, contractsPath)
+  );
+  const rendezvousMap = new Map(
+    rendezvousData.map((rendezvousContractData) => [
+      rendezvousContractData.rendezvousContractName,
+      rendezvousContractData.rendezvousSource,
+    ])
+  );
+
+  // Group the contracts by epoch.
+  // If `epoch` is not specified, it will be overwritten with "2.0".
+  // If `clarity_version` is not specified, it will be overwritten with 1.
+  // FIXME: Find a way to determine the deployment order for contracts with
+  // the same epoch.
+  const contractsByEpoch = Object.entries(clarinetToml.contracts).reduce(
+    (acc, [contractName, { path, epoch, clarity_version }]) => {
+      const groupKey = epoch ?? "2.0";
+      const clarityVersionString = (clarity_version ?? 1) as 1 | 2 | 3;
+
+      return {
+        ...acc,
+        [groupKey]: [
+          ...(acc[groupKey] || []),
+          { [contractName]: { path, clarity_version: clarityVersionString } },
+        ],
+      };
+    },
+    {} as Record<
+      string,
+      Record<string, { path: string; clarity_version: 1 | 2 | 3 }>[]
+    >
+  );
+
+  // Sort the entries by epoch. This is required for easily setting the epoch
+  // deploying the contracts in the correct order.
+  const sortedContractsByEpoch = Object.fromEntries(
+    Object.entries(contractsByEpoch).sort(([epochA], [epochB]) =>
+      epochA.localeCompare(epochB, undefined, { numeric: true })
+    )
+  );
+
+  const simnet = await initSimnet(manifestPath);
+  await simnet.initEmtpySession();
+
+  const getContractSource = (
+    contractName: string,
+    contractProps: any
+  ): string => {
+    if (sutContractNames.includes(contractName)) {
+      if (!rendezvousMap.get(contractName)) {
+        throw new Error(`Contract source not found for ${contractName}`);
+      } else {
+        return rendezvousMap.get(contractName)!;
+      }
+    }
+    switch (sutContractNames.includes(contractName)) {
+      case true: {
+        if (!rendezvousMap.get(contractName)) {
+          throw new Error(`Contract source not found for ${contractName}`);
+        }
+        return rendezvousMap.get(contractName)!;
+      }
+      case false:
+        return readFileSync(join(manifestDir, contractProps.path), "utf-8");
+    }
+  };
+
+  Object.entries(sortedContractsByEpoch).forEach(([epoch, contracts]) => {
+    simnet.setEpoch(epoch as EpochString);
+
+    contracts
+      .flatMap(Object.entries)
+      .forEach(([contractName, contractProps]) => {
+        console.log(contractName, contractProps);
+
+        const contractSource = getContractSource(contractName, contractProps);
+
+        simnet.deployContract(
+          contractName,
+          contractSource,
+          { clarityVersion: contractProps.clarity_version },
+          simnet.deployer
+        );
+      });
+  });
+
+  /**
+   * The list of contract IDs for the SUT contract names, as per the simnet.
+   */
+  const sutContractIds = Array.from(
+    getSimnetDeployerContractsInterfaces(simnet).keys()
+  ).filter((deployedContract) =>
+    sutContractNames.includes(deployedContract.split(".")[1])
+  );
 
   const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
     new Map(
@@ -199,9 +248,6 @@ export async function main() {
     )
   );
 
-  const rendezvousList = rendezvousData.map((contractData) => {
-    return contractData.rendezvousContractId;
-  });
   // Select the testing routine based on `type`.
   // If "invariant", call `checkInvariants` to verify contract invariants.
   // If "test", call `checkProperties` for property-based testing.
@@ -210,7 +256,7 @@ export async function main() {
       checkInvariants(
         simnet,
         sutContractName,
-        rendezvousList,
+        sutContractIds,
         rendezvousAllFunctions,
         seed,
         path,
@@ -224,7 +270,7 @@ export async function main() {
       checkProperties(
         simnet,
         sutContractName,
-        rendezvousList,
+        sutContractIds,
         rendezvousAllFunctions,
         seed,
         path,

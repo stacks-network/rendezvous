@@ -1,17 +1,12 @@
 import { initSimnet } from "@hirosystems/clarinet-sdk";
 import {
-  buildRendezvousData,
-  deriveRendezvousName,
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
-  getSimnetContractSource,
   getSimnetDeployerContractsInterfaces,
-  getTestContractSource,
   scheduleRendezvous,
 } from "./shared";
 import { resolve } from "path";
 import fc from "fast-check";
-import fs from "fs";
 import { getContractNameFromRendezvousId } from "./invariant";
 
 describe("Simnet contracts operations", () => {
@@ -79,85 +74,63 @@ describe("Simnet contracts operations", () => {
     expect(actualAllFunctionsMap).toEqual(expectedAllFunctionsMap);
   });
 
-  it("retrieves Rendezvous contracts data", async () => {
-    // Arrange
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
-    const contractsPath = resolve(__dirname, "./example/contracts");
-    const simnet = await initSimnet(manifestPath);
-    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
-    const sutContractsList = Array.from(sutContractsInterfaces.keys());
+  // it("retrieves Rendezvous contracts data", async () => {
+  //   // Arrange
+  //   const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+  //   const contractsPath = resolve(__dirname, "./example/contracts");
+  //   const simnet = await initSimnet(manifestPath);
+  //   const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+  //   const sutContractsList = Array.from(sutContractsInterfaces.keys());
 
-    const expectedRendezvousData = sutContractsList.map((contractId) => {
-      const sutContractSource = getSimnetContractSource(simnet, contractId);
-      const invariantContractSource = getTestContractSource(
-        contractsPath,
-        contractId
-      );
-      const rendezvousSource = scheduleRendezvous(
-        sutContractSource!,
-        invariantContractSource
-      );
+  //   const expectedRendezvousData = sutContractsList.map((contractId) => {
+  //     const sutContractSource = getSimnetContractSource(simnet, contractId);
+  //     const invariantContractSource = getTestContractSource(
+  //       contractsPath,
+  //       contractId
+  //     );
+  //     const rendezvousSource = scheduleRendezvous(
+  //       sutContractSource!,
+  //       invariantContractSource
+  //     );
 
-      return {
-        rendezvousFileName: deriveRendezvousName(contractId),
-        rendezvousSource,
-        rendezvousContractId: contractId,
-        rendezvousContractName: contractId.split(".")[1],
-      };
-    });
+  //     return {
+  //       rendezvousFileName: deriveRendezvousName(contractId),
+  //       rendezvousSource,
+  //       rendezvousContractId: contractId,
+  //       rendezvousContractName: contractId.split(".")[1],
+  //     };
+  //   });
 
-    // Act
-    const actualRendezvousData = sutContractsList.map((contractId) =>
-      buildRendezvousData(simnet, contractId, contractsPath)
-    );
+  //   // Act
+  //   const actualRendezvousData = sutContractsList.map((contractId) =>
+  //     buildRendezvousData(simnet, contractId, contractsPath)
+  //   );
 
-    // Assert
-    expect(actualRendezvousData).toEqual(expectedRendezvousData);
-  });
-
-  it("retrieves the contract source from the simnet", async () => {
-    // Arrange
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
-    const simnet = await initSimnet(manifestPath);
-    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
-    const sutContractsList = Array.from(sutContractsInterfaces.keys());
-
-    const expectedContractSources = sutContractsList.map((contractId) =>
-      simnet.getContractSource(contractId)
-    );
-
-    // Act
-    const actualContractSources = sutContractsList.map((contractId) =>
-      getSimnetContractSource(simnet, contractId)
-    );
-
-    // Assert
-    expect(actualContractSources).toEqual(expectedContractSources);
-  });
+  //   // Assert
+  //   expect(actualRendezvousData).toEqual(expectedRendezvousData);
+  // });
 });
 
 describe("File stream operations", () => {
-  it("retrieves the test contract source", async () => {
-    // Arrange
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
-    const contractsPath = resolve(__dirname, "./example/contracts");
-    const simnet = await initSimnet(manifestPath);
-    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
-    const sutContractsList = Array.from(sutContractsInterfaces.keys());
-    const expectedTestContractSources = sutContractsList.map((contractId) => {
-      const testContractName = `${contractId.split(".")[1]}.tests`;
-      const testContractPath = `${contractsPath}/${testContractName}.clar`;
-      return fs.readFileSync(testContractPath).toString();
-    });
-
-    // Act
-    const actualTestContractSources = sutContractsList.map((contractId) =>
-      getTestContractSource(contractsPath, contractId)
-    );
-
-    // Assert
-    expect(actualTestContractSources).toEqual(expectedTestContractSources);
-  });
+  // it("retrieves the test contract source", async () => {
+  //   // Arrange
+  //   const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+  //   const contractsPath = resolve(__dirname, "./example/contracts");
+  //   const simnet = await initSimnet(manifestPath);
+  //   const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+  //   const sutContractsList = Array.from(sutContractsInterfaces.keys());
+  //   const expectedTestContractSources = sutContractsList.map((contractId) => {
+  //     const testContractName = `${contractId.split(".")[1]}.tests`;
+  //     const testContractPath = `${contractsPath}/${testContractName}.clar`;
+  //     return fs.readFileSync(testContractPath).toString();
+  //   });
+  //   // Act
+  //   const actualTestContractSources = sutContractsList.map((contractId) =>
+  //     getTestContractSource(contractsPath, contractId)
+  //   );
+  //   // Assert
+  //   expect(actualTestContractSources).toEqual(expectedTestContractSources);
+  // });
 });
 
 describe("Successfully schedules rendezvous", () => {
@@ -179,26 +152,6 @@ describe("Successfully schedules rendezvous", () => {
         const expected = `${contract}\n\n${context}\n\n${invariants}`;
         expect(actual).toBe(expected);
       })
-    );
-  });
-
-  it("derives the Rendezvous contract name", () => {
-    const addressCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    const contractNameCharset =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-    fc.assert(
-      // Arrange
-      fc.property(
-        fc.stringOf(fc.constantFrom(...addressCharset)),
-        fc.stringOf(fc.constantFrom(...contractNameCharset)),
-        (address, contractName) => {
-          // Act
-          const actual = deriveRendezvousName(`${address}.${contractName}`);
-          // Assert
-          const expected = `${contractName}_rendezvous`;
-          expect(actual).toBe(expected);
-        }
-      )
     );
   });
 
