@@ -10,6 +10,7 @@ import {
 } from "./shared";
 import { readFileSync } from "fs";
 import toml from "@iarna/toml";
+import yaml from "yaml";
 import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
 import { ClarinetToml } from "./app.types";
 
@@ -178,58 +179,81 @@ export async function main() {
     >
   );
 
+  const simnet = await initSimnet(manifestPath);
+
+  const simnetPlanPath = join(
+    manifestDir,
+    "deployments",
+    "default.simnet-plan.yaml"
+  );
+
+  // Parse the simnet deployment plan generated during initialization,
+  // which will be used to deploy contracts within the same epoch in the
+  // correct order.
+  const simnetPlan = yaml.parse(
+    readFileSync(simnetPlanPath, { encoding: "utf-8" })
+  );
+
+  // Initialize an empty session. The contracts will be deployed in the correct
+  // order based on the manifest and the simnet plan. The target contract's
+  // source will be overwritten with the combined contract source.
+  await simnet.initEmtpySession();
+
+  const deploymentOrder = getDeploymentOrder(simnetPlan);
+
   // Sort the entries by epoch. This is required for easily setting the epoch
   // deploying the contracts in the correct order.
   const sortedContractsByEpoch = Object.fromEntries(
-    Object.entries(contractsByEpoch).sort(([epochA], [epochB]) =>
-      epochA.localeCompare(epochB, undefined, { numeric: true })
+    Object.entries(contractsByEpoch).sort(
+      ([epochA], [epochB]) => parseFloat(epochA) - parseFloat(epochB)
     )
   );
 
-  const simnet = await initSimnet(manifestPath);
-  await simnet.initEmtpySession();
+  // Use Clarinet's dependency handling to reorder contracts within the same
+  // epoch, following the deployment order determined during simnet
+  // initialization.
+  const sortedContractsByEpochAndPlan = Object.fromEntries(
+    Object.entries(sortedContractsByEpoch).map(([epoch, contracts]) => [
+      epoch,
+      contracts
+        .flatMap(Object.entries)
+        .sort(([contractNameA], [contractNameB]) => {
+          const orderA =
+            deploymentOrder.get(contractNameA) ?? Number.MAX_SAFE_INTEGER;
+          const orderB =
+            deploymentOrder.get(contractNameB) ?? Number.MAX_SAFE_INTEGER;
+          return orderA - orderB;
+        })
+        .map(([contractName, contractData]) => ({
+          [contractName]: contractData,
+        })),
+    ])
+  );
 
-  const getContractSource = (
-    contractName: string,
-    contractProps: any
-  ): string => {
-    if (sutContractNames.includes(contractName)) {
-      if (!rendezvousMap.get(contractName)) {
-        throw new Error(`Contract source not found for ${contractName}`);
-      } else {
-        return rendezvousMap.get(contractName)!;
-      }
+  Object.entries(sortedContractsByEpochAndPlan).forEach(
+    ([epoch, contracts]) => {
+      simnet.setEpoch(epoch as EpochString);
+
+      contracts
+        .flatMap(Object.entries)
+        .forEach(([contractName, contractProps]) => {
+          const contractSource = getContractSource(
+            sutContractNames,
+            rendezvousMap,
+            contractName,
+            contractProps,
+            manifestDir
+          );
+
+          simnet.deployContract(
+            contractName,
+            contractSource,
+            { clarityVersion: contractProps.clarity_version },
+            simnet.deployer
+          );
+        });
     }
-    switch (sutContractNames.includes(contractName)) {
-      case true: {
-        if (!rendezvousMap.get(contractName)) {
-          throw new Error(`Contract source not found for ${contractName}`);
-        }
-        return rendezvousMap.get(contractName)!;
-      }
-      case false:
-        return readFileSync(join(manifestDir, contractProps.path), "utf-8");
-    }
-  };
-
-  Object.entries(sortedContractsByEpoch).forEach(([epoch, contracts]) => {
-    simnet.setEpoch(epoch as EpochString);
-
-    contracts
-      .flatMap(Object.entries)
-      .forEach(([contractName, contractProps]) => {
-        console.log(contractName, contractProps);
-
-        const contractSource = getContractSource(contractName, contractProps);
-
-        simnet.deployContract(
-          contractName,
-          contractSource,
-          { clarityVersion: contractProps.clarity_version },
-          simnet.deployer
-        );
-      });
-  });
+  );
 
   /**
    * The list of contract IDs for the SUT contract names, as per the simnet.
@@ -285,3 +309,37 @@ export async function main() {
 if (require.main === module) {
   main();
 }
+
+const getDeploymentOrder = (simnetPlan: any): Map<string, number> => {
+  return simnetPlan.plan.batches.reduce(
+    (acc: any, batch: any) =>
+      batch.transactions.reduce((innerAcc: any, tx: any) => {
+        const contractName = tx["emulated-contract-publish"]?.["contract-name"];
+        if (contractName && !innerAcc.has(contractName)) {
+          innerAcc.set(contractName, innerAcc.size);
+        }
+        return innerAcc;
+      }, acc),
+    new Map<string, number>()
+  );
+};
+
+const getContractSource = (
+  sutContractNames: string[],
+  rendezvousMap: Map<string, string>,
+  contractName: string,
+  contractProps: any,
+  manifestDir: string
+): string => {
+  if (sutContractNames.includes(contractName)) {
+    const contractSource = rendezvousMap.get(contractName);
+    if (!contractSource) {
+      throw new Error(`Contract source not found for ${contractName}`);
+    }
+    return contractSource;
+  } else {
+    return readFileSync(join(manifestDir, contractProps.path), {
+      encoding: "utf-8",
+    });
+  }
+};
