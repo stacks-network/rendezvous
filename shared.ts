@@ -31,8 +31,9 @@ import {
 } from "@hirosystems/clarinet-sdk-wasm";
 import { join } from "path";
 import fs, { readFileSync } from "fs";
-import { ClarinetToml } from "./app.types";
+import { ClarinetToml } from "./citizen.types";
 
+// TODO: Move to `citizen.ts`.
 /**
  * Get contract source code from the simnet.
  * @param clarinetToml The parsed Clarinet.toml file.
@@ -363,20 +364,19 @@ export function scheduleRendezvous(
   return `${contract}\n\n${context}\n\n${invariants}`;
 }
 
+// TODO: Move to `citizen.ts`.
 /**
  * Build the Rendezvous data.
  * @param clarinetToml The parsed Clarinet.toml file.
  * @param contractName The contract name.
  * @param manifestDir The relative path to the manifest directory.
- * @param contractsPath The contracts path.
  * @returns The Rendezvous data representing an object. The returned object
  * contains the Rendezvous source code and the Rendezvous contract name.
  */
 export const buildRendezvousData = (
   clarinetToml: ClarinetToml,
   contractName: string,
-  manifestDir: string,
-  contractsPath: string
+  manifestDir: string
 ) => {
   try {
     const sutContractSource = getClarinetTomlContractSource(
@@ -386,7 +386,7 @@ export const buildRendezvousData = (
     );
 
     const testContractSource = getTestContractSource(
-      contractsPath,
+      join(manifestDir, "contracts"),
       contractName
     );
 
