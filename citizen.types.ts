@@ -8,10 +8,12 @@ export type ClarinetToml = {
     requirements: any[];
   };
   contracts: {
-    [key: string]: {
-      path: string;
-      epoch?: number | string;
-      clarity_version: number;
-    };
+    [key: string]: ClarinetTomlContractProps;
   };
+};
+
+export type ClarinetTomlContractProps = {
+  path: string;
+  epoch?: number | string;
+  clarity_version: number;
 };
