@@ -1,8 +1,6 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import yaml from "yaml";
-import { ClarinetToml, ClarinetTomlContractProps } from "./citizen.types";
-import toml from "@iarna/toml";
 import { buildRendezvousData } from "./shared";
 import { initSimnet } from "@hirosystems/clarinet-sdk";
 import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
@@ -10,11 +8,7 @@ import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
 /**
  * Prepares the simnet environment and assures the target contract is treated
  * as a first-class citizen. This function handles:
- * - Parsing and preprocessing the manifest file to extract contract
- *   configurations.
- * - Grouping contracts by their associated deployment epochs.
- * - Sorting contracts by epoch and reordering contracts within each epoch
- *   based on the deployment plan.
+ * - Contracts sorting by epoch based on the deployment plan.
  * - Combining the target contract with its tests and deploying all contracts
  *   to the simnet.
  *
@@ -23,14 +17,15 @@ import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
  * @returns The initialized simnet instance with all contracts deployed, with
  * the target contract treated as a first-class citizen.
  */
-export const firstClassCitizenship = async (
+export const issueFirstClassCitizenship = async (
   manifestDir: string,
   sutContractName: string
 ) => {
   const manifestPath = join(manifestDir, "Clarinet.toml");
-  const clarinetToml = parseAndPreprocessManifest(manifestPath);
-  const contractsByEpoch = groupContractsByEpoch(clarinetToml.contracts);
-  const sortedContractsByEpoch = sortContractsByEpoch(contractsByEpoch);
+
+  // Initialize the simnet, which generates the simnet plan and instance.
+  // Later, an empty session will be set up, and contracts will be deployed
+  // in the proper order based on the simnet plan.
   const simnet = await initSimnet(manifestPath);
 
   const simnetPlan = yaml.parse(
@@ -39,131 +34,75 @@ export const firstClassCitizenship = async (
     })
   );
 
-  const deploymentOrder = getDeploymentOrder(simnetPlan);
-  const sortedContractsByEpochAndPlan = reorderContractsWithinEpoch(
-    sortedContractsByEpoch,
-    deploymentOrder
-  );
+  const sortedContractsByEpoch =
+    groupContractsByEpochFromSimnetPlan(simnetPlan);
 
   await simnet.initEmtpySession();
 
   const sutContractNames = [sutContractName];
 
-  // Combine the contract with its tests. The combined contract will overwrite
-  // the target contract in the simnet.
-  const rendezvousData = sutContractNames.map((contractId) =>
-    buildRendezvousData(clarinetToml, contractId, manifestDir)
+  // Combine the target contract with its tests into a single contract.
+  // The resulting contract will replace the target contract in the simnet.
+  // This map stores the contract name and its corresponding source code for
+  // O(1) lookup.
+  const rendezvousSources = new Map(
+    sutContractNames
+      .map((contractId) =>
+        buildRendezvousData(simnetPlan, contractId, manifestDir)
+      )
+      .map((rendezvousContractData) => [
+        rendezvousContractData.rendezvousContractName,
+        rendezvousContractData.rendezvousSource,
+      ])
   );
 
-  const rendezvousMap = new Map(
-    rendezvousData.map((rendezvousContractData) => [
-      rendezvousContractData.rendezvousContractName,
-      rendezvousContractData.rendezvousSource,
-    ])
-  );
-
-  await deployContracts(simnet, sortedContractsByEpochAndPlan, (name, props) =>
-    getContractSource(sutContractNames, rendezvousMap, name, props, manifestDir)
+  // Deploy the contracts to the simnet in the correct order.
+  await deployContracts(simnet, sortedContractsByEpoch, (name, props) =>
+    getContractSource(
+      sutContractNames,
+      rendezvousSources,
+      name,
+      props,
+      manifestDir
+    )
   );
 
   return simnet;
 };
 
 /**
- * Parses the manifest file and stringifies the epoch values to ensure they are
- * consistent with the possible epoch values.
- * @param manifestPath - The relative path to the manifest file.
- * @returns The parsed and preprocessed manifest file.
- */
-const parseAndPreprocessManifest = (manifestPath: string): ClarinetToml => {
-  const clarinetToml = toml.parse(
-    readFileSync(manifestPath, { encoding: "utf-8" })
-  ) as ClarinetToml;
-
-  Object.entries(clarinetToml.contracts || {}).forEach(([_, props]) => {
-    if (props.epoch !== undefined && typeof props.epoch === "number") {
-      props.epoch =
-        props.epoch === 2.05 ? props.epoch.toFixed(2) : props.epoch.toFixed(1);
-    }
-  });
-
-  return clarinetToml;
-};
-
-/**
- * Groups contracts by their associated deployment epochs. Contracts without an
- * epoch are grouped under the default epoch "2.0". Contracts without a clarity
- * version are assigned the default clarity version 1.
- * @param contracts - The record of contracts from the manifest file.
+ * Groups contracts by epoch from the simnet plan.
+ * @param simnetPlan - The simnet plan.
  * @returns A record of contracts grouped by epoch.
  */
-const groupContractsByEpoch = (
-  contracts: Record<string, ClarinetTomlContractProps>
-): Record<
-  string,
-  Record<string, { path: string; clarity_version: 1 | 2 | 3 }>[]
-> => {
-  return Object.entries(contracts).reduce(
+const groupContractsByEpochFromSimnetPlan = (
+  simnetPlan: any
+): Record<string, Record<string, any>[]> => {
+  return simnetPlan.plan.batches.reduce(
     (
-      acc: Record<
-        string,
-        Record<string, { path: string; clarity_version: 1 | 2 | 3 }>[]
-      >,
-      [name, props]
+      acc: Record<string, Record<string, any>[]>,
+      batch: { epoch: string; transactions: any[] }
     ) => {
-      const groupKey = props.epoch ?? "2.0";
-      const clarityVersion = (props.clarity_version ?? 1) as 1 | 2 | 3;
+      const epoch = batch.epoch;
+      const contracts = batch.transactions
+        .filter((tx) => tx["emulated-contract-publish"])
+        .map((tx) => {
+          const contract = tx["emulated-contract-publish"];
+          return {
+            [contract["contract-name"]]: {
+              path: contract.path,
+              clarity_version: contract["clarity-version"],
+            },
+          };
+        });
 
-      return {
-        ...acc,
-        [groupKey]: [
-          ...(acc[groupKey] || []),
-          { [name]: { path: props.path, clarity_version: clarityVersion } },
-        ],
-      };
+      if (contracts.length > 0) {
+        acc[epoch] = (acc[epoch] || []).concat(contracts);
+      }
+
+      return acc;
     },
     {}
-  );
-};
-
-/**
- * Sort the record of contracts by epoch in ascending order.
- * @param groupedContracts - The record of contracts grouped by epoch.
- * @returns The sorted record of contracts by epoch.
- */
-const sortContractsByEpoch = (
-  groupedContracts: Record<string, any>
-): Record<string, any> => {
-  return Object.fromEntries(
-    Object.entries(groupedContracts).sort(
-      ([epochA], [epochB]) => parseFloat(epochA) - parseFloat(epochB)
-    )
-  );
-};
-
-/**
- * Reorder the contracts within each epoch based on the deployment plan.
- * @param sortedContracts - The record of contracts sorted by epoch.
- * @param deploymentOrder - The deployment order map.
- * @returns The record of contracts with the contracts reordered within each
- * epoch based on the deployment plan.
- */
-const reorderContractsWithinEpoch = (
-  sortedContracts: Record<string, any>,
-  deploymentOrder: Map<string, number>
-): Record<string, any> => {
-  return Object.fromEntries(
-    Object.entries(sortedContracts).map(([epoch, contracts]) => [
-      epoch,
-      contracts
-        .flatMap(Object.entries)
-        .sort(
-          ([nameA]: [string], [nameB]: [string]) =>
-            (deploymentOrder.get(nameA) ?? Number.MAX_SAFE_INTEGER) -
-            (deploymentOrder.get(nameB) ?? Number.MAX_SAFE_INTEGER)
-        )
-        .map(([name, data]: [string, any]) => ({ [name]: data })),
-    ])
   );
 };
 
@@ -182,35 +121,28 @@ const deployContracts = async (
     // Move to the next epoch and deploy the contracts in the correct order.
     simnet.setEpoch(epoch as EpochString);
     for (const contract of contracts.flatMap(Object.entries)) {
-      const [name, props] = contract;
+      const [name, props]: [
+        string,
+        { path: string; clarity_version: 1 | 2 | 3 }
+      ] = contract;
+
       const source = getContractSourceFn(name, props);
+
+      // For requirement contracts, use the original sender. The sender address
+      // is included in the path:
+      // "./.cache/requirements/<address>.contract-name.clar".
+      const sender = props.path.includes(".cache")
+        ? props.path.split("requirements")[1].slice(1).split(".")[0]
+        : simnet.deployer;
+
       simnet.deployContract(
         name,
         source,
         { clarityVersion: props.clarity_version },
-        simnet.deployer
+        sender
       );
     }
   }
-};
-
-/**
- * Retrieve the deployment order based on the deployment plan.
- * @param simnetPlan - The simnet plan.
- * @returns The deployment order map.
- */
-const getDeploymentOrder = (simnetPlan: any): Map<string, number> => {
-  return simnetPlan.plan.batches.reduce(
-    (acc: any, batch: any) =>
-      batch.transactions.reduce((innerAcc: any, tx: any) => {
-        const contractName = tx["emulated-contract-publish"]?.["contract-name"];
-        if (contractName && !innerAcc.has(contractName)) {
-          innerAcc.set(contractName, innerAcc.size);
-        }
-        return innerAcc;
-      }, acc),
-    new Map<string, number>()
-  );
 };
 
 /**

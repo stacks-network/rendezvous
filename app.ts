@@ -6,7 +6,7 @@ import {
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
-import { firstClassCitizenship as issueFirstClassCitizenship } from "./citizen";
+import { issueFirstClassCitizenship as issueFirstClassCitizenship } from "./citizen";
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
@@ -103,7 +103,7 @@ export async function main() {
   /**
    * The list of contract IDs for the SUT contract names, as per the simnet.
    */
-  const sutContractIds = Array.from(
+  const rendezvousList = Array.from(
     getSimnetDeployerContractsInterfaces(simnet).keys()
   ).filter((deployedContract) =>
     [sutContractName].includes(deployedContract.split(".")[1])
@@ -112,7 +112,7 @@ export async function main() {
   const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
     new Map(
       Array.from(getSimnetDeployerContractsInterfaces(simnet)).filter(
-        ([contractId]) => sutContractIds.includes(contractId)
+        ([contractId]) => rendezvousList.includes(contractId)
       )
     )
   );
@@ -125,7 +125,7 @@ export async function main() {
       checkInvariants(
         simnet,
         sutContractName,
-        sutContractIds,
+        rendezvousList,
         rendezvousAllFunctions,
         seed,
         path,
@@ -139,7 +139,7 @@ export async function main() {
       checkProperties(
         simnet,
         sutContractName,
-        sutContractIds,
+        rendezvousList,
         rendezvousAllFunctions,
         seed,
         path,
