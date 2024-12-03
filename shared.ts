@@ -31,31 +31,36 @@ import {
 } from "@hirosystems/clarinet-sdk-wasm";
 import { join } from "path";
 import fs, { readFileSync } from "fs";
-import { ClarinetToml } from "./citizen.types";
 
-// TODO: Move to `citizen.ts`.
 /**
  * Get contract source code from the simnet.
- * @param clarinetToml The parsed Clarinet.toml file.
+ * @param simnetPlan The parsed Clarinet.toml file.
  * @param manifestDir The relative path to the manifest directory.
  * @param sutContractName The target contract name.
  * @returns The contract source code.
  */
-export const getClarinetTomlContractSource = (
-  clarinetToml: ClarinetToml,
+export const getSimnetPlanContractSource = (
+  simnetPlan: any,
   manifestDir: string,
   sutContractName: string
 ) => {
-  const contractInfo = clarinetToml.contracts[sutContractName];
+  // Filter for transactions that contain "emulated-contract-publish"
+  const contractInfo = simnetPlan.plan.batches
+    .flatMap((batch: any) => batch.transactions)
+    .find(
+      (transaction: any) =>
+        transaction["emulated-contract-publish"] &&
+        transaction["emulated-contract-publish"]["contract-name"] ===
+          sutContractName
+    )?.["emulated-contract-publish"];
+
   if (contractInfo == undefined) {
     throw new Error(
       `Contract ${sutContractName} not found in the Clarinet.toml.`
     );
   }
+
   return readFileSync(join(manifestDir, contractInfo.path)).toString();
-  // if (simnet.getContractSource(sutContractId) === undefined)
-  //   throw new Error(`Contract ${sutContractId} not found in the network.`);
-  // return simnet.getContractSource(sutContractId);
 };
 
 /**
@@ -367,20 +372,20 @@ export function scheduleRendezvous(
 // TODO: Move to `citizen.ts`.
 /**
  * Build the Rendezvous data.
- * @param clarinetToml The parsed Clarinet.toml file.
+ * @param simnetPlan The parsed Clarinet.toml file.
  * @param contractName The contract name.
  * @param manifestDir The relative path to the manifest directory.
  * @returns The Rendezvous data representing an object. The returned object
  * contains the Rendezvous source code and the Rendezvous contract name.
  */
 export const buildRendezvousData = (
-  clarinetToml: ClarinetToml,
+  simnetPlan: any,
   contractName: string,
   manifestDir: string
 ) => {
   try {
-    const sutContractSource = getClarinetTomlContractSource(
-      clarinetToml,
+    const sutContractSource = getSimnetPlanContractSource(
+      simnetPlan,
       manifestDir,
       contractName
     );
