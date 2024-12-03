@@ -16,7 +16,6 @@
   "license": "MIT",
   "dependencies": {
     "@hirosystems/clarinet-sdk": "^2.12.0-beta1",
-    "@iarna/toml": "^2.2.5",
     "@stacks/transactions": "^6.16.1",
     "ansicolor": "^2.0.3",
     "fast-check": "^3.20.0",
