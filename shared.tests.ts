@@ -3,11 +3,11 @@ import {
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
   getSimnetDeployerContractsInterfaces,
-  scheduleRendezvous,
 } from "./shared";
 import { resolve } from "path";
 import fc from "fast-check";
 import { getContractNameFromRendezvousId } from "./invariant";
+import { scheduleRendezvous } from "./citizen";
 
 describe("Simnet contracts operations", () => {
   it("retrieves the contracts from the simnet", async () => {

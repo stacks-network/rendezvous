@@ -6,7 +6,7 @@ import {
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
-import { issueFirstClassCitizenship as issueFirstClassCitizenship } from "./citizen";
+import { issueFirstClassCitizenship } from "./citizen";
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
