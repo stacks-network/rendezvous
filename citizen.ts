@@ -46,8 +46,8 @@ export const issueFirstClassCitizenship = async (
   // O(1) lookup.
   const rendezvousSources = new Map(
     [sutContractName]
-      .map((contractId) =>
-        buildRendezvousData(simnetPlan, contractId, manifestDir)
+      .map((contractName) =>
+        buildRendezvousData(simnetPlan, contractName, manifestDir)
       )
       .map((rendezvousContractData) => [
         rendezvousContractData.rendezvousContractName,
@@ -77,7 +77,7 @@ export const issueFirstClassCitizenship = async (
  * as a record with the contract name as the key and a record containing the
  * contract path and clarity version as the value.
  */
-const groupContractsByEpochFromSimnetPlan = (
+export const groupContractsByEpochFromSimnetPlan = (
   simnetPlan: SimnetPlan
 ): Record<
   EpochString,
@@ -175,7 +175,7 @@ const deployContracts = async (
  * @param manifestDir - The relative path to the manifest directory.
  * @returns The contract source.
  */
-const getContractSource = (
+export const getContractSource = (
   sutContractNames: string[],
   rendezvousMap: Map<string, string>,
   contractName: string,
@@ -247,7 +247,7 @@ export const buildRendezvousData = (
  * @param sutContractName The target contract name.
  * @returns The contract source code.
  */
-export const getSimnetPlanContractSource = (
+const getSimnetPlanContractSource = (
   simnetPlan: SimnetPlan,
   manifestDir: string,
   sutContractName: string
