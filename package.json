@@ -13,7 +13,7 @@
     "testing"
   ],
   "author": "Radu Bahmata, Nikos Baxevanis",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "dependencies": {
     "@hirosystems/clarinet-sdk": "^2.12.0-beta1",
     "@stacks/transactions": "^6.16.1",
