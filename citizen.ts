@@ -219,8 +219,9 @@ export const buildRendezvousData = (
     );
 
     const testContractSource = getTestContractSource(
-      join(manifestDir, "contracts"),
-      contractName
+      simnetPlan,
+      contractName,
+      manifestDir
     );
 
     const rendezvousSource = scheduleRendezvous(
@@ -274,23 +275,43 @@ export const getSimnetPlanContractSource = (
 
 /**
  * Get the test contract source code.
- * @param contractsPath The relative path to the contracts directory.
+ * @param simnetPlan The parsed simnet plan.
  * @param sutContractName The target contract name.
+ * @param manifestDir The relative path to the manifest directory.
  * @returns The test contract source code.
  */
 export const getTestContractSource = (
-  contractsPath: string,
-  sutContractName: string
-) => {
-  // FIXME: Here, we can encounter a failure if the contract file name is
-  // not the same as the contract name in the manifest.
-  // Example:
-  // - Contract name in the manifest: [contracts.counter-xyz]
-  // - Contract file name: path = "contracts/counter.clar"
-  const testContractName = `${sutContractName}.tests.clar`;
-  const testContractPath = join(contractsPath, testContractName);
+  simnetPlan: SimnetPlan,
+  sutContractName: string,
+  manifestDir: string
+): string => {
+  const contractInfo = simnetPlan.plan.batches
+    .flatMap((batch: Batch) => batch.transactions)
+    .find(
+      (transaction: Transaction) =>
+        transaction["emulated-contract-publish"] &&
+        transaction["emulated-contract-publish"]["contract-name"] ===
+          sutContractName
+    )?.["emulated-contract-publish"];
+
+  const sutContractPath = contractInfo!.path;
+  const extension = ".clar";
+
+  if (!sutContractPath.endsWith(extension)) {
+    throw new Error(
+      `Invalid contract extension for the "${sutContractName}" contract.`
+    );
+  }
+
+  const testContractPath = sutContractPath.replace(
+    extension,
+    `.tests${extension}`
+  );
+
   try {
-    return readFileSync(testContractPath, { encoding: "utf-8" }).toString();
+    return readFileSync(join(manifestDir, testContractPath), {
+      encoding: "utf-8",
+    }).toString();
   } catch (e: any) {
     throw new Error(
       `Error retrieving the corresponding test contract for the "${sutContractName}" contract. ${e.message}`
