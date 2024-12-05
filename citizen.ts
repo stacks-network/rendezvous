@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import yaml from "yaml";
-import { initSimnet } from "@hirosystems/clarinet-sdk";
+import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
 import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
 
 /**
@@ -20,7 +20,7 @@ import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
 export const issueFirstClassCitizenship = async (
   manifestDir: string,
   sutContractName: string
-) => {
+): Promise<Simnet> => {
   const manifestPath = join(manifestDir, "Clarinet.toml");
 
   // Initialize the simnet, which generates the simnet plan and instance.
