@@ -6,7 +6,8 @@ import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
 
 /**
  * Prepares the simnet environment and assures the target contract is treated
- * as a first-class citizen. This function handles:
+ * as a first-class citizen, by combining it with its tests. This function
+ * handles:
  * - Contract sorting by epoch based on the deployment plan.
  * - Combining the target contract with its tests and deploying all contracts
  *   to the simnet.
