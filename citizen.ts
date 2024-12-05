@@ -136,7 +136,7 @@ const deployContracts = async (
       clarity_version: 1 | 2 | 3;
     }
   ) => string
-) => {
+): Promise<void> => {
   for (const [epoch, contracts] of Object.entries(contractsByEpoch)) {
     // Move to the next epoch and deploy the contracts in the correct order.
     simnet.setEpoch(epoch as EpochString);
