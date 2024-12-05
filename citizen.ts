@@ -3,6 +3,7 @@ import { join } from "path";
 import yaml from "yaml";
 import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
 import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
+import { Batch, SimnetPlan, Transaction } from "./citizen.types";
 
 /**
  * Prepares the simnet environment and assures the target contract is treated
@@ -77,7 +78,7 @@ export const issueFirstClassCitizenship = async (
  * contract path and clarity version as the value.
  */
 const groupContractsByEpochFromSimnetPlan = (
-  simnetPlan: any
+  simnetPlan: SimnetPlan
 ): Record<
   EpochString,
   Record<string, { path: string; clarity_version: string }>[]
@@ -88,13 +89,13 @@ const groupContractsByEpochFromSimnetPlan = (
         EpochString,
         Record<string, { path: string; clarity_version: string }>[]
       >,
-      batch: { epoch: string; transactions: any[] }
+      batch: Batch
     ) => {
       const epoch = batch.epoch as EpochString;
       const contracts = batch.transactions
         .filter((tx) => tx["emulated-contract-publish"])
         .map((tx) => {
-          const contract = tx["emulated-contract-publish"];
+          const contract = tx["emulated-contract-publish"]!;
           return {
             [contract["contract-name"]]: {
               path: contract.path,
@@ -104,12 +105,15 @@ const groupContractsByEpochFromSimnetPlan = (
         });
 
       if (contracts.length > 0) {
-        acc[epoch] = (acc[epoch] || []).concat(contracts);
+        acc[epoch] = (acc[epoch] || []).concat(contracts as {});
       }
 
       return acc;
     },
-    {}
+    {} as Record<
+      EpochString,
+      Record<string, { path: string; clarity_version: string }>[]
+    >
   );
 };
 
@@ -120,9 +124,18 @@ const groupContractsByEpochFromSimnetPlan = (
  * @param getContractSourceFn - The function to retrieve the contract source.
  */
 const deployContracts = async (
-  simnet: any,
-  contractsByEpoch: Record<string, any>,
-  getContractSourceFn: (name: string, props: any) => string
+  simnet: Simnet,
+  contractsByEpoch: Record<
+    EpochString,
+    Record<string, { path: string; clarity_version: string }>[]
+  >,
+  getContractSourceFn: (
+    name: string,
+    props: {
+      path: string;
+      clarity_version: 1 | 2 | 3;
+    }
+  ) => string
 ) => {
   for (const [epoch, contracts] of Object.entries(contractsByEpoch)) {
     // Move to the next epoch and deploy the contracts in the correct order.
@@ -166,7 +179,10 @@ const getContractSource = (
   sutContractNames: string[],
   rendezvousMap: Map<string, string>,
   contractName: string,
-  contractProps: any,
+  contractProps: {
+    path: string;
+    clarity_version: 1 | 2 | 3;
+  },
   manifestDir: string
 ): string => {
   if (sutContractNames.includes(contractName)) {
@@ -191,7 +207,7 @@ const getContractSource = (
  * contains the Rendezvous source code and the Rendezvous contract name.
  */
 export const buildRendezvousData = (
-  simnetPlan: any,
+  simnetPlan: SimnetPlan,
   contractName: string,
   manifestDir: string
 ) => {
@@ -231,15 +247,15 @@ export const buildRendezvousData = (
  * @returns The contract source code.
  */
 export const getSimnetPlanContractSource = (
-  simnetPlan: any,
+  simnetPlan: SimnetPlan,
   manifestDir: string,
   sutContractName: string
 ) => {
   // Filter for transactions that contain "emulated-contract-publish".
   const contractInfo = simnetPlan.plan.batches
-    .flatMap((batch: any) => batch.transactions)
+    .flatMap((batch: Batch) => batch.transactions)
     .find(
-      (transaction: any) =>
+      (transaction: Transaction) =>
         transaction["emulated-contract-publish"] &&
         transaction["emulated-contract-publish"]["contract-name"] ===
           sutContractName
