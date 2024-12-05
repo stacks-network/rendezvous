@@ -46,7 +46,7 @@ export async function main() {
     return;
   }
 
-  /** The relative path to the Clarinet project.*/
+  /** The relative path to the Clarinet project. */
   const manifestDir = args[2];
   if (!manifestDir || manifestDir.startsWith("--")) {
     radio.emit(

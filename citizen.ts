@@ -7,7 +7,7 @@ import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
 /**
  * Prepares the simnet environment and assures the target contract is treated
  * as a first-class citizen. This function handles:
- * - Contracts sorting by epoch based on the deployment plan.
+ * - Contract sorting by epoch based on the deployment plan.
  * - Combining the target contract with its tests and deploying all contracts
  *   to the simnet.
  *
@@ -216,7 +216,7 @@ export const buildRendezvousData = (
 };
 
 /**
- * Get contract source code from the simnet plan.
+ * Get the contract source code from the simnet plan.
  * @param simnetPlan The parsed simnet plan.
  * @param manifestDir The relative path to the manifest directory.
  * @param sutContractName The target contract name.
@@ -227,7 +227,7 @@ export const getSimnetPlanContractSource = (
   manifestDir: string,
   sutContractName: string
 ) => {
-  // Filter for transactions that contain "emulated-contract-publish"
+  // Filter for transactions that contain "emulated-contract-publish".
   const contractInfo = simnetPlan.plan.batches
     .flatMap((batch: any) => batch.transactions)
     .find(
