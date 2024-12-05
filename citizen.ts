@@ -71,17 +71,26 @@ export const issueFirstClassCitizenship = async (
 /**
  * Groups contracts by epoch from the simnet plan.
  * @param simnetPlan - The simnet plan.
- * @returns A record of contracts grouped by epoch.
+ * @returns A record of contracts grouped by epoch. The record key is the epoch
+ * string, and the value is an array of contracts. Each contract is represented
+ * as a record with the contract name as the key and a record containing the
+ * contract path and clarity version as the value.
  */
 const groupContractsByEpochFromSimnetPlan = (
   simnetPlan: any
-): Record<string, Record<string, any>[]> => {
+): Record<
+  EpochString,
+  Record<string, { path: string; clarity_version: string }>[]
+> => {
   return simnetPlan.plan.batches.reduce(
     (
-      acc: Record<string, Record<string, any>[]>,
+      acc: Record<
+        EpochString,
+        Record<string, { path: string; clarity_version: string }>[]
+      >,
       batch: { epoch: string; transactions: any[] }
     ) => {
-      const epoch = batch.epoch;
+      const epoch = batch.epoch as EpochString;
       const contracts = batch.transactions
         .filter((tx) => tx["emulated-contract-publish"])
         .map((tx) => {
