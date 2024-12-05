@@ -23,9 +23,9 @@ export const issueFirstClassCitizenship = async (
 ): Promise<Simnet> => {
   const manifestPath = join(manifestDir, "Clarinet.toml");
 
-  // Initialize the simnet, which generates the simnet plan and instance.
-  // Later, an empty session will be set up, and contracts will be deployed
-  // in the proper order based on the simnet plan.
+  // Initialize the simnet, to generate the simnet plan and instance. The empty
+  // session will be set up, and contracts will be deployed in the correct
+  // order based on the simnet plan a few lines below.
   const simnet = await initSimnet(manifestPath);
 
   const simnetPlan = yaml.parse(
