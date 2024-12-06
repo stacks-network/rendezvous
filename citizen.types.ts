@@ -6,11 +6,9 @@ type Wallet = {
   balance: string;
 };
 
-type Contract = string;
-
 type Genesis = {
   wallets: Wallet[];
-  contracts: Contract[];
+  contracts: string[];
 };
 
 type EmulatedContractPublish = {
