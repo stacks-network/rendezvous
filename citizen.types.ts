@@ -41,3 +41,8 @@ export type SimnetPlan = {
   genesis: Genesis;
   plan: Plan;
 };
+
+export type ContractsByEpoch = Record<
+  EpochString,
+  Record<string, { path: string; clarity_version: 1 | 2 | 3 }>[]
+>;
