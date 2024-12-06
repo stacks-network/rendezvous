@@ -3,7 +3,12 @@ import { join } from "path";
 import yaml from "yaml";
 import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
 import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
-import { Batch, SimnetPlan, Transaction } from "./citizen.types";
+import {
+  Batch,
+  ContractsByEpoch,
+  SimnetPlan,
+  Transaction,
+} from "./citizen.types";
 
 /**
  * Prepares the simnet environment and assures the target contract is treated
@@ -79,18 +84,9 @@ export const issueFirstClassCitizenship = async (
  */
 export const groupContractsByEpochFromSimnetPlan = (
   simnetPlan: SimnetPlan
-): Record<
-  EpochString,
-  Record<string, { path: string; clarity_version: 1 | 2 | 3 }>[]
-> => {
+): ContractsByEpoch => {
   return simnetPlan.plan.batches.reduce(
-    (
-      acc: Record<
-        EpochString,
-        Record<string, { path: string; clarity_version: 1 | 2 | 3 }>[]
-      >,
-      batch: Batch
-    ) => {
+    (acc: ContractsByEpoch, batch: Batch) => {
       const epoch = batch.epoch;
       const contracts = batch.transactions
         .filter((tx) => tx["emulated-contract-publish"])
@@ -110,10 +106,7 @@ export const groupContractsByEpochFromSimnetPlan = (
 
       return acc;
     },
-    {} as Record<
-      EpochString,
-      Record<string, { path: string; clarity_version: 1 | 2 | 3 }>[]
-    >
+    {} as ContractsByEpoch
   );
 };
 
