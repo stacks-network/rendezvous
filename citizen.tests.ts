@@ -230,10 +230,7 @@ describe("Simnet deployment plan operations", () => {
       "counter",
       {
         path: counterContractData.path,
-        clarity_version: counterContractData.clarity_version as unknown as
-          | 1
-          | 2
-          | 3,
+        clarity_version: counterContractData.clarity_version,
       },
       tempDir
     );
@@ -293,10 +290,7 @@ describe("Simnet deployment plan operations", () => {
       "cargo",
       {
         path: cargoContractData.path,
-        clarity_version: cargoContractData.clarity_version as unknown as
-          | 1
-          | 2
-          | 3,
+        clarity_version: cargoContractData.clarity_version,
       },
       tempDir
     );
