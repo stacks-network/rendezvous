@@ -81,17 +81,17 @@ export const groupContractsByEpochFromSimnetPlan = (
   simnetPlan: SimnetPlan
 ): Record<
   EpochString,
-  Record<string, { path: string; clarity_version: string }>[]
+  Record<string, { path: string; clarity_version: 1 | 2 | 3 }>[]
 > => {
   return simnetPlan.plan.batches.reduce(
     (
       acc: Record<
         EpochString,
-        Record<string, { path: string; clarity_version: string }>[]
+        Record<string, { path: string; clarity_version: 1 | 2 | 3 }>[]
       >,
       batch: Batch
     ) => {
-      const epoch = batch.epoch as EpochString;
+      const epoch = batch.epoch;
       const contracts = batch.transactions
         .filter((tx) => tx["emulated-contract-publish"])
         .map((tx) => {
@@ -105,14 +105,14 @@ export const groupContractsByEpochFromSimnetPlan = (
         });
 
       if (contracts.length > 0) {
-        acc[epoch] = (acc[epoch] || []).concat(contracts as {});
+        acc[epoch] = (acc[epoch] || []).concat(contracts);
       }
 
       return acc;
     },
     {} as Record<
       EpochString,
-      Record<string, { path: string; clarity_version: string }>[]
+      Record<string, { path: string; clarity_version: 1 | 2 | 3 }>[]
     >
   );
 };
@@ -127,7 +127,7 @@ const deployContracts = async (
   simnet: Simnet,
   contractsByEpoch: Record<
     EpochString,
-    Record<string, { path: string; clarity_version: string }>[]
+    Record<string, { path: string; clarity_version: 1 | 2 | 3 }>[]
   >,
   getContractSourceFn: (
     name: string,
