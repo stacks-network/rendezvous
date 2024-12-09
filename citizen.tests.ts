@@ -115,7 +115,7 @@ describe("Simnet deployment plan operations", () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it("retreieves the test contract source from the simnet deployment plan", () => {
+  it("retrieves the test contract source from the simnet deployment plan", () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
