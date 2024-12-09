@@ -9,16 +9,7 @@ import {
 } from "./citizen";
 import { initSimnet } from "@hirosystems/clarinet-sdk";
 import { join } from "path";
-import {
-  copyFileSync,
-  existsSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  statSync,
-} from "fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import yaml from "yaml";
 
@@ -50,7 +41,7 @@ describe("Simnet deployment plan operations", () => {
   it("retrieves the simnet deployment plan", async () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    copyRecursiveSync(manifestDir, tempDir);
+    cpSync(manifestDir, tempDir, { recursive: true });
     const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
 
     rmSync(simnetPlanPath, { force: true });
@@ -76,7 +67,7 @@ describe("Simnet deployment plan operations", () => {
   it("groups the contracts by epoch", async () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    copyRecursiveSync(manifestDir, tempDir);
+    cpSync(manifestDir, tempDir, { recursive: true });
     const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
     const manifestPath = join(tempDir, manifestFileName);
 
@@ -127,7 +118,7 @@ describe("Simnet deployment plan operations", () => {
   it("retreieves the test contract source from the simnet deployment plan", () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    copyRecursiveSync(manifestDir, tempDir);
+    cpSync(manifestDir, tempDir, { recursive: true });
     const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
 
     const parsedSimnetPlan = yaml.parse(
@@ -152,7 +143,7 @@ describe("Simnet deployment plan operations", () => {
   it("builds the rendezvous data", async () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    copyRecursiveSync(manifestDir, tempDir);
+    cpSync(manifestDir, tempDir, { recursive: true });
     const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
     const manifestPath = join(tempDir, manifestFileName);
 
@@ -195,7 +186,7 @@ describe("Simnet deployment plan operations", () => {
   it("retrieves the contract source for a target contract", async () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    copyRecursiveSync(manifestDir, tempDir);
+    cpSync(manifestDir, tempDir, { recursive: true });
     const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
     const manifestPath = join(tempDir, manifestFileName);
 
@@ -255,7 +246,7 @@ describe("Simnet deployment plan operations", () => {
   it("retrieves the contract source for a non-target contract", async () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    copyRecursiveSync(manifestDir, tempDir);
+    cpSync(manifestDir, tempDir, { recursive: true });
     const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
     const manifestPath = join(tempDir, manifestFileName);
 
@@ -309,7 +300,7 @@ describe("Simnet deployment plan operations", () => {
   it("issues first-class citizenship", async () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    copyRecursiveSync(manifestDir, tempDir);
+    cpSync(manifestDir, tempDir, { recursive: true });
 
     // Exercise
     const firstClassSimnet = await issueFirstClassCitizenship(tempDir, "cargo");
@@ -330,25 +321,3 @@ describe("Simnet deployment plan operations", () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 });
-
-const copyRecursiveSync = (src: string, dest: string) => {
-  if (!existsSync(src)) {
-    throw new Error(`Source path does not exist: ${src}`);
-  }
-
-  const stat = statSync(src);
-  if (stat.isDirectory()) {
-    if (!existsSync(dest)) {
-      mkdirSync(dest);
-    }
-
-    const entries = readdirSync(src);
-    for (const entry of entries) {
-      const srcPath = join(src, entry);
-      const destPath = join(dest, entry);
-      copyRecursiveSync(srcPath, destPath);
-    }
-  } else {
-    copyFileSync(src, dest);
-  }
-};
