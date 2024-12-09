@@ -45,10 +45,9 @@ export const issueFirstClassCitizenship = async (
 
   await simnet.initEmtpySession();
 
-  // Combine the target contract with its tests into a single contract.
-  // The resulting contract will replace the target contract in the simnet.
-  // This map stores the contract name and its corresponding source code for
-  // O(1) lookup.
+  // Combine the target contract with its tests into a single contract. The
+  // resulting contract will replace the target contract in the simnet. This
+  // map stores the contract name and its corresponding source code.
   const rendezvousSources = new Map(
     [sutContractName]
       .map((contractName) =>
