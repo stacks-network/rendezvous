@@ -7,29 +7,54 @@
 
 (define-read-only (invariant-counter-gt-zero)
   (let
-      ((increment-num-calls (default-to u0 (get called (map-get? context "increment"))))
-       (decrement-num-calls (default-to u0 (get called (map-get? context "decrement")))))
-    (if (> increment-num-calls decrement-num-calls)
-        (> (var-get counter) u0)
-        true)))
+    (
+      (increment-num-calls
+        (default-to u0
+          (get called (map-get? context "increment"))
+        )
+      )
+      (decrement-num-calls
+        (default-to u0
+          (get called (map-get? context "decrement"))
+        )
+      )
+    )
+    (if
+      (<= increment-num-calls decrement-num-calls)
+      true
+      (> (var-get counter) u0)
+    )
+  )
+)
 
 ;; Properties
 
 ;; This test catches the bug in the counter contract.
 (define-public (test-increment)
-  (let ((counter-before (get-counter)))
+  (let
+    ((counter-before (get-counter)))
     (unwrap-panic (increment))
     (asserts! (is-eq (get-counter) (+ counter-before u1)) (err u404))
-    (ok true)))
+    (ok true)
+  )
+)
 
-;; Test that takes a parameter. This will be run using property-based techniques.
+;; Test that takes a parameter. This will be run using property-based
+;; techniques.
 (define-public (test-add (n uint))
-  (let ((counter-before (get-counter)))
-    (ok 
-      (if 
-        (> n u1)
+  (let
+    ((counter-before (get-counter)))
+    (ok
+      (if
+        (<= n u1)
+        ;; Discard the test if `add` cannot be called with the given parameter.
+        false
         (begin
           (try! (add n))
           (asserts! (is-eq (get-counter) (+ counter-before n)) (err u403))
-          true)
-        true))))
+          true
+        )
+      )
+    )
+  )
+)

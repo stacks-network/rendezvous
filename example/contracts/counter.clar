@@ -23,7 +23,7 @@
 ;; (define-public (increment)
 ;;   (let ((current-counter (var-get counter)))
 ;;     (if (> current-counter u1000) ;; Introduce a bug for large values.
-;;       (ok (var-set counter u0))   ;; Reset counter to zero if it exceeds 1000.
+;;       (ok (var-set counter u0)) ;; Reset counter to zero if it exceeds 1000.
 ;;       (ok (var-set counter (+ current-counter u1)))
 ;;     )
 ;;   )
