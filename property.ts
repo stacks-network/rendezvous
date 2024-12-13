@@ -226,11 +226,13 @@ export const checkProperties = (
             // Capture the error and log the test failure.
             radio.emit(
               "logMessage",
-              `${dim(testCallerWallet)} ${red("[FAIL]")} ${
-                r.testContractId.split(".")[1]
-              } ${underline(
-                r.selectedTestFunction.name
-              )} ${printedTestFunctionArgs}`
+              red(
+                `${testCallerWallet} [FAIL] ${
+                  r.testContractId.split(".")[1]
+                } ${underline(
+                  r.selectedTestFunction.name
+                )} ${printedTestFunctionArgs}`
+              )
             );
 
             // Re-throw the error for fast-check to catch and process.

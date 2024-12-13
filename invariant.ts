@@ -253,11 +253,11 @@ export const checkInvariants = (
           // function's result, including any runtime errors it caused.
           radio.emit(
             "logMessage",
-            `${invariantCallerWallet} ${red(
-              "[FAIL]"
-            )} ${getContractNameFromRendezvousId(
-              r.rendezvousContractId
-            )} ${underline(r.selectedInvariant.name)} ${printedInvariantArgs}`
+            red(
+              `${invariantCallerWallet} [FAIL] ${getContractNameFromRendezvousId(
+                r.rendezvousContractId
+              )} ${underline(r.selectedInvariant.name)} ${printedInvariantArgs}`
+            )
           );
 
           // Re-throw the error for fast-check to catch and process.
