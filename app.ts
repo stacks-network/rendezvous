@@ -1,5 +1,6 @@
 import { join } from "path";
 import { EventEmitter } from "events";
+import { readFileSync } from "fs";
 import { checkProperties } from "./property";
 import { checkInvariants } from "./invariant";
 import {
@@ -12,7 +13,13 @@ const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
 };
 
+const { version } = JSON.parse(
+  readFileSync(join(__dirname, "package.json"), "utf-8")
+);
+
 const helpMessage = `
+  rv v${version}
+  
   Usage: ./rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--path=<path>] [--runs=<runs>]
 
   Positional arguments:

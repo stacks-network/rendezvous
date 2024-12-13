@@ -1,8 +1,17 @@
 import { main } from "./app";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 describe("Command-line arguments handling", () => {
   const initialArgv = process.argv;
+
+  const { version } = JSON.parse(
+    readFileSync(join(__dirname, "package.json"), "utf-8")
+  );
+
   const helpMessage = `
+  rv v${version}
+  
   Usage: ./rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--path=<path>] [--runs=<runs>]
 
   Positional arguments:
