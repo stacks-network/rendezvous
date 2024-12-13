@@ -174,7 +174,7 @@ export const checkInvariants = (
 
             radio.emit(
               "logMessage",
-              `       ${dim(sutCallerWallet)} ${getContractNameFromRendezvousId(
+              `${dim(sutCallerWallet)}        ${getContractNameFromRendezvousId(
                 r.rendezvousContractId
               )} ${underline(r.selectedFunction.name)} ${printedFunctionArgs}`
             );
@@ -182,7 +182,7 @@ export const checkInvariants = (
             radio.emit(
               "logMessage",
               dim(
-                `       ${sutCallerWallet} ${getContractNameFromRendezvousId(
+                `${sutCallerWallet}        ${getContractNameFromRendezvousId(
                   r.rendezvousContractId
                 )} ${underline(r.selectedFunction.name)} ${printedFunctionArgs}`
               )
@@ -195,7 +195,7 @@ export const checkInvariants = (
           radio.emit(
             "logMessage",
             dim(
-              `       ${sutCallerWallet} ${getContractNameFromRendezvousId(
+              `${sutCallerWallet}        ${getContractNameFromRendezvousId(
                 r.rendezvousContractId
               )} ${underline(r.selectedFunction.name)} ${printedFunctionArgs}`
             )
@@ -230,8 +230,8 @@ export const checkInvariants = (
           if (invariantCallResultJson.value === true) {
             radio.emit(
               "logMessage",
-              `${green("[PASS]")} ${dim(
-                invariantCallerWallet
+              `${dim(invariantCallerWallet)} ${green(
+                "[PASS]"
               )} ${getContractNameFromRendezvousId(
                 r.rendezvousContractId
               )} ${underline(r.selectedInvariant.name)} ${printedInvariantArgs}`
@@ -253,9 +253,9 @@ export const checkInvariants = (
           // function's result, including any runtime errors it caused.
           radio.emit(
             "logMessage",
-            `${red(
+            `${invariantCallerWallet} ${red(
               "[FAIL]"
-            )} ${invariantCallerWallet} ${getContractNameFromRendezvousId(
+            )} ${getContractNameFromRendezvousId(
               r.rendezvousContractId
             )} ${underline(r.selectedInvariant.name)} ${printedInvariantArgs}`
           );
