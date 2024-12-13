@@ -170,7 +170,7 @@ export const checkProperties = (
         if (discarded) {
           radio.emit(
             "logMessage",
-            `${yellow("[WARN]")} ${dim(testCallerWallet)} ${
+            `${dim(testCallerWallet)} ${yellow("[WARN]")} ${
               r.testContractId.split(".")[1]
             } ${underline(r.selectedTestFunction.name)} ${dim(
               printedTestFunctionArgs
@@ -196,7 +196,7 @@ export const checkProperties = (
             if (discardedInPlace) {
               radio.emit(
                 "logMessage",
-                `${yellow("[WARN]")} ${dim(testCallerWallet)} ${
+                `${dim(testCallerWallet)} ${yellow("[WARN]")} ${
                   r.testContractId.split(".")[1]
                 } ${underline(r.selectedTestFunction.name)} ${dim(
                   printedTestFunctionArgs
@@ -209,7 +209,7 @@ export const checkProperties = (
             ) {
               radio.emit(
                 "logMessage",
-                `${green("[PASS]")} ${dim(testCallerWallet)} ${
+                `${dim(testCallerWallet)} ${green("[PASS]")} ${
                   r.testContractId.split(".")[1]
                 } ${underline(
                   r.selectedTestFunction.name
@@ -226,7 +226,7 @@ export const checkProperties = (
             // Capture the error and log the test failure.
             radio.emit(
               "logMessage",
-              `${red("[FAIL]")} ${dim(testCallerWallet)} ${
+              `${dim(testCallerWallet)} ${red("[FAIL]")} ${
                 r.testContractId.split(".")[1]
               } ${underline(
                 r.selectedTestFunction.name
