@@ -15,14 +15,14 @@
   "author": "Radu Bahmata, Nikos Baxevanis",
   "license": "GPL-3.0-only",
   "dependencies": {
-    "@hirosystems/clarinet-sdk": "2.12.0-beta1",
+    "@hirosystems/clarinet-sdk": "2.12.0",
     "@stacks/transactions": "^6.16.1",
     "ansicolor": "^2.0.3",
     "fast-check": "^3.20.0",
     "yaml": "^2.6.1"
   },
   "devDependencies": {
-    "@hirosystems/clarinet-sdk-wasm": "2.12.0-beta1",
+    "@hirosystems/clarinet-sdk-wasm": "2.12.0",
     "@types/jest": "^29.5.12",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.3",
