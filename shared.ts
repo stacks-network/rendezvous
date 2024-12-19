@@ -146,7 +146,7 @@ const complexTypesToArbitrary: ComplexTypesToArbitrary = {
   "string-ascii": (length: number) =>
     fc.stringOf(fc.constantFrom(...charSet), {
       maxLength: length,
-      minLength: 1,
+      minLength: 0,
     }),
   "string-utf8": (length: number) => fc.string({ maxLength: length }),
   list: (type: ParameterType, length: number, addresses: string[]) =>
