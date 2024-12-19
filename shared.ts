@@ -11,7 +11,6 @@ import {
 } from "./shared.types";
 import {
   boolCV,
-  bufferCV,
   ClarityValue,
   intCV,
   listCV,
@@ -29,6 +28,7 @@ import {
   ContractInterfaceFunction,
   IContractInterface,
 } from "@hirosystems/clarinet-sdk-wasm";
+import { bufferFromHex } from "@stacks/transactions/dist/cl";
 
 /**
  * Get the interfaces of contracts deployed by the specified deployer from the
@@ -262,7 +262,7 @@ const baseTypesToCV: BaseTypesToCV = {
  * Complex types to Clarity values mapping.
  */
 const complexTypesToCV: ComplexTypesToCV = {
-  buffer: (arg: string) => bufferCV(Uint8Array.from(Buffer.from(arg, "hex"))),
+  buffer: (arg: string) => bufferFromHex(arg),
   "string-ascii": (arg: string) => stringAsciiCV(arg),
   "string-utf8": (arg: string) => stringUtf8CV(arg),
   list: (items: ClarityValue[]) => {
