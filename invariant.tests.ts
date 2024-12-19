@@ -8,7 +8,7 @@ import {
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
-import { join } from "path";
+import { resolve } from "path";
 import { issueFirstClassCitizenship } from "./citizen";
 import { Cl } from "@stacks/transactions";
 import fc from "fast-check";
@@ -16,7 +16,7 @@ import fc from "fast-check";
 describe("Simnet contracts operations", () => {
   it("correctly initializes the local context for a given functions map", async () => {
     // Arrange
-    const manifestPath = join("example", "Clarinet.toml");
+    const manifestPath = resolve("example", "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsAllFunctions = getFunctionsFromContractInterfaces(
