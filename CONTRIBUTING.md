@@ -54,7 +54,7 @@ To keep things simple and to maintain quality, please follow these guidelines.
 
    Commit messages should be short and clear.
 
-6. **Open a pull request (PR):**
+6. **Open a pull request (PR) targeting the `master` branch:**
    Keep it small and focused. Explain what and why.
    Example PR description:
    ```
