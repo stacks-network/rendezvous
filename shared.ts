@@ -139,6 +139,29 @@ const baseTypesToArbitrary: BaseTypesToArbitrary = {
 };
 
 /**
+ * Custom hexadecimal string generator. The `hexaString` generator from
+ * fast-check has been deprecated. This generator is implemented to precisely
+ * match the behavior of the deprecated generator.
+ *
+ * @param constraints Fast-check string constraints.
+ * @returns Fast-check arbitrary for hexadecimal strings.
+ *
+ * Reference for the proposed replacement of the deprecated `hexaString`
+ * generator:
+ * https://github.com/dubzzz/fast-check/commit/3f4f1203a8863c07d22b45591bf0de1fac02b948
+ */
+export const hexaStringGenerator = (
+  constraints: fc.StringConstraints = {}
+): fc.Arbitrary<string> => {
+  const hexa = (): fc.Arbitrary<string> => {
+    const hexCharSet = "0123456789abcdef";
+    return fc.integer({ min: 0, max: 15 }).map((n) => hexCharSet[n]);
+  };
+
+  return fc.string({ ...constraints, unit: hexa() });
+};
+
+/**
  * Complex types to fast-check arbitraries mapping.
  */
 const complexTypesToArbitrary: ComplexTypesToArbitrary = {
@@ -147,7 +170,7 @@ const complexTypesToArbitrary: ComplexTypesToArbitrary = {
   // conversion. The UInt8Array will have half the length of the corresponding
   // hex string. Stacks.js reference:
   // https://github.com/hirosystems/stacks.js/blob/fd0bf26b5f29fc3c1bf79581d0ad9b89f0d7f15a/packages/common/src/utils.ts#L522
-  buffer: (length: number) => fc.hexaString({ maxLength: 2 * length }),
+  buffer: (length: number) => hexaStringGenerator({ maxLength: 2 * length }),
   "string-ascii": (length: number) =>
     fc.string({
       unit: fc.constantFrom(...charSet),

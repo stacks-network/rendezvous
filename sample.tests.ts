@@ -1,5 +1,6 @@
 import fc from "fast-check";
 import { compareGenerators } from "./sample";
+import { hexaStringGenerator } from "./shared";
 
 describe("Fast-check deprecated generators replacement validation", () => {
   const charSet =
@@ -31,8 +32,34 @@ describe("Fast-check deprecated generators replacement validation", () => {
 
         expect(mismatchedItems).toEqual([]);
         expect(isMatching).toBe(true);
-      }),
-      { numRuns: 10 }
+      })
+    );
+  });
+
+  it("buff Clarity type corresponding generator", () => {
+    fc.assert(
+      fc.property(fc.nat(), (length) => {
+        const deprecatedGenerator = fc.hexaString({ maxLength: 2 * length });
+
+        const replacementGenerator = hexaStringGenerator({
+          maxLength: 2 * length,
+        });
+
+        const comparisonResults = compareGenerators(
+          deprecatedGenerator,
+          replacementGenerator
+        );
+
+        const isMatching = comparisonResults.every(
+          (result) => result.match.matches
+        );
+        const mismatchedItems = comparisonResults.flatMap(
+          (result) => result.match.mismatchedItems
+        );
+
+        expect(mismatchedItems).toEqual([]);
+        expect(isMatching).toBe(true);
+      })
     );
   });
 });
