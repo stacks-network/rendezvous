@@ -13,7 +13,6 @@ describe("Fast-check deprecated generators replacement validation", () => {
           maxLength: length,
           minLength: 0,
         });
-
         const replacementGenerator = fc.string({
           unit: fc.constantFrom(...charSet),
           maxLength: length,
