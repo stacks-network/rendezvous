@@ -1,4 +1,3 @@
-import { green, red } from "ansicolor";
 import fc from "fast-check";
 
 /**
@@ -56,35 +55,3 @@ const arraysMatch = (array1: any[], array2: any[]) => {
   }
   return { matches: matches, mismatchedItems: mismatchedItems };
 };
-
-// FIXME: The following code is for demonstration purposes only. It will be
-// removed once the function is integrated into the test suite.
-
-// Initialize comparison subject generators.
-const length = 20;
-
-const generator1 = fc.stringOf(fc.constantFrom(..."0123456789abcdef"), {
-  maxLength: 2 * length,
-  minLength: 0,
-});
-
-const generator2 = fc.string({
-  unit: fc.constantFrom(..."0123456789abcdef"),
-  maxLength: 2 * length,
-  minLength: 0,
-});
-
-// Run the comparison.
-const results = compareGenerators(generator1, generator2, 10);
-
-// Report the comparison results.
-console.log("Comparison Results:");
-results.forEach(({ sample, valueA, valueB, match }) => {
-  console.log(
-    `-------------------------------------------------------------------------`
-  );
-  console.log(`Sample ${sample}:\n`);
-  console.log(`Old Generator: ${JSON.stringify(valueA)}\n`);
-  console.log(`New Generator: ${JSON.stringify(valueB)}\n`);
-  console.log(`Match: ${match.matches ? green("Yes") : red("No")}`);
-});

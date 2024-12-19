@@ -144,9 +144,9 @@ const baseTypesToArbitrary: BaseTypesToArbitrary = {
 const complexTypesToArbitrary: ComplexTypesToArbitrary = {
   buffer: (length: number) => fc.hexaString({ maxLength: length }),
   "string-ascii": (length: number) =>
-    fc.stringOf(fc.constantFrom(...charSet), {
+    fc.string({
+      unit: fc.constantFrom(...charSet),
       maxLength: length,
-      minLength: 0,
     }),
   "string-utf8": (length: number) => fc.string({ maxLength: length }),
   list: (type: ParameterType, length: number, addresses: string[]) =>
