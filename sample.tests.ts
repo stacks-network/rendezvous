@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import { compareGenerators } from "./sample";
-import { hexaStringGenerator } from "./shared";
+import { hexaString } from "./shared";
 
 describe("Fast-check deprecated generators replacement validation", () => {
   const charSet =
@@ -40,7 +40,7 @@ describe("Fast-check deprecated generators replacement validation", () => {
       fc.property(fc.nat(), (length) => {
         const deprecatedGenerator = fc.hexaString({ maxLength: 2 * length });
 
-        const replacementGenerator = hexaStringGenerator({
+        const replacementGenerator = hexaString({
           maxLength: 2 * length,
         });
 
