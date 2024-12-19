@@ -43,7 +43,7 @@ export const issueFirstClassCitizenship = async (
   const sortedContractsByEpoch =
     groupContractsByEpochFromSimnetPlan(simnetPlan);
 
-  await simnet.initEmtpySession();
+  await simnet.initEmptySession();
 
   // Combine the target contract with its tests into a single contract. The
   // resulting contract will replace the target contract in the simnet. This
