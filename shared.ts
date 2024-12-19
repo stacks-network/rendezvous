@@ -9,26 +9,18 @@ import {
   ResponseStatus,
   TupleData,
 } from "./shared.types";
-import {
-  boolCV,
-  ClarityValue,
-  intCV,
-  listCV,
-  optionalCVOf,
-  principalCV,
-  responseErrorCV,
-  responseOkCV,
-  stringAsciiCV,
-  stringUtf8CV,
-  tupleCV,
-  uintCV,
-} from "@stacks/transactions";
 import { Simnet } from "@hirosystems/clarinet-sdk";
 import {
   ContractInterfaceFunction,
   IContractInterface,
 } from "@hirosystems/clarinet-sdk-wasm";
-import { bufferFromHex } from "@stacks/transactions/dist/cl";
+import {
+  Cl,
+  ClarityValue,
+  optionalCVOf,
+  responseErrorCV,
+  responseOkCV,
+} from "@stacks/transactions";
 
 /**
  * Get the interfaces of contracts deployed by the specified deployer from the
@@ -280,24 +272,24 @@ const argToCV = (arg: any, type: ParameterType): ClarityValue => {
  * Base types to Clarity values mapping.
  */
 const baseTypesToCV: BaseTypesToCV = {
-  int128: (arg: number) => intCV(arg),
-  uint128: (arg: number) => uintCV(arg),
-  bool: (arg: boolean) => boolCV(arg),
-  principal: (arg: string) => principalCV(arg),
+  int128: (arg: number) => Cl.int(arg),
+  uint128: (arg: number) => Cl.uint(arg),
+  bool: (arg: boolean) => Cl.bool(arg),
+  principal: (arg: string) => Cl.principal(arg),
 };
 
 /**
  * Complex types to Clarity values mapping.
  */
 const complexTypesToCV: ComplexTypesToCV = {
-  buffer: (arg: string) => bufferFromHex(arg),
-  "string-ascii": (arg: string) => stringAsciiCV(arg),
-  "string-utf8": (arg: string) => stringUtf8CV(arg),
+  buffer: (arg: string) => Cl.bufferFromHex(arg),
+  "string-ascii": (arg: string) => Cl.stringAscii(arg),
+  "string-utf8": (arg: string) => Cl.stringUtf8(arg),
   list: (items: ClarityValue[]) => {
-    return listCV(items);
+    return Cl.list(items);
   },
   tuple: (tupleData: TupleData<ClarityValue>) => {
-    return tupleCV(tupleData);
+    return Cl.tuple(tupleData);
   },
   optional: (arg: ClarityValue | null) =>
     arg ? optionalCVOf(arg) : optionalCVOf(undefined),
