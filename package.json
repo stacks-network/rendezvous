@@ -4,6 +4,7 @@
   "description": "Meet your contract's vulnerabilities head-on.",
   "main": "app.js",
   "scripts": {
+    "build": "npx tsc --project tsconfig.json",
     "test": "npx tsc --project tsconfig.json && npx jest"
   },
   "keywords": [
