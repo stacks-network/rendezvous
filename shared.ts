@@ -9,26 +9,18 @@ import {
   ResponseStatus,
   TupleData,
 } from "./shared.types";
-import {
-  boolCV,
-  bufferCV,
-  ClarityValue,
-  intCV,
-  listCV,
-  optionalCVOf,
-  principalCV,
-  responseErrorCV,
-  responseOkCV,
-  stringAsciiCV,
-  stringUtf8CV,
-  tupleCV,
-  uintCV,
-} from "@stacks/transactions";
 import { Simnet } from "@hirosystems/clarinet-sdk";
 import {
   ContractInterfaceFunction,
   IContractInterface,
 } from "@hirosystems/clarinet-sdk-wasm";
+import {
+  Cl,
+  ClarityValue,
+  optionalCVOf,
+  responseErrorCV,
+  responseOkCV,
+} from "@stacks/transactions";
 
 /**
  * Get the interfaces of contracts deployed by the specified deployer from the
@@ -139,14 +131,42 @@ const baseTypesToArbitrary: BaseTypesToArbitrary = {
 };
 
 /**
+ * Custom hexadecimal string generator. The `hexaString` generator from
+ * fast-check has been deprecated. This generator is implemented to precisely
+ * match the behavior of the deprecated generator.
+ *
+ * @param constraints Fast-check string constraints.
+ * @returns Fast-check arbitrary for hexadecimal strings.
+ *
+ * Reference for the proposed replacement of the deprecated `hexaString`
+ * generator:
+ * https://github.com/dubzzz/fast-check/commit/3f4f1203a8863c07d22b45591bf0de1fac02b948
+ */
+export const hexaString = (
+  constraints: fc.StringConstraints = {}
+): fc.Arbitrary<string> => {
+  const hexa = (): fc.Arbitrary<string> => {
+    const hexCharSet = "0123456789abcdef";
+    return fc.integer({ min: 0, max: 15 }).map((n) => hexCharSet[n]);
+  };
+
+  return fc.string({ ...constraints, unit: hexa() });
+};
+
+/**
  * Complex types to fast-check arbitraries mapping.
  */
 const complexTypesToArbitrary: ComplexTypesToArbitrary = {
-  buffer: (length: number) => fc.hexaString({ maxLength: length }),
+  // For buffer types, the length must be doubled because they are represented
+  // in hex. The `argToCV` function expects this format for `buff` ClarityValue
+  // conversion. The UInt8Array will have half the length of the corresponding
+  // hex string. Stacks.js reference:
+  // https://github.com/hirosystems/stacks.js/blob/fd0bf26b5f29fc3c1bf79581d0ad9b89f0d7f15a/packages/common/src/utils.ts#L522
+  buffer: (length: number) => hexaString({ maxLength: 2 * length }),
   "string-ascii": (length: number) =>
-    fc.stringOf(fc.constantFrom(...charSet), {
+    fc.string({
+      unit: fc.constantFrom(...charSet),
       maxLength: length,
-      minLength: 1,
     }),
   "string-utf8": (length: number) => fc.string({ maxLength: length }),
   list: (type: ParameterType, length: number, addresses: string[]) =>
@@ -252,24 +272,24 @@ const argToCV = (arg: any, type: ParameterType): ClarityValue => {
  * Base types to Clarity values mapping.
  */
 const baseTypesToCV: BaseTypesToCV = {
-  int128: (arg: number) => intCV(arg),
-  uint128: (arg: number) => uintCV(arg),
-  bool: (arg: boolean) => boolCV(arg),
-  principal: (arg: string) => principalCV(arg),
+  int128: (arg: number) => Cl.int(arg),
+  uint128: (arg: number) => Cl.uint(arg),
+  bool: (arg: boolean) => Cl.bool(arg),
+  principal: (arg: string) => Cl.principal(arg),
 };
 
 /**
  * Complex types to Clarity values mapping.
  */
 const complexTypesToCV: ComplexTypesToCV = {
-  buffer: (arg: string) => bufferCV(Uint8Array.from(Buffer.from(arg, "hex"))),
-  "string-ascii": (arg: string) => stringAsciiCV(arg),
-  "string-utf8": (arg: string) => stringUtf8CV(arg),
+  buffer: (arg: string) => Cl.bufferFromHex(arg),
+  "string-ascii": (arg: string) => Cl.stringAscii(arg),
+  "string-utf8": (arg: string) => Cl.stringUtf8(arg),
   list: (items: ClarityValue[]) => {
-    return listCV(items);
+    return Cl.list(items);
   },
   tuple: (tupleData: TupleData<ClarityValue>) => {
-    return tupleCV(tupleData);
+    return Cl.tuple(tupleData);
   },
   optional: (arg: ClarityValue | null) =>
     arg ? optionalCVOf(arg) : optionalCVOf(undefined),
