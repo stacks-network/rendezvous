@@ -26,15 +26,18 @@ describe("Fast-check deprecated generators replacement validation", () => {
             replacementGenerator,
             numSamples
           );
-          const isMatching = comparisonResults.every(
-            (result) => result.match.matches
-          );
-          const mismatchedItems = comparisonResults.flatMap(
-            (result) => result.match.mismatchedItems
-          );
 
-          expect(mismatchedItems).toEqual([]);
-          expect(isMatching).toBe(true);
+          const mismatchedPerSampleId = comparisonResults
+            .filter((result) => result.mismatchedItems.length > 0)
+            .reduce((acc, result) => {
+              acc[result.sample] = result.mismatchedItems.map((item) => ({
+                val1: item.val1,
+                val2: item.val2,
+              }));
+              return acc;
+            }, {} as Record<number, { val1: string; val2: string }[]>);
+
+          expect(mismatchedPerSampleId).toEqual({});
         }
       )
     );
@@ -58,15 +61,17 @@ describe("Fast-check deprecated generators replacement validation", () => {
             numSamples
           );
 
-          const isMatching = comparisonResults.every(
-            (result) => result.match.matches
-          );
-          const mismatchedItems = comparisonResults.flatMap(
-            (result) => result.match.mismatchedItems
-          );
+          const mismatchedPerSampleId = comparisonResults
+            .filter((result) => result.mismatchedItems.length > 0)
+            .reduce((acc, result) => {
+              acc[result.sample] = result.mismatchedItems.map((item) => ({
+                val1: item.val1,
+                val2: item.val2,
+              }));
+              return acc;
+            }, {} as Record<number, { val1: string; val2: string }[]>);
 
-          expect(mismatchedItems).toEqual([]);
-          expect(isMatching).toBe(true);
+          expect(mismatchedPerSampleId).toEqual({});
         }
       )
     );

@@ -18,40 +18,35 @@ export const compareGenerators = (
   for (let i = 0; i < numSamples; i++) {
     const seed = 123 * i;
 
-    // Generate values.
     const valueA = fc.sample(generatorA, { seed: seed });
     const valueB = fc.sample(generatorB, { seed: seed });
 
-    // Compare outputs.
-    const match = arraysMatch(valueA, valueB);
+    const mismatchedItems = getMismatchedItems(valueA, valueB);
 
-    // Append to the results. They will be returned and logged later.
-    results.push({ sample: i + 1, valueA, valueB, match });
+    results.push({ sample: i + 1, valueA, valueB, mismatchedItems });
   }
   return results;
 };
 
 /**
- * Utility function to compare two arrays.
+ * Utility function to compare two arrays and return mismatched items.
  * @param array1 The first array to compare.
  * @param array2 The second array to compare.
- * @returns An object containing whether the arrays match and the mismatched
- * elements. If the arrays do not match, an error is thrown.
+ * @returns An array of mismatched elements. Each element includes the index
+ * and the differing values from both arrays.
  */
-const arraysMatch = (array1: any[], array2: any[]) => {
-  if (array1.length !== array2.length)
+const getMismatchedItems = (
+  array1: any[],
+  array2: any[]
+): { index: number; val1: any; val2: any }[] => {
+  if (array1.length !== array2.length) {
     throw new Error("Different array lengths");
-
-  const mismatchedItems: { index: number; val1: any; val2: any }[] = [];
-  const matches = array1.every((val, idx) => {
-    const isMatch = val === array2[idx];
-    if (!isMatch)
-      mismatchedItems.push({ index: idx, val1: val, val2: array2[idx] });
-    return isMatch;
-  });
-
-  if (!matches) {
-    console.log("Mismatched elements found:", mismatchedItems);
   }
-  return { matches: matches, mismatchedItems: mismatchedItems };
+
+  return array1.reduce((mismatchedItems, val, idx) => {
+    if (val !== array2[idx]) {
+      mismatchedItems.push({ index: idx, val1: val, val2: array2[idx] });
+    }
+    return mismatchedItems;
+  }, []);
 };
