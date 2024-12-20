@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { join } from "path";
 import { EventEmitter } from "events";
 import { checkProperties } from "./property";
