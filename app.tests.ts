@@ -1,13 +1,8 @@
 import { main } from "./app";
-import { readFileSync } from "fs";
-import { join } from "path";
+import { version } from "./package.json";
 
 describe("Command-line arguments handling", () => {
   const initialArgv = process.argv;
-
-  const { version } = JSON.parse(
-    readFileSync(join(__dirname, "package.json"), "utf-8")
-  );
 
   const helpMessage = `
   rv v${version}
