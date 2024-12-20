@@ -12,7 +12,7 @@ import fc from "fast-check";
 export const compareGenerators = (
   generatorA: fc.Arbitrary<any>,
   generatorB: fc.Arbitrary<any>,
-  numSamples = 10
+  numSamples: number
 ) => {
   const results = [];
   for (let i = 0; i < numSamples; i++) {
