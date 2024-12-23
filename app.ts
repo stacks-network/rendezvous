@@ -1,4 +1,4 @@
-import { join } from "path";
+import { resolve } from "path";
 import { EventEmitter } from "events";
 import { readFileSync } from "fs";
 import { checkProperties } from "./property";
@@ -14,7 +14,7 @@ const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
 };
 
 const { version } = JSON.parse(
-  readFileSync(join(__dirname, "package.json"), "utf-8")
+  readFileSync(resolve(__dirname, "package.json"), "utf-8")
 );
 
 const helpMessage = `
@@ -53,8 +53,9 @@ export async function main() {
     return;
   }
 
-  /** The relative path to the Clarinet project. */
+  /** The path to the Clarinet project. */
   const manifestDir = args[2];
+
   if (!manifestDir || manifestDir.startsWith("--")) {
     radio.emit(
       "logMessage",
@@ -63,6 +64,8 @@ export async function main() {
     radio.emit("logMessage", helpMessage);
     return;
   }
+
+  const absoluteManifestDir = resolve(manifestDir);
 
   /** The target contract name. */
   const sutContractName = args[3];
@@ -85,8 +88,8 @@ export async function main() {
     return;
   }
 
-  /** The relative path to `Clarinet.toml`. */
-  const manifestPath = join(manifestDir, "Clarinet.toml");
+  /** The absolute path to `Clarinet.toml`. */
+  const manifestPath = resolve(absoluteManifestDir, "Clarinet.toml");
   radio.emit("logMessage", `Using manifest path: ${manifestPath}`);
   radio.emit("logMessage", `Target contract: ${sutContractName}`);
 
@@ -105,7 +108,10 @@ export async function main() {
     radio.emit("logMessage", `Using runs: ${runs}`);
   }
 
-  const simnet = await issueFirstClassCitizenship(manifestDir, sutContractName);
+  const simnet = await issueFirstClassCitizenship(
+    absoluteManifestDir,
+    sutContractName
+  );
 
   /**
    * The list of contract IDs for the SUT contract names, as per the simnet.

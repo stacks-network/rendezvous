@@ -1,12 +1,12 @@
 import { main } from "./app";
 import { readFileSync } from "fs";
-import { join } from "path";
+import { resolve } from "path";
 
 describe("Command-line arguments handling", () => {
   const initialArgv = process.argv;
 
   const { version } = JSON.parse(
-    readFileSync(join(__dirname, "package.json"), "utf-8")
+    readFileSync(resolve(__dirname, "package.json"), "utf-8")
   );
 
   const helpMessage = `
@@ -174,7 +174,7 @@ describe("Command-line arguments handling", () => {
       ["manifest path", "contract name", "type=invariant"],
       ["node", "app.js", "example", "counter", "invariant"],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${resolve("example", "Clarinet.toml")}`,
         `Target contract: counter`,
         `\nStarting invariant testing type for the counter contract...`,
       ],
@@ -183,7 +183,7 @@ describe("Command-line arguments handling", () => {
       ["manifest path", "contract name", "type=InVaRiAnT (case-insensitive)"],
       ["node", "app.js", "example", "counter", "InVaRiAnT"],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${resolve("example", "Clarinet.toml")}`,
         `Target contract: counter`,
         `\nStarting invariant testing type for the counter contract...`,
       ],
@@ -192,7 +192,7 @@ describe("Command-line arguments handling", () => {
       ["manifest path", "contract name", "type=test"],
       ["node", "app.js", "example", "counter", "test"],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${resolve("example", "Clarinet.toml")}`,
         `Target contract: counter`,
         `\nStarting property testing type for the counter contract...`,
       ],
@@ -201,7 +201,7 @@ describe("Command-line arguments handling", () => {
       ["manifest path", "contract name", "type=tESt (case-insensitive)"],
       ["node", "app.js", "example", "counter", "tESt"],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${resolve("example", "Clarinet.toml")}`,
         `Target contract: counter`,
         `\nStarting property testing type for the counter contract...`,
       ],
@@ -218,7 +218,7 @@ describe("Command-line arguments handling", () => {
         "--path=84:0",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${resolve("example", "Clarinet.toml")}`,
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
@@ -243,7 +243,7 @@ describe("Command-line arguments handling", () => {
         "--path=84:0",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${resolve("example", "Clarinet.toml")}`,
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
@@ -262,7 +262,7 @@ describe("Command-line arguments handling", () => {
         "--path=84:0",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${resolve("example", "Clarinet.toml")}`,
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
@@ -281,7 +281,7 @@ describe("Command-line arguments handling", () => {
         "--path=84:0",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${resolve("example", "Clarinet.toml")}`,
         `Target contract: reverse`,
         `Using seed: 123`,
         `Using path: 84:0`,
@@ -300,7 +300,7 @@ describe("Command-line arguments handling", () => {
         "--path=84:0",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${resolve("example", "Clarinet.toml")}`,
         `Target contract: slice`,
         `Using seed: 123`,
         `Using path: 84:0`,
@@ -325,7 +325,7 @@ describe("Command-line arguments handling", () => {
         "--path=84:0",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${resolve("example", "Clarinet.toml")}`,
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
