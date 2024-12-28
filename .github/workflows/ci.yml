@@ -1,4 +1,4 @@
-name: Cross-Platform CI
+name: Sanity checks
 
 on:
   push:
@@ -33,7 +33,7 @@ jobs:
       - name: Run tests
         run: npm test
 
-  example-tests:
+  examples:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 3
     strategy:
@@ -54,7 +54,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run example tests
+      - name: Run examples
         shell: bash
         run: |
           cd example
