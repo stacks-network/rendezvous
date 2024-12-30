@@ -54,10 +54,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        shell: bash
-        run: npm run build
-
       - name: Global install
         run: npm install -g .
 
