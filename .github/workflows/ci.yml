@@ -54,13 +54,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build
+        shell: bash
+        run: |
+          npm run build
+          if [ "$RUNNER_OS" != "Windows" ]; then
+            chmod +x ./dist/app.js
+          fi
+
+      - name: Global install
+        run: npm install -g .
+
       - name: Run examples
         shell: bash
         run: |
           cd example
-          ../rv . counter test
-          ../rv . counter invariant
-          ../rv . cargo test
-          ../rv . cargo invariant
-          ../rv . reverse test
-          ../rv . slice test
+          rv . counter test
+          rv . counter invariant
+          rv . cargo test
+          rv . cargo invariant
+          rv . reverse test
+          rv . slice test
