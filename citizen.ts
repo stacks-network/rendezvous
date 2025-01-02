@@ -227,7 +227,7 @@ export const buildRendezvousData = (
     };
   } catch (e: any) {
     throw new Error(
-      `Error processing contract ${contractName.split(".")[1]}: ${e.message}`
+      `Error processing "${contractName}" contract: ${e.message}`
     );
   }
 };
@@ -256,7 +256,7 @@ const getSimnetPlanContractSource = (
 
   if (contractInfo == undefined) {
     throw new Error(
-      `Contract ${sutContractName} not found in the Clarinet.toml.`
+      `"${sutContractName}" contract not found in Clarinet.toml.`
     );
   }
 
