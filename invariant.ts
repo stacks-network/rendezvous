@@ -45,6 +45,14 @@ export const checkInvariants = (
     `\nStarting invariant testing type for the ${sutContractName} contract...`
   );
 
+  const simnetAccounts = simnet.getAccounts();
+
+  const eligibleAccounts = new Map(
+    [...simnetAccounts].filter(([key]) => key !== "faucet")
+  );
+
+  const simnetAddresses = Array.from(simnetAccounts.values());
+
   const radioReporter = (runDetails: any) => {
     reporter(runDetails, radio, "invariant");
   };
@@ -54,16 +62,8 @@ export const checkInvariants = (
       fc
         .record({
           rendezvousContractId: fc.constantFrom(...rendezvousList),
-          sutCaller: fc.constantFrom(
-            ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
-          ),
-          invariantCaller: fc.constantFrom(
-            ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
-          ),
+          sutCaller: fc.constantFrom(...eligibleAccounts.entries()),
+          invariantCaller: fc.constantFrom(...eligibleAccounts.entries()),
         })
         .chain((r) => {
           const functions = getFunctionsListForContract(
@@ -108,12 +108,12 @@ export const checkInvariants = (
         .chain((r) => {
           const functionArgsArb = functionToArbitrary(
             r.selectedFunction,
-            Array.from(simnet.getAccounts().values())
+            simnetAddresses
           );
 
           const invariantArgsArb = functionToArbitrary(
             r.selectedInvariant,
-            Array.from(simnet.getAccounts().values())
+            simnetAddresses
           );
 
           return fc
