@@ -26,15 +26,41 @@ root
     └── Devnet.toml
 ```
 
-### Usage
+### Installation
 
-Run the fuzzer with the following command:
+---
+
+**Install the package locally**
+
+```
+npm install "https://github.com/stacks-network/rendezvous.git"
+```
+
+Run the fuzzer locally:
+
+```
+npx rv <path-to-clarinet-project> <contract-name> <type>
+```
+
+---
+
+**Install the package globally**
+
+```
+git clone https://github.com/stacks-network/rendezvous
+npm install
+npm install --global .
+```
+
+Run the fuzzer from anywhere on your system:
 
 ```
 rv <path-to-clarinet-project> <contract-name> <type>
 ```
 
-This will execute the fuzzing process, attempting to falsify invariants or tests.
+---
+
+### Configuration
 
 **Positional arguments:**
 
