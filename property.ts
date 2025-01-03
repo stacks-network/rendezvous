@@ -84,6 +84,14 @@ export const checkProperties = (
     return;
   }
 
+  const simnetAccounts = simnet.getAccounts();
+
+  const eligibleAccounts = new Map(
+    [...simnetAccounts].filter(([key]) => key !== "faucet")
+  );
+
+  const simnetAddresses = Array.from(simnetAccounts.values());
+
   const radioReporter = (runDetails: any) => {
     reporter(runDetails, radio, "test");
   };
@@ -93,11 +101,7 @@ export const checkProperties = (
       fc
         .record({
           testContractId: fc.constantFrom(...rendezvousList),
-          testCaller: fc.constantFrom(
-            ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
-          ),
+          testCaller: fc.constantFrom(...eligibleAccounts.entries()),
         })
         .chain((r) => {
           const testFunctionsList = getFunctionsListForContract(
@@ -126,7 +130,7 @@ export const checkProperties = (
         .chain((r) => {
           const functionArgsArb = functionToArbitrary(
             r.selectedTestFunction,
-            Array.from(simnet.getAccounts().values())
+            simnetAddresses
           );
 
           return fc
