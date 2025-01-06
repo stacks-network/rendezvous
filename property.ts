@@ -30,7 +30,7 @@ export const checkProperties = (
 
   radio.emit(
     "logMessage",
-    `\nStarting property testing type for the ${sutContractName} contract...`
+    `\nStarting property testing type for the ${sutContractName} contract...\n`
   );
 
   // Search for discard functions, for each test function. This map will
@@ -102,6 +102,7 @@ export const checkProperties = (
         .record({
           testContractId: fc.constantFrom(...rendezvousList),
           testCaller: fc.constantFrom(...eligibleAccounts.entries()),
+          mineBurnBlocks: fc.boolean(),
         })
         .chain((r) => {
           const testFunctionsList = getFunctionsListForContract(
@@ -138,7 +139,16 @@ export const checkProperties = (
               functionArgsArb: fc.tuple(...functionArgsArb),
             })
             .map((args) => ({ ...r, ...args }));
-        }),
+        })
+        .chain((r) =>
+          fc
+            .record({
+              burnBlocksToMine: r.mineBurnBlocks
+                ? fc.integer({ min: 1, max: 10 })
+                : fc.constant(0),
+            })
+            .map((burnBlocksToMine) => ({ ...r, ...burnBlocksToMine }))
+        ),
       (r) => {
         const selectedTestFunctionArgs = argsToCV(
           r.selectedTestFunction,
@@ -174,11 +184,13 @@ export const checkProperties = (
         if (discarded) {
           radio.emit(
             "logMessage",
-            `${dim(testCallerWallet)} ${yellow("[WARN]")} ${
-              r.testContractId.split(".")[1]
-            } ${underline(r.selectedTestFunction.name)} ${dim(
-              printedTestFunctionArgs
-            )}`
+            `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
+              `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+              `${dim(testCallerWallet)} ` +
+              `${yellow("[WARN]")} ` +
+              `${r.testContractId.split(".")[1]} ` +
+              `${underline(r.selectedTestFunction.name)} ` +
+              dim(printedTestFunctionArgs)
           );
         } else {
           try {
@@ -200,11 +212,13 @@ export const checkProperties = (
             if (discardedInPlace) {
               radio.emit(
                 "logMessage",
-                `${dim(testCallerWallet)} ${yellow("[WARN]")} ${
-                  r.testContractId.split(".")[1]
-                } ${underline(r.selectedTestFunction.name)} ${dim(
-                  printedTestFunctionArgs
-                )}`
+                `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
+                  `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+                  `${dim(testCallerWallet)} ` +
+                  `${yellow("[WARN]")} ` +
+                  `${r.testContractId.split(".")[1]} ` +
+                  `${underline(r.selectedTestFunction.name)} ` +
+                  dim(printedTestFunctionArgs)
               );
             } else if (
               !discardedInPlace &&
@@ -213,12 +227,18 @@ export const checkProperties = (
             ) {
               radio.emit(
                 "logMessage",
-                `${dim(testCallerWallet)} ${green("[PASS]")} ${
-                  r.testContractId.split(".")[1]
-                } ${underline(
-                  r.selectedTestFunction.name
-                )} ${printedTestFunctionArgs}`
+                `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
+                  `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+                  `${dim(testCallerWallet)} ` +
+                  `${green("[PASS]")} ` +
+                  `${r.testContractId.split(".")[1]} ` +
+                  `${underline(r.selectedTestFunction.name)} ` +
+                  printedTestFunctionArgs
               );
+
+              if (r.mineBurnBlocks) {
+                simnet.mineEmptyBurnBlocks(r.burnBlocksToMine);
+              }
             } else {
               throw new Error(
                 `Test failed for ${r.testContractId.split(".")[1]} contract: "${
@@ -231,11 +251,13 @@ export const checkProperties = (
             radio.emit(
               "logMessage",
               red(
-                `${testCallerWallet} [FAIL] ${
-                  r.testContractId.split(".")[1]
-                } ${underline(
-                  r.selectedTestFunction.name
-                )} ${printedTestFunctionArgs}`
+                `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
+                  `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+                  `${testCallerWallet} ` +
+                  `[FAIL] ` +
+                  `${r.testContractId.split(".")[1]} ` +
+                  `${underline(r.selectedTestFunction.name)} ` +
+                  printedTestFunctionArgs
               )
             );
 

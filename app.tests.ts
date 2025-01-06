@@ -189,7 +189,7 @@ describe("Command-line arguments handling", () => {
       [
         `Using manifest path: example/Clarinet.toml`,
         `Target contract: counter`,
-        `\nStarting property testing type for the counter contract...`,
+        `\nStarting property testing type for the counter contract...\n`,
       ],
     ],
     [
@@ -198,7 +198,7 @@ describe("Command-line arguments handling", () => {
       [
         `Using manifest path: example/Clarinet.toml`,
         `Target contract: counter`,
-        `\nStarting property testing type for the counter contract...`,
+        `\nStarting property testing type for the counter contract...\n`,
       ],
     ],
     [
@@ -261,7 +261,7 @@ describe("Command-line arguments handling", () => {
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
-        `\nStarting property testing type for the counter contract...`,
+        `\nStarting property testing type for the counter contract...\n`,
       ],
     ],
     [
@@ -280,7 +280,7 @@ describe("Command-line arguments handling", () => {
         `Target contract: reverse`,
         `Using seed: 123`,
         `Using path: 84:0`,
-        `\nStarting property testing type for the reverse contract...`,
+        `\nStarting property testing type for the reverse contract...\n`,
       ],
     ],
     [
@@ -299,7 +299,7 @@ describe("Command-line arguments handling", () => {
         `Target contract: slice`,
         `Using seed: 123`,
         `Using path: 84:0`,
-        `\nStarting property testing type for the slice contract...`,
+        `\nStarting property testing type for the slice contract...\n`,
       ],
     ],
     [
@@ -324,7 +324,7 @@ describe("Command-line arguments handling", () => {
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
-        `\nStarting property testing type for the counter contract...`,
+        `\nStarting property testing type for the counter contract...\n`,
       ],
     ],
   ])(
