@@ -171,7 +171,7 @@ describe("Command-line arguments handling", () => {
       [
         `Using manifest path: example/Clarinet.toml`,
         `Target contract: counter`,
-        `\nStarting invariant testing type for the counter contract...`,
+        `\nStarting invariant testing type for the counter contract...\n`,
       ],
     ],
     [
@@ -180,7 +180,7 @@ describe("Command-line arguments handling", () => {
       [
         `Using manifest path: example/Clarinet.toml`,
         `Target contract: counter`,
-        `\nStarting invariant testing type for the counter contract...`,
+        `\nStarting invariant testing type for the counter contract...\n`,
       ],
     ],
     [
@@ -217,7 +217,7 @@ describe("Command-line arguments handling", () => {
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
-        `\nStarting invariant testing type for the counter contract...`,
+        `\nStarting invariant testing type for the counter contract...\n`,
       ],
     ],
     [
@@ -242,7 +242,7 @@ describe("Command-line arguments handling", () => {
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
-        `\nStarting invariant testing type for the counter contract...`,
+        `\nStarting invariant testing type for the counter contract...\n`,
       ],
     ],
     [

@@ -42,7 +42,7 @@ export const checkInvariants = (
 
   radio.emit(
     "logMessage",
-    `\nStarting invariant testing type for the ${sutContractName} contract...`
+    `\nStarting invariant testing type for the ${sutContractName} contract...\n`
   );
 
   const simnetAccounts = simnet.getAccounts();
@@ -64,6 +64,7 @@ export const checkInvariants = (
           rendezvousContractId: fc.constantFrom(...rendezvousList),
           sutCaller: fc.constantFrom(...eligibleAccounts.entries()),
           invariantCaller: fc.constantFrom(...eligibleAccounts.entries()),
+          mineBurnBlocks: fc.boolean(),
         })
         .chain((r) => {
           const functions = getFunctionsListForContract(
@@ -122,7 +123,16 @@ export const checkInvariants = (
               invariantArgsArb: fc.tuple(...invariantArgsArb),
             })
             .map((args) => ({ ...r, ...args }));
-        }),
+        })
+        .chain((r) =>
+          fc
+            .record({
+              burnBlocksToMine: r.mineBurnBlocks
+                ? fc.integer({ min: 1, max: 10 })
+                : fc.constant(0),
+            })
+            .map((burnBlocksToMine) => ({ ...r, ...burnBlocksToMine }))
+        ),
       (r) => {
         const selectedFunctionArgs = argsToCV(
           r.selectedFunction,
@@ -174,17 +184,25 @@ export const checkInvariants = (
 
             radio.emit(
               "logMessage",
-              `${dim(sutCallerWallet)}        ${getContractNameFromRendezvousId(
-                r.rendezvousContractId
-              )} ${underline(r.selectedFunction.name)} ${printedFunctionArgs}`
+              `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
+                `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+                dim(`${sutCallerWallet}        `) +
+                `${getContractNameFromRendezvousId(r.rendezvousContractId)} ` +
+                `${underline(r.selectedFunction.name)} ` +
+                printedFunctionArgs
             );
           } else {
             radio.emit(
               "logMessage",
               dim(
-                `${sutCallerWallet}        ${getContractNameFromRendezvousId(
-                  r.rendezvousContractId
-                )} ${underline(r.selectedFunction.name)} ${printedFunctionArgs}`
+                `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
+                  `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+                  `${sutCallerWallet}        ` +
+                  `${getContractNameFromRendezvousId(
+                    r.rendezvousContractId
+                  )} ` +
+                  `${underline(r.selectedFunction.name)} ` +
+                  printedFunctionArgs
               )
             );
           }
@@ -195,9 +213,12 @@ export const checkInvariants = (
           radio.emit(
             "logMessage",
             dim(
-              `${sutCallerWallet}        ${getContractNameFromRendezvousId(
-                r.rendezvousContractId
-              )} ${underline(r.selectedFunction.name)} ${printedFunctionArgs}`
+              `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
+                `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+                `${sutCallerWallet}        ` +
+                `${getContractNameFromRendezvousId(r.rendezvousContractId)} ` +
+                `${underline(r.selectedFunction.name)} ` +
+                printedFunctionArgs
             )
           );
         }
@@ -230,11 +251,13 @@ export const checkInvariants = (
           if (invariantCallResultJson.value === true) {
             radio.emit(
               "logMessage",
-              `${dim(invariantCallerWallet)} ${green(
-                "[PASS]"
-              )} ${getContractNameFromRendezvousId(
-                r.rendezvousContractId
-              )} ${underline(r.selectedInvariant.name)} ${printedInvariantArgs}`
+              `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
+                `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+                `${dim(invariantCallerWallet)} ` +
+                `${green("[PASS]")} ` +
+                `${getContractNameFromRendezvousId(r.rendezvousContractId)} ` +
+                `${underline(r.selectedInvariant.name)} ` +
+                printedInvariantArgs
             );
           }
 
@@ -254,13 +277,25 @@ export const checkInvariants = (
           radio.emit(
             "logMessage",
             red(
-              `${invariantCallerWallet} [FAIL] ${getContractNameFromRendezvousId(
-                r.rendezvousContractId
-              )} ${underline(r.selectedInvariant.name)} ${printedInvariantArgs}`
+              `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
+                `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+                `${invariantCallerWallet} ` +
+                `[FAIL] ` +
+                `${getContractNameFromRendezvousId(r.rendezvousContractId)} ` +
+                `${underline(r.selectedInvariant.name)} ` +
+                printedInvariantArgs
             )
           );
 
           // Re-throw the error for fast-check to catch and process.
+          throw error;
+        }
+
+        try {
+          if (r.mineBurnBlocks) {
+            simnet.mineEmptyBurnBlocks(r.burnBlocksToMine);
+          }
+        } catch (error: any) {
           throw error;
         }
       }
