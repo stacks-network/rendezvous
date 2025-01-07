@@ -193,8 +193,8 @@ export const checkProperties = (
         if (discarded) {
           radio.emit(
             "logMessage",
-            `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
-              `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+            `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+              `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
               `${dim(testCallerWallet)} ` +
               `${yellow("[WARN]")} ` +
               `${r.testContractId.split(".")[1]} ` +
@@ -221,8 +221,8 @@ export const checkProperties = (
             if (discardedInPlace) {
               radio.emit(
                 "logMessage",
-                `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
-                  `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+                `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+                  `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                   `${dim(testCallerWallet)} ` +
                   `${yellow("[WARN]")} ` +
                   `${r.testContractId.split(".")[1]} ` +
@@ -236,8 +236,8 @@ export const checkProperties = (
             ) {
               radio.emit(
                 "logMessage",
-                `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
-                  `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+                `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+                  `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                   `${dim(testCallerWallet)} ` +
                   `${green("[PASS]")} ` +
                   `${r.testContractId.split(".")[1]} ` +
@@ -260,8 +260,8 @@ export const checkProperties = (
             radio.emit(
               "logMessage",
               red(
-                `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
-                  `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+                `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+                  `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                   `${testCallerWallet} ` +
                   `[FAIL] ` +
                   `${r.testContractId.split(".")[1]} ` +
