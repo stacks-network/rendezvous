@@ -128,7 +128,16 @@ export const checkInvariants = (
           fc
             .record({
               burnBlocks: r.canMineBlocks
-                ? fc.integer({ min: 1, max: 10 })
+                ? // This arbitrary produces integers with a maximum value
+                  // inversely proportional to the number of runs:
+                  // - Fewer runs result in a higher maximum burn blocks,
+                  //   allowing more blocks to be mined.
+                  // - More runs result in a lower maximum burn blocks, as more
+                  //   blocks are mined overall.
+                  fc.integer({
+                    min: 1,
+                    max: Math.ceil(100_000 / (runs || 100)),
+                  })
                 : fc.constant(0),
             })
             .map((burnBlocks) => ({ ...r, ...burnBlocks }))
