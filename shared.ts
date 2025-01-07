@@ -59,8 +59,8 @@ export const getFunctionsListForContract = (
 ): ContractInterfaceFunction[] => functionsMap.get(contractId) || [];
 
 /** For a given function, dynamically generate fast-check arbitraries.
- * @param fn ContractInterfaceFunction
- * @returns Array of fast-check arbitraries
+ * @param fn The function interface.
+ * @returns Array of fast-check arbitraries.
  */
 export const functionToArbitrary = (
   fn: ContractInterfaceFunction,
@@ -72,15 +72,15 @@ export const functionToArbitrary = (
 
 /**
  * For a given type, generate a fast-check arbitrary.
- * @param type
- * @returns fast-check arbitrary
+ * @param type The parameter type.
+ * @returns Fast-check arbitrary.
  */
 const parameterTypeToArbitrary = (
   type: ParameterType,
   addresses: string[]
 ): fc.Arbitrary<any> => {
   if (typeof type === "string") {
-    // The type is a base type
+    // The type is a base type.
     if (type === "principal") {
       if (addresses.length === 0)
         throw new Error(
@@ -91,7 +91,7 @@ const parameterTypeToArbitrary = (
       throw new Error("Unsupported parameter type: trait_reference");
     } else return baseTypesToArbitrary[type];
   } else {
-    // The type is a complex type
+    // The type is a complex type.
     if ("buffer" in type) {
       return complexTypesToArbitrary["buffer"](type.buffer.length);
     } else if ("string-ascii" in type) {
@@ -212,13 +212,12 @@ const charSet =
 
 /**
  * Convert function arguments to Clarity values.
- * @param fn ContractFunction.
+ * @param fn The function interface.
  * @param args Array of arguments.
  * @returns Array of Clarity values.
  */
-export const argsToCV = (fn: ContractInterfaceFunction, args: any[]) => {
-  return fn.args.map((arg, i) => argToCV(args[i], arg.type as ParameterType));
-};
+export const argsToCV = (fn: ContractInterfaceFunction, args: any[]) =>
+  fn.args.map((arg, i) => argToCV(args[i], arg.type as ParameterType));
 
 /**
  * Convert a function argument to a Clarity value.
@@ -312,7 +311,7 @@ const isBaseType = (type: ParameterType): type is BaseType => {
 /**
  * Checks if any parameter of the function contains a `trait_reference` type.
  * @param fn The function interface.
- * @returns boolean - true if the function contains a trait reference, false
+ * @returns Boolean - true if the function contains a trait reference, false
  * otherwise.
  */
 export const isTraitReferenceFunction = (
