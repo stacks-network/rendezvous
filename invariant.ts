@@ -193,8 +193,8 @@ export const checkInvariants = (
 
             radio.emit(
               "logMessage",
-              `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
-                `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+              `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+                `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                 dim(`${sutCallerWallet}        `) +
                 `${getContractNameFromRendezvousId(r.rendezvousContractId)} ` +
                 `${underline(r.selectedFunction.name)} ` +
@@ -204,8 +204,8 @@ export const checkInvariants = (
             radio.emit(
               "logMessage",
               dim(
-                `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
-                  `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+                `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+                  `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                   `${sutCallerWallet}        ` +
                   `${getContractNameFromRendezvousId(
                     r.rendezvousContractId
@@ -222,8 +222,8 @@ export const checkInvariants = (
           radio.emit(
             "logMessage",
             dim(
-              `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
-                `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+              `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+                `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                 `${sutCallerWallet}        ` +
                 `${getContractNameFromRendezvousId(r.rendezvousContractId)} ` +
                 `${underline(r.selectedFunction.name)} ` +
@@ -260,8 +260,8 @@ export const checkInvariants = (
           if (invariantCallResultJson.value === true) {
             radio.emit(
               "logMessage",
-              `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
-                `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+              `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+                `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                 `${dim(invariantCallerWallet)} ` +
                 `${green("[PASS]")} ` +
                 `${getContractNameFromRendezvousId(r.rendezvousContractId)} ` +
@@ -286,8 +286,8 @@ export const checkInvariants = (
           radio.emit(
             "logMessage",
             red(
-              `₿ ${simnet.burnBlockHeight.toString().padStart(6)} ` +
-                `Ӿ ${simnet.blockHeight.toString().padStart(6)}   ` +
+              `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+                `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                 `${invariantCallerWallet} ` +
                 `[FAIL] ` +
                 `${getContractNameFromRendezvousId(r.rendezvousContractId)} ` +
