@@ -1,6 +1,6 @@
 {
   "name": "rendezvous",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Meet your contract's vulnerabilities head-on.",
   "main": "app.js",
   "bin": {
