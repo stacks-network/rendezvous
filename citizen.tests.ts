@@ -8,7 +8,7 @@ import {
   scheduleRendezvous,
 } from "./citizen";
 import { initSimnet } from "@hirosystems/clarinet-sdk";
-import { join } from "path";
+import { resolve } from "path";
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import yaml from "yaml";
@@ -40,16 +40,16 @@ describe("Simnet deployment plan operations", () => {
 
   it("retrieves the simnet deployment plan", async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
+    const tempDir = mkdtempSync(resolve(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
-    const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
+    const simnetPlanPath = resolve(tempDir, "deployments", simnetPlanFileName);
 
     rmSync(simnetPlanPath, { force: true });
     if (existsSync(simnetPlanPath)) {
       throw new Error("Simnet plan file already exists");
     }
 
-    const manifestPath = join(tempDir, manifestFileName);
+    const manifestPath = resolve(tempDir, manifestFileName);
     await initSimnet(manifestPath);
 
     // Exercise
@@ -66,10 +66,10 @@ describe("Simnet deployment plan operations", () => {
 
   it("groups the contracts by epoch", async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
+    const tempDir = mkdtempSync(resolve(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
-    const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
-    const manifestPath = join(tempDir, manifestFileName);
+    const simnetPlanPath = resolve(tempDir, "deployments", simnetPlanFileName);
+    const manifestPath = resolve(tempDir, manifestFileName);
 
     await initSimnet(manifestPath);
     const parsedSimnetPlan = yaml.parse(
@@ -117,9 +117,9 @@ describe("Simnet deployment plan operations", () => {
 
   it("retrieves the test contract source from the simnet deployment plan", () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
+    const tempDir = mkdtempSync(resolve(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
-    const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
+    const simnetPlanPath = resolve(tempDir, "deployments", simnetPlanFileName);
 
     const parsedSimnetPlan = yaml.parse(
       readFileSync(simnetPlanPath, { encoding: "utf-8" }).toString()
@@ -130,7 +130,7 @@ describe("Simnet deployment plan operations", () => {
 
     // Verify
     const expected = readFileSync(
-      join("example", "contracts", "counter.tests.clar"),
+      resolve("example", "contracts", "counter.tests.clar"),
       { encoding: "utf-8" }
     );
 
@@ -142,10 +142,10 @@ describe("Simnet deployment plan operations", () => {
 
   it("builds the rendezvous data", async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
+    const tempDir = mkdtempSync(resolve(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
-    const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
-    const manifestPath = join(tempDir, manifestFileName);
+    const simnetPlanPath = resolve(tempDir, "deployments", simnetPlanFileName);
+    const manifestPath = resolve(tempDir, manifestFileName);
 
     await initSimnet(manifestPath);
 
@@ -167,11 +167,11 @@ describe("Simnet deployment plan operations", () => {
 
     // Verify
     const counterSrc = readFileSync(
-      join("example", "contracts", "counter.clar"),
+      resolve("example", "contracts", "counter.clar"),
       { encoding: "utf-8" }
     );
     const counterTestsSrc = readFileSync(
-      join("example", "contracts", "counter.tests.clar"),
+      resolve("example", "contracts", "counter.tests.clar"),
       { encoding: "utf-8" }
     );
     const rendezvousSrc = scheduleRendezvous(counterSrc, counterTestsSrc);
@@ -185,10 +185,10 @@ describe("Simnet deployment plan operations", () => {
 
   it("retrieves the contract source for a target contract", async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
+    const tempDir = mkdtempSync(resolve(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
-    const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
-    const manifestPath = join(tempDir, manifestFileName);
+    const simnetPlanPath = resolve(tempDir, "deployments", simnetPlanFileName);
+    const manifestPath = resolve(tempDir, manifestFileName);
 
     await initSimnet(manifestPath);
 
@@ -228,11 +228,11 @@ describe("Simnet deployment plan operations", () => {
 
     // Verify
     const counterSrc = readFileSync(
-      join("example", "contracts", "counter.clar"),
+      resolve("example", "contracts", "counter.clar"),
       { encoding: "utf-8" }
     );
     const counterTestsSrc = readFileSync(
-      join("example", "contracts", "counter.tests.clar"),
+      resolve("example", "contracts", "counter.tests.clar"),
       { encoding: "utf-8" }
     );
     const expected = scheduleRendezvous(counterSrc, counterTestsSrc);
@@ -245,10 +245,10 @@ describe("Simnet deployment plan operations", () => {
 
   it("retrieves the contract source for a non-target contract", async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
+    const tempDir = mkdtempSync(resolve(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
-    const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
-    const manifestPath = join(tempDir, manifestFileName);
+    const simnetPlanPath = resolve(tempDir, "deployments", simnetPlanFileName);
+    const manifestPath = resolve(tempDir, manifestFileName);
 
     await initSimnet(manifestPath);
 
@@ -287,9 +287,12 @@ describe("Simnet deployment plan operations", () => {
     );
 
     // Verify
-    const expected = readFileSync(join("example", "contracts", "cargo.clar"), {
-      encoding: "utf-8",
-    });
+    const expected = readFileSync(
+      resolve("example", "contracts", "cargo.clar"),
+      {
+        encoding: "utf-8",
+      }
+    );
 
     expect(actual).toBe(expected);
 
@@ -299,7 +302,7 @@ describe("Simnet deployment plan operations", () => {
 
   it("issues first-class citizenship", async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
+    const tempDir = mkdtempSync(resolve(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
 
     // Exercise
@@ -307,11 +310,14 @@ describe("Simnet deployment plan operations", () => {
     const actual = firstClassSimnet.getContractSource("cargo");
 
     // Verify
-    const cargoSrc = readFileSync(join("example", "contracts", "cargo.clar"), {
-      encoding: "utf-8",
-    });
+    const cargoSrc = readFileSync(
+      resolve("example", "contracts", "cargo.clar"),
+      {
+        encoding: "utf-8",
+      }
+    );
     const cargoTestsSrc = readFileSync(
-      join("example", "contracts", "cargo.tests.clar"),
+      resolve("example", "contracts", "cargo.tests.clar"),
       { encoding: "utf-8" }
     );
     const expected = scheduleRendezvous(cargoSrc, cargoTestsSrc);

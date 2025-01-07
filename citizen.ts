@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { join } from "path";
+import { resolve } from "path";
 import yaml from "yaml";
 import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
 import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
@@ -18,16 +18,16 @@ import {
  * - Combining the target contract with its tests and deploying all contracts
  *   to the simnet.
  *
- * @param manifestDir - The relative path to the manifest directory.
+ * @param absoluteManifestDir - The absolute path to the manifest directory.
  * @param sutContractName - The target contract name.
  * @returns The initialized simnet instance with all contracts deployed, with
  * the target contract treated as a first-class citizen.
  */
 export const issueFirstClassCitizenship = async (
-  manifestDir: string,
+  absoluteManifestDir: string,
   sutContractName: string
 ): Promise<Simnet> => {
-  const manifestPath = join(manifestDir, "Clarinet.toml");
+  const manifestPath = resolve(absoluteManifestDir, "Clarinet.toml");
 
   // Initialize the simnet, to generate the simnet plan and instance. The empty
   // session will be set up, and contracts will be deployed in the correct
@@ -35,9 +35,12 @@ export const issueFirstClassCitizenship = async (
   const simnet = await initSimnet(manifestPath);
 
   const simnetPlan = yaml.parse(
-    readFileSync(join(manifestDir, "deployments", "default.simnet-plan.yaml"), {
-      encoding: "utf-8",
-    })
+    readFileSync(
+      resolve(absoluteManifestDir, "deployments", "default.simnet-plan.yaml"),
+      {
+        encoding: "utf-8",
+      }
+    )
   );
 
   const sortedContractsByEpoch =
@@ -51,7 +54,7 @@ export const issueFirstClassCitizenship = async (
   const rendezvousSources = new Map(
     [sutContractName]
       .map((contractName) =>
-        buildRendezvousData(simnetPlan, contractName, manifestDir)
+        buildRendezvousData(simnetPlan, contractName, absoluteManifestDir)
       )
       .map((rendezvousContractData) => [
         rendezvousContractData.rendezvousContractName,
@@ -66,7 +69,7 @@ export const issueFirstClassCitizenship = async (
       rendezvousSources,
       name,
       props,
-      manifestDir
+      absoluteManifestDir
     )
   );
 
@@ -164,7 +167,7 @@ const deployContracts = async (
  * @param rendezvousMap - The rendezvous map.
  * @param contractName - The contract name.
  * @param contractProps - The contract properties.
- * @param manifestDir - The relative path to the manifest directory.
+ * @param absoluteManifestDir - The absolute path to the manifest directory.
  * @returns The contract source.
  */
 export const getContractSource = (
@@ -175,7 +178,7 @@ export const getContractSource = (
     path: string;
     clarity_version: 1 | 2 | 3;
   },
-  manifestDir: string
+  absoluteManifestDir: string
 ): string => {
   if (sutContractNames.includes(contractName)) {
     const contractSource = rendezvousMap.get(contractName);
@@ -184,7 +187,7 @@ export const getContractSource = (
     }
     return contractSource;
   } else {
-    return readFileSync(join(manifestDir, contractProps.path), {
+    return readFileSync(resolve(absoluteManifestDir, contractProps.path), {
       encoding: "utf-8",
     });
   }
@@ -194,26 +197,26 @@ export const getContractSource = (
  * Build the Rendezvous data.
  * @param simnetPlan The parsed simnet plan.
  * @param contractName The contract name.
- * @param manifestDir The relative path to the manifest directory.
+ * @param absoluteManifestDir The absolute path to the manifest directory.
  * @returns The Rendezvous data representing an object. The returned object
  * contains the Rendezvous source code and the Rendezvous contract name.
  */
 export const buildRendezvousData = (
   simnetPlan: SimnetPlan,
   contractName: string,
-  manifestDir: string
+  absoluteManifestDir: string
 ) => {
   try {
     const sutContractSource = getSimnetPlanContractSource(
       simnetPlan,
-      manifestDir,
+      absoluteManifestDir,
       contractName
     );
 
     const testContractSource = getTestContractSource(
       simnetPlan,
       contractName,
-      manifestDir
+      absoluteManifestDir
     );
 
     const rendezvousSource = scheduleRendezvous(
@@ -235,13 +238,13 @@ export const buildRendezvousData = (
 /**
  * Get the contract source code from the simnet plan.
  * @param simnetPlan The parsed simnet plan.
- * @param manifestDir The relative path to the manifest directory.
+ * @param absoluteManifestDir The absolute path to the manifest directory.
  * @param sutContractName The target contract name.
  * @returns The contract source code.
  */
 const getSimnetPlanContractSource = (
   simnetPlan: SimnetPlan,
-  manifestDir: string,
+  absoluteManifestDir: string,
   sutContractName: string
 ) => {
   // Filter for transactions that contain "emulated-contract-publish".
@@ -260,7 +263,7 @@ const getSimnetPlanContractSource = (
     );
   }
 
-  return readFileSync(join(manifestDir, contractInfo.path), {
+  return readFileSync(resolve(absoluteManifestDir, contractInfo.path), {
     encoding: "utf-8",
   }).toString();
 };
@@ -269,13 +272,13 @@ const getSimnetPlanContractSource = (
  * Get the test contract source code.
  * @param simnetPlan The parsed simnet plan.
  * @param sutContractName The target contract name.
- * @param manifestDir The relative path to the manifest directory.
+ * @param absoluteManifestDir The absolute path to the manifest directory.
  * @returns The test contract source code.
  */
 export const getTestContractSource = (
   simnetPlan: SimnetPlan,
   sutContractName: string,
-  manifestDir: string
+  absoluteManifestDir: string
 ): string => {
   const contractInfo = simnetPlan.plan.batches
     .flatMap((batch: Batch) => batch.transactions)
@@ -301,7 +304,7 @@ export const getTestContractSource = (
   );
 
   try {
-    return readFileSync(join(manifestDir, testContractPath), {
+    return readFileSync(resolve(absoluteManifestDir, testContractPath), {
       encoding: "utf-8",
     }).toString();
   } catch (e: any) {
