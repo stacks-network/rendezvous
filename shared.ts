@@ -87,6 +87,8 @@ const parameterTypeToArbitrary = (
           "No addresses could be retrieved from the simnet instance!"
         );
       return baseTypesToArbitrary.principal(addresses);
+    } else if (type === "trait_reference") {
+      throw new Error("Unsupported parameter type: trait_reference");
     } else return baseTypesToArbitrary[type];
   } else {
     // The type is a complex type
@@ -128,6 +130,7 @@ const baseTypesToArbitrary: BaseTypesToArbitrary = {
   uint128: fc.nat(),
   bool: fc.boolean(),
   principal: (addresses: string[]) => fc.constantFrom(...addresses),
+  trait_reference: undefined,
 };
 
 /**
@@ -236,7 +239,7 @@ const argToCV = (arg: any, type: ParameterType): ClarityValue => {
       case "principal":
         return baseTypesToCV.principal(arg as string);
       default:
-        throw new Error(`Unsupported base type: ${type}`);
+        throw new Error(`Unsupported base parameter type: ${type}`);
     }
   } else {
     // Complex type.
@@ -263,7 +266,9 @@ const argToCV = (arg: any, type: ParameterType): ClarityValue => {
       const responseValue = argToCV(arg.value, branchType);
       return complexTypesToCV.response(status, responseValue);
     } else {
-      throw new Error(`Unsupported complex type: ${JSON.stringify(type)}`);
+      throw new Error(
+        `Unsupported complex parameter type: ${JSON.stringify(type)}`
+      );
     }
   }
 };
@@ -302,4 +307,39 @@ const complexTypesToCV: ComplexTypesToCV = {
 
 const isBaseType = (type: ParameterType): type is BaseType => {
   return ["int128", "uint128", "bool", "principal"].includes(type as BaseType);
+};
+
+/**
+ * Checks if any parameter of the function contains a `trait_reference` type.
+ * @param fn The function interface.
+ * @returns boolean - true if the function contains a trait reference, false
+ * otherwise.
+ */
+export const isTraitReferenceFunction = (
+  fn: ContractInterfaceFunction
+): boolean => {
+  const hasTraitReference = (type: ParameterType): boolean => {
+    if (typeof type === "string") {
+      // The type is a base type.
+      return type === "trait_reference";
+    } else {
+      // The type is a complex type.
+      if ("buffer" in type) return false;
+      if ("string-ascii" in type) return false;
+      if ("string-utf8" in type) return false;
+      if ("list" in type) return hasTraitReference(type.list.type);
+      if ("tuple" in type)
+        return type.tuple.some((item) => hasTraitReference(item.type));
+      if ("optional" in type) return hasTraitReference(type.optional);
+      if ("response" in type)
+        return (
+          hasTraitReference(type.response.ok) ||
+          hasTraitReference(type.response.error)
+        );
+      // Default to false for unexpected types.
+      return false;
+    }
+  };
+
+  return fn.args.some((arg) => hasTraitReference(arg.type as ParameterType));
 };

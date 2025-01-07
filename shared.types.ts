@@ -45,7 +45,12 @@ export type ComplexTypesToCV = {
 
 // Types used for argument generation.
 
-export type BaseType = "int128" | "uint128" | "bool" | "principal";
+export type BaseType =
+  | "int128"
+  | "uint128"
+  | "bool"
+  | "principal"
+  | "trait_reference";
 
 type ComplexType =
   | { buffer: { length: number } }
@@ -63,6 +68,8 @@ export type BaseTypesToArbitrary = {
   uint128: ReturnType<typeof fc.nat>;
   bool: ReturnType<typeof fc.boolean>;
   principal: (addresses: string[]) => ReturnType<typeof fc.constantFrom>;
+  // Trait reference is not yet supported. This is a placeholder.
+  trait_reference: undefined;
 };
 
 export type ComplexTypesToArbitrary = {
