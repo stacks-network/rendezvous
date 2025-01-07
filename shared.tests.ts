@@ -3,10 +3,12 @@ import {
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
   getSimnetDeployerContractsInterfaces,
+  isTraitReferenceFunction,
   hexaString,
 } from "./shared";
 import { resolve } from "path";
 import fc from "fast-check";
+import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
 
 describe("Simnet contracts operations", () => {
   it("retrieves the contracts from the simnet", async () => {
@@ -71,6 +73,100 @@ describe("Simnet contracts operations", () => {
 
     // Assert
     expect(actualAllFunctionsMap).toEqual(expectedAllFunctionsMap);
+  });
+
+  it("trait reference finder returns false for a function witout traits", async () => {
+    // Arrange
+    const noTraitContractInterfaceFunction = {
+      name: "create-new-shipment",
+      access: "public",
+      args: [
+        {
+          name: "starting-location",
+          type: {
+            "string-ascii": {
+              length: 25,
+            },
+          },
+        },
+        {
+          name: "receiver",
+          type: "principal",
+        },
+      ],
+      outputs: {
+        type: {
+          response: {
+            ok: {
+              "string-ascii": {
+                length: 29,
+              },
+            },
+            error: "none",
+          },
+        },
+      },
+    } as ContractInterfaceFunction;
+
+    // Act
+    const hasTrait = isTraitReferenceFunction(noTraitContractInterfaceFunction);
+
+    // Assert
+    expect(hasTrait).toBe(false);
+  });
+
+  it("trait reference finder returns true for a function with traits", async () => {
+    // Arrange
+    const traitContractInterfaceFunction = {
+      name: "transfer-two",
+      access: "public",
+      args: [
+        {
+          name: "ft-contract",
+          type: {
+            tuple: [
+              {
+                name: "token",
+                type: "trait_reference",
+              },
+            ],
+          },
+        },
+        {
+          name: "nft-contract",
+          type: {
+            tuple: [
+              {
+                name: "token",
+                type: "trait_reference",
+              },
+            ],
+          },
+        },
+        {
+          name: "amount",
+          type: "uint128",
+        },
+        {
+          name: "recipient",
+          type: "principal",
+        },
+      ],
+      outputs: {
+        type: {
+          response: {
+            ok: "bool",
+            error: "uint128",
+          },
+        },
+      },
+    } as ContractInterfaceFunction;
+
+    // Act
+    const hasTrait = isTraitReferenceFunction(traitContractInterfaceFunction);
+
+    // Assert
+    expect(hasTrait).toBe(true);
   });
 });
 

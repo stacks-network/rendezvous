@@ -2,6 +2,7 @@ import { Simnet } from "@hirosystems/clarinet-sdk";
 import { EventEmitter } from "events";
 import {
   argsToCV,
+  isTraitReferenceFunction,
   functionToArbitrary,
   getFunctionsListForContract,
 } from "./shared";
@@ -53,6 +54,60 @@ export const checkInvariants = (
 
   const simnetAddresses = Array.from(simnetAccounts.values());
 
+  // The Rendezvous identifier is the first one in the list. Only one contract
+  // can be fuzzed at a time.
+  const rendezvousContractId = rendezvousList[0];
+
+  const functions = getFunctionsListForContract(
+    rendezvousSutFunctions,
+    rendezvousContractId
+  );
+
+  const invariantFunctions = getFunctionsListForContract(
+    rendezvousInvariantFunctions,
+    rendezvousContractId
+  );
+
+  if (functions?.length === 0) {
+    throw new Error(
+      `No public functions found for the "${getContractNameFromRendezvousId(
+        rendezvousContractId
+      )}" contract.`
+    );
+  }
+
+  if (invariantFunctions?.length === 0) {
+    throw new Error(
+      `No invariant functions found for the "${getContractNameFromRendezvousId(
+        rendezvousContractId
+      )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
+    );
+  }
+
+  const eligibleFunctions = functions.filter(
+    (fn) => !isTraitReferenceFunction(fn)
+  );
+
+  const eligibleInvariants = invariantFunctions.filter(
+    (fn) => !isTraitReferenceFunction(fn)
+  );
+
+  if (eligibleFunctions.length === 0) {
+    throw new Error(
+      `No eligible public functions found for the "${getContractNameFromRendezvousId(
+        rendezvousContractId
+      )}" contract. Note: trait references are not supported.`
+    );
+  }
+
+  if (eligibleInvariants.length === 0) {
+    throw new Error(
+      `No eligible invariant functions found for the "${getContractNameFromRendezvousId(
+        rendezvousContractId
+      )}" contract. Note: trait references are not supported.`
+    );
+  }
+
   const radioReporter = (runDetails: any) => {
     reporter(runDetails, radio, "invariant");
   };
@@ -61,69 +116,36 @@ export const checkInvariants = (
     fc.property(
       fc
         .record({
-          rendezvousContractId: fc.constantFrom(...rendezvousList),
+          // The target contract identifier. It is a constant value equal
+          // to the first contract in the list. The arbitrary is still needed,
+          // being used for reporting purposes in `heatstroke.ts`.
+          rendezvousContractId: fc.constant(rendezvousContractId),
           sutCaller: fc.constantFrom(...eligibleAccounts.entries()),
           invariantCaller: fc.constantFrom(...eligibleAccounts.entries()),
           canMineBlocks: fc.boolean(),
         })
-        .chain((r) => {
-          const functions = getFunctionsListForContract(
-            rendezvousSutFunctions,
-            r.rendezvousContractId
-          );
-          const invariantFunctions = getFunctionsListForContract(
-            rendezvousInvariantFunctions,
-            r.rendezvousContractId
-          );
-
-          if (functions?.length === 0) {
-            throw new Error(
-              `No public functions found for the "${getContractNameFromRendezvousId(
-                r.rendezvousContractId
-              )}" contract.`
-            );
-          }
-          if (invariantFunctions?.length === 0) {
-            throw new Error(
-              `No invariant functions found for the "${getContractNameFromRendezvousId(
-                r.rendezvousContractId
-              )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
-            );
-          }
-          const functionArbitrary = fc.constantFrom(
-            ...(functions as ContractInterfaceFunction[])
-          );
-          // FIXME: For invariants, we have to be able to select a random
-          // number of them (zero or more).
-          const invariantFunctionArbitrary = fc.constantFrom(
-            ...(invariantFunctions as ContractInterfaceFunction[])
-          );
-
-          return fc
+        .chain((r) =>
+          fc
             .record({
-              selectedFunction: functionArbitrary,
-              selectedInvariant: invariantFunctionArbitrary,
+              selectedFunction: fc.constantFrom(...eligibleFunctions),
+              // FIXME: For invariants, we have to be able to select a random
+              // number of them (zero or more).
+              selectedInvariant: fc.constantFrom(...eligibleInvariants),
             })
-            .map((selectedFunctions) => ({ ...r, ...selectedFunctions }));
-        })
-        .chain((r) => {
-          const functionArgsArb = functionToArbitrary(
-            r.selectedFunction,
-            simnetAddresses
-          );
-
-          const invariantArgsArb = functionToArbitrary(
-            r.selectedInvariant,
-            simnetAddresses
-          );
-
-          return fc
+            .map((selectedFunctions) => ({ ...r, ...selectedFunctions }))
+        )
+        .chain((r) =>
+          fc
             .record({
-              functionArgsArb: fc.tuple(...functionArgsArb),
-              invariantArgsArb: fc.tuple(...invariantArgsArb),
+              functionArgsArb: fc.tuple(
+                ...functionToArbitrary(r.selectedFunction, simnetAddresses)
+              ),
+              invariantArgsArb: fc.tuple(
+                ...functionToArbitrary(r.selectedInvariant, simnetAddresses)
+              ),
             })
-            .map((args) => ({ ...r, ...args }));
-        })
+            .map((args) => ({ ...r, ...args }))
+        )
         .chain((r) =>
           fc
             .record({
