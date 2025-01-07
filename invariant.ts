@@ -291,12 +291,8 @@ export const checkInvariants = (
           throw error;
         }
 
-        try {
-          if (r.canMineBlocks) {
-            simnet.mineEmptyBurnBlocks(r.burnBlocks);
-          }
-        } catch (error: any) {
-          throw error;
+        if (r.canMineBlocks) {
+          simnet.mineEmptyBurnBlocks(r.burnBlocks);
         }
       }
     ),
