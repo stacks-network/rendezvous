@@ -7,6 +7,7 @@ import {
   argsToCV,
   functionToArbitrary,
   getFunctionsListForContract,
+  isTraitReferenceFunction,
 } from "./shared";
 import { dim, green, red, underline, yellow } from "ansicolor";
 import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
@@ -92,6 +93,29 @@ export const checkProperties = (
 
   const simnetAddresses = Array.from(simnetAccounts.values());
 
+  const testContractId = rendezvousList[0];
+
+  const testFunctions = getFunctionsListForContract(
+    testContractsTestFunctions,
+    testContractId
+  );
+
+  if (testFunctions?.length === 0) {
+    throw new Error(
+      `No test functions found for the "${sutContractName}" contract.`
+    );
+  }
+
+  const eligibleTestFunctions = testFunctions.filter(
+    (fn) => !isTraitReferenceFunction(fn)
+  );
+
+  if (eligibleTestFunctions.length === 0) {
+    throw new Error(
+      `No eligible test functions found for the "${sutContractName}" contract. Note: trait references are not supported.`
+    );
+  }
+
   const radioReporter = (runDetails: any) => {
     reporter(runDetails, radio, "test");
   };
@@ -100,46 +124,31 @@ export const checkProperties = (
     fc.property(
       fc
         .record({
-          testContractId: fc.constantFrom(...rendezvousList),
+          testContractId: fc.constant(testContractId),
           testCaller: fc.constantFrom(...eligibleAccounts.entries()),
           canMineBlocks: fc.boolean(),
         })
-        .chain((r) => {
-          const testFunctionsList = getFunctionsListForContract(
-            testContractsTestFunctions,
-            r.testContractId
-          );
-
-          if (testFunctionsList?.length === 0) {
-            throw new Error(
-              `No test functions found for the "${sutContractName}" contract.`
-            );
-          }
-          const testFunctionArbitrary = fc.constantFrom(
-            ...(testFunctionsList as ContractInterfaceFunction[])
-          );
-
-          return fc
+        .chain((r) =>
+          fc
             .record({
-              selectedTestFunction: testFunctionArbitrary,
+              selectedTestFunction: fc.constantFrom(
+                ...(eligibleTestFunctions as ContractInterfaceFunction[])
+              ),
             })
             .map((selectedTestFunction) => ({
               ...r,
               ...selectedTestFunction,
-            }));
-        })
-        .chain((r) => {
-          const functionArgsArb = functionToArbitrary(
-            r.selectedTestFunction,
-            simnetAddresses
-          );
-
-          return fc
+            }))
+        )
+        .chain((r) =>
+          fc
             .record({
-              functionArgsArb: fc.tuple(...functionArgsArb),
+              functionArgsArb: fc.tuple(
+                ...functionToArbitrary(r.selectedTestFunction, simnetAddresses)
+              ),
             })
-            .map((args) => ({ ...r, ...args }));
-        })
+            .map((args) => ({ ...r, ...args }))
+        )
         .chain((r) =>
           fc
             .record({
