@@ -64,7 +64,7 @@ export const checkInvariants = (
           rendezvousContractId: fc.constantFrom(...rendezvousList),
           sutCaller: fc.constantFrom(...eligibleAccounts.entries()),
           invariantCaller: fc.constantFrom(...eligibleAccounts.entries()),
-          mineBurnBlocks: fc.boolean(),
+          canMineBlocks: fc.boolean(),
         })
         .chain((r) => {
           const functions = getFunctionsListForContract(
@@ -127,11 +127,11 @@ export const checkInvariants = (
         .chain((r) =>
           fc
             .record({
-              burnBlocksToMine: r.mineBurnBlocks
+              burnBlocks: r.canMineBlocks
                 ? fc.integer({ min: 1, max: 10 })
                 : fc.constant(0),
             })
-            .map((burnBlocksToMine) => ({ ...r, ...burnBlocksToMine }))
+            .map((burnBlocks) => ({ ...r, ...burnBlocks }))
         ),
       (r) => {
         const selectedFunctionArgs = argsToCV(
@@ -292,8 +292,8 @@ export const checkInvariants = (
         }
 
         try {
-          if (r.mineBurnBlocks) {
-            simnet.mineEmptyBurnBlocks(r.burnBlocksToMine);
+          if (r.canMineBlocks) {
+            simnet.mineEmptyBurnBlocks(r.burnBlocks);
           }
         } catch (error: any) {
           throw error;

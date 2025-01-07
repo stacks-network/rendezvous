@@ -102,7 +102,7 @@ export const checkProperties = (
         .record({
           testContractId: fc.constantFrom(...rendezvousList),
           testCaller: fc.constantFrom(...eligibleAccounts.entries()),
-          mineBurnBlocks: fc.boolean(),
+          canMineBlocks: fc.boolean(),
         })
         .chain((r) => {
           const testFunctionsList = getFunctionsListForContract(
@@ -143,11 +143,11 @@ export const checkProperties = (
         .chain((r) =>
           fc
             .record({
-              burnBlocksToMine: r.mineBurnBlocks
+              burnBlocks: r.canMineBlocks
                 ? fc.integer({ min: 1, max: 10 })
                 : fc.constant(0),
             })
-            .map((burnBlocksToMine) => ({ ...r, ...burnBlocksToMine }))
+            .map((burnBlocks) => ({ ...r, ...burnBlocks }))
         ),
       (r) => {
         const selectedTestFunctionArgs = argsToCV(
@@ -236,8 +236,8 @@ export const checkProperties = (
                   printedTestFunctionArgs
               );
 
-              if (r.mineBurnBlocks) {
-                simnet.mineEmptyBurnBlocks(r.burnBlocksToMine);
+              if (r.canMineBlocks) {
+                simnet.mineEmptyBurnBlocks(r.burnBlocks);
               }
             } else {
               throw new Error(
