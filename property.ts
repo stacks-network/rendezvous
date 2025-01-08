@@ -6,6 +6,7 @@ import { reporter } from "./heatstroke";
 import {
   argsToCV,
   functionToArbitrary,
+  getContractNameFromContractId,
   getFunctionsListForContract,
   isTraitReferenceFunction,
 } from "./shared";
@@ -212,7 +213,7 @@ export const checkProperties = (
               `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
               `${dim(testCallerWallet)} ` +
               `${yellow("[WARN]")} ` +
-              `${r.testContractId.split(".")[1]} ` +
+              `${sutContractName} ` +
               `${underline(r.selectedTestFunction.name)} ` +
               dim(printedTestFunctionArgs)
           );
@@ -240,7 +241,7 @@ export const checkProperties = (
                   `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                   `${dim(testCallerWallet)} ` +
                   `${yellow("[WARN]")} ` +
-                  `${r.testContractId.split(".")[1]} ` +
+                  `${sutContractName} ` +
                   `${underline(r.selectedTestFunction.name)} ` +
                   dim(printedTestFunctionArgs)
               );
@@ -255,7 +256,7 @@ export const checkProperties = (
                   `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                   `${dim(testCallerWallet)} ` +
                   `${green("[PASS]")} ` +
-                  `${r.testContractId.split(".")[1]} ` +
+                  `${sutContractName} ` +
                   `${underline(r.selectedTestFunction.name)} ` +
                   printedTestFunctionArgs
               );
@@ -265,9 +266,7 @@ export const checkProperties = (
               }
             } else {
               throw new Error(
-                `Test failed for ${r.testContractId.split(".")[1]} contract: "${
-                  r.selectedTestFunction.name
-                }" returned ${testFunctionCallResultJson.value.value}`
+                `Test failed for ${sutContractName} contract: "${r.selectedTestFunction.name}" returned ${testFunctionCallResultJson.value.value}`
               );
             }
           } catch (error: any) {
@@ -279,7 +278,7 @@ export const checkProperties = (
                   `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                   `${testCallerWallet} ` +
                   `[FAIL] ` +
-                  `${r.testContractId.split(".")[1]} ` +
+                  `${sutContractName} ` +
                   `${underline(r.selectedTestFunction.name)} ` +
                   printedTestFunctionArgs
               )
@@ -377,9 +376,9 @@ const validateDiscardFunction = (
     radio.emit(
       "logMessage",
       red(
-        `\nError: Parameter mismatch for discard function "${discardFunctionName}" in contract "${
-          contractId.split(".")[1]
-        }".\n`
+        `\nError: Parameter mismatch for discard function "${discardFunctionName}" in contract "${getContractNameFromContractId(
+          contractId
+        )}".\n`
       )
     );
     return false;
@@ -389,9 +388,9 @@ const validateDiscardFunction = (
     radio.emit(
       "logMessage",
       red(
-        `\nError: Return type must be boolean for discard function "${discardFunctionName}" in contract "${
-          contractId.split(".")[1]
-        }".\n`
+        `\nError: Return type must be boolean for discard function "${discardFunctionName}" in contract "${getContractNameFromContractId(
+          contractId
+        )}".\n`
       )
     );
     return false;

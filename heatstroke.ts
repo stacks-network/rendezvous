@@ -25,6 +25,7 @@
 
 import { green } from "ansicolor";
 import { EventEmitter } from "events";
+import { getContractNameFromContractId } from "./shared";
 
 export function reporter(
   //@ts-ignore
@@ -50,7 +51,9 @@ export function reporter(
         radio.emit("logFailure", `\nCounterexample:`);
         radio.emit(
           "logFailure",
-          `- Contract : ${r.rendezvousContractId.split(".")[1]}`
+          `- Contract : ${getContractNameFromContractId(
+            r.rendezvousContractId
+          )}`
         );
         radio.emit(
           "logFailure",
@@ -98,7 +101,7 @@ export function reporter(
         radio.emit("logFailure", `\nCounterexample:`);
         radio.emit(
           "logFailure",
-          `- Test Contract : ${r.testContractId.split(".")[1]}`
+          `- Test Contract : ${getContractNameFromContractId(r.testContractId)}`
         );
         radio.emit(
           "logFailure",

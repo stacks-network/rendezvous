@@ -342,3 +342,6 @@ export const isTraitReferenceFunction = (
 
   return fn.args.some((arg) => hasTraitReference(arg.type as ParameterType));
 };
+
+export const getContractNameFromContractId = (contractId: string): string =>
+  contractId.split(".")[1];

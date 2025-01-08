@@ -5,6 +5,7 @@ import {
   getSimnetDeployerContractsInterfaces,
   isTraitReferenceFunction,
   hexaString,
+  getContractNameFromContractId,
 } from "./shared";
 import { resolve } from "path";
 import fc from "fast-check";
@@ -212,5 +213,29 @@ describe("Fast-check deprecated generators replacement validation", () => {
     // Assert
     // Strict, same-order comparison.
     expect(JSON.stringify(a)).toEqual(JSON.stringify(b));
+  });
+});
+
+describe("Contract identifier parsing", () => {
+  it("gets correct contract name from contract identifier", () => {
+    const addressCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const contractNameCharset =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    fc.assert(
+      // Arrange
+      fc.property(
+        fc.string({ unit: fc.constantFrom(...addressCharset) }),
+        fc.string({ unit: fc.constantFrom(...contractNameCharset) }),
+        (address, contractName) => {
+          const contractId = `${address}.${contractName}`;
+
+          // Act
+          const actual = getContractNameFromContractId(contractId);
+
+          // Assert
+          expect(actual).toBe(contractName);
+        }
+      )
+    );
   });
 });

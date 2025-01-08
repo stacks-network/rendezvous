@@ -4,6 +4,7 @@ import { EventEmitter } from "events";
 import { checkProperties } from "./property";
 import { checkInvariants } from "./invariant";
 import {
+  getContractNameFromContractId,
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
@@ -117,7 +118,7 @@ export async function main() {
   const rendezvousList = Array.from(
     getSimnetDeployerContractsInterfaces(simnet).keys()
   ).filter((deployedContract) =>
-    [sutContractName].includes(deployedContract.split(".")[1])
+    [sutContractName].includes(getContractNameFromContractId(deployedContract))
   );
 
   const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
