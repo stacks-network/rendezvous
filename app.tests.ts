@@ -1,3 +1,4 @@
+import { red } from "ansicolor";
 import { main } from "./app";
 import { version } from "./package.json";
 
@@ -20,8 +21,12 @@ describe("Command-line arguments handling", () => {
     --runs - The runs to use for iterating over the tests. Default: 100.
     --help - Show the help message.
   `;
-  const noManifestMessage = `\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.`;
-  const noContractNameMessage = `\nNo target contract name provided. Please provide the contract name to be fuzzed.`;
+  const noManifestMessage = red(
+    `\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.`
+  );
+  const noContractNameMessage = red(
+    `\nNo target contract name provided. Please provide the contract name to be fuzzed.`
+  );
 
   it.each([
     ["manifest path", ["node", "app.js"]],
@@ -96,24 +101,20 @@ describe("Command-line arguments handling", () => {
     [
       ["no command-line arguments"],
       ["node", "app.js"],
-      [
-        `\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.`,
-        helpMessage,
-      ],
+      [noManifestMessage, helpMessage],
     ],
     [
       ["manifest path"],
       ["node", "app.js", "example"],
-      [
-        `\nNo target contract name provided. Please provide the contract name to be fuzzed.`,
-        helpMessage,
-      ],
+      [noContractNameMessage, helpMessage],
     ],
     [
       ["manifest path", "contract name"],
       ["node", "app.js", "example", "counter"],
       [
-        `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
+        red(
+          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
+        ),
         helpMessage,
       ],
     ],
@@ -121,7 +122,9 @@ describe("Command-line arguments handling", () => {
       ["manifest path", "contract name", "seed"],
       ["node", "app.js", "example", "counter", "--seed=123"],
       [
-        `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
+        red(
+          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
+        ),
         helpMessage,
       ],
     ],
@@ -129,7 +132,9 @@ describe("Command-line arguments handling", () => {
       ["manifest path", "contract name", "seed", "path"],
       ["node", "app.js", "example", "counter", "--seed=123", "--path=84:0"],
       [
-        `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
+        red(
+          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
+        ),
         helpMessage,
       ],
     ],
@@ -137,7 +142,9 @@ describe("Command-line arguments handling", () => {
       ["manifest path", "contract name", "runs"],
       ["node", "app.js", "example", "counter", "--runs=10"],
       [
-        `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
+        red(
+          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
+        ),
         helpMessage,
       ],
     ],
@@ -145,7 +152,9 @@ describe("Command-line arguments handling", () => {
       ["manifest path", "contract name", "path"],
       ["node", "app.js", "example", "counter", "--path=84:0"],
       [
-        `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
+        red(
+          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
+        ),
         helpMessage,
       ],
     ],
@@ -161,7 +170,9 @@ describe("Command-line arguments handling", () => {
         "--runs=10",
       ],
       [
-        `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
+        red(
+          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
+        ),
         helpMessage,
       ],
     ],

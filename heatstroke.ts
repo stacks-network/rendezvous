@@ -23,9 +23,8 @@
  * @property runDetails.error - The error thrown during the test.
  */
 
-import { EventEmitter } from "events";
-import { getContractNameFromRendezvousId } from "./invariant";
 import { green } from "ansicolor";
+import { EventEmitter } from "events";
 
 export function reporter(
   //@ts-ignore
@@ -51,9 +50,7 @@ export function reporter(
         radio.emit("logFailure", `\nCounterexample:`);
         radio.emit(
           "logFailure",
-          `- Contract : ${getContractNameFromRendezvousId(
-            r.rendezvousContractId
-          )}`
+          `- Contract : ${r.rendezvousContractId.split(".")[1]}`
         );
         radio.emit(
           "logFailure",
@@ -138,9 +135,11 @@ export function reporter(
   } else {
     radio.emit(
       "logMessage",
+      green(
         `\nOK, ${
           type === "invariant" ? "invariants" : "properties"
         } passed after ${runDetails.numRuns} runs.\n`
+      )
     );
   }
 }

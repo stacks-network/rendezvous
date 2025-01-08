@@ -9,6 +9,7 @@ import {
 } from "./shared";
 import { issueFirstClassCitizenship } from "./citizen";
 import { version } from "./package.json";
+import { red } from "ansicolor";
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
@@ -42,7 +43,7 @@ const parseOptionalArgument = (argName: string) => {
 export async function main() {
   const radio = new EventEmitter();
   radio.on("logMessage", (log) => logger(log));
-  radio.on("logFailure", (log) => logger(log, "error"));
+  radio.on("logFailure", (log) => logger(red(log), "error"));
 
   const args = process.argv;
   if (args.includes("--help")) {
@@ -55,7 +56,9 @@ export async function main() {
   if (!manifestDir || manifestDir.startsWith("--")) {
     radio.emit(
       "logMessage",
-      "\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
+      red(
+        "\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
+      )
     );
     radio.emit("logMessage", helpMessage);
     return;
@@ -66,7 +69,9 @@ export async function main() {
   if (!sutContractName || sutContractName.startsWith("--")) {
     radio.emit(
       "logMessage",
-      "\nNo target contract name provided. Please provide the contract name to be fuzzed."
+      red(
+        "\nNo target contract name provided. Please provide the contract name to be fuzzed."
+      )
     );
     radio.emit("logMessage", helpMessage);
     return;
@@ -76,7 +81,9 @@ export async function main() {
   if (!type || type.startsWith("--") || !["test", "invariant"].includes(type)) {
     radio.emit(
       "logMessage",
-      "\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant."
+      red(
+        "\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant."
+      )
     );
     radio.emit("logMessage", helpMessage);
     return;

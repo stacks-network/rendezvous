@@ -101,9 +101,11 @@ export const checkProperties = (
   );
 
   if (testFunctions?.length === 0) {
-    throw new Error(
-      `No test functions found for the "${sutContractName}" contract.`
+    radio.emit(
+      "logMessage",
+      red(`No test functions found for the "${sutContractName}" contract.\n`)
     );
+    return;
   }
 
   const eligibleTestFunctions = testFunctions.filter(
@@ -111,9 +113,13 @@ export const checkProperties = (
   );
 
   if (eligibleTestFunctions.length === 0) {
-    throw new Error(
-      `No eligible test functions found for the "${sutContractName}" contract. Note: trait references are not supported.`
+    radio.emit(
+      "logMessage",
+      red(
+        `No eligible test functions found for the "${sutContractName}" contract. Note: trait references are not supported.\n`
+      )
     );
+    return;
   }
 
   const radioReporter = (runDetails: any) => {
@@ -369,7 +375,7 @@ const validateDiscardFunction = (
 
   if (!isParamsMatch(testFunction, discardFunction)) {
     radio.emit(
-      "logFailure",
+      "logMessage",
       red(
         `\nError: Parameter mismatch for discard function "${discardFunctionName}" in contract "${
           contractId.split(".")[1]
@@ -381,7 +387,7 @@ const validateDiscardFunction = (
 
   if (!isReturnTypeBoolean(discardFunction)) {
     radio.emit(
-      "logFailure",
+      "logMessage",
       red(
         `\nError: Return type must be boolean for discard function "${discardFunctionName}" in contract "${
           contractId.split(".")[1]
