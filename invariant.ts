@@ -136,8 +136,6 @@ export const checkInvariants = (
           fc
             .record({
               selectedFunction: fc.constantFrom(...eligibleFunctions),
-              // FIXME: For invariants, we have to be able to select a random
-              // number of them (zero or more).
               selectedInvariant: fc.constantFrom(...eligibleInvariants),
             })
             .map((selectedFunctions) => ({ ...r, ...selectedFunctions }))
