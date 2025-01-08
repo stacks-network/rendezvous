@@ -3,6 +3,7 @@ import { reporter } from "./heatstroke";
 import { EventEmitter } from "events";
 import { resolve } from "path";
 import { initSimnet } from "@hirosystems/clarinet-sdk";
+import { getContractNameFromContractId } from "./shared";
 
 describe("Custom reporter logging", () => {
   it("handles cases with missing path on failure for invariant testing type", async () => {
@@ -104,7 +105,9 @@ describe("Custom reporter logging", () => {
             `\nError: Property failed after ${r.numRuns} tests.`,
             `Seed : ${r.seed}`,
             `\nCounterexample:`,
-            `- Contract : ${rendezvousContractId.split(".")[1]}`,
+            `- Contract : ${getContractNameFromContractId(
+              rendezvousContractId
+            )}`,
             `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
             `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
             `- Caller   : ${r.sutCaller[0]}`,
@@ -232,7 +235,9 @@ describe("Custom reporter logging", () => {
             `Seed : ${r.seed}`,
             `Path : ${r.path}`,
             `\nCounterexample:`,
-            `- Contract : ${rendezvousContractId.split(".")[1]}`,
+            `- Contract : ${getContractNameFromContractId(
+              rendezvousContractId
+            )}`,
             `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
             `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
             `- Caller   : ${r.sutCaller[0]}`,
@@ -439,7 +444,9 @@ describe("Custom reporter logging", () => {
             `\nError: Property failed after ${r.numRuns} tests.`,
             `Seed : ${r.seed}`,
             `\nCounterexample:`,
-            `- Test Contract : ${testContractId.split(".")[1]}`,
+            `- Test Contract : ${getContractNameFromContractId(
+              testContractId
+            )}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
             `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`,
             `- Caller        : ${r.testCaller[0]}`,
@@ -542,7 +549,9 @@ describe("Custom reporter logging", () => {
             `Seed : ${r.seed}`,
             `Path : ${r.path}`,
             `\nCounterexample:`,
-            `- Test Contract : ${testContractId.split(".")[1]}`,
+            `- Test Contract : ${getContractNameFromContractId(
+              testContractId
+            )}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
             `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`,
             `- Caller        : ${r.testCaller[0]}`,

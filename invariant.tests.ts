@@ -1,6 +1,7 @@
 import { initSimnet } from "@hirosystems/clarinet-sdk";
 import { initializeClarityContext, initializeLocalContext } from "./invariant";
 import {
+  getContractNameFromContractId,
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
@@ -43,7 +44,7 @@ describe("Simnet contracts operations", () => {
     const rendezvousList = Array.from(
       getSimnetDeployerContractsInterfaces(simnet).keys()
     ).filter((deployedContract) =>
-      ["counter"].includes(deployedContract.split(".")[1])
+      ["counter"].includes(getContractNameFromContractId(deployedContract))
     );
 
     const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
