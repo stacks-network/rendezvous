@@ -69,19 +69,23 @@ export const checkInvariants = (
   );
 
   if (functions?.length === 0) {
-    throw new Error(
-      `No public functions found for the "${getContractNameFromRendezvousId(
-        rendezvousContractId
-      )}" contract.`
+    radio.emit(
+      "logMessage",
+      red(
+        `No public functions found for the "${sutContractName}" contract. Without public functions, no state transitions can happen inside the contract, and the invariant test is not meaningful.\n`
+      )
     );
+    return;
   }
 
   if (invariantFunctions?.length === 0) {
-    throw new Error(
-      `No invariant functions found for the "${getContractNameFromRendezvousId(
-        rendezvousContractId
-      )}" contract. Beware, for your contract may be exposed to unforeseen issues.`
+    radio.emit(
+      "logMessage",
+      red(
+        `No invariant functions found for the "${sutContractName}" contract. Beware, for your contract may be exposed to unforeseen issues.\n`
+      )
     );
+    return;
   }
 
   const eligibleFunctions = functions.filter(
@@ -93,19 +97,23 @@ export const checkInvariants = (
   );
 
   if (eligibleFunctions.length === 0) {
-    throw new Error(
-      `No eligible public functions found for the "${getContractNameFromRendezvousId(
-        rendezvousContractId
-      )}" contract. Note: trait references are not supported.`
+    radio.emit(
+      "logMessage",
+      red(
+        `No eligible public functions found for the "${sutContractName}" contract. Note: trait references are not supported.\n`
+      )
     );
+    return;
   }
 
   if (eligibleInvariants.length === 0) {
-    throw new Error(
-      `No eligible invariant functions found for the "${getContractNameFromRendezvousId(
-        rendezvousContractId
-      )}" contract. Note: trait references are not supported.`
+    radio.emit(
+      "logMessage",
+      red(
+        `No eligible invariant functions found for the "${sutContractName}" contract. Note: trait references are not supported.\n`
+      )
     );
+    return;
   }
 
   const radioReporter = (runDetails: any) => {
@@ -218,7 +226,7 @@ export const checkInvariants = (
               `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
                 `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                 dim(`${sutCallerWallet}        `) +
-                `${getContractNameFromRendezvousId(r.rendezvousContractId)} ` +
+                `${sutContractName} ` +
                 `${underline(r.selectedFunction.name)} ` +
                 printedFunctionArgs
             );
@@ -229,9 +237,7 @@ export const checkInvariants = (
                 `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
                   `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                   `${sutCallerWallet}        ` +
-                  `${getContractNameFromRendezvousId(
-                    r.rendezvousContractId
-                  )} ` +
+                  `${sutContractName} ` +
                   `${underline(r.selectedFunction.name)} ` +
                   printedFunctionArgs
               )
@@ -247,7 +253,7 @@ export const checkInvariants = (
               `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
                 `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                 `${sutCallerWallet}        ` +
-                `${getContractNameFromRendezvousId(r.rendezvousContractId)} ` +
+                `${sutContractName} ` +
                 `${underline(r.selectedFunction.name)} ` +
                 printedFunctionArgs
             )
@@ -286,7 +292,7 @@ export const checkInvariants = (
                 `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                 `${dim(invariantCallerWallet)} ` +
                 `${green("[PASS]")} ` +
-                `${getContractNameFromRendezvousId(r.rendezvousContractId)} ` +
+                `${sutContractName} ` +
                 `${underline(r.selectedInvariant.name)} ` +
                 printedInvariantArgs
             );
@@ -294,11 +300,7 @@ export const checkInvariants = (
 
           if (!invariantCallResultJson.value) {
             throw new Error(
-              `Invariant failed for ${getContractNameFromRendezvousId(
-                r.rendezvousContractId
-              )} contract: "${r.selectedInvariant.name}" returned ${
-                invariantCallResultJson.value
-              }`
+              `Invariant failed for ${sutContractName} contract: "${r.selectedInvariant.name}" returned ${invariantCallResultJson.value}`
             );
           }
         } catch (error: any) {
@@ -312,7 +314,7 @@ export const checkInvariants = (
                 `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                 `${invariantCallerWallet} ` +
                 `[FAIL] ` +
-                `${getContractNameFromRendezvousId(r.rendezvousContractId)} ` +
+                `${sutContractName} ` +
                 `${underline(r.selectedInvariant.name)} ` +
                 printedInvariantArgs
             )
@@ -375,14 +377,6 @@ export const initializeClarityContext = (
       }
     });
   });
-
-/**
- * Get the contract name from the Rendezvous identifier.
- * @param rendezvousId The Rendezvous contract identifier.
- * @returns The contract name.
- */
-export const getContractNameFromRendezvousId = (rendezvousId: string) =>
-  rendezvousId.split(".")[1].replace("_rendezvous", "");
 
 /**
  * Filter the System Under Test (`SUT`) functions from the map of all

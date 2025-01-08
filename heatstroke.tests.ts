@@ -1,6 +1,5 @@
 import fc from "fast-check";
 import { reporter } from "./heatstroke";
-import { getContractNameFromRendezvousId } from "./invariant";
 import { EventEmitter } from "events";
 import { resolve } from "path";
 import { initSimnet } from "@hirosystems/clarinet-sdk";
@@ -105,9 +104,7 @@ describe("Custom reporter logging", () => {
             `\nError: Property failed after ${r.numRuns} tests.`,
             `Seed : ${r.seed}`,
             `\nCounterexample:`,
-            `- Contract : ${getContractNameFromRendezvousId(
-              rendezvousContractId
-            )}`,
+            `- Contract : ${rendezvousContractId.split(".")[1]}`,
             `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
             `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
             `- Caller   : ${r.sutCaller[0]}`,
@@ -235,9 +232,7 @@ describe("Custom reporter logging", () => {
             `Seed : ${r.seed}`,
             `Path : ${r.path}`,
             `\nCounterexample:`,
-            `- Contract : ${getContractNameFromRendezvousId(
-              rendezvousContractId
-            )}`,
+            `- Contract : ${rendezvousContractId.split(".")[1]}`,
             `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
             `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
             `- Caller   : ${r.sutCaller[0]}`,

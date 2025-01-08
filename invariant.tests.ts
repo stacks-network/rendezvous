@@ -1,9 +1,5 @@
 import { initSimnet } from "@hirosystems/clarinet-sdk";
-import {
-  getContractNameFromRendezvousId,
-  initializeClarityContext,
-  initializeLocalContext,
-} from "./invariant";
+import { initializeClarityContext, initializeLocalContext } from "./invariant";
 import {
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
@@ -11,7 +7,6 @@ import {
 import { join } from "path";
 import { issueFirstClassCitizenship } from "./citizen";
 import { Cl } from "@stacks/transactions";
-import fc from "fast-check";
 
 describe("Simnet contracts operations", () => {
   it("correctly initializes the local context for a given functions map", async () => {
@@ -95,29 +90,5 @@ describe("Simnet contracts operations", () => {
     );
 
     expect(actualContext).toEqual(expectedContext);
-  });
-});
-
-describe("Rendezvous contract name", () => {
-  it("gets contract name from Rendezvous contract name", () => {
-    const addressCharset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    const contractNameCharset =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-    fc.assert(
-      // Arrange
-      fc.property(
-        fc.stringOf(fc.constantFrom(...addressCharset)),
-        fc.stringOf(fc.constantFrom(...contractNameCharset)),
-        (address, contractName) => {
-          const rendezvousId = `${address}.${contractName}_rendezvous`;
-
-          // Act
-          const actual = getContractNameFromRendezvousId(rendezvousId);
-
-          // Assert
-          expect(actual).toBe(contractName);
-        }
-      )
-    );
   });
 });
