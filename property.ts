@@ -124,7 +124,7 @@ export const checkProperties = (
   }
 
   const radioReporter = (runDetails: any) => {
-    reporter(runDetails, radio, "test");
+    reporter(runDetails, radio, "test", simnet);
   };
 
   fc.assert(

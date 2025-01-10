@@ -26,13 +26,18 @@
 import { green } from "ansicolor";
 import { EventEmitter } from "events";
 import { getContractNameFromContractId } from "./shared";
+import { Simnet } from "@hirosystems/clarinet-sdk";
 
 export function reporter(
   //@ts-ignore
   runDetails,
   radio: EventEmitter,
-  type: "invariant" | "test"
+  type: "invariant" | "test",
+  simnet: Simnet
 ) {
+  const report = simnet.collectReport(false, "");
+  console.log(report.coverage);
+
   if (runDetails.failed) {
     // Report general run data.
     const r = runDetails.counterexample[0];

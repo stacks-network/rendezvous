@@ -117,7 +117,7 @@ export const checkInvariants = (
   }
 
   const radioReporter = (runDetails: any) => {
-    reporter(runDetails, radio, "invariant");
+    reporter(runDetails, radio, "invariant", simnet);
   };
 
   fc.assert(

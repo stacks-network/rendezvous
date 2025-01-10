@@ -32,7 +32,10 @@ export const issueFirstClassCitizenship = async (
   // Initialize the simnet, to generate the simnet plan and instance. The empty
   // session will be set up, and contracts will be deployed in the correct
   // order based on the simnet plan a few lines below.
-  const simnet = await initSimnet(manifestPath);
+  const simnet = await initSimnet(manifestPath, false, {
+    trackCosts: false,
+    trackCoverage: true,
+  });
 
   const simnetPlan = yaml.parse(
     readFileSync(join(manifestDir, "deployments", "default.simnet-plan.yaml"), {
