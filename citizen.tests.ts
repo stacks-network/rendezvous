@@ -81,6 +81,14 @@ describe("Simnet deployment plan operations", () => {
 
     // Verify
     const expected = {
+      "2.1": [
+        {
+          "sip-010-trait-ft-standard": {
+            clarity_version: 1,
+            path: "./.cache/requirements/SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard.clar",
+          },
+        },
+      ],
       "3.0": [
         {
           cargo: {
@@ -103,6 +111,12 @@ describe("Simnet deployment plan operations", () => {
         {
           slice: {
             path: "contracts/slice.clar",
+            clarity_version: 3,
+          },
+        },
+        {
+          trait: {
+            path: "contracts/trait.clar",
             clarity_version: 3,
           },
         },
