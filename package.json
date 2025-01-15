@@ -19,6 +19,12 @@
   ],
   "author": "Radu Bahmata, Nikos Baxevanis",
   "license": "GPL-3.0-only",
+  "files": [
+    "dist/",
+    "package.json",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@hirosystems/clarinet-sdk": "2.12.0",
     "@stacks/transactions": "^6.16.1",
