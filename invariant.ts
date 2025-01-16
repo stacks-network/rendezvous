@@ -2,7 +2,6 @@ import { Simnet } from "@hirosystems/clarinet-sdk";
 import { EventEmitter } from "events";
 import {
   argsToCV,
-  isTraitReferenceFunction,
   functionToArbitrary,
   getFunctionsListForContract,
 } from "./shared";
@@ -12,6 +11,7 @@ import { reporter } from "./heatstroke";
 import fc from "fast-check";
 import { dim, green, red, underline } from "ansicolor";
 import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
+import { isTraitReferenceFunction } from "./traits";
 
 export const checkInvariants = (
   simnet: Simnet,
@@ -144,10 +144,18 @@ export const checkInvariants = (
           fc
             .record({
               functionArgsArb: fc.tuple(
-                ...functionToArbitrary(r.selectedFunction, simnetAddresses)
+                ...functionToArbitrary(
+                  r.selectedFunction,
+                  simnetAddresses,
+                  simnet
+                )
               ),
               invariantArgsArb: fc.tuple(
-                ...functionToArbitrary(r.selectedInvariant, simnetAddresses)
+                ...functionToArbitrary(
+                  r.selectedInvariant,
+                  simnetAddresses,
+                  simnet
+                )
               ),
             })
             .map((args) => ({ ...r, ...args }))

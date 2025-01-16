@@ -1,0 +1,50 @@
+[
+  {
+    "name": "function",
+    "access": "public",
+    "args": [],
+    "outputs": {
+      "type": {
+        "response": {
+          "ok": "bool",
+          "error": "none"
+        }
+      }
+    }
+  },
+  {
+    "name": "test-no-trait",
+    "access": "public",
+    "args": [],
+    "outputs": {
+      "type": {
+        "response": {
+          "ok": "bool",
+          "error": "none"
+        }
+      }
+    }
+  },
+  {
+    "name": "test-trait",
+    "access": "public",
+    "args": [
+      {
+        "name": "a",
+        "type": "uint128"
+      },
+      {
+        "name": "token",
+        "type": "trait_reference"
+      }
+    ],
+    "outputs": {
+      "type": {
+        "response": {
+          "ok": "bool",
+          "error": "none"
+        }
+      }
+    }
+  }
+]

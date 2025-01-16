@@ -4,7 +4,7 @@ telemetry = false
 cache_dir = "./.cache"
 
 [[project.requirements]]
-contract_id = 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard'
+contract_id = 'SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.ststx-token'
 
 [contracts.cargo]
 path = "contracts/cargo.clar"
