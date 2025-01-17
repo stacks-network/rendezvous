@@ -19,7 +19,7 @@ const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
 const helpMessage = `
   rv v${version}
   
-  Usage: ./rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--path=<path>] [--runs=<runs>]
+  Usage: rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--path=<path>] [--runs=<runs>]
 
   Positional arguments:
     path-to-clarinet-project - The path to the Clarinet project.
