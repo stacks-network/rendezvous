@@ -34,6 +34,7 @@ root
 
 ```
 npm install "https://github.com/stacks-network/rendezvous.git"
+npm run build
 ```
 
 Run the fuzzer locally:
