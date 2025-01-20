@@ -3,6 +3,9 @@ name = "example"
 telemetry = false
 cache_dir = "./.cache"
 
+[[project.requirements]]
+contract_id = 'SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.ststx-token'
+
 [contracts.cargo]
 path = "contracts/cargo.clar"
 clarity_version = 3
@@ -20,6 +23,11 @@ epoch = 3.0
 
 [contracts.slice]
 path = "contracts/slice.clar"
+clarity_version = 3
+epoch = 3.0
+
+[contracts.trait]
+path = 'contracts/trait.clar'
 clarity_version = 3
 epoch = 3.0
 
