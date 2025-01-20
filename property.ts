@@ -8,10 +8,15 @@ import {
   functionToArbitrary,
   getContractNameFromContractId,
   getFunctionsListForContract,
-  isTraitReferenceFunction,
 } from "./shared";
 import { dim, green, red, underline, yellow } from "ansicolor";
 import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
+import { EnrichedContractInterfaceFunction } from "./shared.types";
+import {
+  buildTraitReferenceMap,
+  enrichInterfaceWithTraitData,
+  isTraitReferenceFunction,
+} from "./traits";
 
 export const checkProperties = (
   simnet: Simnet,
@@ -23,12 +28,42 @@ export const checkProperties = (
   runs: number | undefined,
   radio: EventEmitter
 ) => {
+  const testContractId = rendezvousList[0];
+
+  const ast = simnet.getContractAST(testContractId.split(".")[1]);
+
   // A map where the keys are the test contract identifiers and the values are
   // arrays of their test functions. This map will be used to access the test
   // functions for each test contract in the property-based testing routine.
   const testContractsTestFunctions = filterTestFunctions(
     rendezvousAllFunctions
   );
+
+  const traitReferenceFunctions = testContractsTestFunctions
+    .get(testContractId)!
+    .filter((fn) => {
+      return isTraitReferenceFunction(fn);
+    });
+
+  /**
+   * Map having the test function name as the key and the trait reference data
+   * as the value. The intermediate keys are the path to the trait reference.
+   * The path is used to identify nested trait references.
+   */
+  const traitReferenceMap =
+    traitReferenceFunctions.length > 0
+      ? buildTraitReferenceMap(testContractsTestFunctions.get(testContractId)!)
+      : new Map<string, any>();
+
+  const enrichedTestFunctionsInterfacesMap =
+    traitReferenceFunctions.length > 0
+      ? enrichInterfaceWithTraitData(
+          ast,
+          traitReferenceMap,
+          testContractsTestFunctions.get(testContractId)!,
+          testContractId
+        )
+      : testContractsTestFunctions;
 
   radio.emit(
     "logMessage",
@@ -94,10 +129,8 @@ export const checkProperties = (
 
   const simnetAddresses = Array.from(simnetAccounts.values());
 
-  const testContractId = rendezvousList[0];
-
   const testFunctions = getFunctionsListForContract(
-    testContractsTestFunctions,
+    enrichedTestFunctionsInterfacesMap,
     testContractId
   );
 
@@ -105,20 +138,6 @@ export const checkProperties = (
     radio.emit(
       "logMessage",
       red(`No test functions found for the "${sutContractName}" contract.\n`)
-    );
-    return;
-  }
-
-  const eligibleTestFunctions = testFunctions.filter(
-    (fn) => !isTraitReferenceFunction(fn)
-  );
-
-  if (eligibleTestFunctions.length === 0) {
-    radio.emit(
-      "logMessage",
-      red(
-        `No eligible test functions found for the "${sutContractName}" contract. Note: trait references are not supported.\n`
-      )
     );
     return;
   }
@@ -138,9 +157,7 @@ export const checkProperties = (
         .chain((r) =>
           fc
             .record({
-              selectedTestFunction: fc.constantFrom(
-                ...(eligibleTestFunctions as ContractInterfaceFunction[])
-              ),
+              selectedTestFunction: fc.constantFrom(...testFunctions),
             })
             .map((selectedTestFunction) => ({
               ...r,
@@ -151,7 +168,11 @@ export const checkProperties = (
           fc
             .record({
               functionArgsArb: fc.tuple(
-                ...functionToArbitrary(r.selectedTestFunction, simnetAddresses)
+                ...functionToArbitrary(
+                  r.selectedTestFunction,
+                  simnetAddresses,
+                  simnet
+                )
               ),
             })
             .map((args) => ({ ...r, ...args }))
@@ -359,8 +380,11 @@ const validateDiscardFunction = (
   contractId: string,
   discardFunctionName: string,
   testFunctionName: string,
-  testContractsDiscardFunctions: Map<string, ContractInterfaceFunction[]>,
-  testContractsTestFunctions: Map<string, ContractInterfaceFunction[]>,
+  testContractsDiscardFunctions: Map<
+    string,
+    EnrichedContractInterfaceFunction[]
+  >,
+  testContractsTestFunctions: Map<string, EnrichedContractInterfaceFunction[]>,
   radio: EventEmitter
 ) => {
   const testFunction = testContractsTestFunctions
@@ -407,8 +431,8 @@ const validateDiscardFunction = (
  * @returns A boolean indicating if the parameters match.
  */
 export const isParamsMatch = (
-  testFunction: ContractInterfaceFunction,
-  discardFunction: ContractInterfaceFunction
+  testFunction: EnrichedContractInterfaceFunction,
+  discardFunction: EnrichedContractInterfaceFunction
 ) => {
   const sortedTestFunctionArgs = [...testFunction.args].sort((a, b) =>
     a.name.localeCompare(b.name)
@@ -428,5 +452,5 @@ export const isParamsMatch = (
  * @returns A boolean indicating if the return type is boolean.
  */
 export const isReturnTypeBoolean = (
-  discardFunction: ContractInterfaceFunction
+  discardFunction: EnrichedContractInterfaceFunction
 ) => discardFunction.outputs.type === "bool";

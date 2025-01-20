@@ -81,6 +81,26 @@ describe("Simnet deployment plan operations", () => {
 
     // Verify
     const expected = {
+      "2.4": [
+        {
+          dao: {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.dao.clar",
+          },
+        },
+        {
+          "sip-010-trait-ft-standard": {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.sip-010-trait-ft-standard.clar",
+          },
+        },
+        {
+          "ststx-token": {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.ststx-token.clar",
+          },
+        },
+      ],
       "3.0": [
         {
           cargo: {
@@ -103,6 +123,12 @@ describe("Simnet deployment plan operations", () => {
         {
           slice: {
             path: "contracts/slice.clar",
+            clarity_version: 3,
+          },
+        },
+        {
+          trait: {
+            path: "contracts/trait.clar",
             clarity_version: 3,
           },
         },
