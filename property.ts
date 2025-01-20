@@ -55,7 +55,7 @@ export const checkProperties = (
   const traitReferenceFunctions = testContractsTestFunctions
     .get(testContractId)!
     .filter((fn) => {
-      isTraitReferenceFunction(fn);
+      return isTraitReferenceFunction(fn);
     });
 
   /**

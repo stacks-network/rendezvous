@@ -21,6 +21,44 @@ export const enrichInterfaceWithTraitData = (
 ): Map<string, EnrichedContractInterfaceFunction[]> => {
   const enriched = new Map<string, EnrichedContractInterfaceFunction[]>();
 
+  const enrichListArgs = (
+    listArg: any,
+    functionName: string,
+    paramMap: any,
+    path: string[]
+  ): any => {
+    const currentPath = [...path, "list"];
+    const [traitReferenceName, traitReferenceImport] = getTraitReferenceData(
+      ast,
+      functionName,
+      currentPath
+    );
+    if (traitReferenceName && traitReferenceImport) {
+      return {
+        ...listArg,
+        type: {
+          trait_reference: {
+            name: traitReferenceName,
+            import: traitReferenceImport,
+          },
+        },
+      };
+    } else if (listArg.type && listArg.type.list) {
+      return {
+        ...listArg,
+        type: {
+          list: enrichListArgs(
+            listArg.type.list,
+            functionName,
+            paramMap?.list,
+            currentPath
+          ),
+        },
+      };
+    }
+    return listArg;
+  };
+
   const enrichArgs = (
     args: any[],
     functionName: string,
@@ -36,7 +74,7 @@ export const enrichInterfaceWithTraitData = (
             tuple: enrichArgs(
               arg.type.tuple,
               functionName,
-              paramMap[arg.name].tuple,
+              paramMap[arg.name]?.tuple,
               currentPath
             ),
           },
@@ -72,7 +110,6 @@ export const enrichInterfaceWithTraitData = (
     });
   };
 
-  // Iterate over all functions in the target contract
   const enrichedFunctions = functionInterfaceList.map((f) => {
     return {
       ...f,
@@ -94,6 +131,11 @@ export const getTraitReferenceData = (
     path: string[]
   ): [string, any] | [undefined, undefined] => {
     for (const param of paramList) {
+      if (param.expr && (param.expr as TraitReference).TraitReference) {
+        const [name, importData] = (param.expr as TraitReference)
+          .TraitReference;
+        return [name, importData];
+      }
       if (!param.expr || !(param.expr as List).List) continue;
 
       const paramNameNode = (param.expr as List).List[0];
@@ -113,7 +155,6 @@ export const getTraitReferenceData = (
             return [name, importData];
           }
         } else {
-          // Recursively check for nested trait references
           if (
             (param.expr as List).List[1] &&
             ((param.expr as List).List[1].expr as List)
@@ -167,7 +208,6 @@ export const buildTraitReferenceMap = (
   const findTraitReferences = (args: any[]): any => {
     const traitReferences: any = {};
     args.forEach((arg) => {
-      console.log(`Processing argument: ${arg.name}, Type:`, arg.type);
       if (arg.type && arg.type.tuple) {
         const nestedTraitReferences = findTraitReferences(arg.type.tuple);
         if (Object.keys(nestedTraitReferences).length > 0) {
@@ -187,13 +227,11 @@ export const buildTraitReferenceMap = (
 
   functionInterfaces.forEach((fn) => {
     const traitReferences = findTraitReferences(fn.args);
-    console.log(`Function: ${fn.name}, Trait References:`, traitReferences);
     if (Object.keys(traitReferences).length > 0) {
       traitReferenceMap.set(fn.name, traitReferences);
     }
   });
 
-  console.log("Final Trait Reference Map:", traitReferenceMap);
   return traitReferenceMap;
 };
 
@@ -248,14 +286,12 @@ export const getContractIdsImplementingTrait = (
     );
   });
 
-  // This map searches through all the contracts deployed by a non-reserved
-  // address and returns the contract ASTs that implement the trait.
   const astRecord = filteredContracts.reduce<Record<string, IContractAST>>(
     (acc, contractId: string) => {
       // TODO: Move AST parsing to a pre-processing step.
       const ast = simnet.getContractAST(contractId);
 
-      // Check if the trait is implemented based on properties
+      // Check if the trait is implemented based on properties.
       const implementsTrait = ast.implemented_traits.some(
         (implementedTrait: {
           name: string;

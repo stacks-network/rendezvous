@@ -533,6 +533,110 @@ describe("Trait reference processing", () => {
     expect(enrichedTestFunctionsInterfacesMap).toEqual(expected);
   });
 
+  it("correctly enriches interface with trait reference data for a list nested trait", () => {
+    // Arrange
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
+
+    const allFunctionsInterfaces = JSON.parse(
+      readFileSync(
+        "./fixtures/list-trait-parameter-functions-interfaces.json",
+        "utf-8"
+      )
+    ).filter((f: any) => f.name !== "update-context");
+
+    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+
+    const ast = JSON.parse(
+      readFileSync("./fixtures/list-trait-parameter-ast.json", "utf-8")
+    );
+
+    const expected = new Map(
+      Object.entries({
+        [targetContractId]: [
+          {
+            name: "function",
+            access: "public",
+            args: [],
+            outputs: {
+              type: {
+                response: {
+                  error: "none",
+                  ok: "bool",
+                },
+              },
+            },
+          },
+          {
+            name: "test-no-trait",
+            access: "public",
+            args: [],
+            outputs: {
+              type: {
+                response: {
+                  error: "none",
+                  ok: "bool",
+                },
+              },
+            },
+          },
+          {
+            name: "test-trait",
+            access: "public",
+            args: [
+              {
+                name: "token-list",
+                type: {
+                  list: {
+                    length: 5,
+                    type: {
+                      trait_reference: {
+                        name: "ft-trait",
+                        import: {
+                          Imported: {
+                            name: "sip-010-trait",
+                            contract_identifier: {
+                              name: "sip-010-trait-ft-standard",
+                              issuer: [
+                                22,
+                                [
+                                  9, 159, 184, 137, 38, 216, 47, 48, 178, 244,
+                                  14, 175, 62, 228, 35, 203, 114, 91, 219, 59,
+                                ],
+                              ],
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+            outputs: {
+              type: {
+                response: {
+                  ok: "bool",
+                  error: "none",
+                },
+              },
+            },
+          },
+        ],
+      })
+    );
+
+    // Act
+    const enrichedTestFunctionsInterfacesMap = enrichInterfaceWithTraitData(
+      ast,
+      traitReferenceMap,
+      allFunctionsInterfaces,
+      targetContractId
+    );
+
+    // Assert
+    expect(enrichedTestFunctionsInterfacesMap).toEqual(expected);
+  });
+
   it("correctly retrieves the contracts implementing a trait from the Clarinet project", async () => {
     // Arrange
     const simnet = await initSimnet(
