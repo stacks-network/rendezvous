@@ -97,6 +97,30 @@ describe("Trait reference processing", () => {
     expect(traitReferenceMap).toEqual(expectedTraitReferenceMap);
   });
 
+  it("correctly builds the trait reference map for a list nested trait", () => {
+    // Arrange
+    const allFunctionsInterfaces = JSON.parse(
+      readFileSync(
+        "./fixtures/list-trait-parameter-functions-interfaces.json",
+        "utf-8"
+      )
+    );
+
+    const expectedTraitReferenceMap = new Map(
+      Object.entries({
+        "test-trait": {
+          "token-list": { list: { undefined: "trait_reference" } },
+        },
+      })
+    );
+
+    // Act
+    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+
+    // Assert
+    expect(traitReferenceMap).toEqual(expectedTraitReferenceMap);
+  });
+
   it("correctly enriches interface with trait reference data for a direct trait that is the first parameter", () => {
     // Arrange
     const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";

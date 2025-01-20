@@ -41,6 +41,18 @@ export const enrichInterfaceWithTraitData = (
             ),
           },
         };
+      } else if (arg.type && arg.type.list) {
+        return {
+          ...arg,
+          type: {
+            list: enrichArgs(
+              [arg.type.list],
+              functionName,
+              paramMap[arg.name].list,
+              currentPath
+            )[0],
+          },
+        };
       } else if (paramMap[arg.name]) {
         const [traitReferenceName, traitReferenceImport] =
           getTraitReferenceData(ast, functionName, currentPath);
@@ -155,10 +167,16 @@ export const buildTraitReferenceMap = (
   const findTraitReferences = (args: any[]): any => {
     const traitReferences: any = {};
     args.forEach((arg) => {
+      console.log(`Processing argument: ${arg.name}, Type:`, arg.type);
       if (arg.type && arg.type.tuple) {
         const nestedTraitReferences = findTraitReferences(arg.type.tuple);
         if (Object.keys(nestedTraitReferences).length > 0) {
           traitReferences[arg.name] = { tuple: nestedTraitReferences };
+        }
+      } else if (arg.type && arg.type.list) {
+        const nestedTraitReferences = findTraitReferences([arg.type.list]);
+        if (Object.keys(nestedTraitReferences).length > 0) {
+          traitReferences[arg.name] = { list: nestedTraitReferences };
         }
       } else if (arg.type === "trait_reference") {
         traitReferences[arg.name] = "trait_reference";
@@ -169,11 +187,13 @@ export const buildTraitReferenceMap = (
 
   functionInterfaces.forEach((fn) => {
     const traitReferences = findTraitReferences(fn.args);
+    console.log(`Function: ${fn.name}, Trait References:`, traitReferences);
     if (Object.keys(traitReferences).length > 0) {
       traitReferenceMap.set(fn.name, traitReferences);
     }
   });
 
+  console.log("Final Trait Reference Map:", traitReferenceMap);
   return traitReferenceMap;
 };
 
