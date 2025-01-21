@@ -12,7 +12,6 @@ import {
 } from "./shared.types";
 import { Simnet } from "@hirosystems/clarinet-sdk";
 
-// TODO: Should handle list, tuple, optional, response nesting.
 export const enrichInterfaceWithTraitData = (
   ast: IContractAST,
   traitReferenceMap: Map<string, any>,
@@ -77,6 +76,20 @@ export const enrichInterfaceWithTraitData = (
             },
           },
         };
+      } else if (arg.type && arg.type.optional) {
+        const optionalPath = [...currentPath, "optional"];
+        const optionalTraitReference = enrichArgs(
+          [{ name: "optional", type: arg.type.optional }],
+          functionName,
+          { optional: paramMap[arg.name]?.optional },
+          optionalPath
+        )[0];
+        return {
+          ...arg,
+          type: {
+            optional: optionalTraitReference.type,
+          },
+        };
       } else if (paramMap[arg.name] || paramMap.undefined) {
         const [traitReferenceName, traitReferenceImport] =
           getTraitReferenceData(
@@ -100,6 +113,7 @@ export const enrichInterfaceWithTraitData = (
     });
   };
 
+  // Iterate over all functions in the target contract
   const enrichedFunctions = functionInterfaceList.map((f) => {
     return {
       ...f,
@@ -224,6 +238,13 @@ export const buildTraitReferenceMap = (
         }
         if (Object.keys(responseTraitReferences).length > 0) {
           traitReferences[arg.name] = { response: responseTraitReferences };
+        }
+      } else if (arg.type && arg.type.optional) {
+        const nestedTraitReferences = findTraitReferences([arg.type.optional]);
+        if (Object.keys(nestedTraitReferences).length > 0) {
+          traitReferences[arg.name] = {
+            optional: nestedTraitReferences[arg.name] || "trait_reference",
+          };
         }
       } else if (arg.type === "trait_reference") {
         traitReferences[arg.name] = "trait_reference";

@@ -168,6 +168,28 @@ describe("Trait reference processing", () => {
     expect(traitReferenceMap).toEqual(expectedTraitReferenceMap);
   });
 
+  it("correctly builds the trait reference map for an optional nested trait", () => {
+    // Arrange
+    const allFunctionsInterfaces = testInputs.optionalTraitParameter
+      .functionsInterfaces as ContractInterfaceFunction[];
+
+    const expectedTraitReferenceMap = new Map(
+      Object.entries({
+        "test-trait": {
+          "opt-trait": {
+            optional: "trait_reference",
+          },
+        },
+      })
+    );
+
+    // Act
+    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+
+    // Assert
+    expect(traitReferenceMap).toEqual(expectedTraitReferenceMap);
+  });
+
   it("correctly enriches interface with trait reference data for a direct trait that is the first parameter", () => {
     // Arrange
     const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
@@ -953,6 +975,103 @@ describe("Trait reference processing", () => {
                                 ],
                               ],
                             },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+            outputs: {
+              type: {
+                response: {
+                  ok: "bool",
+                  error: "none",
+                },
+              },
+            },
+          },
+        ],
+      })
+    );
+
+    // Act
+    const enrichedTestFunctionsInterfacesMap = enrichInterfaceWithTraitData(
+      ast,
+      traitReferenceMap,
+      allFunctionsInterfaces,
+      targetContractId
+    );
+
+    // Assert
+    expect(enrichedTestFunctionsInterfacesMap).toEqual(expected);
+  });
+
+  it("correctly enriches interface with trait reference data for a optional nested trait", () => {
+    // Arrange
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
+
+    const allFunctionsInterfaces = (
+      testInputs.optionalTraitParameter
+        .functionsInterfaces as ContractInterfaceFunction[]
+    ).filter((f: any) => f.name !== "update-context");
+
+    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+
+    const ast = testInputs.optionalTraitParameter.ast as any as IContractAST;
+
+    const expected = new Map(
+      Object.entries({
+        [targetContractId]: [
+          {
+            name: "function",
+            access: "public",
+            args: [],
+            outputs: {
+              type: {
+                response: {
+                  error: "none",
+                  ok: "bool",
+                },
+              },
+            },
+          },
+          {
+            name: "test-no-trait",
+            access: "public",
+            args: [],
+            outputs: {
+              type: {
+                response: {
+                  error: "none",
+                  ok: "bool",
+                },
+              },
+            },
+          },
+          {
+            name: "test-trait",
+            access: "public",
+            args: [
+              {
+                name: "opt-trait",
+                type: {
+                  optional: {
+                    trait_reference: {
+                      name: "ft-trait",
+                      import: {
+                        Imported: {
+                          name: "sip-010-trait",
+                          contract_identifier: {
+                            name: "sip-010-trait-ft-standard",
+                            issuer: [
+                              22,
+                              [
+                                9, 159, 184, 137, 38, 216, 47, 48, 178, 244, 14,
+                                175, 62, 228, 35, 203, 114, 91, 219, 59,
+                              ],
+                            ],
                           },
                         },
                       },
@@ -9078,6 +9197,938 @@ const testInputs = {
                   ],
                 },
                 id: 63,
+                span: {
+                  start_line: 21,
+                  start_column: 3,
+                  end_line: 21,
+                  end_column: 11,
+                },
+              },
+            ],
+          },
+          id: 53,
+          span: {
+            start_line: 20,
+            start_column: 1,
+            end_line: 22,
+            end_column: 1,
+          },
+        },
+      ],
+      top_level_expression_sorting: [0, 1, 2, 3, 4, 5],
+      referenced_traits: {},
+      implemented_traits: [],
+    },
+  },
+  optionalTraitParameter: {
+    functionsInterfaces: [
+      {
+        name: "function",
+        access: "public",
+        args: [],
+        outputs: {
+          type: {
+            response: {
+              ok: "bool",
+              error: "none",
+            },
+          },
+        },
+      },
+      {
+        name: "test-no-trait",
+        access: "public",
+        args: [],
+        outputs: {
+          type: {
+            response: {
+              ok: "bool",
+              error: "none",
+            },
+          },
+        },
+      },
+      {
+        name: "test-trait",
+        access: "public",
+        args: [
+          {
+            name: "opt-trait",
+            type: {
+              optional: "trait_reference",
+            },
+          },
+        ],
+        outputs: {
+          type: {
+            response: {
+              ok: "bool",
+              error: "none",
+            },
+          },
+        },
+      },
+      {
+        name: "update-context",
+        access: "public",
+        args: [
+          {
+            name: "function-name",
+            type: {
+              "string-ascii": {
+                length: 100,
+              },
+            },
+          },
+          {
+            name: "called",
+            type: "uint128",
+          },
+        ],
+        outputs: {
+          type: {
+            response: {
+              ok: "bool",
+              error: "none",
+            },
+          },
+        },
+      },
+    ],
+    ast: {
+      contract_identifier: {
+        issuer: [
+          26,
+          [
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
+            220, 61, 195, 242, 206,
+          ],
+        ],
+        name: "trait",
+      },
+      pre_expressions: [],
+      expressions: [
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "define-public",
+                },
+                id: 2,
+                span: {
+                  start_line: 1,
+                  start_column: 2,
+                  end_line: 1,
+                  end_column: 14,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "function",
+                      },
+                      id: 4,
+                      span: {
+                        start_line: 1,
+                        start_column: 17,
+                        end_line: 1,
+                        end_column: 24,
+                      },
+                    },
+                  ],
+                },
+                id: 3,
+                span: {
+                  start_line: 1,
+                  start_column: 16,
+                  end_line: 1,
+                  end_column: 25,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "ok",
+                      },
+                      id: 6,
+                      span: {
+                        start_line: 2,
+                        start_column: 4,
+                        end_line: 2,
+                        end_column: 5,
+                      },
+                    },
+                    {
+                      expr: {
+                        Atom: "true",
+                      },
+                      id: 7,
+                      span: {
+                        start_line: 2,
+                        start_column: 7,
+                        end_line: 2,
+                        end_column: 10,
+                      },
+                    },
+                  ],
+                },
+                id: 5,
+                span: {
+                  start_line: 2,
+                  start_column: 3,
+                  end_line: 2,
+                  end_column: 11,
+                },
+              },
+            ],
+          },
+          id: 1,
+          span: {
+            start_line: 1,
+            start_column: 1,
+            end_line: 3,
+            end_column: 1,
+          },
+        },
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "define-map",
+                },
+                id: 9,
+                span: {
+                  start_line: 6,
+                  start_column: 2,
+                  end_line: 6,
+                  end_column: 11,
+                },
+              },
+              {
+                expr: {
+                  Atom: "context",
+                },
+                id: 10,
+                span: {
+                  start_line: 6,
+                  start_column: 13,
+                  end_line: 6,
+                  end_column: 19,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "string-ascii",
+                      },
+                      id: 12,
+                      span: {
+                        start_line: 6,
+                        start_column: 22,
+                        end_line: 6,
+                        end_column: 33,
+                      },
+                    },
+                    {
+                      expr: {
+                        LiteralValue: {
+                          Int: "100",
+                        },
+                      },
+                      id: 13,
+                      span: {
+                        start_line: 6,
+                        start_column: 35,
+                        end_line: 6,
+                        end_column: 37,
+                      },
+                    },
+                  ],
+                },
+                id: 11,
+                span: {
+                  start_line: 6,
+                  start_column: 21,
+                  end_line: 6,
+                  end_column: 38,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "tuple",
+                      },
+                      id: 15,
+                      span: {
+                        start_line: 0,
+                        start_column: 0,
+                        end_line: 0,
+                        end_column: 0,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "called",
+                            },
+                            id: 17,
+                            span: {
+                              start_line: 7,
+                              start_column: 5,
+                              end_line: 7,
+                              end_column: 10,
+                            },
+                          },
+                          {
+                            expr: {
+                              Atom: "uint",
+                            },
+                            id: 18,
+                            span: {
+                              start_line: 7,
+                              start_column: 13,
+                              end_line: 7,
+                              end_column: 16,
+                            },
+                            post_comments: [
+                              [
+                                "other data",
+                                {
+                                  start_line: 8,
+                                  start_column: 5,
+                                  end_line: 8,
+                                  end_column: 17,
+                                },
+                              ],
+                            ],
+                          },
+                        ],
+                      },
+                      id: 16,
+                      span: {
+                        start_line: 7,
+                        start_column: 5,
+                        end_line: 7,
+                        end_column: 16,
+                      },
+                    },
+                  ],
+                },
+                id: 14,
+                span: {
+                  start_line: 6,
+                  start_column: 40,
+                  end_line: 9,
+                  end_column: 3,
+                },
+              },
+            ],
+          },
+          id: 8,
+          span: {
+            start_line: 6,
+            start_column: 1,
+            end_line: 9,
+            end_column: 4,
+          },
+        },
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "define-public",
+                },
+                id: 20,
+                span: {
+                  start_line: 11,
+                  start_column: 4,
+                  end_line: 11,
+                  end_column: 16,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "update-context",
+                      },
+                      id: 22,
+                      span: {
+                        start_line: 11,
+                        start_column: 19,
+                        end_line: 11,
+                        end_column: 32,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "function-name",
+                            },
+                            id: 24,
+                            span: {
+                              start_line: 11,
+                              start_column: 35,
+                              end_line: 11,
+                              end_column: 47,
+                            },
+                          },
+                          {
+                            expr: {
+                              List: [
+                                {
+                                  expr: {
+                                    Atom: "string-ascii",
+                                  },
+                                  id: 26,
+                                  span: {
+                                    start_line: 11,
+                                    start_column: 50,
+                                    end_line: 11,
+                                    end_column: 61,
+                                  },
+                                },
+                                {
+                                  expr: {
+                                    LiteralValue: {
+                                      Int: "100",
+                                    },
+                                  },
+                                  id: 27,
+                                  span: {
+                                    start_line: 11,
+                                    start_column: 63,
+                                    end_line: 11,
+                                    end_column: 65,
+                                  },
+                                },
+                              ],
+                            },
+                            id: 25,
+                            span: {
+                              start_line: 11,
+                              start_column: 49,
+                              end_line: 11,
+                              end_column: 66,
+                            },
+                          },
+                        ],
+                      },
+                      id: 23,
+                      span: {
+                        start_line: 11,
+                        start_column: 34,
+                        end_line: 11,
+                        end_column: 67,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "called",
+                            },
+                            id: 29,
+                            span: {
+                              start_line: 11,
+                              start_column: 70,
+                              end_line: 11,
+                              end_column: 75,
+                            },
+                          },
+                          {
+                            expr: {
+                              Atom: "uint",
+                            },
+                            id: 30,
+                            span: {
+                              start_line: 11,
+                              start_column: 77,
+                              end_line: 11,
+                              end_column: 80,
+                            },
+                          },
+                        ],
+                      },
+                      id: 28,
+                      span: {
+                        start_line: 11,
+                        start_column: 69,
+                        end_line: 11,
+                        end_column: 81,
+                      },
+                    },
+                  ],
+                },
+                id: 21,
+                span: {
+                  start_line: 11,
+                  start_column: 18,
+                  end_line: 11,
+                  end_column: 82,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "ok",
+                      },
+                      id: 32,
+                      span: {
+                        start_line: 12,
+                        start_column: 6,
+                        end_line: 12,
+                        end_column: 7,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "map-set",
+                            },
+                            id: 34,
+                            span: {
+                              start_line: 12,
+                              start_column: 10,
+                              end_line: 12,
+                              end_column: 16,
+                            },
+                          },
+                          {
+                            expr: {
+                              Atom: "context",
+                            },
+                            id: 35,
+                            span: {
+                              start_line: 12,
+                              start_column: 18,
+                              end_line: 12,
+                              end_column: 24,
+                            },
+                          },
+                          {
+                            expr: {
+                              Atom: "function-name",
+                            },
+                            id: 36,
+                            span: {
+                              start_line: 12,
+                              start_column: 26,
+                              end_line: 12,
+                              end_column: 38,
+                            },
+                          },
+                          {
+                            expr: {
+                              List: [
+                                {
+                                  expr: {
+                                    Atom: "tuple",
+                                  },
+                                  id: 38,
+                                  span: {
+                                    start_line: 0,
+                                    start_column: 0,
+                                    end_line: 0,
+                                    end_column: 0,
+                                  },
+                                },
+                                {
+                                  expr: {
+                                    List: [
+                                      {
+                                        expr: {
+                                          Atom: "called",
+                                        },
+                                        id: 40,
+                                        span: {
+                                          start_line: 12,
+                                          start_column: 41,
+                                          end_line: 12,
+                                          end_column: 46,
+                                        },
+                                      },
+                                      {
+                                        expr: {
+                                          Atom: "called",
+                                        },
+                                        id: 41,
+                                        span: {
+                                          start_line: 12,
+                                          start_column: 49,
+                                          end_line: 12,
+                                          end_column: 54,
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  id: 39,
+                                  span: {
+                                    start_line: 12,
+                                    start_column: 41,
+                                    end_line: 12,
+                                    end_column: 54,
+                                  },
+                                },
+                              ],
+                            },
+                            id: 37,
+                            span: {
+                              start_line: 12,
+                              start_column: 40,
+                              end_line: 12,
+                              end_column: 55,
+                            },
+                          },
+                        ],
+                      },
+                      id: 33,
+                      span: {
+                        start_line: 12,
+                        start_column: 9,
+                        end_line: 12,
+                        end_column: 56,
+                      },
+                    },
+                  ],
+                },
+                id: 31,
+                span: {
+                  start_line: 12,
+                  start_column: 5,
+                  end_line: 12,
+                  end_column: 57,
+                },
+              },
+            ],
+          },
+          id: 19,
+          span: {
+            start_line: 11,
+            start_column: 3,
+            end_line: 12,
+            end_column: 58,
+          },
+        },
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "use-trait",
+                },
+                id: 43,
+                span: {
+                  start_line: 14,
+                  start_column: 2,
+                  end_line: 14,
+                  end_column: 10,
+                },
+              },
+              {
+                expr: {
+                  Atom: "ft-trait",
+                },
+                id: 44,
+                span: {
+                  start_line: 14,
+                  start_column: 12,
+                  end_line: 14,
+                  end_column: 19,
+                },
+              },
+              {
+                expr: {
+                  Field: {
+                    name: "sip-010-trait",
+                    contract_identifier: {
+                      issuer: [
+                        22,
+                        [
+                          9, 159, 184, 137, 38, 216, 47, 48, 178, 244, 14, 175,
+                          62, 228, 35, 203, 114, 91, 219, 59,
+                        ],
+                      ],
+                      name: "sip-010-trait-ft-standard",
+                    },
+                  },
+                },
+                id: 45,
+                span: {
+                  start_line: 14,
+                  start_column: 21,
+                  end_line: 14,
+                  end_column: 101,
+                },
+              },
+            ],
+          },
+          id: 42,
+          span: {
+            start_line: 14,
+            start_column: 1,
+            end_line: 14,
+            end_column: 102,
+          },
+        },
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "define-public",
+                },
+                id: 47,
+                span: {
+                  start_line: 16,
+                  start_column: 2,
+                  end_line: 16,
+                  end_column: 14,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "test-no-trait",
+                      },
+                      id: 49,
+                      span: {
+                        start_line: 16,
+                        start_column: 17,
+                        end_line: 16,
+                        end_column: 29,
+                      },
+                    },
+                  ],
+                },
+                id: 48,
+                span: {
+                  start_line: 16,
+                  start_column: 16,
+                  end_line: 16,
+                  end_column: 30,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "ok",
+                      },
+                      id: 51,
+                      span: {
+                        start_line: 17,
+                        start_column: 4,
+                        end_line: 17,
+                        end_column: 5,
+                      },
+                    },
+                    {
+                      expr: {
+                        Atom: "true",
+                      },
+                      id: 52,
+                      span: {
+                        start_line: 17,
+                        start_column: 7,
+                        end_line: 17,
+                        end_column: 10,
+                      },
+                    },
+                  ],
+                },
+                id: 50,
+                span: {
+                  start_line: 17,
+                  start_column: 3,
+                  end_line: 17,
+                  end_column: 11,
+                },
+              },
+            ],
+          },
+          id: 46,
+          span: {
+            start_line: 16,
+            start_column: 1,
+            end_line: 18,
+            end_column: 1,
+          },
+        },
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "define-public",
+                },
+                id: 54,
+                span: {
+                  start_line: 20,
+                  start_column: 2,
+                  end_line: 20,
+                  end_column: 14,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "test-trait",
+                      },
+                      id: 56,
+                      span: {
+                        start_line: 20,
+                        start_column: 17,
+                        end_line: 20,
+                        end_column: 26,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "opt-trait",
+                            },
+                            id: 58,
+                            span: {
+                              start_line: 20,
+                              start_column: 29,
+                              end_line: 20,
+                              end_column: 37,
+                            },
+                          },
+                          {
+                            expr: {
+                              List: [
+                                {
+                                  expr: {
+                                    Atom: "optional",
+                                  },
+                                  id: 60,
+                                  span: {
+                                    start_line: 20,
+                                    start_column: 40,
+                                    end_line: 20,
+                                    end_column: 47,
+                                  },
+                                },
+                                {
+                                  expr: {
+                                    TraitReference: [
+                                      "ft-trait",
+                                      {
+                                        Imported: {
+                                          name: "sip-010-trait",
+                                          contract_identifier: {
+                                            issuer: [
+                                              22,
+                                              [
+                                                9, 159, 184, 137, 38, 216, 47,
+                                                48, 178, 244, 14, 175, 62, 228,
+                                                35, 203, 114, 91, 219, 59,
+                                              ],
+                                            ],
+                                            name: "sip-010-trait-ft-standard",
+                                          },
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  id: 61,
+                                  span: {
+                                    start_line: 20,
+                                    start_column: 49,
+                                    end_line: 20,
+                                    end_column: 58,
+                                  },
+                                },
+                              ],
+                            },
+                            id: 59,
+                            span: {
+                              start_line: 20,
+                              start_column: 39,
+                              end_line: 20,
+                              end_column: 59,
+                            },
+                          },
+                        ],
+                      },
+                      id: 57,
+                      span: {
+                        start_line: 20,
+                        start_column: 28,
+                        end_line: 20,
+                        end_column: 60,
+                      },
+                    },
+                  ],
+                },
+                id: 55,
+                span: {
+                  start_line: 20,
+                  start_column: 16,
+                  end_line: 20,
+                  end_column: 61,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "ok",
+                      },
+                      id: 63,
+                      span: {
+                        start_line: 21,
+                        start_column: 4,
+                        end_line: 21,
+                        end_column: 5,
+                      },
+                    },
+                    {
+                      expr: {
+                        Atom: "true",
+                      },
+                      id: 64,
+                      span: {
+                        start_line: 21,
+                        start_column: 7,
+                        end_line: 21,
+                        end_column: 10,
+                      },
+                    },
+                  ],
+                },
+                id: 62,
                 span: {
                   start_line: 21,
                   start_column: 3,
