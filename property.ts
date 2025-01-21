@@ -17,7 +17,6 @@ import {
   enrichInterfaceWithTraitData,
   isTraitReferenceFunction,
 } from "./traits";
-import { writeFileSync } from "fs";
 
 export const checkProperties = (
   simnet: Simnet,
@@ -31,19 +30,7 @@ export const checkProperties = (
 ) => {
   const testContractId = rendezvousList[0];
 
-  const interfaces = rendezvousAllFunctions.get(testContractId)!;
-
-  // writeFileSync(
-  //   "./fixtures/list-trait-parameter-functions-interfaces.json",
-  //   JSON.stringify(interfaces, null, 2)
-  // );
-
   const ast = simnet.getContractAST(testContractId.split(".")[1]);
-
-  // writeFileSync(
-  //   "./fixtures/list-trait-parameter-ast.json",
-  //   JSON.stringify(ast, null, 2)
-  // );
 
   // A map where the keys are the test contract identifiers and the values are
   // arrays of their test functions. This map will be used to access the test
