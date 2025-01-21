@@ -30,8 +30,6 @@ export const checkProperties = (
 ) => {
   const testContractId = rendezvousList[0];
 
-  const ast = simnet.getContractAST(testContractId.split(".")[1]);
-
   // A map where the keys are the test contract identifiers and the values are
   // arrays of their test functions. This map will be used to access the test
   // functions for each test contract in the property-based testing routine.
@@ -41,25 +39,15 @@ export const checkProperties = (
 
   const traitReferenceFunctions = testContractsTestFunctions
     .get(testContractId)!
-    .filter((fn) => {
-      return isTraitReferenceFunction(fn);
-    });
+    .filter((fn) => isTraitReferenceFunction(fn));
 
-  /**
-   * Map having the test function name as the key and the trait reference data
-   * as the value. The intermediate keys are the path to the trait reference.
-   * The path is used to identify nested trait references.
-   */
-  const traitReferenceMap =
-    traitReferenceFunctions.length > 0
-      ? buildTraitReferenceMap(testContractsTestFunctions.get(testContractId)!)
-      : new Map<string, any>();
-
-  const enrichedTestFunctionsInterfacesMap =
+  const enrichedTestFunctionsInterfaces =
     traitReferenceFunctions.length > 0
       ? enrichInterfaceWithTraitData(
-          ast,
-          traitReferenceMap,
+          simnet.getContractAST(sutContractName),
+          buildTraitReferenceMap(
+            testContractsTestFunctions.get(testContractId)!
+          ),
           testContractsTestFunctions.get(testContractId)!,
           testContractId
         )
@@ -130,7 +118,7 @@ export const checkProperties = (
   const simnetAddresses = Array.from(simnetAccounts.values());
 
   const testFunctions = getFunctionsListForContract(
-    enrichedTestFunctionsInterfacesMap,
+    enrichedTestFunctionsInterfaces,
     testContractId
   );
 
