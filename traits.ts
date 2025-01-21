@@ -113,7 +113,6 @@ export const enrichInterfaceWithTraitData = (
     });
   };
 
-  // Iterate over all functions in the target contract
   const enrichedFunctions = functionInterfaceList.map((f) => {
     return {
       ...f,
@@ -180,10 +179,12 @@ export const getTraitReferenceData = (
     if (!node.expr || !(node.expr as List).List) continue;
 
     const functionList = (node.expr as List).List;
-    const definePublicNode = functionList[0];
+    const defineFunctionNode = functionList[0];
     if (
-      !definePublicNode ||
-      (definePublicNode.expr as Atom).Atom !== "define-public"
+      !defineFunctionNode ||
+      !["define-public", "define-read-only"].includes(
+        (defineFunctionNode.expr as Atom).Atom.toString()
+      )
     )
       continue;
 
