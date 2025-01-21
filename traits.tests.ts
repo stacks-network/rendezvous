@@ -17,17 +17,17 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = testInputs.directTrait1stParameter
       .functionsInterfaces as ContractInterfaceFunction[];
 
-    const expectedTraitReferenceMap = new Map(
+    const expected = new Map(
       Object.entries({
         "test-trait": { token: "trait_reference" },
       })
     );
 
     // Act
-    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+    const actual = buildTraitReferenceMap(allFunctionsInterfaces);
 
     // Assert
-    expect(traitReferenceMap).toEqual(expectedTraitReferenceMap);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly builds the trait reference map for a direct trait that is the second parameter", () => {
@@ -35,17 +35,17 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = testInputs.directTrait2ndParameter
       .functionsInterfaces as ContractInterfaceFunction[];
 
-    const expectedTraitReferenceMap = new Map(
+    const expected = new Map(
       Object.entries({
         "test-trait": { token: "trait_reference" },
       })
     );
 
     // Act
-    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+    const actual = buildTraitReferenceMap(allFunctionsInterfaces);
 
     // Assert
-    expect(traitReferenceMap).toEqual(expectedTraitReferenceMap);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly builds the trait reference map for a direct trait that is the fifth parameter", () => {
@@ -53,17 +53,17 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = testInputs.directTrait5thParameter
       .functionsInterfaces as ContractInterfaceFunction[];
 
-    const expectedTraitReferenceMap = new Map(
+    const expected = new Map(
       Object.entries({
         "test-trait": { e: "trait_reference" },
       })
     );
 
     // Act
-    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+    const actual = buildTraitReferenceMap(allFunctionsInterfaces);
 
     // Assert
-    expect(traitReferenceMap).toEqual(expectedTraitReferenceMap);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly builds the trait reference map for a tuple nested trait that is the first parameter", () => {
@@ -71,7 +71,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = testInputs.tupleTraitParameter
       .functionsInterfaces as ContractInterfaceFunction[];
 
-    const expectedTraitReferenceMap = new Map(
+    const expected = new Map(
       Object.entries({
         "test-trait": {
           "tuple-param": { tuple: { token: "trait_reference" } },
@@ -80,10 +80,10 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+    const actual = buildTraitReferenceMap(allFunctionsInterfaces);
 
     // Assert
-    expect(traitReferenceMap).toEqual(expectedTraitReferenceMap);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly builds the trait reference map for a list nested trait", () => {
@@ -91,7 +91,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = testInputs.listTraitParameter
       .functionsInterfaces as ContractInterfaceFunction[];
 
-    const expectedTraitReferenceMap = new Map(
+    const expected = new Map(
       Object.entries({
         "test-trait": {
           "token-list": { list: { undefined: "trait_reference" } },
@@ -100,10 +100,10 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+    const actual = buildTraitReferenceMap(allFunctionsInterfaces);
 
     // Assert
-    expect(traitReferenceMap).toEqual(expectedTraitReferenceMap);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly builds the trait reference map for a response ok branch nested trait", () => {
@@ -111,7 +111,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = testInputs.responseOkTraitParameter
       .functionsInterfaces as ContractInterfaceFunction[];
 
-    const expectedTraitReferenceMap = new Map(
+    const expected = new Map(
       Object.entries({
         "test-trait": {
           "resp-trait-param": { response: { ok: "trait_reference" } },
@@ -120,10 +120,10 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+    const actual = buildTraitReferenceMap(allFunctionsInterfaces);
 
     // Assert
-    expect(traitReferenceMap).toEqual(expectedTraitReferenceMap);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly builds the trait reference map for a response error branch nested trait", () => {
@@ -131,7 +131,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = testInputs.responseErrTraitParameter
       .functionsInterfaces as ContractInterfaceFunction[];
 
-    const expectedTraitReferenceMap = new Map(
+    const expected = new Map(
       Object.entries({
         "test-trait": {
           "resp-trait-param": { response: { error: "trait_reference" } },
@@ -140,10 +140,10 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+    const actual = buildTraitReferenceMap(allFunctionsInterfaces);
 
     // Assert
-    expect(traitReferenceMap).toEqual(expectedTraitReferenceMap);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly builds the trait reference map for a response both branches nested trait", () => {
@@ -151,7 +151,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = testInputs.responseBothTraitParameter
       .functionsInterfaces as ContractInterfaceFunction[];
 
-    const expectedTraitReferenceMap = new Map(
+    const expected = new Map(
       Object.entries({
         "test-trait": {
           "resp-trait-param": {
@@ -162,10 +162,10 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+    const actual = buildTraitReferenceMap(allFunctionsInterfaces);
 
     // Assert
-    expect(traitReferenceMap).toEqual(expectedTraitReferenceMap);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly builds the trait reference map for an optional nested trait", () => {
@@ -173,7 +173,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = testInputs.optionalTraitParameter
       .functionsInterfaces as ContractInterfaceFunction[];
 
-    const expectedTraitReferenceMap = new Map(
+    const expected = new Map(
       Object.entries({
         "test-trait": {
           "opt-trait": {
@@ -184,10 +184,10 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+    const actual = buildTraitReferenceMap(allFunctionsInterfaces);
 
     // Assert
-    expect(traitReferenceMap).toEqual(expectedTraitReferenceMap);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly enriches interface with trait reference data for a direct trait that is the first parameter", () => {
@@ -274,7 +274,7 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const enrichedTestFunctionsInterfacesMap = enrichInterfaceWithTraitData(
+    const actual = enrichInterfaceWithTraitData(
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
@@ -282,7 +282,7 @@ describe("Trait reference processing", () => {
     );
 
     // Assert
-    expect(enrichedTestFunctionsInterfacesMap).toEqual(expected);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly enriches interface with trait reference data for a direct trait that is the second parameter", () => {
@@ -370,7 +370,7 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const enrichedTestFunctionsInterfacesMap = enrichInterfaceWithTraitData(
+    const actual = enrichInterfaceWithTraitData(
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
@@ -378,7 +378,7 @@ describe("Trait reference processing", () => {
     );
 
     // Assert
-    expect(enrichedTestFunctionsInterfacesMap).toEqual(expected);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly enriches interface with trait reference data for a direct trait that is the fifth parameter", () => {
@@ -476,7 +476,7 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const enrichedTestFunctionsInterfacesMap = enrichInterfaceWithTraitData(
+    const actual = enrichInterfaceWithTraitData(
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
@@ -484,7 +484,7 @@ describe("Trait reference processing", () => {
     );
 
     // Assert
-    expect(enrichedTestFunctionsInterfacesMap).toEqual(expected);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly enriches interface with trait reference data for a tuple nested trait that is the first parameter", () => {
@@ -577,7 +577,7 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const enrichedTestFunctionsInterfacesMap = enrichInterfaceWithTraitData(
+    const actual = enrichInterfaceWithTraitData(
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
@@ -585,7 +585,7 @@ describe("Trait reference processing", () => {
     );
 
     // Assert
-    expect(enrichedTestFunctionsInterfacesMap).toEqual(expected);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly enriches interface with trait reference data for a list nested trait", () => {
@@ -677,7 +677,7 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const enrichedTestFunctionsInterfacesMap = enrichInterfaceWithTraitData(
+    const actual = enrichInterfaceWithTraitData(
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
@@ -685,7 +685,7 @@ describe("Trait reference processing", () => {
     );
 
     // Assert
-    expect(enrichedTestFunctionsInterfacesMap).toEqual(expected);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly enriches interface with trait reference data for a response ok branch nested trait", () => {
@@ -777,7 +777,7 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const enrichedTestFunctionsInterfacesMap = enrichInterfaceWithTraitData(
+    const actual = enrichInterfaceWithTraitData(
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
@@ -785,7 +785,7 @@ describe("Trait reference processing", () => {
     );
 
     // Assert
-    expect(enrichedTestFunctionsInterfacesMap).toEqual(expected);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly enriches interface with trait reference data for a response error branch nested trait", () => {
@@ -877,7 +877,7 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const enrichedTestFunctionsInterfacesMap = enrichInterfaceWithTraitData(
+    const actual = enrichInterfaceWithTraitData(
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
@@ -885,7 +885,7 @@ describe("Trait reference processing", () => {
     );
 
     // Assert
-    expect(enrichedTestFunctionsInterfacesMap).toEqual(expected);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly enriches interface with trait reference data for a response both branches nested trait", () => {
@@ -997,7 +997,7 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const enrichedTestFunctionsInterfacesMap = enrichInterfaceWithTraitData(
+    const actual = enrichInterfaceWithTraitData(
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
@@ -1005,7 +1005,7 @@ describe("Trait reference processing", () => {
     );
 
     // Assert
-    expect(enrichedTestFunctionsInterfacesMap).toEqual(expected);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly enriches interface with trait reference data for a optional nested trait", () => {
@@ -1094,7 +1094,7 @@ describe("Trait reference processing", () => {
     );
 
     // Act
-    const enrichedTestFunctionsInterfacesMap = enrichInterfaceWithTraitData(
+    const actual = enrichInterfaceWithTraitData(
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
@@ -1102,7 +1102,7 @@ describe("Trait reference processing", () => {
     );
 
     // Assert
-    expect(enrichedTestFunctionsInterfacesMap).toEqual(expected);
+    expect(actual).toEqual(expected);
   });
 
   it("correctly retrieves the contracts implementing a trait from the Clarinet project", async () => {
@@ -1133,13 +1133,10 @@ describe("Trait reference processing", () => {
     const expected = ["SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.ststx-token"];
 
     // Act
-    const traitImplementations = getContractIdsImplementingTrait(
-      traitData,
-      simnet
-    );
+    const actual = getContractIdsImplementingTrait(traitData, simnet);
 
     // Assert
-    expect(traitImplementations).toEqual(expected);
+    expect(actual).toEqual(expected);
   });
 });
 
@@ -1168,10 +1165,10 @@ describe("Trait reference detection", () => {
     } as ContractInterfaceFunction;
 
     // Act
-    const result = isTraitReferenceFunction(noTraitFunction);
+    const actual = isTraitReferenceFunction(noTraitFunction);
 
     // Assert
-    expect(result).toBe(false);
+    expect(actual).toBe(false);
   });
 
   it("returns true when an argument contains a trait reference", async () => {
@@ -1194,10 +1191,10 @@ describe("Trait reference detection", () => {
     } as ContractInterfaceFunction;
 
     // Act
-    const result = isTraitReferenceFunction(traitFunction);
+    const actual = isTraitReferenceFunction(traitFunction);
 
     // Assert
-    expect(result).toBe(true);
+    expect(actual).toBe(true);
   });
 
   it("returns false for a list argument without traits", async () => {
@@ -1222,10 +1219,10 @@ describe("Trait reference detection", () => {
     } as ContractInterfaceFunction;
 
     // Act
-    const result = isTraitReferenceFunction(listFunction);
+    const actual = isTraitReferenceFunction(listFunction);
 
     // Assert
-    expect(result).toBe(false);
+    expect(actual).toBe(false);
   });
 
   it("returns true for a list argument with traits", async () => {
@@ -1250,10 +1247,10 @@ describe("Trait reference detection", () => {
     } as ContractInterfaceFunction;
 
     // Act
-    const result = isTraitReferenceFunction(listWithTraitFunction);
+    const actual = isTraitReferenceFunction(listWithTraitFunction);
 
     // Assert
-    expect(result).toBe(true);
+    expect(actual).toBe(true);
   });
 
   it("returns false for a tuple argument without traits", async () => {
@@ -1283,10 +1280,10 @@ describe("Trait reference detection", () => {
     } as ContractInterfaceFunction;
 
     // Act
-    const result = isTraitReferenceFunction(tupleFunction);
+    const actual = isTraitReferenceFunction(tupleFunction);
 
     // Assert
-    expect(result).toBe(false);
+    expect(actual).toBe(false);
   });
 
   it("returns true for a tuple argument with traits", async () => {
@@ -1316,10 +1313,10 @@ describe("Trait reference detection", () => {
     } as ContractInterfaceFunction;
 
     // Act
-    const result = isTraitReferenceFunction(tupleWithTraitFunction);
+    const actual = isTraitReferenceFunction(tupleWithTraitFunction);
 
     // Assert
-    expect(result).toBe(true);
+    expect(actual).toBe(true);
   });
 
   it("returns false for an optional argument without traits", async () => {
@@ -1339,10 +1336,10 @@ describe("Trait reference detection", () => {
     } as ContractInterfaceFunction;
 
     // Act
-    const result = isTraitReferenceFunction(optionalFunction);
+    const actual = isTraitReferenceFunction(optionalFunction);
 
     // Assert
-    expect(result).toBe(false);
+    expect(actual).toBe(false);
   });
 
   it("returns true for an optional argument with traits", async () => {
@@ -1362,10 +1359,10 @@ describe("Trait reference detection", () => {
     } as ContractInterfaceFunction;
 
     // Act
-    const result = isTraitReferenceFunction(optionalWithTraitFunction);
+    const actual = isTraitReferenceFunction(optionalWithTraitFunction);
 
     // Assert
-    expect(result).toBe(true);
+    expect(actual).toBe(true);
   });
 
   it("returns false for a response argument without traits", async () => {
@@ -1392,10 +1389,10 @@ describe("Trait reference detection", () => {
     } as ContractInterfaceFunction;
 
     // Act
-    const result = isTraitReferenceFunction(responseFunction);
+    const actual = isTraitReferenceFunction(responseFunction);
 
     // Assert
-    expect(result).toBe(false);
+    expect(actual).toBe(false);
   });
 
   it("returns true for a response argument with traits", async () => {
@@ -1422,10 +1419,10 @@ describe("Trait reference detection", () => {
     } as ContractInterfaceFunction;
 
     // Act
-    const result = isTraitReferenceFunction(responseWithTraitFunction);
+    const actual = isTraitReferenceFunction(responseWithTraitFunction);
 
     // Assert
-    expect(result).toBe(true);
+    expect(actual).toBe(true);
   });
 
   it("returns false for unexpected argument types", async () => {
@@ -1445,10 +1442,10 @@ describe("Trait reference detection", () => {
     } as ContractInterfaceFunction;
 
     // Act
-    const result = isTraitReferenceFunction(unexpectedTypeFunction);
+    const actual = isTraitReferenceFunction(unexpectedTypeFunction);
 
     // Assert
-    expect(result).toBe(false);
+    expect(actual).toBe(false);
   });
 
   it("returns false for an argument with an unrecognized complex type", async () => {
@@ -1461,10 +1458,10 @@ describe("Trait reference detection", () => {
     } as ContractInterfaceFunction;
 
     // Act
-    const result = isTraitReferenceFunction(unrecognizedTypeFunction);
+    const actual = isTraitReferenceFunction(unrecognizedTypeFunction);
 
     // Assert
-    expect(result).toBe(false);
+    expect(actual).toBe(false);
   });
 });
 
