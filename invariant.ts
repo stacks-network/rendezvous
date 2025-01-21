@@ -11,7 +11,12 @@ import { reporter } from "./heatstroke";
 import fc from "fast-check";
 import { dim, green, red, underline } from "ansicolor";
 import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
-import { isTraitReferenceFunction } from "./traits";
+import {
+  buildTraitReferenceMap,
+  enrichInterfaceWithTraitData,
+  isTraitReferenceFunction,
+} from "./traits";
+import { EnrichedContractInterfaceFunction } from "./shared.types";
 
 export const checkInvariants = (
   simnet: Simnet,
@@ -28,6 +33,26 @@ export const checkInvariants = (
   // to access the SUT functions for each Rendezvous contract afterwards.
   const rendezvousSutFunctions = filterSutFunctions(rendezvousAllFunctions);
 
+  // The Rendezvous identifier is the first one in the list. Only one contract
+  // can be fuzzed at a time.
+  const rendezvousContractId = rendezvousList[0];
+
+  const traitReferenceSutFunctions = rendezvousSutFunctions
+    .get(rendezvousContractId)!
+    .filter((fn) => isTraitReferenceFunction(fn));
+
+  const enrichedSutFunctionsInterfaces =
+    traitReferenceSutFunctions.length > 0
+      ? enrichInterfaceWithTraitData(
+          simnet.getContractAST(sutContractName),
+          buildTraitReferenceMap(
+            rendezvousSutFunctions.get(rendezvousContractId)!
+          ),
+          rendezvousSutFunctions.get(rendezvousContractId)!,
+          rendezvousContractId
+        )
+      : rendezvousSutFunctions;
+
   // A map where the keys are the Rendezvous identifiers and the values are
   // arrays of their invariant functions. This map will be used to access the
   // invariant functions for each Rendezvous contract afterwards.
@@ -35,11 +60,27 @@ export const checkInvariants = (
     rendezvousAllFunctions
   );
 
+  const traitReferenceInvariantFunctions = rendezvousInvariantFunctions
+    .get(rendezvousContractId)!
+    .filter((fn) => isTraitReferenceFunction(fn));
+
+  const enrichedInvariantFunctionsInterfaces =
+    traitReferenceInvariantFunctions.length > 0
+      ? enrichInterfaceWithTraitData(
+          simnet.getContractAST(sutContractName),
+          buildTraitReferenceMap(
+            rendezvousInvariantFunctions.get(rendezvousContractId)!
+          ),
+          rendezvousInvariantFunctions.get(rendezvousContractId)!,
+          rendezvousContractId
+        )
+      : rendezvousInvariantFunctions;
+
   // Set up local context to track SUT function call counts.
-  const localContext = initializeLocalContext(rendezvousSutFunctions);
+  const localContext = initializeLocalContext(enrichedSutFunctionsInterfaces);
 
   // Set up context in simnet by initializing state for SUT.
-  initializeClarityContext(simnet, rendezvousSutFunctions);
+  initializeClarityContext(simnet, enrichedSutFunctionsInterfaces);
 
   radio.emit(
     "logMessage",
@@ -54,17 +95,13 @@ export const checkInvariants = (
 
   const simnetAddresses = Array.from(simnetAccounts.values());
 
-  // The Rendezvous identifier is the first one in the list. Only one contract
-  // can be fuzzed at a time.
-  const rendezvousContractId = rendezvousList[0];
-
   const functions = getFunctionsListForContract(
-    rendezvousSutFunctions,
+    enrichedSutFunctionsInterfaces,
     rendezvousContractId
   );
 
   const invariantFunctions = getFunctionsListForContract(
-    rendezvousInvariantFunctions,
+    enrichedInvariantFunctionsInterfaces,
     rendezvousContractId
   );
 
@@ -83,34 +120,6 @@ export const checkInvariants = (
       "logMessage",
       red(
         `No invariant functions found for the "${sutContractName}" contract. Beware, for your contract may be exposed to unforeseen issues.\n`
-      )
-    );
-    return;
-  }
-
-  const eligibleFunctions = functions.filter(
-    (fn) => !isTraitReferenceFunction(fn)
-  );
-
-  const eligibleInvariants = invariantFunctions.filter(
-    (fn) => !isTraitReferenceFunction(fn)
-  );
-
-  if (eligibleFunctions.length === 0) {
-    radio.emit(
-      "logMessage",
-      red(
-        `No eligible public functions found for the "${sutContractName}" contract. Note: trait references are not supported.\n`
-      )
-    );
-    return;
-  }
-
-  if (eligibleInvariants.length === 0) {
-    radio.emit(
-      "logMessage",
-      red(
-        `No eligible invariant functions found for the "${sutContractName}" contract. Note: trait references are not supported.\n`
       )
     );
     return;
@@ -135,8 +144,8 @@ export const checkInvariants = (
         .chain((r) =>
           fc
             .record({
-              selectedFunction: fc.constantFrom(...eligibleFunctions),
-              selectedInvariant: fc.constantFrom(...eligibleInvariants),
+              selectedFunction: fc.constantFrom(...functions),
+              selectedInvariant: fc.constantFrom(...invariantFunctions),
             })
             .map((selectedFunctions) => ({ ...r, ...selectedFunctions }))
         )
@@ -352,7 +361,7 @@ export const checkInvariants = (
  * @returns The initialized local context.
  */
 export const initializeLocalContext = (
-  rendezvousSutFunctions: Map<string, ContractInterfaceFunction[]>
+  rendezvousSutFunctions: Map<string, EnrichedContractInterfaceFunction[]>
 ): LocalContext =>
   Object.fromEntries(
     Array.from(rendezvousSutFunctions.entries()).map(
@@ -365,7 +374,7 @@ export const initializeLocalContext = (
 
 export const initializeClarityContext = (
   simnet: Simnet,
-  rendezvousSutFunctions: Map<string, ContractInterfaceFunction[]>
+  rendezvousSutFunctions: Map<string, EnrichedContractInterfaceFunction[]>
 ) =>
   rendezvousSutFunctions.forEach((fns, contractId) => {
     fns.forEach((fn) => {
