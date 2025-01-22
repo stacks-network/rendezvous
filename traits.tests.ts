@@ -114,7 +114,7 @@ describe("Trait reference processing", () => {
     const expected = new Map(
       Object.entries({
         "test-trait": {
-          "token-list": { list: { undefined: "trait_reference" } },
+          "token-list": { list: "trait_reference" },
         },
       })
     );
@@ -198,6 +198,56 @@ describe("Trait reference processing", () => {
         "test-trait": {
           "opt-trait": {
             optional: "trait_reference",
+          },
+        },
+      })
+    );
+
+    // Act
+    const actual = buildTraitReferenceMap(allFunctionsInterfaces);
+
+    // Assert
+    expect(actual).toEqual(expected);
+  });
+
+  it("correctly builds the trait reference map for list-tuple nested traits", () => {
+    // Arrange
+    const allFunctionsInterfaces = testInputs.listTupleNestedTrait
+      .functionsInterfaces as ContractInterfaceFunction[];
+
+    const expected = new Map(
+      Object.entries({
+        "test-mixed-traits": {
+          "list-tuple-trait": {
+            list: { tuple: { "mad-inner": "trait_reference" } },
+          },
+        },
+      })
+    );
+
+    // Act
+    const actual = buildTraitReferenceMap(allFunctionsInterfaces);
+
+    // Assert
+    expect(actual).toEqual(expected);
+  });
+
+  it("correctly builds the trait reference map for mixed direct and nested traits", () => {
+    // Arrange
+    const allFunctionsInterfaces = testInputs.mixedDirectAndNestedTraits
+      .functionsInterfaces as ContractInterfaceFunction[];
+
+    const expected = new Map(
+      Object.entries({
+        "test-mixed-traits": {
+          direct: "trait_reference",
+          "list-1": { list: "trait_reference" },
+          mad: {
+            tuple: {
+              "list-mad": {
+                list: { tuple: { "mad-inner": "trait_reference" } },
+              },
+            },
           },
         },
       })
@@ -634,7 +684,7 @@ describe("Trait reference processing", () => {
     // Assert
     expect(actual).toEqual(expected);
   });
-
+  // paramPath::: [ 'mad', 'list-mad', 'list', 'mad-inner' ]
   it("correctly enriches interface with trait reference data for a tuple nested trait that is the first parameter", () => {
     // Arrange
     const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
@@ -1225,6 +1275,255 @@ describe("Trait reference processing", () => {
                       },
                     },
                   },
+                },
+              },
+            ],
+            outputs: {
+              type: {
+                response: {
+                  ok: "bool",
+                  error: "none",
+                },
+              },
+            },
+          },
+        ],
+      })
+    );
+
+    // Act
+    const actual = enrichInterfaceWithTraitData(
+      ast,
+      traitReferenceMap,
+      allFunctionsInterfaces,
+      targetContractId
+    );
+
+    // Assert
+    expect(actual).toEqual(expected);
+  });
+
+  it("correctly enriches interface with trait reference data for a list-tuple-nested trait", () => {
+    // Arrange
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
+
+    const allFunctionsInterfaces = (
+      testInputs.listTupleNestedTrait
+        .functionsInterfaces as ContractInterfaceFunction[]
+    ).filter((f: any) => f.name !== "update-context");
+
+    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+
+    const ast = testInputs.listTupleNestedTrait.ast as any as IContractAST;
+
+    const expected = new Map(
+      Object.entries({
+        [targetContractId]: [
+          {
+            name: "function",
+            access: "public",
+            args: [],
+            outputs: {
+              type: {
+                response: {
+                  error: "none",
+                  ok: "bool",
+                },
+              },
+            },
+          },
+          {
+            name: "test-mixed-traits",
+            access: "public",
+            args: [
+              {
+                name: "list-tuple-trait",
+                type: {
+                  list: {
+                    length: 4,
+                    type: {
+                      tuple: [
+                        {
+                          name: "mad-inner",
+                          type: {
+                            trait_reference: {
+                              name: "ft-trait",
+                              import: {
+                                Imported: {
+                                  name: "sip-010-trait",
+                                  contract_identifier: {
+                                    name: "sip-010-trait-ft-standard",
+                                    issuer: [
+                                      22,
+                                      [
+                                        9, 159, 184, 137, 38, 216, 47, 48, 178,
+                                        244, 14, 175, 62, 228, 35, 203, 114, 91,
+                                        219, 59,
+                                      ],
+                                    ],
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            ],
+            outputs: {
+              type: {
+                response: {
+                  ok: "bool",
+                  error: "none",
+                },
+              },
+            },
+          },
+        ],
+      })
+    );
+
+    // Act
+    const actual = enrichInterfaceWithTraitData(
+      ast,
+      traitReferenceMap,
+      allFunctionsInterfaces,
+      targetContractId
+    );
+
+    // Assert
+    expect(actual).toEqual(expected);
+  });
+
+  it("correctly enriches interface with trait reference data for mixed direct and nested traits", () => {
+    // Arrange
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
+
+    const allFunctionsInterfaces = (
+      testInputs.mixedDirectAndNestedTraits
+        .functionsInterfaces as ContractInterfaceFunction[]
+    ).filter((f: any) => f.name !== "update-context");
+
+    const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
+
+    const ast = testInputs.mixedDirectAndNestedTraits
+      .ast as any as IContractAST;
+
+    const expected = new Map(
+      Object.entries({
+        [targetContractId]: [
+          {
+            name: "function",
+            access: "public",
+            args: [],
+            outputs: {
+              type: {
+                response: {
+                  error: "none",
+                  ok: "bool",
+                },
+              },
+            },
+          },
+          {
+            name: "test-mixed-traits",
+            access: "public",
+            args: [
+              {
+                name: "direct",
+                type: {
+                  trait_reference: {
+                    name: "ft-trait",
+                    import: {
+                      Imported: {
+                        name: "sip-010-trait",
+                        contract_identifier: {
+                          name: "sip-010-trait-ft-standard",
+                          issuer: [
+                            22,
+                            [
+                              9, 159, 184, 137, 38, 216, 47, 48, 178, 244, 14,
+                              175, 62, 228, 35, 203, 114, 91, 219, 59,
+                            ],
+                          ],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              {
+                name: "list-1",
+                type: {
+                  list: {
+                    length: 4,
+                    type: {
+                      trait_reference: {
+                        name: "ft-trait",
+                        import: {
+                          Imported: {
+                            name: "sip-010-trait",
+                            contract_identifier: {
+                              name: "sip-010-trait-ft-standard",
+                              issuer: [
+                                22,
+                                [
+                                  9, 159, 184, 137, 38, 216, 47, 48, 178, 244,
+                                  14, 175, 62, 228, 35, 203, 114, 91, 219, 59,
+                                ],
+                              ],
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              {
+                name: "mad",
+                type: {
+                  tuple: [
+                    {
+                      name: "list-mad",
+                      type: {
+                        list: {
+                          length: 7,
+                          type: {
+                            tuple: [
+                              {
+                                name: "mad-inner",
+                                type: {
+                                  trait_reference: {
+                                    name: "ft-trait",
+                                    import: {
+                                      Imported: {
+                                        name: "sip-010-trait",
+                                        contract_identifier: {
+                                          name: "sip-010-trait-ft-standard",
+                                          issuer: [
+                                            22,
+                                            [
+                                              9, 159, 184, 137, 38, 216, 47, 48,
+                                              178, 244, 14, 175, 62, 228, 35,
+                                              203, 114, 91, 219, 59,
+                                            ],
+                                          ],
+                                        },
+                                      },
+                                    },
+                                  },
+                                },
+                              },
+                            ],
+                          },
+                        },
+                      },
+                    },
+                  ],
                 },
               },
             ],
@@ -11328,6 +11627,2057 @@ const testInputs = {
         },
       ],
       top_level_expression_sorting: [0, 1, 2, 3, 4, 5],
+      referenced_traits: {},
+      implemented_traits: [],
+    },
+  },
+  mixedDirectAndNestedTraits: {
+    functionsInterfaces: [
+      {
+        name: "function",
+        access: "public",
+        args: [],
+        outputs: {
+          type: {
+            response: {
+              ok: "bool",
+              error: "none",
+            },
+          },
+        },
+      },
+      {
+        name: "test-mixed-traits",
+        access: "public",
+        args: [
+          {
+            name: "direct",
+            type: "trait_reference",
+          },
+          {
+            name: "list-1",
+            type: {
+              list: {
+                type: "trait_reference",
+                length: 4,
+              },
+            },
+          },
+          {
+            name: "mad",
+            type: {
+              tuple: [
+                {
+                  name: "list-mad",
+                  type: {
+                    list: {
+                      type: {
+                        tuple: [
+                          {
+                            name: "mad-inner",
+                            type: "trait_reference",
+                          },
+                        ],
+                      },
+                      length: 7,
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+        outputs: {
+          type: {
+            response: {
+              ok: "bool",
+              error: "none",
+            },
+          },
+        },
+      },
+      {
+        name: "update-context",
+        access: "public",
+        args: [
+          {
+            name: "function-name",
+            type: {
+              "string-ascii": {
+                length: 100,
+              },
+            },
+          },
+          {
+            name: "called",
+            type: "uint128",
+          },
+        ],
+        outputs: {
+          type: {
+            response: {
+              ok: "bool",
+              error: "none",
+            },
+          },
+        },
+      },
+    ],
+    ast: {
+      contract_identifier: {
+        issuer: [
+          26,
+          [
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
+            220, 61, 195, 242, 206,
+          ],
+        ],
+        name: "trait",
+      },
+      pre_expressions: [],
+      expressions: [
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "use-trait",
+                },
+                id: 2,
+                span: {
+                  start_line: 1,
+                  start_column: 2,
+                  end_line: 1,
+                  end_column: 10,
+                },
+              },
+              {
+                expr: {
+                  Atom: "ft-trait",
+                },
+                id: 3,
+                span: {
+                  start_line: 1,
+                  start_column: 12,
+                  end_line: 1,
+                  end_column: 19,
+                },
+              },
+              {
+                expr: {
+                  Field: {
+                    name: "sip-010-trait",
+                    contract_identifier: {
+                      issuer: [
+                        22,
+                        [
+                          9, 159, 184, 137, 38, 216, 47, 48, 178, 244, 14, 175,
+                          62, 228, 35, 203, 114, 91, 219, 59,
+                        ],
+                      ],
+                      name: "sip-010-trait-ft-standard",
+                    },
+                  },
+                },
+                id: 4,
+                span: {
+                  start_line: 1,
+                  start_column: 21,
+                  end_line: 1,
+                  end_column: 101,
+                },
+              },
+            ],
+          },
+          id: 1,
+          span: {
+            start_line: 1,
+            start_column: 1,
+            end_line: 1,
+            end_column: 102,
+          },
+        },
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "define-public",
+                },
+                id: 6,
+                span: {
+                  start_line: 3,
+                  start_column: 2,
+                  end_line: 3,
+                  end_column: 14,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "function",
+                      },
+                      id: 8,
+                      span: {
+                        start_line: 3,
+                        start_column: 17,
+                        end_line: 3,
+                        end_column: 24,
+                      },
+                    },
+                  ],
+                },
+                id: 7,
+                span: {
+                  start_line: 3,
+                  start_column: 16,
+                  end_line: 3,
+                  end_column: 25,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "ok",
+                      },
+                      id: 10,
+                      span: {
+                        start_line: 4,
+                        start_column: 4,
+                        end_line: 4,
+                        end_column: 5,
+                      },
+                    },
+                    {
+                      expr: {
+                        Atom: "true",
+                      },
+                      id: 11,
+                      span: {
+                        start_line: 4,
+                        start_column: 7,
+                        end_line: 4,
+                        end_column: 10,
+                      },
+                    },
+                  ],
+                },
+                id: 9,
+                span: {
+                  start_line: 4,
+                  start_column: 3,
+                  end_line: 4,
+                  end_column: 11,
+                },
+              },
+            ],
+          },
+          id: 5,
+          span: {
+            start_line: 3,
+            start_column: 1,
+            end_line: 5,
+            end_column: 1,
+          },
+        },
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "define-map",
+                },
+                id: 13,
+                span: {
+                  start_line: 8,
+                  start_column: 2,
+                  end_line: 8,
+                  end_column: 11,
+                },
+              },
+              {
+                expr: {
+                  Atom: "context",
+                },
+                id: 14,
+                span: {
+                  start_line: 8,
+                  start_column: 13,
+                  end_line: 8,
+                  end_column: 19,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "string-ascii",
+                      },
+                      id: 16,
+                      span: {
+                        start_line: 8,
+                        start_column: 22,
+                        end_line: 8,
+                        end_column: 33,
+                      },
+                    },
+                    {
+                      expr: {
+                        LiteralValue: {
+                          Int: "100",
+                        },
+                      },
+                      id: 17,
+                      span: {
+                        start_line: 8,
+                        start_column: 35,
+                        end_line: 8,
+                        end_column: 37,
+                      },
+                    },
+                  ],
+                },
+                id: 15,
+                span: {
+                  start_line: 8,
+                  start_column: 21,
+                  end_line: 8,
+                  end_column: 38,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "tuple",
+                      },
+                      id: 19,
+                      span: {
+                        start_line: 0,
+                        start_column: 0,
+                        end_line: 0,
+                        end_column: 0,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "called",
+                            },
+                            id: 21,
+                            span: {
+                              start_line: 9,
+                              start_column: 5,
+                              end_line: 9,
+                              end_column: 10,
+                            },
+                          },
+                          {
+                            expr: {
+                              Atom: "uint",
+                            },
+                            id: 22,
+                            span: {
+                              start_line: 9,
+                              start_column: 13,
+                              end_line: 9,
+                              end_column: 16,
+                            },
+                            post_comments: [
+                              [
+                                "other data",
+                                {
+                                  start_line: 10,
+                                  start_column: 5,
+                                  end_line: 10,
+                                  end_column: 17,
+                                },
+                              ],
+                            ],
+                          },
+                        ],
+                      },
+                      id: 20,
+                      span: {
+                        start_line: 9,
+                        start_column: 5,
+                        end_line: 9,
+                        end_column: 16,
+                      },
+                    },
+                  ],
+                },
+                id: 18,
+                span: {
+                  start_line: 8,
+                  start_column: 40,
+                  end_line: 11,
+                  end_column: 3,
+                },
+              },
+            ],
+          },
+          id: 12,
+          span: {
+            start_line: 8,
+            start_column: 1,
+            end_line: 11,
+            end_column: 4,
+          },
+        },
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "define-public",
+                },
+                id: 24,
+                span: {
+                  start_line: 13,
+                  start_column: 4,
+                  end_line: 13,
+                  end_column: 16,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "update-context",
+                      },
+                      id: 26,
+                      span: {
+                        start_line: 13,
+                        start_column: 19,
+                        end_line: 13,
+                        end_column: 32,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "function-name",
+                            },
+                            id: 28,
+                            span: {
+                              start_line: 13,
+                              start_column: 35,
+                              end_line: 13,
+                              end_column: 47,
+                            },
+                          },
+                          {
+                            expr: {
+                              List: [
+                                {
+                                  expr: {
+                                    Atom: "string-ascii",
+                                  },
+                                  id: 30,
+                                  span: {
+                                    start_line: 13,
+                                    start_column: 50,
+                                    end_line: 13,
+                                    end_column: 61,
+                                  },
+                                },
+                                {
+                                  expr: {
+                                    LiteralValue: {
+                                      Int: "100",
+                                    },
+                                  },
+                                  id: 31,
+                                  span: {
+                                    start_line: 13,
+                                    start_column: 63,
+                                    end_line: 13,
+                                    end_column: 65,
+                                  },
+                                },
+                              ],
+                            },
+                            id: 29,
+                            span: {
+                              start_line: 13,
+                              start_column: 49,
+                              end_line: 13,
+                              end_column: 66,
+                            },
+                          },
+                        ],
+                      },
+                      id: 27,
+                      span: {
+                        start_line: 13,
+                        start_column: 34,
+                        end_line: 13,
+                        end_column: 67,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "called",
+                            },
+                            id: 33,
+                            span: {
+                              start_line: 13,
+                              start_column: 70,
+                              end_line: 13,
+                              end_column: 75,
+                            },
+                          },
+                          {
+                            expr: {
+                              Atom: "uint",
+                            },
+                            id: 34,
+                            span: {
+                              start_line: 13,
+                              start_column: 77,
+                              end_line: 13,
+                              end_column: 80,
+                            },
+                          },
+                        ],
+                      },
+                      id: 32,
+                      span: {
+                        start_line: 13,
+                        start_column: 69,
+                        end_line: 13,
+                        end_column: 81,
+                      },
+                    },
+                  ],
+                },
+                id: 25,
+                span: {
+                  start_line: 13,
+                  start_column: 18,
+                  end_line: 13,
+                  end_column: 82,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "ok",
+                      },
+                      id: 36,
+                      span: {
+                        start_line: 14,
+                        start_column: 6,
+                        end_line: 14,
+                        end_column: 7,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "map-set",
+                            },
+                            id: 38,
+                            span: {
+                              start_line: 14,
+                              start_column: 10,
+                              end_line: 14,
+                              end_column: 16,
+                            },
+                          },
+                          {
+                            expr: {
+                              Atom: "context",
+                            },
+                            id: 39,
+                            span: {
+                              start_line: 14,
+                              start_column: 18,
+                              end_line: 14,
+                              end_column: 24,
+                            },
+                          },
+                          {
+                            expr: {
+                              Atom: "function-name",
+                            },
+                            id: 40,
+                            span: {
+                              start_line: 14,
+                              start_column: 26,
+                              end_line: 14,
+                              end_column: 38,
+                            },
+                          },
+                          {
+                            expr: {
+                              List: [
+                                {
+                                  expr: {
+                                    Atom: "tuple",
+                                  },
+                                  id: 42,
+                                  span: {
+                                    start_line: 0,
+                                    start_column: 0,
+                                    end_line: 0,
+                                    end_column: 0,
+                                  },
+                                },
+                                {
+                                  expr: {
+                                    List: [
+                                      {
+                                        expr: {
+                                          Atom: "called",
+                                        },
+                                        id: 44,
+                                        span: {
+                                          start_line: 14,
+                                          start_column: 41,
+                                          end_line: 14,
+                                          end_column: 46,
+                                        },
+                                      },
+                                      {
+                                        expr: {
+                                          Atom: "called",
+                                        },
+                                        id: 45,
+                                        span: {
+                                          start_line: 14,
+                                          start_column: 49,
+                                          end_line: 14,
+                                          end_column: 54,
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  id: 43,
+                                  span: {
+                                    start_line: 14,
+                                    start_column: 41,
+                                    end_line: 14,
+                                    end_column: 54,
+                                  },
+                                },
+                              ],
+                            },
+                            id: 41,
+                            span: {
+                              start_line: 14,
+                              start_column: 40,
+                              end_line: 14,
+                              end_column: 55,
+                            },
+                          },
+                        ],
+                      },
+                      id: 37,
+                      span: {
+                        start_line: 14,
+                        start_column: 9,
+                        end_line: 14,
+                        end_column: 56,
+                      },
+                    },
+                  ],
+                },
+                id: 35,
+                span: {
+                  start_line: 14,
+                  start_column: 5,
+                  end_line: 14,
+                  end_column: 57,
+                },
+              },
+            ],
+          },
+          id: 23,
+          span: {
+            start_line: 13,
+            start_column: 3,
+            end_line: 14,
+            end_column: 58,
+          },
+        },
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "define-public",
+                },
+                id: 47,
+                span: {
+                  start_line: 16,
+                  start_column: 2,
+                  end_line: 16,
+                  end_column: 14,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "test-mixed-traits",
+                      },
+                      id: 49,
+                      span: {
+                        start_line: 16,
+                        start_column: 17,
+                        end_line: 16,
+                        end_column: 33,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "direct",
+                            },
+                            id: 51,
+                            span: {
+                              start_line: 17,
+                              start_column: 6,
+                              end_line: 17,
+                              end_column: 11,
+                            },
+                          },
+                          {
+                            expr: {
+                              TraitReference: [
+                                "ft-trait",
+                                {
+                                  Imported: {
+                                    name: "sip-010-trait",
+                                    contract_identifier: {
+                                      issuer: [
+                                        22,
+                                        [
+                                          9, 159, 184, 137, 38, 216, 47, 48,
+                                          178, 244, 14, 175, 62, 228, 35, 203,
+                                          114, 91, 219, 59,
+                                        ],
+                                      ],
+                                      name: "sip-010-trait-ft-standard",
+                                    },
+                                  },
+                                },
+                              ],
+                            },
+                            id: 52,
+                            span: {
+                              start_line: 17,
+                              start_column: 13,
+                              end_line: 17,
+                              end_column: 22,
+                            },
+                          },
+                        ],
+                      },
+                      id: 50,
+                      span: {
+                        start_line: 17,
+                        start_column: 5,
+                        end_line: 17,
+                        end_column: 23,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "list-1",
+                            },
+                            id: 54,
+                            span: {
+                              start_line: 18,
+                              start_column: 6,
+                              end_line: 18,
+                              end_column: 11,
+                            },
+                          },
+                          {
+                            expr: {
+                              List: [
+                                {
+                                  expr: {
+                                    Atom: "list",
+                                  },
+                                  id: 56,
+                                  span: {
+                                    start_line: 18,
+                                    start_column: 14,
+                                    end_line: 18,
+                                    end_column: 17,
+                                  },
+                                },
+                                {
+                                  expr: {
+                                    LiteralValue: {
+                                      Int: "4",
+                                    },
+                                  },
+                                  id: 57,
+                                  span: {
+                                    start_line: 18,
+                                    start_column: 19,
+                                    end_line: 18,
+                                    end_column: 19,
+                                  },
+                                },
+                                {
+                                  expr: {
+                                    TraitReference: [
+                                      "ft-trait",
+                                      {
+                                        Imported: {
+                                          name: "sip-010-trait",
+                                          contract_identifier: {
+                                            issuer: [
+                                              22,
+                                              [
+                                                9, 159, 184, 137, 38, 216, 47,
+                                                48, 178, 244, 14, 175, 62, 228,
+                                                35, 203, 114, 91, 219, 59,
+                                              ],
+                                            ],
+                                            name: "sip-010-trait-ft-standard",
+                                          },
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  id: 58,
+                                  span: {
+                                    start_line: 18,
+                                    start_column: 21,
+                                    end_line: 18,
+                                    end_column: 30,
+                                  },
+                                },
+                              ],
+                            },
+                            id: 55,
+                            span: {
+                              start_line: 18,
+                              start_column: 13,
+                              end_line: 18,
+                              end_column: 31,
+                            },
+                          },
+                        ],
+                      },
+                      id: 53,
+                      span: {
+                        start_line: 18,
+                        start_column: 5,
+                        end_line: 18,
+                        end_column: 32,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "mad",
+                            },
+                            id: 60,
+                            span: {
+                              start_line: 19,
+                              start_column: 6,
+                              end_line: 19,
+                              end_column: 8,
+                            },
+                          },
+                          {
+                            expr: {
+                              List: [
+                                {
+                                  expr: {
+                                    Atom: "tuple",
+                                  },
+                                  id: 62,
+                                  span: {
+                                    start_line: 0,
+                                    start_column: 0,
+                                    end_line: 0,
+                                    end_column: 0,
+                                  },
+                                },
+                                {
+                                  expr: {
+                                    List: [
+                                      {
+                                        expr: {
+                                          Atom: "list-mad",
+                                        },
+                                        id: 64,
+                                        span: {
+                                          start_line: 21,
+                                          start_column: 9,
+                                          end_line: 21,
+                                          end_column: 16,
+                                        },
+                                      },
+                                      {
+                                        expr: {
+                                          List: [
+                                            {
+                                              expr: {
+                                                Atom: "list",
+                                              },
+                                              id: 66,
+                                              span: {
+                                                start_line: 21,
+                                                start_column: 20,
+                                                end_line: 21,
+                                                end_column: 23,
+                                              },
+                                            },
+                                            {
+                                              expr: {
+                                                LiteralValue: {
+                                                  Int: "7",
+                                                },
+                                              },
+                                              id: 67,
+                                              span: {
+                                                start_line: 21,
+                                                start_column: 25,
+                                                end_line: 21,
+                                                end_column: 25,
+                                              },
+                                            },
+                                            {
+                                              expr: {
+                                                List: [
+                                                  {
+                                                    expr: {
+                                                      Atom: "tuple",
+                                                    },
+                                                    id: 69,
+                                                    span: {
+                                                      start_line: 0,
+                                                      start_column: 0,
+                                                      end_line: 0,
+                                                      end_column: 0,
+                                                    },
+                                                  },
+                                                  {
+                                                    expr: {
+                                                      List: [
+                                                        {
+                                                          expr: {
+                                                            Atom: "mad-inner",
+                                                          },
+                                                          id: 71,
+                                                          span: {
+                                                            start_line: 21,
+                                                            start_column: 29,
+                                                            end_line: 21,
+                                                            end_column: 37,
+                                                          },
+                                                        },
+                                                        {
+                                                          expr: {
+                                                            TraitReference: [
+                                                              "ft-trait",
+                                                              {
+                                                                Imported: {
+                                                                  name: "sip-010-trait",
+                                                                  contract_identifier:
+                                                                    {
+                                                                      issuer: [
+                                                                        22,
+                                                                        [
+                                                                          9,
+                                                                          159,
+                                                                          184,
+                                                                          137,
+                                                                          38,
+                                                                          216,
+                                                                          47,
+                                                                          48,
+                                                                          178,
+                                                                          244,
+                                                                          14,
+                                                                          175,
+                                                                          62,
+                                                                          228,
+                                                                          35,
+                                                                          203,
+                                                                          114,
+                                                                          91,
+                                                                          219,
+                                                                          59,
+                                                                        ],
+                                                                      ],
+                                                                      name: "sip-010-trait-ft-standard",
+                                                                    },
+                                                                },
+                                                              },
+                                                            ],
+                                                          },
+                                                          id: 72,
+                                                          span: {
+                                                            start_line: 21,
+                                                            start_column: 40,
+                                                            end_line: 21,
+                                                            end_column: 49,
+                                                          },
+                                                        },
+                                                      ],
+                                                    },
+                                                    id: 70,
+                                                    span: {
+                                                      start_line: 21,
+                                                      start_column: 29,
+                                                      end_line: 21,
+                                                      end_column: 49,
+                                                    },
+                                                  },
+                                                ],
+                                              },
+                                              id: 68,
+                                              span: {
+                                                start_line: 21,
+                                                start_column: 27,
+                                                end_line: 21,
+                                                end_column: 51,
+                                              },
+                                            },
+                                          ],
+                                        },
+                                        id: 65,
+                                        span: {
+                                          start_line: 21,
+                                          start_column: 19,
+                                          end_line: 21,
+                                          end_column: 52,
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  id: 63,
+                                  span: {
+                                    start_line: 21,
+                                    start_column: 9,
+                                    end_line: 21,
+                                    end_column: 52,
+                                  },
+                                },
+                              ],
+                            },
+                            id: 61,
+                            span: {
+                              start_line: 20,
+                              start_column: 7,
+                              end_line: 22,
+                              end_column: 7,
+                            },
+                          },
+                        ],
+                      },
+                      id: 59,
+                      span: {
+                        start_line: 19,
+                        start_column: 5,
+                        end_line: 23,
+                        end_column: 5,
+                      },
+                    },
+                  ],
+                },
+                id: 48,
+                span: {
+                  start_line: 16,
+                  start_column: 16,
+                  end_line: 24,
+                  end_column: 3,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "ok",
+                      },
+                      id: 74,
+                      span: {
+                        start_line: 25,
+                        start_column: 4,
+                        end_line: 25,
+                        end_column: 5,
+                      },
+                    },
+                    {
+                      expr: {
+                        Atom: "true",
+                      },
+                      id: 75,
+                      span: {
+                        start_line: 25,
+                        start_column: 7,
+                        end_line: 25,
+                        end_column: 10,
+                      },
+                    },
+                  ],
+                },
+                id: 73,
+                span: {
+                  start_line: 25,
+                  start_column: 3,
+                  end_line: 25,
+                  end_column: 11,
+                },
+              },
+            ],
+          },
+          id: 46,
+          span: {
+            start_line: 16,
+            start_column: 1,
+            end_line: 26,
+            end_column: 1,
+          },
+        },
+      ],
+      top_level_expression_sorting: [0, 1, 2, 3, 4],
+      referenced_traits: {},
+      implemented_traits: [],
+    },
+  },
+  listTupleNestedTrait: {
+    functionsInterfaces: [
+      {
+        name: "function",
+        access: "public",
+        args: [],
+        outputs: {
+          type: {
+            response: {
+              ok: "bool",
+              error: "none",
+            },
+          },
+        },
+      },
+      {
+        name: "test-mixed-traits",
+        access: "public",
+        args: [
+          {
+            name: "list-tuple-trait",
+            type: {
+              list: {
+                type: {
+                  tuple: [
+                    {
+                      name: "mad-inner",
+                      type: "trait_reference",
+                    },
+                  ],
+                },
+                length: 4,
+              },
+            },
+          },
+        ],
+        outputs: {
+          type: {
+            response: {
+              ok: "bool",
+              error: "none",
+            },
+          },
+        },
+      },
+      {
+        name: "update-context",
+        access: "public",
+        args: [
+          {
+            name: "function-name",
+            type: {
+              "string-ascii": {
+                length: 100,
+              },
+            },
+          },
+          {
+            name: "called",
+            type: "uint128",
+          },
+        ],
+        outputs: {
+          type: {
+            response: {
+              ok: "bool",
+              error: "none",
+            },
+          },
+        },
+      },
+    ],
+    ast: {
+      contract_identifier: {
+        issuer: [
+          26,
+          [
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
+            220, 61, 195, 242, 206,
+          ],
+        ],
+        name: "trait",
+      },
+      pre_expressions: [],
+      expressions: [
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "use-trait",
+                },
+                id: 2,
+                span: {
+                  start_line: 1,
+                  start_column: 2,
+                  end_line: 1,
+                  end_column: 10,
+                },
+              },
+              {
+                expr: {
+                  Atom: "ft-trait",
+                },
+                id: 3,
+                span: {
+                  start_line: 1,
+                  start_column: 12,
+                  end_line: 1,
+                  end_column: 19,
+                },
+              },
+              {
+                expr: {
+                  Field: {
+                    name: "sip-010-trait",
+                    contract_identifier: {
+                      issuer: [
+                        22,
+                        [
+                          9, 159, 184, 137, 38, 216, 47, 48, 178, 244, 14, 175,
+                          62, 228, 35, 203, 114, 91, 219, 59,
+                        ],
+                      ],
+                      name: "sip-010-trait-ft-standard",
+                    },
+                  },
+                },
+                id: 4,
+                span: {
+                  start_line: 1,
+                  start_column: 21,
+                  end_line: 1,
+                  end_column: 101,
+                },
+              },
+            ],
+          },
+          id: 1,
+          span: {
+            start_line: 1,
+            start_column: 1,
+            end_line: 1,
+            end_column: 102,
+          },
+        },
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "define-public",
+                },
+                id: 6,
+                span: {
+                  start_line: 3,
+                  start_column: 2,
+                  end_line: 3,
+                  end_column: 14,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "function",
+                      },
+                      id: 8,
+                      span: {
+                        start_line: 3,
+                        start_column: 17,
+                        end_line: 3,
+                        end_column: 24,
+                      },
+                    },
+                  ],
+                },
+                id: 7,
+                span: {
+                  start_line: 3,
+                  start_column: 16,
+                  end_line: 3,
+                  end_column: 25,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "ok",
+                      },
+                      id: 10,
+                      span: {
+                        start_line: 4,
+                        start_column: 4,
+                        end_line: 4,
+                        end_column: 5,
+                      },
+                    },
+                    {
+                      expr: {
+                        Atom: "true",
+                      },
+                      id: 11,
+                      span: {
+                        start_line: 4,
+                        start_column: 7,
+                        end_line: 4,
+                        end_column: 10,
+                      },
+                    },
+                  ],
+                },
+                id: 9,
+                span: {
+                  start_line: 4,
+                  start_column: 3,
+                  end_line: 4,
+                  end_column: 11,
+                },
+              },
+            ],
+          },
+          id: 5,
+          span: {
+            start_line: 3,
+            start_column: 1,
+            end_line: 5,
+            end_column: 1,
+          },
+        },
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "define-map",
+                },
+                id: 13,
+                span: {
+                  start_line: 8,
+                  start_column: 2,
+                  end_line: 8,
+                  end_column: 11,
+                },
+              },
+              {
+                expr: {
+                  Atom: "context",
+                },
+                id: 14,
+                span: {
+                  start_line: 8,
+                  start_column: 13,
+                  end_line: 8,
+                  end_column: 19,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "string-ascii",
+                      },
+                      id: 16,
+                      span: {
+                        start_line: 8,
+                        start_column: 22,
+                        end_line: 8,
+                        end_column: 33,
+                      },
+                    },
+                    {
+                      expr: {
+                        LiteralValue: {
+                          Int: "100",
+                        },
+                      },
+                      id: 17,
+                      span: {
+                        start_line: 8,
+                        start_column: 35,
+                        end_line: 8,
+                        end_column: 37,
+                      },
+                    },
+                  ],
+                },
+                id: 15,
+                span: {
+                  start_line: 8,
+                  start_column: 21,
+                  end_line: 8,
+                  end_column: 38,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "tuple",
+                      },
+                      id: 19,
+                      span: {
+                        start_line: 0,
+                        start_column: 0,
+                        end_line: 0,
+                        end_column: 0,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "called",
+                            },
+                            id: 21,
+                            span: {
+                              start_line: 9,
+                              start_column: 5,
+                              end_line: 9,
+                              end_column: 10,
+                            },
+                          },
+                          {
+                            expr: {
+                              Atom: "uint",
+                            },
+                            id: 22,
+                            span: {
+                              start_line: 9,
+                              start_column: 13,
+                              end_line: 9,
+                              end_column: 16,
+                            },
+                            post_comments: [
+                              [
+                                "other data",
+                                {
+                                  start_line: 10,
+                                  start_column: 5,
+                                  end_line: 10,
+                                  end_column: 17,
+                                },
+                              ],
+                            ],
+                          },
+                        ],
+                      },
+                      id: 20,
+                      span: {
+                        start_line: 9,
+                        start_column: 5,
+                        end_line: 9,
+                        end_column: 16,
+                      },
+                    },
+                  ],
+                },
+                id: 18,
+                span: {
+                  start_line: 8,
+                  start_column: 40,
+                  end_line: 11,
+                  end_column: 3,
+                },
+              },
+            ],
+          },
+          id: 12,
+          span: {
+            start_line: 8,
+            start_column: 1,
+            end_line: 11,
+            end_column: 4,
+          },
+        },
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "define-public",
+                },
+                id: 24,
+                span: {
+                  start_line: 13,
+                  start_column: 4,
+                  end_line: 13,
+                  end_column: 16,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "update-context",
+                      },
+                      id: 26,
+                      span: {
+                        start_line: 13,
+                        start_column: 19,
+                        end_line: 13,
+                        end_column: 32,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "function-name",
+                            },
+                            id: 28,
+                            span: {
+                              start_line: 13,
+                              start_column: 35,
+                              end_line: 13,
+                              end_column: 47,
+                            },
+                          },
+                          {
+                            expr: {
+                              List: [
+                                {
+                                  expr: {
+                                    Atom: "string-ascii",
+                                  },
+                                  id: 30,
+                                  span: {
+                                    start_line: 13,
+                                    start_column: 50,
+                                    end_line: 13,
+                                    end_column: 61,
+                                  },
+                                },
+                                {
+                                  expr: {
+                                    LiteralValue: {
+                                      Int: "100",
+                                    },
+                                  },
+                                  id: 31,
+                                  span: {
+                                    start_line: 13,
+                                    start_column: 63,
+                                    end_line: 13,
+                                    end_column: 65,
+                                  },
+                                },
+                              ],
+                            },
+                            id: 29,
+                            span: {
+                              start_line: 13,
+                              start_column: 49,
+                              end_line: 13,
+                              end_column: 66,
+                            },
+                          },
+                        ],
+                      },
+                      id: 27,
+                      span: {
+                        start_line: 13,
+                        start_column: 34,
+                        end_line: 13,
+                        end_column: 67,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "called",
+                            },
+                            id: 33,
+                            span: {
+                              start_line: 13,
+                              start_column: 70,
+                              end_line: 13,
+                              end_column: 75,
+                            },
+                          },
+                          {
+                            expr: {
+                              Atom: "uint",
+                            },
+                            id: 34,
+                            span: {
+                              start_line: 13,
+                              start_column: 77,
+                              end_line: 13,
+                              end_column: 80,
+                            },
+                          },
+                        ],
+                      },
+                      id: 32,
+                      span: {
+                        start_line: 13,
+                        start_column: 69,
+                        end_line: 13,
+                        end_column: 81,
+                      },
+                    },
+                  ],
+                },
+                id: 25,
+                span: {
+                  start_line: 13,
+                  start_column: 18,
+                  end_line: 13,
+                  end_column: 82,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "ok",
+                      },
+                      id: 36,
+                      span: {
+                        start_line: 14,
+                        start_column: 6,
+                        end_line: 14,
+                        end_column: 7,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "map-set",
+                            },
+                            id: 38,
+                            span: {
+                              start_line: 14,
+                              start_column: 10,
+                              end_line: 14,
+                              end_column: 16,
+                            },
+                          },
+                          {
+                            expr: {
+                              Atom: "context",
+                            },
+                            id: 39,
+                            span: {
+                              start_line: 14,
+                              start_column: 18,
+                              end_line: 14,
+                              end_column: 24,
+                            },
+                          },
+                          {
+                            expr: {
+                              Atom: "function-name",
+                            },
+                            id: 40,
+                            span: {
+                              start_line: 14,
+                              start_column: 26,
+                              end_line: 14,
+                              end_column: 38,
+                            },
+                          },
+                          {
+                            expr: {
+                              List: [
+                                {
+                                  expr: {
+                                    Atom: "tuple",
+                                  },
+                                  id: 42,
+                                  span: {
+                                    start_line: 0,
+                                    start_column: 0,
+                                    end_line: 0,
+                                    end_column: 0,
+                                  },
+                                },
+                                {
+                                  expr: {
+                                    List: [
+                                      {
+                                        expr: {
+                                          Atom: "called",
+                                        },
+                                        id: 44,
+                                        span: {
+                                          start_line: 14,
+                                          start_column: 41,
+                                          end_line: 14,
+                                          end_column: 46,
+                                        },
+                                      },
+                                      {
+                                        expr: {
+                                          Atom: "called",
+                                        },
+                                        id: 45,
+                                        span: {
+                                          start_line: 14,
+                                          start_column: 49,
+                                          end_line: 14,
+                                          end_column: 54,
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  id: 43,
+                                  span: {
+                                    start_line: 14,
+                                    start_column: 41,
+                                    end_line: 14,
+                                    end_column: 54,
+                                  },
+                                },
+                              ],
+                            },
+                            id: 41,
+                            span: {
+                              start_line: 14,
+                              start_column: 40,
+                              end_line: 14,
+                              end_column: 55,
+                            },
+                          },
+                        ],
+                      },
+                      id: 37,
+                      span: {
+                        start_line: 14,
+                        start_column: 9,
+                        end_line: 14,
+                        end_column: 56,
+                      },
+                    },
+                  ],
+                },
+                id: 35,
+                span: {
+                  start_line: 14,
+                  start_column: 5,
+                  end_line: 14,
+                  end_column: 57,
+                },
+              },
+            ],
+          },
+          id: 23,
+          span: {
+            start_line: 13,
+            start_column: 3,
+            end_line: 14,
+            end_column: 58,
+          },
+        },
+        {
+          expr: {
+            List: [
+              {
+                expr: {
+                  Atom: "define-public",
+                },
+                id: 47,
+                span: {
+                  start_line: 16,
+                  start_column: 2,
+                  end_line: 16,
+                  end_column: 14,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "test-mixed-traits",
+                      },
+                      id: 49,
+                      span: {
+                        start_line: 16,
+                        start_column: 17,
+                        end_line: 16,
+                        end_column: 33,
+                      },
+                    },
+                    {
+                      expr: {
+                        List: [
+                          {
+                            expr: {
+                              Atom: "list-tuple-trait",
+                            },
+                            id: 51,
+                            span: {
+                              start_line: 17,
+                              start_column: 6,
+                              end_line: 17,
+                              end_column: 21,
+                            },
+                          },
+                          {
+                            expr: {
+                              List: [
+                                {
+                                  expr: {
+                                    Atom: "list",
+                                  },
+                                  id: 53,
+                                  span: {
+                                    start_line: 17,
+                                    start_column: 24,
+                                    end_line: 17,
+                                    end_column: 27,
+                                  },
+                                },
+                                {
+                                  expr: {
+                                    LiteralValue: {
+                                      Int: "4",
+                                    },
+                                  },
+                                  id: 54,
+                                  span: {
+                                    start_line: 17,
+                                    start_column: 29,
+                                    end_line: 17,
+                                    end_column: 29,
+                                  },
+                                },
+                                {
+                                  expr: {
+                                    List: [
+                                      {
+                                        expr: {
+                                          Atom: "tuple",
+                                        },
+                                        id: 56,
+                                        span: {
+                                          start_line: 0,
+                                          start_column: 0,
+                                          end_line: 0,
+                                          end_column: 0,
+                                        },
+                                      },
+                                      {
+                                        expr: {
+                                          List: [
+                                            {
+                                              expr: {
+                                                Atom: "mad-inner",
+                                              },
+                                              id: 58,
+                                              span: {
+                                                start_line: 17,
+                                                start_column: 33,
+                                                end_line: 17,
+                                                end_column: 41,
+                                              },
+                                            },
+                                            {
+                                              expr: {
+                                                TraitReference: [
+                                                  "ft-trait",
+                                                  {
+                                                    Imported: {
+                                                      name: "sip-010-trait",
+                                                      contract_identifier: {
+                                                        issuer: [
+                                                          22,
+                                                          [
+                                                            9, 159, 184, 137,
+                                                            38, 216, 47, 48,
+                                                            178, 244, 14, 175,
+                                                            62, 228, 35, 203,
+                                                            114, 91, 219, 59,
+                                                          ],
+                                                        ],
+                                                        name: "sip-010-trait-ft-standard",
+                                                      },
+                                                    },
+                                                  },
+                                                ],
+                                              },
+                                              id: 59,
+                                              span: {
+                                                start_line: 17,
+                                                start_column: 44,
+                                                end_line: 17,
+                                                end_column: 53,
+                                              },
+                                            },
+                                          ],
+                                        },
+                                        id: 57,
+                                        span: {
+                                          start_line: 17,
+                                          start_column: 33,
+                                          end_line: 17,
+                                          end_column: 53,
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  id: 55,
+                                  span: {
+                                    start_line: 17,
+                                    start_column: 31,
+                                    end_line: 17,
+                                    end_column: 55,
+                                  },
+                                },
+                              ],
+                            },
+                            id: 52,
+                            span: {
+                              start_line: 17,
+                              start_column: 23,
+                              end_line: 17,
+                              end_column: 56,
+                            },
+                          },
+                        ],
+                      },
+                      id: 50,
+                      span: {
+                        start_line: 17,
+                        start_column: 5,
+                        end_line: 17,
+                        end_column: 57,
+                      },
+                    },
+                  ],
+                },
+                id: 48,
+                span: {
+                  start_line: 16,
+                  start_column: 16,
+                  end_line: 18,
+                  end_column: 3,
+                },
+              },
+              {
+                expr: {
+                  List: [
+                    {
+                      expr: {
+                        Atom: "ok",
+                      },
+                      id: 61,
+                      span: {
+                        start_line: 19,
+                        start_column: 4,
+                        end_line: 19,
+                        end_column: 5,
+                      },
+                    },
+                    {
+                      expr: {
+                        Atom: "true",
+                      },
+                      id: 62,
+                      span: {
+                        start_line: 19,
+                        start_column: 7,
+                        end_line: 19,
+                        end_column: 10,
+                      },
+                    },
+                  ],
+                },
+                id: 60,
+                span: {
+                  start_line: 19,
+                  start_column: 3,
+                  end_line: 19,
+                  end_column: 11,
+                },
+              },
+            ],
+          },
+          id: 46,
+          span: {
+            start_line: 16,
+            start_column: 1,
+            end_line: 20,
+            end_column: 1,
+          },
+        },
+      ],
+      top_level_expression_sorting: [0, 1, 2, 3, 4],
       referenced_traits: {},
       implemented_traits: [],
     },
