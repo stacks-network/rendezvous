@@ -23,11 +23,12 @@ export const enrichInterfaceWithTraitData = (
   const enrichArgs = (
     args: any[],
     functionName: string,
-    paramMap: any,
+    traitReferenceMap: any,
     path: string[] = []
   ): any[] => {
     return args.map((arg) => {
-      const currentPath = [...path, arg.name];
+      const listNested = !arg.name;
+      const currentPath = listNested ? path : [...path, arg.name];
       if (arg.type && arg.type.tuple) {
         return {
           ...arg,
@@ -35,7 +36,9 @@ export const enrichInterfaceWithTraitData = (
             tuple: enrichArgs(
               arg.type.tuple,
               functionName,
-              paramMap[arg.name]?.tuple,
+              listNested
+                ? traitReferenceMap.tuple
+                : traitReferenceMap[arg.name]?.tuple,
               currentPath
             ),
           },
@@ -47,24 +50,37 @@ export const enrichInterfaceWithTraitData = (
             list: enrichArgs(
               [arg.type.list],
               functionName,
-              paramMap[arg.name]?.list,
-              currentPath
+              listNested
+                ? traitReferenceMap.list
+                : traitReferenceMap[arg.name]?.list,
+              arg.type.list.type.tuple
+                ? [...currentPath, "tuple"]
+                : [...currentPath, "list"]
             )[0],
           },
         };
       } else if (arg.type && arg.type.response) {
-        const okPath = [...currentPath, "ok"];
-        const errorPath = [...currentPath, "error"];
+        const okPath = listNested ? currentPath : [...currentPath, "ok"];
+        const errorPath = listNested ? currentPath : [...currentPath, "error"];
+
         const okTraitReference = enrichArgs(
           [{ name: "ok", type: arg.type.response.ok }],
           functionName,
-          { ok: paramMap[arg.name]?.response?.ok },
+          {
+            ok: listNested
+              ? traitReferenceMap.response?.ok
+              : traitReferenceMap[arg.name]?.response?.ok,
+          },
           okPath
         )[0];
         const errorTraitReference = enrichArgs(
           [{ name: "error", type: arg.type.response.error }],
           functionName,
-          { error: paramMap[arg.name]?.response?.error },
+          {
+            error: listNested
+              ? traitReferenceMap.response?.error
+              : traitReferenceMap[arg.name]?.response?.error,
+          },
           errorPath
         )[0];
         return {
@@ -81,7 +97,11 @@ export const enrichInterfaceWithTraitData = (
         const optionalTraitReference = enrichArgs(
           [{ name: "optional", type: arg.type.optional }],
           functionName,
-          { optional: paramMap[arg.name]?.optional },
+          {
+            optional: listNested
+              ? traitReferenceMap.optional
+              : traitReferenceMap[arg.name]?.optional,
+          },
           optionalPath
         )[0];
         return {
@@ -90,12 +110,12 @@ export const enrichInterfaceWithTraitData = (
             optional: optionalTraitReference.type,
           },
         };
-      } else if (paramMap[arg.name] || paramMap.undefined) {
+      } else if (traitReferenceMap && traitReferenceMap[arg.name]) {
         const [traitReferenceName, traitReferenceImport] =
           getTraitReferenceData(
             ast,
             functionName,
-            paramMap[arg.name] ? currentPath : path
+            currentPath.filter((x) => x !== undefined)
           );
         if (traitReferenceName && traitReferenceImport) {
           return {
@@ -108,7 +128,22 @@ export const enrichInterfaceWithTraitData = (
             },
           };
         }
+      } else if (traitReferenceMap === "trait_reference") {
+        const [traitReferenceName, traitReferenceImport] =
+          getTraitReferenceData(ast, functionName, path);
+        if (traitReferenceName && traitReferenceImport) {
+          return {
+            ...arg,
+            type: {
+              trait_reference: {
+                name: traitReferenceName,
+                import: traitReferenceImport,
+              },
+            },
+          };
+        }
       }
+
       return arg;
     });
   };
@@ -221,7 +256,9 @@ export const buildTraitReferenceMap = (
       } else if (arg.type && arg.type.list) {
         const nestedTraitReferences = findTraitReferences([arg.type.list]);
         if (Object.keys(nestedTraitReferences).length > 0) {
-          traitReferences[arg.name] = { list: nestedTraitReferences };
+          traitReferences[arg.name] = {
+            list: nestedTraitReferences["undefined"],
+          };
         }
       } else if (arg.type && arg.type.response) {
         const okTraitReferences = findTraitReferences([arg.type.response.ok]);
