@@ -217,13 +217,16 @@ export const getTraitReferenceData = (
         return [name, importData];
       }
 
-      if (!parameterNode.expr || !(parameterNode.expr as List).List) continue;
+      if (!parameterNode.expr || !(parameterNode.expr as List).List) {
+        continue;
+      }
 
       // The parameter name node is the first node in the parameter node list.
       const parameterNameNode = (parameterNode.expr as List).List[0];
 
-      if (!parameterNameNode || !(parameterNameNode.expr as Atom).Atom)
+      if (!parameterNameNode || !(parameterNameNode.expr as Atom).Atom) {
         continue;
+      }
 
       const currentParameterName = (
         parameterNameNode.expr as Atom
@@ -271,7 +274,9 @@ export const getTraitReferenceData = (
   };
 
   for (const node of ast.expressions) {
-    if (!node.expr || !(node.expr as List).List) continue;
+    if (!node.expr || !(node.expr as List).List) {
+      continue;
+    }
 
     // Traverse down the expression.
     const expressionList = (node.expr as List).List;
@@ -287,15 +292,18 @@ export const getTraitReferenceData = (
       !["define-public", "define-read-only"].includes(
         (potentialFunctionDefinitionAtom.expr as Atom).Atom.toString()
       )
-    )
+    ) {
       continue;
+    }
 
     // The current expression is a function definition. Extract the function
     // name node, which is the second node in the expression list.
     const functionNameNode = expressionList[1];
 
     // Check if the function name node exists and if it is a list.
-    if (!functionNameNode || !(functionNameNode.expr as List).List) continue;
+    if (!functionNameNode || !(functionNameNode.expr as List).List) {
+      continue;
+    }
 
     // Extract the function definition list.
     const functionDefinitionList = (functionNameNode.expr as List).List;
@@ -303,13 +311,17 @@ export const getTraitReferenceData = (
     const functionNameAtom = functionDefinitionList[0];
 
     // Check if the function name atom exists.
-    if (!functionNameAtom || !(functionNameAtom.expr as Atom).Atom) continue;
+    if (!functionNameAtom || !(functionNameAtom.expr as Atom).Atom) {
+      continue;
+    }
 
     const currentFunctionName = (functionNameAtom.expr as Atom).Atom.toString();
 
     // Check if the current function name matches the function name we are
     // looking for.
-    if (currentFunctionName !== functionName) continue;
+    if (currentFunctionName !== functionName) {
+      continue;
+    }
 
     // Bingo! Found the function definition. The function parameters are the
     // nodes following the function name node.
