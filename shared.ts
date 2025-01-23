@@ -58,7 +58,7 @@ export const getFunctionsFromContractInterfaces = (
   );
 
 export const getFunctionsListForContract = (
-  functionsMap: Map<string, any[]>,
+  functionsMap: Map<string, EnrichedContractInterfaceFunction[]>,
   contractId: string
 ) => functionsMap.get(contractId) || [];
 

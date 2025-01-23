@@ -23,6 +23,10 @@ import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 // Types used for Clarity Value conversion.
 
+/**
+ * The type of the function interface, after the contract interface is
+ * "enriched" with additional information about trait references.
+ */
 export type EnrichedContractInterfaceFunction = {
   args: (
     | ContractInterfaceFunctionArg

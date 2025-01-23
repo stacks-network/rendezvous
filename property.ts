@@ -11,7 +11,6 @@ import {
 } from "./shared";
 import { dim, green, red, underline, yellow } from "ansicolor";
 import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
-import { EnrichedContractInterfaceFunction } from "./shared.types";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
@@ -386,11 +385,8 @@ const validateDiscardFunction = (
   contractId: string,
   discardFunctionName: string,
   testFunctionName: string,
-  testContractsDiscardFunctions: Map<
-    string,
-    EnrichedContractInterfaceFunction[]
-  >,
-  testContractsTestFunctions: Map<string, EnrichedContractInterfaceFunction[]>,
+  testContractsDiscardFunctions: Map<string, ContractInterfaceFunction[]>,
+  testContractsTestFunctions: Map<string, ContractInterfaceFunction[]>,
   radio: EventEmitter
 ) => {
   const testFunction = testContractsTestFunctions
@@ -437,8 +433,8 @@ const validateDiscardFunction = (
  * @returns A boolean indicating if the parameters match.
  */
 export const isParamsMatch = (
-  testFunction: EnrichedContractInterfaceFunction,
-  discardFunction: EnrichedContractInterfaceFunction
+  testFunction: ContractInterfaceFunction,
+  discardFunction: ContractInterfaceFunction
 ) => {
   const sortedTestFunctionArgs = [...testFunction.args].sort((a, b) =>
     a.name.localeCompare(b.name)
@@ -458,5 +454,5 @@ export const isParamsMatch = (
  * @returns A boolean indicating if the return type is boolean.
  */
 export const isReturnTypeBoolean = (
-  discardFunction: EnrichedContractInterfaceFunction
+  discardFunction: ContractInterfaceFunction
 ) => discardFunction.outputs.type === "bool";
