@@ -1,6 +1,6 @@
 import fc from "fast-check";
 import {
-  BaseTypeAfterEnrich,
+  EnrichedBaseType,
   BaseTypesToArbitrary,
   BaseTypesToCV,
   ComplexTypesToArbitrary,
@@ -58,7 +58,7 @@ export const getFunctionsFromContractInterfaces = (
   );
 
 export const getFunctionsListForContract = (
-  functionsMap: Map<string, any[]>,
+  functionsMap: Map<string, EnrichedContractInterfaceFunction[]>,
   contractId: string
 ) => functionsMap.get(contractId) || [];
 
@@ -153,30 +153,6 @@ const baseTypesToArbitrary: BaseTypesToArbitrary = {
   uint128: fc.nat(),
   bool: fc.boolean(),
   principal: (addresses: string[]) => fc.constantFrom(...addresses),
-  trait_reference: undefined,
-};
-
-/**
- * Custom hexadecimal string generator. The `hexaString` generator from
- * fast-check has been deprecated. This generator is implemented to precisely
- * match the behavior of the deprecated generator.
- *
- * @param constraints Fast-check string constraints.
- * @returns Fast-check arbitrary for hexadecimal strings.
- *
- * Reference for the proposed replacement of the deprecated `hexaString`
- * generator:
- * https://github.com/dubzzz/fast-check/commit/3f4f1203a8863c07d22b45591bf0de1fac02b948
- */
-export const hexaString = (
-  constraints: fc.StringConstraints = {}
-): fc.Arbitrary<string> => {
-  const hexa = (): fc.Arbitrary<string> => {
-    const hexCharSet = "0123456789abcdef";
-    return fc.integer({ min: 0, max: 15 }).map((n) => hexCharSet[n]);
-  };
-
-  return fc.string({ ...constraints, unit: hexa() });
 };
 
 /**
@@ -262,6 +238,29 @@ const complexTypesToArbitrary: ComplexTypesToArbitrary = {
       ...getContractIdsImplementingTrait(traitData, projectTraitImplementations)
     );
   },
+};
+
+/**
+ * Custom hexadecimal string generator. The `hexaString` generator from
+ * fast-check has been deprecated. This generator is implemented to precisely
+ * match the behavior of the deprecated generator.
+ *
+ * @param constraints Fast-check string constraints.
+ * @returns Fast-check arbitrary for hexadecimal strings.
+ *
+ * Reference for the proposed replacement of the deprecated `hexaString`
+ * generator:
+ * https://github.com/dubzzz/fast-check/commit/3f4f1203a8863c07d22b45591bf0de1fac02b948
+ */
+export const hexaString = (
+  constraints: fc.StringConstraints = {}
+): fc.Arbitrary<string> => {
+  const hexa = (): fc.Arbitrary<string> => {
+    const hexCharSet = "0123456789abcdef";
+    return fc.integer({ min: 0, max: 15 }).map((n) => hexCharSet[n]);
+  };
+
+  return fc.string({ ...constraints, unit: hexa() });
 };
 
 /** The character set used for generating ASCII strings.*/
@@ -366,11 +365,9 @@ const complexTypesToCV: ComplexTypesToCV = {
     principalCV(traitImplementation),
 };
 
-const isBaseType = (
-  type: EnrichedParameterType
-): type is BaseTypeAfterEnrich => {
+const isBaseType = (type: EnrichedParameterType): type is EnrichedBaseType => {
   return ["int128", "uint128", "bool", "principal"].includes(
-    type as BaseTypeAfterEnrich
+    type as EnrichedBaseType
   );
 };
 

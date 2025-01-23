@@ -7,11 +7,23 @@ import {
 } from "@hirosystems/clarinet-sdk-wasm";
 import {
   EnrichedContractInterfaceFunction,
-  ParameterTypeBeforeEnrich,
+  ParameterType,
 } from "./shared.types";
 import { Simnet } from "@hirosystems/clarinet-sdk";
 import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
+/**
+ * Enriches contract interface with trait reference data. Before enrichment,
+ * the contract interface lacks trait reference data for parameters. This
+ * function constructs a copy of the contract interface with trait reference
+ * data for parameters that are trait references.
+ * @param ast The contract AST.
+ * @param traitReferenceMap The map of function names to trait reference paths.
+ * @param functionInterfaceList The list of function interfaces for a contract.
+ * @param targetContractId The contract ID to enrich with trait reference data.
+ * @returns A map of contract IDs to a list of enriched contract interface
+ * functions.
+ */
 export const enrichInterfaceWithTraitData = (
   ast: IContractAST,
   traitReferenceMap: Map<string, any>,
@@ -159,30 +171,74 @@ export const enrichInterfaceWithTraitData = (
   return enriched;
 };
 
+/**
+ * Searches for a trait reference in the contract AST, given the function name
+ * and the nesting path of the trait reference.
+ * @param ast The contract AST.
+ * @param functionName The name of the function to search for trait references
+ * import data.
+ * @param parameterPath The path to search for the trait reference. The path is
+ * an array of strings that represent the nested location of the trait
+ * reference in the contract AST.
+ * @returns A tuple containing the `trait reference name` and the `imported
+ * trait data` if the trait reference is found. Otherwise, returns a tuple of
+ * `undefined` values.
+ */
 export const getTraitReferenceData = (
   ast: IContractAST,
   functionName: string,
-  paramPath: string[]
-): [string, any] | [undefined, undefined] => {
+  parameterPath: string[]
+): [string, ImportedTraitType] | [undefined, undefined] => {
+  /**
+   * Recursively searches for a trait reference import details in the contract
+   * parameter nodes, part of the contract AST.
+   * @param functionParameterNodes The list of function parameter nodes from
+   * the AST. This is the list of nodes following the function name node.
+   * @param path The path to search for the trait reference. The path is an
+   * array of strings that represent the nested location of the trait reference
+   * in the function parameter nodes.
+   * @returns A tuple containing the `trait reference name` and the `imported
+   * trait data` if the trait reference is found. Otherwise, returns a tuple of
+   * `undefined` values.
+   */
   const findTraitReference = (
-    paramList: any[],
+    functionParameterNodes: any[],
     path: string[]
-  ): [string, any] | [undefined, undefined] => {
-    for (const param of paramList) {
-      if (param.expr && (param.expr as TraitReference).TraitReference) {
-        const [name, importData] = (param.expr as TraitReference)
+  ): [string, ImportedTraitType] | [undefined, undefined] => {
+    for (const parameterNode of functionParameterNodes) {
+      // Check if the current parameter node is a trait reference in the first
+      // level of the function parameter nodes.
+      if (
+        parameterNode.expr &&
+        (parameterNode.expr as TraitReference).TraitReference
+      ) {
+        const [name, importData] = (parameterNode.expr as TraitReference)
           .TraitReference;
         return [name, importData];
       }
-      if (!param.expr || !(param.expr as List).List) continue;
 
-      const paramNameNode = (param.expr as List).List[0];
-      if (!paramNameNode || !(paramNameNode.expr as Atom).Atom) continue;
+      if (!parameterNode.expr || !(parameterNode.expr as List).List) {
+        continue;
+      }
 
-      const currentParamName = (paramNameNode.expr as Atom).Atom.toString();
-      if (currentParamName === path[0]) {
+      // The parameter name node is the first node in the parameter node list.
+      const parameterNameNode = (parameterNode.expr as List).List[0];
+
+      if (!parameterNameNode || !(parameterNameNode.expr as Atom).Atom) {
+        continue;
+      }
+
+      const currentParameterName = (
+        parameterNameNode.expr as Atom
+      ).Atom.toString();
+
+      // Check the first item in the path list to see if it matches the current
+      // parameter name. If it does, we are on the right track.
+      if (currentParameterName === path[0]) {
+        // If the path only has one item left, the trait reference should be
+        // right under our noses, in the next node.
         if (path.length === 1) {
-          const traitReferenceNode = (param.expr as List).List[1];
+          const traitReferenceNode = (parameterNode.expr as List).List[1];
           if (
             traitReferenceNode &&
             (traitReferenceNode.expr as TraitReference).TraitReference
@@ -193,15 +249,22 @@ export const getTraitReferenceData = (
             return [name, importData];
           }
         } else {
+          // If the path has more than one item left, we need to traverse down
+          // the expression list to find the nested trait reference.
           if (
-            (param.expr as List).List[1] &&
-            ((param.expr as List).List[1].expr as List)
+            (parameterNode.expr as List).List[1] &&
+            ((parameterNode.expr as List).List[1].expr as List)
           ) {
-            const nestedParamList = (param.expr as List).List[1].expr as List;
+            const nestedParameterList = (parameterNode.expr as List).List[1]
+              .expr as List;
+
+            // Recursively search for the trait reference in the nested
+            // parameter list.
             const result = findTraitReference(
-              nestedParamList.List,
+              nestedParameterList.List,
               path.slice(1)
             );
+
             if (result[0] !== undefined) return result;
           }
         }
@@ -211,35 +274,76 @@ export const getTraitReferenceData = (
   };
 
   for (const node of ast.expressions) {
-    if (!node.expr || !(node.expr as List).List) continue;
-
-    const functionList = (node.expr as List).List;
-    const defineFunctionNode = functionList[0];
-    if (
-      !defineFunctionNode ||
-      !["define-public", "define-read-only"].includes(
-        (defineFunctionNode.expr as Atom).Atom.toString()
-      )
-    )
+    if (!node.expr || !(node.expr as List).List) {
       continue;
+    }
 
-    const functionNameNode = functionList[1];
-    if (!functionNameNode || !(functionNameNode.expr as List).List) continue;
+    // Traverse down the expression.
+    const expressionList = (node.expr as List).List;
 
+    // Extract the first atom in the expression list to determine if it is a
+    // function definition.
+    const potentialFunctionDefinitionAtom = expressionList[0];
+
+    // Check if the potential function definition atom is an actual function
+    // definition.
+    if (
+      !potentialFunctionDefinitionAtom ||
+      !["define-public", "define-read-only"].includes(
+        (potentialFunctionDefinitionAtom.expr as Atom).Atom.toString()
+      )
+    ) {
+      continue;
+    }
+
+    // The current expression is a function definition. Extract the function
+    // name node, which is the second node in the expression list.
+    const functionNameNode = expressionList[1];
+
+    // Check if the function name node exists and if it is a list.
+    if (!functionNameNode || !(functionNameNode.expr as List).List) {
+      continue;
+    }
+
+    // Extract the function definition list.
     const functionDefinitionList = (functionNameNode.expr as List).List;
+
     const functionNameAtom = functionDefinitionList[0];
-    if (!functionNameAtom || !(functionNameAtom.expr as Atom).Atom) continue;
+
+    // Check if the function name atom exists.
+    if (!functionNameAtom || !(functionNameAtom.expr as Atom).Atom) {
+      continue;
+    }
 
     const currentFunctionName = (functionNameAtom.expr as Atom).Atom.toString();
-    if (currentFunctionName !== functionName) continue;
 
-    const params = functionDefinitionList.slice(1);
-    const result = findTraitReference(params, paramPath);
-    if (result[0] !== undefined) return result;
+    // Check if the current function name matches the function name we are
+    // looking for.
+    if (currentFunctionName !== functionName) {
+      continue;
+    }
+
+    // Bingo! Found the function definition. The function parameters are the
+    // nodes following the function name node.
+    const functionParameterNodes = functionDefinitionList.slice(1);
+
+    const traitReferenceImportData = findTraitReference(
+      functionParameterNodes,
+      parameterPath
+    );
+
+    if (traitReferenceImportData[0] !== undefined)
+      return traitReferenceImportData;
   }
   return [undefined, undefined];
 };
 
+/**
+ * Builds a map of function names to trait reference paths. The trait reference
+ * path is the path to the trait reference in the function parameter list.
+ * @param functionInterfaces The list of function interfaces for a contract.
+ * @returns A map of function names to trait reference paths.
+ */
 export const buildTraitReferenceMap = (
   functionInterfaces: ContractInterfaceFunction[]
 ): Map<string, any> => {
@@ -303,45 +407,13 @@ export const buildTraitReferenceMap = (
   return traitReferenceMap;
 };
 
-export const getTraitReferencePath = (
-  functionInterface: ContractInterfaceFunction
-) => {
-  const traitReferencePath: any = {};
-
-  const extractTraitReference = (type: any): any => {
-    if (typeof type === "string") {
-      return type === "trait_reference" ? type : null;
-    } else {
-      if ("list" in type) return extractTraitReference(type.list.type);
-      if ("tuple" in type) {
-        const tupleReferences = type.tuple
-          .map((item: any) => extractTraitReference(item.type))
-          .filter((ref: any) => ref !== null);
-        return tupleReferences.length > 0 ? tupleReferences : null;
-      }
-      if ("optional" in type) return extractTraitReference(type.optional);
-      if ("response" in type) {
-        const okRef = extractTraitReference(type.response.ok);
-        const errorRef = extractTraitReference(type.response.error);
-        return okRef || errorRef ? { ok: okRef, error: errorRef } : null;
-      }
-      return null;
-    }
-  };
-
-  functionInterface.args.forEach((arg) => {
-    const traitRef = extractTraitReference(arg.type);
-    if (traitRef) {
-      if (!traitReferencePath[arg.name]) {
-        traitReferencePath[arg.name] = {};
-      }
-      traitReferencePath[arg.name] = "trait_reference";
-    }
-  });
-
-  return traitReferencePath;
-};
-
+/**
+ * Retrieves the contract IDs that implement a given trait.
+ * @param trait The trait to search for.
+ * @param projectTraitImplementations The record of the project contract IDs to
+ * their implemented traits.
+ * @returns An array of contract IDs that implement the trait.
+ */
 export const getContractIdsImplementingTrait = (
   trait: ImportedTraitType,
   projectTraitImplementations: Record<string, ImplementedTraitType[]>
@@ -376,7 +448,7 @@ export const getContractIdsImplementingTrait = (
 export const isTraitReferenceFunction = (
   fn: ContractInterfaceFunction
 ): boolean => {
-  const hasTraitReference = (type: ParameterTypeBeforeEnrich): boolean => {
+  const hasTraitReference = (type: ParameterType): boolean => {
     if (typeof type === "string") {
       // The type is a base type.
       return type === "trait_reference";
@@ -386,26 +458,24 @@ export const isTraitReferenceFunction = (
       if ("string-ascii" in type) return false;
       if ("string-utf8" in type) return false;
       if ("list" in type)
-        return hasTraitReference(type.list.type as ParameterTypeBeforeEnrich);
+        return hasTraitReference(type.list.type as ParameterType);
       if ("tuple" in type)
         return type.tuple.some((item) =>
-          hasTraitReference(item.type as ParameterTypeBeforeEnrich)
+          hasTraitReference(item.type as ParameterType)
         );
       if ("optional" in type)
-        return hasTraitReference(type.optional as ParameterTypeBeforeEnrich);
+        return hasTraitReference(type.optional as ParameterType);
       if ("response" in type)
         return (
-          hasTraitReference(type.response.ok as ParameterTypeBeforeEnrich) ||
-          hasTraitReference(type.response.error as ParameterTypeBeforeEnrich)
+          hasTraitReference(type.response.ok as ParameterType) ||
+          hasTraitReference(type.response.error as ParameterType)
         );
       // Default to false for unexpected types.
       return false;
     }
   };
 
-  return fn.args.some((arg) =>
-    hasTraitReference(arg.type as ParameterTypeBeforeEnrich)
-  );
+  return fn.args.some((arg) => hasTraitReference(arg.type as ParameterType));
 };
 
 /**
