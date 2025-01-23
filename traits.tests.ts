@@ -268,7 +268,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = (
       testInputs.directTrait1stParameter
         .functionsInterfaces as ContractInterfaceFunction[]
-    ).filter((f: any) => f.name !== "update-context");
+    ).filter((f) => f.name !== "update-context");
 
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
@@ -363,7 +363,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = (
       testInputs.directTraitParameterPublicAndReadOnlyFunctions
         .functionsInterfaces as ContractInterfaceFunction[]
-    ).filter((f: any) => f.name !== "update-context");
+    ).filter((f) => f.name !== "update-context");
 
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
@@ -491,7 +491,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = (
       testInputs.directTrait2ndParameter
         .functionsInterfaces as ContractInterfaceFunction[]
-    ).filter((f: any) => f.name !== "update-context");
+    ).filter((f) => f.name !== "update-context");
 
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
@@ -587,7 +587,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = (
       testInputs.directTrait5thParameter
         .functionsInterfaces as ContractInterfaceFunction[]
-    ).filter((f: any) => f.name !== "update-context");
+    ).filter((f) => f.name !== "update-context");
 
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
@@ -693,7 +693,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = (
       testInputs.tupleTraitParameter
         .functionsInterfaces as ContractInterfaceFunction[]
-    ).filter((f: any) => f.name !== "update-context");
+    ).filter((f) => f.name !== "update-context");
 
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
@@ -794,7 +794,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = (
       testInputs.listTraitParameter
         .functionsInterfaces as ContractInterfaceFunction[]
-    ).filter((f: any) => f.name !== "update-context");
+    ).filter((f) => f.name !== "update-context");
 
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
@@ -894,7 +894,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = (
       testInputs.responseOkTraitParameter
         .functionsInterfaces as ContractInterfaceFunction[]
-    ).filter((f: any) => f.name !== "update-context");
+    ).filter((f) => f.name !== "update-context");
 
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
@@ -994,7 +994,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = (
       testInputs.responseErrTraitParameter
         .functionsInterfaces as ContractInterfaceFunction[]
-    ).filter((f: any) => f.name !== "update-context");
+    ).filter((f) => f.name !== "update-context");
 
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
@@ -1094,7 +1094,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = (
       testInputs.responseBothTraitParameter
         .functionsInterfaces as ContractInterfaceFunction[]
-    ).filter((f: any) => f.name !== "update-context");
+    ).filter((f) => f.name !== "update-context");
 
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
@@ -1214,7 +1214,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = (
       testInputs.optionalTraitParameter
         .functionsInterfaces as ContractInterfaceFunction[]
-    ).filter((f: any) => f.name !== "update-context");
+    ).filter((f) => f.name !== "update-context");
 
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
@@ -1311,7 +1311,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = (
       testInputs.listTupleNestedTrait
         .functionsInterfaces as ContractInterfaceFunction[]
-    ).filter((f: any) => f.name !== "update-context");
+    ).filter((f) => f.name !== "update-context");
 
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
@@ -1406,7 +1406,7 @@ describe("Trait reference processing", () => {
     const allFunctionsInterfaces = (
       testInputs.mixedDirectAndNestedTraits
         .functionsInterfaces as ContractInterfaceFunction[]
-    ).filter((f: any) => f.name !== "update-context");
+    ).filter((f) => f.name !== "update-context");
 
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
