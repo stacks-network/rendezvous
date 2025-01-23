@@ -7,7 +7,7 @@ import {
 } from "@hirosystems/clarinet-sdk-wasm";
 import {
   EnrichedContractInterfaceFunction,
-  ParameterTypeBeforeEnrich,
+  ParameterType,
 } from "./shared.types";
 import { Simnet } from "@hirosystems/clarinet-sdk";
 import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
@@ -376,7 +376,7 @@ export const getContractIdsImplementingTrait = (
 export const isTraitReferenceFunction = (
   fn: ContractInterfaceFunction
 ): boolean => {
-  const hasTraitReference = (type: ParameterTypeBeforeEnrich): boolean => {
+  const hasTraitReference = (type: ParameterType): boolean => {
     if (typeof type === "string") {
       // The type is a base type.
       return type === "trait_reference";
@@ -386,26 +386,24 @@ export const isTraitReferenceFunction = (
       if ("string-ascii" in type) return false;
       if ("string-utf8" in type) return false;
       if ("list" in type)
-        return hasTraitReference(type.list.type as ParameterTypeBeforeEnrich);
+        return hasTraitReference(type.list.type as ParameterType);
       if ("tuple" in type)
         return type.tuple.some((item) =>
-          hasTraitReference(item.type as ParameterTypeBeforeEnrich)
+          hasTraitReference(item.type as ParameterType)
         );
       if ("optional" in type)
-        return hasTraitReference(type.optional as ParameterTypeBeforeEnrich);
+        return hasTraitReference(type.optional as ParameterType);
       if ("response" in type)
         return (
-          hasTraitReference(type.response.ok as ParameterTypeBeforeEnrich) ||
-          hasTraitReference(type.response.error as ParameterTypeBeforeEnrich)
+          hasTraitReference(type.response.ok as ParameterType) ||
+          hasTraitReference(type.response.error as ParameterType)
         );
       // Default to false for unexpected types.
       return false;
     }
   };
 
-  return fn.args.some((arg) =>
-    hasTraitReference(arg.type as ParameterTypeBeforeEnrich)
-  );
+  return fn.args.some((arg) => hasTraitReference(arg.type as ParameterType));
 };
 
 /**
