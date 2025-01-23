@@ -15,6 +15,7 @@ import { EnrichedContractInterfaceFunction } from "./shared.types";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
+  extractProjectTraitImplementations,
   isTraitReferenceFunction,
 } from "./traits";
 
@@ -40,6 +41,23 @@ export const checkProperties = (
   const traitReferenceFunctions = testContractsTestFunctions
     .get(testContractId)!
     .filter((fn) => isTraitReferenceFunction(fn));
+
+  const projectTraitImplementations =
+    extractProjectTraitImplementations(simnet);
+
+  if (
+    Object.entries(projectTraitImplementations).length === 0 &&
+    traitReferenceFunctions.length > 0
+  ) {
+    radio.emit(
+      "logMessage",
+      red(
+        `\nFound test functions referencing traits, but no trait implementations were found in the project.
+\nNote: You can add contracts implementing traits either as project contracts or requirements!\n`
+      )
+    );
+    return;
+  }
 
   const enrichedTestFunctionsInterfaces =
     traitReferenceFunctions.length > 0
@@ -159,7 +177,7 @@ export const checkProperties = (
                 ...functionToArbitrary(
                   r.selectedTestFunction,
                   simnetAddresses,
-                  simnet
+                  projectTraitImplementations
                 )
               ),
             })
