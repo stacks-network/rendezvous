@@ -72,8 +72,8 @@ export type ComplexTypesToCV = {
 
 /** The base Clarity parameter types, as found in the contract interface. */
 export type BaseType =
-  | "int"
-  | "uint"
+  | "int128"
+  | "uint128"
   | "bool"
   | "principal"
   | "trait_reference";
