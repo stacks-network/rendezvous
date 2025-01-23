@@ -23,20 +23,19 @@ import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 // Types used for Clarity Value conversion.
 
+type ImportedTraitReferenceFunctionArg = {
+  type: {
+    trait_reference: ImportedTraitType;
+  };
+  name: string;
+};
+
 /**
  * The type of the function interface, after the contract interface is
  * "enriched" with additional information about trait references.
  */
 export type EnrichedContractInterfaceFunction = {
-  args: (
-    | ContractInterfaceFunctionArg
-    | {
-        type: {
-          trait_reference: ImportedTraitType;
-        };
-        name: string;
-      }
-  )[];
+  args: (ContractInterfaceFunctionArg | ImportedTraitReferenceFunctionArg)[];
   name: string;
   access: ContractInterfaceFunctionAccess;
   outputs: ContractInterfaceFunctionOutput;
