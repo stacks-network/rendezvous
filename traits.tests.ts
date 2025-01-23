@@ -263,7 +263,6 @@ describe("Trait reference processing", () => {
 
   it("correctly enriches interface with trait reference data for a direct trait that is the first parameter", () => {
     // Arrange
-    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
 
     const allFunctionsInterfaces = (
       testInputs.directTrait1stParameter
@@ -273,6 +272,8 @@ describe("Trait reference processing", () => {
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
     const ast = testInputs.directTrait1stParameter.ast as any as IContractAST;
+
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
 
     const expected = new Map(
       Object.entries({
@@ -358,8 +359,6 @@ describe("Trait reference processing", () => {
 
   it("correctly enriches interface with trait reference data for a direct trait that is the first parameter", () => {
     // Arrange
-    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
-
     const allFunctionsInterfaces = (
       testInputs.directTraitParameterPublicAndReadOnlyFunctions
         .functionsInterfaces as ContractInterfaceFunction[]
@@ -369,6 +368,8 @@ describe("Trait reference processing", () => {
 
     const ast = testInputs.directTraitParameterPublicAndReadOnlyFunctions
       .ast as any as IContractAST;
+
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
 
     const expected = new Map(
       Object.entries({
@@ -486,8 +487,6 @@ describe("Trait reference processing", () => {
 
   it("correctly enriches interface with trait reference data for a direct trait that is the second parameter", () => {
     // Arrange
-    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
-
     const allFunctionsInterfaces = (
       testInputs.directTrait2ndParameter
         .functionsInterfaces as ContractInterfaceFunction[]
@@ -496,6 +495,8 @@ describe("Trait reference processing", () => {
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
     const ast = testInputs.directTrait2ndParameter.ast as any as IContractAST;
+
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
 
     const expected = new Map(
       Object.entries({
@@ -582,8 +583,6 @@ describe("Trait reference processing", () => {
 
   it("correctly enriches interface with trait reference data for a direct trait that is the fifth parameter", () => {
     // Arrange
-    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
-
     const allFunctionsInterfaces = (
       testInputs.directTrait5thParameter
         .functionsInterfaces as ContractInterfaceFunction[]
@@ -592,6 +591,8 @@ describe("Trait reference processing", () => {
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
     const ast = testInputs.directTrait5thParameter.ast as any as IContractAST;
+
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
 
     const expected = new Map(
       Object.entries({
@@ -688,8 +689,6 @@ describe("Trait reference processing", () => {
   // paramPath::: [ 'mad', 'list-mad', 'list', 'mad-inner' ]
   it("correctly enriches interface with trait reference data for a tuple nested trait that is the first parameter", () => {
     // Arrange
-    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
-
     const allFunctionsInterfaces = (
       testInputs.tupleTraitParameter
         .functionsInterfaces as ContractInterfaceFunction[]
@@ -698,6 +697,9 @@ describe("Trait reference processing", () => {
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
     const ast = testInputs.tupleTraitParameter.ast as any as IContractAST;
+
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
+
     const expected = new Map(
       Object.entries({
         [targetContractId]: [
@@ -789,8 +791,6 @@ describe("Trait reference processing", () => {
 
   it("correctly enriches interface with trait reference data for a list nested trait", () => {
     // Arrange
-    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
-
     const allFunctionsInterfaces = (
       testInputs.listTraitParameter
         .functionsInterfaces as ContractInterfaceFunction[]
@@ -799,6 +799,8 @@ describe("Trait reference processing", () => {
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
     const ast = testInputs.listTraitParameter.ast as any as IContractAST;
+
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
 
     const expected = new Map(
       Object.entries({
@@ -889,8 +891,6 @@ describe("Trait reference processing", () => {
 
   it("correctly enriches interface with trait reference data for a response ok branch nested trait", () => {
     // Arrange
-    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
-
     const allFunctionsInterfaces = (
       testInputs.responseOkTraitParameter
         .functionsInterfaces as ContractInterfaceFunction[]
@@ -899,6 +899,8 @@ describe("Trait reference processing", () => {
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
     const ast = testInputs.responseOkTraitParameter.ast as any as IContractAST;
+
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
 
     const expected = new Map(
       Object.entries({
@@ -989,8 +991,6 @@ describe("Trait reference processing", () => {
 
   it("correctly enriches interface with trait reference data for a response error branch nested trait", () => {
     // Arrange
-    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
-
     const allFunctionsInterfaces = (
       testInputs.responseErrTraitParameter
         .functionsInterfaces as ContractInterfaceFunction[]
@@ -999,6 +999,8 @@ describe("Trait reference processing", () => {
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
     const ast = testInputs.responseErrTraitParameter.ast as any as IContractAST;
+
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
 
     const expected = new Map(
       Object.entries({
@@ -1089,8 +1091,6 @@ describe("Trait reference processing", () => {
 
   it("correctly enriches interface with trait reference data for a response both branches nested trait", () => {
     // Arrange
-    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
-
     const allFunctionsInterfaces = (
       testInputs.responseBothTraitParameter
         .functionsInterfaces as ContractInterfaceFunction[]
@@ -1100,6 +1100,8 @@ describe("Trait reference processing", () => {
 
     const ast = testInputs.responseBothTraitParameter
       .ast as any as IContractAST;
+
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
 
     const expected = new Map(
       Object.entries({
@@ -1209,8 +1211,6 @@ describe("Trait reference processing", () => {
 
   it("correctly enriches interface with trait reference data for a optional nested trait", () => {
     // Arrange
-    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
-
     const allFunctionsInterfaces = (
       testInputs.optionalTraitParameter
         .functionsInterfaces as ContractInterfaceFunction[]
@@ -1219,6 +1219,8 @@ describe("Trait reference processing", () => {
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
     const ast = testInputs.optionalTraitParameter.ast as any as IContractAST;
+
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
 
     const expected = new Map(
       Object.entries({
@@ -1306,8 +1308,6 @@ describe("Trait reference processing", () => {
 
   it("correctly enriches interface with trait reference data for a list-tuple-nested trait", () => {
     // Arrange
-    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
-
     const allFunctionsInterfaces = (
       testInputs.listTupleNestedTrait
         .functionsInterfaces as ContractInterfaceFunction[]
@@ -1316,6 +1316,8 @@ describe("Trait reference processing", () => {
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
     const ast = testInputs.listTupleNestedTrait.ast as any as IContractAST;
+
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
 
     const expected = new Map(
       Object.entries({
@@ -1401,8 +1403,6 @@ describe("Trait reference processing", () => {
 
   it("correctly enriches interface with trait reference data for mixed direct and nested traits", () => {
     // Arrange
-    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
-
     const allFunctionsInterfaces = (
       testInputs.mixedDirectAndNestedTraits
         .functionsInterfaces as ContractInterfaceFunction[]
@@ -1412,6 +1412,8 @@ describe("Trait reference processing", () => {
 
     const ast = testInputs.mixedDirectAndNestedTraits
       .ast as any as IContractAST;
+
+    const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
 
     const expected = new Map(
       Object.entries({
