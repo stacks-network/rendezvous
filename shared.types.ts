@@ -23,16 +23,19 @@ import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 // Types used for Clarity Value conversion.
 
+type ImportedTraitReferenceFunctionArg = {
+  type: {
+    trait_reference: ImportedTraitType;
+  };
+  name: string;
+};
+
+/**
+ * The type of the function interface, after the contract interface is
+ * "enriched" with additional information about trait references.
+ */
 export type EnrichedContractInterfaceFunction = {
-  args: (
-    | ContractInterfaceFunctionArg
-    | {
-        type: {
-          trait_reference: ImportedTraitType;
-        };
-        name: string;
-      }
-  )[];
+  args: (ContractInterfaceFunctionArg | ImportedTraitReferenceFunctionArg)[];
   name: string;
   access: ContractInterfaceFunctionAccess;
   outputs: ContractInterfaceFunctionOutput;
@@ -66,16 +69,38 @@ export type ComplexTypesToCV = {
 };
 
 // Types used for argument generation.
-export type BaseTypeBeforeEnrich =
-  | "int"
-  | "uint"
+
+/** The base Clarity parameter types, as found in the contract interface. */
+export type BaseType =
+  | "int128"
+  | "uint128"
   | "bool"
   | "principal"
   | "trait_reference";
 
-export type BaseTypeAfterEnrich = "int128" | "uint128" | "bool" | "principal";
+/**
+ * The base Clarity parameter types, after the contract interface is "enriched"
+ * with additional information about trait references. The "trait_reference" is
+ * no longer a base type after "enrichment".
+ */
+export type EnrichedBaseType = "int128" | "uint128" | "bool" | "principal";
 
-type ComplexTypeAfterEnrich =
+/** The complex Clarity parameter types, as found in the contract interface. */
+type ComplexType =
+  | { buffer: { length: number } }
+  | { "string-ascii": { length: number } }
+  | { "string-utf8": { length: number } }
+  | { list: { type: ParameterType; length: number } }
+  | { tuple: { name: string; type: ParameterType }[] }
+  | { optional: ParameterType }
+  | { response: { ok: ParameterType; error: ParameterType } };
+
+/**
+ * The complex Clarity parameter types, after the contract interface is
+ * "enriched" with additional information about trait references. The
+ * "trait_reference" is a complex type after enrichment.
+ */
+type EnrichedComplexType =
   | { buffer: { length: number } }
   | { "string-ascii": { length: number } }
   | { "string-utf8": { length: number } }
@@ -85,30 +110,17 @@ type ComplexTypeAfterEnrich =
   | { response: { ok: EnrichedParameterType; error: EnrichedParameterType } }
   | { trait_reference: ImportedTraitType };
 
-type ComplexTypeBeforeEnrich =
-  | { buffer: { length: number } }
-  | { "string-ascii": { length: number } }
-  | { "string-utf8": { length: number } }
-  | { list: { type: EnrichedParameterType; length: number } }
-  | { tuple: { name: string; type: EnrichedParameterType }[] }
-  | { optional: EnrichedParameterType }
-  | { response: { ok: EnrichedParameterType; error: EnrichedParameterType } };
+/** The Clarity parameter types as found in the contract interface. */
+export type ParameterType = BaseType | ComplexType;
 
-export type EnrichedParameterType =
-  | BaseTypeAfterEnrich
-  | ComplexTypeAfterEnrich;
-
-export type ParameterTypeBeforeEnrich =
-  | BaseTypeBeforeEnrich
-  | ComplexTypeBeforeEnrich;
+/** The Clarity parameter types after the contract interface is "enriched". */
+export type EnrichedParameterType = EnrichedBaseType | EnrichedComplexType;
 
 export type BaseTypesToArbitrary = {
   int128: ReturnType<typeof fc.integer>;
   uint128: ReturnType<typeof fc.nat>;
   bool: ReturnType<typeof fc.boolean>;
   principal: (addresses: string[]) => ReturnType<typeof fc.constantFrom>;
-  // Trait reference is not yet supported. This is a placeholder.
-  trait_reference: undefined;
 };
 
 export type ComplexTypesToArbitrary = {
