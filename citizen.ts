@@ -111,7 +111,7 @@ export const groupContractsByEpochFromSimnetPlan = (
 
 /**
  * Deploy the contracts to the simnet in the correct order.
- * @param simnet - The simnet instance.
+ * @param simnet The simnet instance.
  * @param contractsByEpoch - The record of contracts by epoch.
  * @param getContractSourceFn - The function to retrieve the contract source.
  */

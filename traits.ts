@@ -8,9 +8,9 @@ import {
 import {
   EnrichedContractInterfaceFunction,
   ParameterTypeBeforeEnrich,
-  TraitImportType,
 } from "./shared.types";
 import { Simnet } from "@hirosystems/clarinet-sdk";
+import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 export const enrichInterfaceWithTraitData = (
   ast: IContractAST,
@@ -343,45 +343,28 @@ export const getTraitReferencePath = (
 };
 
 export const getContractIdsImplementingTrait = (
-  trait: TraitImportType,
-  simnet: Simnet
+  trait: ImportedTraitType,
+  projectTraitImplementations: Record<string, ImplementedTraitType[]>
 ): string[] => {
-  const contracts = [...simnet.getContractsInterfaces().keys()];
+  const contracts = Object.keys(projectTraitImplementations);
+
   const filteredContracts = contracts.filter((contractId) => {
-    return (
-      contractId.split(".")[0] !== "SP000000000000000000002Q6VF78" &&
-      contractId.split(".")[0] !== "ST000000000000000000002AMW42H"
+    const traitImplemented = projectTraitImplementations[contractId]?.some(
+      (implementedTrait) => {
+        const isTraitNamesMatch =
+          implementedTrait.name === trait.import.Imported?.name;
+
+        const isTraitIssuersMatch =
+          JSON.stringify(implementedTrait.contract_identifier.issuer) ===
+          JSON.stringify(trait.import.Imported?.contract_identifier.issuer);
+
+        return isTraitNamesMatch && isTraitIssuersMatch;
+      }
     );
+    return traitImplemented;
   });
 
-  const astRecord = filteredContracts.reduce<Record<string, IContractAST>>(
-    (acc, contractId: string) => {
-      // TODO: Move AST parsing to a pre-processing step.
-      const ast = simnet.getContractAST(contractId);
-
-      // Check if the trait is implemented based on properties.
-      const implementsTrait = ast.implemented_traits.some(
-        (implementedTrait: {
-          name: string;
-          contract_identifier: { issuer: object; name: string };
-        }) => {
-          return (
-            implementedTrait.name === trait.import.Imported?.name &&
-            JSON.stringify(implementedTrait.contract_identifier.issuer) ===
-              JSON.stringify(trait.import.Imported?.contract_identifier.issuer)
-          );
-        }
-      );
-
-      if (implementsTrait) {
-        acc[contractId] = ast;
-      }
-      return acc;
-    },
-    {}
-  );
-
-  return Object.keys(astRecord);
+  return filteredContracts;
 };
 
 /**
@@ -423,4 +406,35 @@ export const isTraitReferenceFunction = (
   return fn.args.some((arg) =>
     hasTraitReference(arg.type as ParameterTypeBeforeEnrich)
   );
+};
+
+/**
+ * Iterates over all project contracts's ASTs excluding the boot ones and
+ * extracts a record of contract IDs to their implemented traits.
+ * @param simnet The Simnet instance.
+ * @returns A record of contract IDs to their implemented traits.
+ */
+export const extractProjectTraitImplementations = (simnet: Simnet) => {
+  const allProjectContracts = [
+    ...simnet.getContractsInterfaces().keys(),
+  ].filter((contractId) => {
+    const contractDeployer = contractId.split(".")[0];
+    return ![
+      "SP000000000000000000002Q6VF78",
+      "ST000000000000000000002AMW42H",
+    ].includes(contractDeployer);
+  });
+
+  const projectTraitImplementations = allProjectContracts.reduce<
+    Record<string, ImplementedTraitType[]>
+  >((acc, contractId) => {
+    const ast = simnet.getContractAST(contractId);
+    const implementedTraits = ast.implemented_traits as ImplementedTraitType[];
+    if (implementedTraits.length > 0) {
+      acc[contractId] = implementedTraits;
+    }
+    return acc;
+  }, {});
+
+  return projectTraitImplementations;
 };

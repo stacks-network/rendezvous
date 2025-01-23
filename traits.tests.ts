@@ -7,6 +7,7 @@ import { resolve } from "path";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
+  extractProjectTraitImplementations,
   getContractIdsImplementingTrait,
   isTraitReferenceFunction,
 } from "./traits";
@@ -1558,6 +1559,9 @@ describe("Trait reference processing", () => {
       resolve(__dirname, "example", "Clarinet.toml")
     );
 
+    const projectTraitImplementations =
+      extractProjectTraitImplementations(simnet);
+
     const traitData = {
       name: "ft-trait",
       import: {
@@ -1580,7 +1584,10 @@ describe("Trait reference processing", () => {
     const expected = ["SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.ststx-token"];
 
     // Act
-    const actual = getContractIdsImplementingTrait(traitData, simnet);
+    const actual = getContractIdsImplementingTrait(
+      traitData,
+      projectTraitImplementations
+    );
 
     // Assert
     expect(actual).toEqual(expected);

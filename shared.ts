@@ -8,7 +8,6 @@ import {
   EnrichedContractInterfaceFunction,
   EnrichedParameterType,
   ResponseStatus,
-  TraitImportType,
   TupleData,
 } from "./shared.types";
 import { Simnet } from "@hirosystems/clarinet-sdk";
@@ -25,6 +24,7 @@ import {
   responseOkCV,
 } from "@stacks/transactions";
 import { getContractIdsImplementingTrait } from "./traits";
+import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 /**
  * Get the interfaces of contracts deployed by the specified deployer from the
@@ -69,13 +69,13 @@ export const getFunctionsListForContract = (
 export const functionToArbitrary = (
   fn: EnrichedContractInterfaceFunction,
   addresses: string[],
-  simnet: Simnet
+  projectTraitImplementations: Record<string, ImplementedTraitType[]>
 ): fc.Arbitrary<any>[] =>
   fn.args.map((arg) =>
     parameterTypeToArbitrary(
       arg.type as EnrichedParameterType,
       addresses,
-      simnet
+      projectTraitImplementations
     )
   );
 
@@ -87,7 +87,7 @@ export const functionToArbitrary = (
 const parameterTypeToArbitrary = (
   type: EnrichedParameterType,
   addresses: string[],
-  simnet: Simnet
+  projectTraitImplementations: Record<string, ImplementedTraitType[]>
 ): fc.Arbitrary<any> => {
   if (typeof type === "string") {
     // The type is a base type.
@@ -113,27 +113,31 @@ const parameterTypeToArbitrary = (
         type.list.type,
         type.list.length,
         addresses,
-        simnet
+        projectTraitImplementations
       );
     } else if ("tuple" in type) {
-      return complexTypesToArbitrary["tuple"](type.tuple, addresses, simnet);
+      return complexTypesToArbitrary["tuple"](
+        type.tuple,
+        addresses,
+        projectTraitImplementations
+      );
     } else if ("optional" in type) {
       return complexTypesToArbitrary["optional"](
         type.optional,
         addresses,
-        simnet
+        projectTraitImplementations
       );
     } else if ("response" in type) {
       return complexTypesToArbitrary.response(
         type.response.ok,
         type.response.error,
         addresses,
-        simnet
+        projectTraitImplementations
       );
     } else if ("trait_reference" in type) {
       return complexTypesToArbitrary.trait_reference(
         type.trait_reference,
-        simnet
+        projectTraitImplementations
       );
     } else {
       throw new Error(`Unsupported complex type: ${JSON.stringify(type)}`);
@@ -195,22 +199,25 @@ const complexTypesToArbitrary: ComplexTypesToArbitrary = {
     type: EnrichedParameterType,
     length: number,
     addresses: string[],
-    simnet: Simnet
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
   ) =>
-    fc.array(parameterTypeToArbitrary(type, addresses, simnet), {
-      maxLength: length,
-    }),
+    fc.array(
+      parameterTypeToArbitrary(type, addresses, projectTraitImplementations),
+      {
+        maxLength: length,
+      }
+    ),
   tuple: (
     items: { name: string; type: EnrichedParameterType }[],
     addresses: string[],
-    simnet: Simnet
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
   ) => {
     const tupleArbitraries: { [key: string]: fc.Arbitrary<any> } = {};
     items.forEach((item) => {
       tupleArbitraries[item.name] = parameterTypeToArbitrary(
         item.type,
         addresses,
-        simnet
+        projectTraitImplementations
       );
     });
     return fc.record(tupleArbitraries);
@@ -218,27 +225,41 @@ const complexTypesToArbitrary: ComplexTypesToArbitrary = {
   optional: (
     type: EnrichedParameterType,
     addresses: string[],
-    simnet: Simnet
-  ) => fc.option(parameterTypeToArbitrary(type, addresses, simnet)),
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+  ) =>
+    fc.option(
+      parameterTypeToArbitrary(type, addresses, projectTraitImplementations)
+    ),
   response: (
     okType: EnrichedParameterType,
     errType: EnrichedParameterType,
     addresses: string[],
-    simnet: Simnet
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
   ) =>
     fc.oneof(
       fc.record({
         status: fc.constant("ok"),
-        value: parameterTypeToArbitrary(okType, addresses, simnet),
+        value: parameterTypeToArbitrary(
+          okType,
+          addresses,
+          projectTraitImplementations
+        ),
       }),
       fc.record({
         status: fc.constant("error"),
-        value: parameterTypeToArbitrary(errType, addresses, simnet),
+        value: parameterTypeToArbitrary(
+          errType,
+          addresses,
+          projectTraitImplementations
+        ),
       })
     ),
-  trait_reference: (traitData: TraitImportType, simnet: Simnet) => {
+  trait_reference: (
+    traitData: ImportedTraitType,
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+  ) => {
     return fc.constantFrom(
-      ...getContractIdsImplementingTrait(traitData, simnet)
+      ...getContractIdsImplementingTrait(traitData, projectTraitImplementations)
     );
   },
 };

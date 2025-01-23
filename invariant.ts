@@ -14,6 +14,7 @@ import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
+  extractProjectTraitImplementations,
   isTraitReferenceFunction,
 } from "./traits";
 import { EnrichedContractInterfaceFunction } from "./shared.types";
@@ -33,6 +34,13 @@ export const checkInvariants = (
   // to access the SUT functions for each Rendezvous contract afterwards.
   const rendezvousSutFunctions = filterSutFunctions(rendezvousAllFunctions);
 
+  // A map where the keys are the Rendezvous identifiers and the values are
+  // arrays of their invariant functions. This map will be used to access the
+  // invariant functions for each Rendezvous contract afterwards.
+  const rendezvousInvariantFunctions = filterInvariantFunctions(
+    rendezvousAllFunctions
+  );
+
   // The Rendezvous identifier is the first one in the list. Only one contract
   // can be fuzzed at a time.
   const rendezvousContractId = rendezvousList[0];
@@ -40,6 +48,36 @@ export const checkInvariants = (
   const traitReferenceSutFunctions = rendezvousSutFunctions
     .get(rendezvousContractId)!
     .filter((fn) => isTraitReferenceFunction(fn));
+
+  const traitReferenceInvariantFunctions = rendezvousInvariantFunctions
+    .get(rendezvousContractId)!
+    .filter((fn) => isTraitReferenceFunction(fn));
+
+  const projectTraitImplementations =
+    extractProjectTraitImplementations(simnet);
+
+  if (
+    Object.entries(projectTraitImplementations).length === 0 &&
+    (traitReferenceSutFunctions.length > 0 ||
+      traitReferenceInvariantFunctions.length > 0)
+  ) {
+    const foundTraitReferenceMessage =
+      traitReferenceSutFunctions.length > 0 &&
+      traitReferenceInvariantFunctions.length > 0
+        ? "public functions and invariants"
+        : traitReferenceSutFunctions.length > 0
+        ? "public functions"
+        : "invariants";
+
+    radio.emit(
+      "logMessage",
+      red(
+        `\nFound ${foundTraitReferenceMessage} referencing traits, but no trait implementations were found in the project.
+\nNote: You can add contracts implementing traits either as project contracts or requirements!\n`
+      )
+    );
+    return;
+  }
 
   const enrichedSutFunctionsInterfaces =
     traitReferenceSutFunctions.length > 0
@@ -52,17 +90,6 @@ export const checkInvariants = (
           rendezvousContractId
         )
       : rendezvousSutFunctions;
-
-  // A map where the keys are the Rendezvous identifiers and the values are
-  // arrays of their invariant functions. This map will be used to access the
-  // invariant functions for each Rendezvous contract afterwards.
-  const rendezvousInvariantFunctions = filterInvariantFunctions(
-    rendezvousAllFunctions
-  );
-
-  const traitReferenceInvariantFunctions = rendezvousInvariantFunctions
-    .get(rendezvousContractId)!
-    .filter((fn) => isTraitReferenceFunction(fn));
 
   const enrichedInvariantFunctionsInterfaces =
     traitReferenceInvariantFunctions.length > 0
@@ -156,14 +183,14 @@ export const checkInvariants = (
                 ...functionToArbitrary(
                   r.selectedFunction,
                   simnetAddresses,
-                  simnet
+                  projectTraitImplementations
                 )
               ),
               invariantArgsArb: fc.tuple(
                 ...functionToArbitrary(
                   r.selectedInvariant,
                   simnetAddresses,
-                  simnet
+                  projectTraitImplementations
                 )
               ),
             })
