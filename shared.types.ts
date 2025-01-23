@@ -1,4 +1,3 @@
-import { Simnet } from "@hirosystems/clarinet-sdk";
 import {
   ContractInterfaceFunctionAccess,
   ContractInterfaceFunctionArg,
@@ -20,6 +19,7 @@ import {
   uintCV,
 } from "@stacks/transactions";
 import fc from "fast-check";
+import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 // Types used for Clarity Value conversion.
 
@@ -28,7 +28,7 @@ export type EnrichedContractInterfaceFunction = {
     | ContractInterfaceFunctionArg
     | {
         type: {
-          trait_reference: TraitImportType;
+          trait_reference: ImportedTraitType;
         };
         name: string;
       }
@@ -83,7 +83,7 @@ type ComplexTypeAfterEnrich =
   | { tuple: { name: string; type: EnrichedParameterType }[] }
   | { optional: EnrichedParameterType }
   | { response: { ok: EnrichedParameterType; error: EnrichedParameterType } }
-  | { trait_reference: TraitImportType };
+  | { trait_reference: ImportedTraitType };
 
 type ComplexTypeBeforeEnrich =
   | { buffer: { length: number } }
@@ -119,36 +119,26 @@ export type ComplexTypesToArbitrary = {
     type: EnrichedParameterType,
     length: number,
     addresses: string[],
-    simnet: Simnet
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
   ) => fc.Arbitrary<any[]>;
   tuple: (
     items: { name: string; type: EnrichedParameterType }[],
     addresses: string[],
-    simnet: Simnet
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
   ) => fc.Arbitrary<object>;
   optional: (
     type: EnrichedParameterType,
     addresses: string[],
-    simnet: Simnet
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
   ) => fc.Arbitrary<any>;
   response: (
     okType: EnrichedParameterType,
     errType: EnrichedParameterType,
     addresses: string[],
-    simnet: Simnet
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
   ) => fc.Arbitrary<any>;
   trait_reference: (
-    traitData: TraitImportType,
-    simnet: Simnet
+    traitData: ImportedTraitType,
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
   ) => fc.Arbitrary<any>;
-};
-
-export type TraitImportType = {
-  name: string;
-  import: {
-    Imported: {
-      name: string;
-      contract_identifier: { issuer: Array<any>; name: string };
-    };
-  };
 };
