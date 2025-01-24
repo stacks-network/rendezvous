@@ -6,6 +6,14 @@ cache_dir = "./.cache"
 [[project.requirements]]
 contract_id = 'SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.ststx-token'
 
+[[project.requirements]]
+contract_id = 'SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.sip-010-trait-ft-standard'
+
+[contracts.rendezvous-token]
+path = 'contracts/rendezvous-token.clar'
+clarity_version = 2
+epoch = 2.5
+
 [contracts.cargo]
 path = "contracts/cargo.clar"
 clarity_version = 3
@@ -26,8 +34,8 @@ path = "contracts/slice.clar"
 clarity_version = 3
 epoch = 3.0
 
-[contracts.trait]
-path = 'contracts/trait.clar'
+[contracts.ft-transfer-many]
+path = 'contracts/ft-transfer-many.clar'
 clarity_version = 3
 epoch = 3.0
 

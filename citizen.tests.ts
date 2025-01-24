@@ -101,6 +101,14 @@ describe("Simnet deployment plan operations", () => {
           },
         },
       ],
+      "2.5": [
+        {
+          "rendezvous-token": {
+            clarity_version: 2,
+            path: "contracts/rendezvous-token.clar",
+          },
+        },
+      ],
       "3.0": [
         {
           cargo: {
@@ -115,6 +123,12 @@ describe("Simnet deployment plan operations", () => {
           },
         },
         {
+          "ft-transfer-many": {
+            path: "contracts/ft-transfer-many.clar",
+            clarity_version: 3,
+          },
+        },
+        {
           reverse: {
             path: "contracts/reverse.clar",
             clarity_version: 3,
@@ -123,12 +137,6 @@ describe("Simnet deployment plan operations", () => {
         {
           slice: {
             path: "contracts/slice.clar",
-            clarity_version: 3,
-          },
-        },
-        {
-          trait: {
-            path: "contracts/trait.clar",
             clarity_version: 3,
           },
         },
