@@ -12,6 +12,9 @@ import {
 import { Simnet } from "@hirosystems/clarinet-sdk";
 import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
+// FIXME: The presence of a list in the nesting chain affects the trait
+// reference path during trait import data enrichment. This function cannot
+// handle responses or optionals nested under lists.
 /**
  * Enriches contract interface with trait reference data. Before enrichment,
  * the contract interface lacks trait reference data for parameters. This
