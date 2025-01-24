@@ -1,10 +1,10 @@
 import fc from "fast-check";
 import {
-  EnrichedBaseType,
   BaseTypesToArbitrary,
   BaseTypesToCV,
   ComplexTypesToArbitrary,
   ComplexTypesToCV,
+  EnrichedBaseType,
   EnrichedContractInterfaceFunction,
   EnrichedParameterType,
   ResponseStatus,
