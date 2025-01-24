@@ -52,7 +52,8 @@ export const checkProperties = (
       "logMessage",
       red(
         `\nFound test functions referencing traits, but no trait implementations were found in the project.
-\nNote: You can add contracts implementing traits either as project contracts or requirements!\n`
+\nNote: You can add contracts implementing traits either as project contracts or as Clarinet requirements. For more details, visit: https://www.hiro.so/clarinet/.
+\n`
       )
     );
     return;

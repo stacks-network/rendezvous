@@ -686,7 +686,7 @@ describe("Trait reference processing", () => {
     // Assert
     expect(actual).toEqual(expected);
   });
-  // paramPath::: [ 'mad', 'list-mad', 'list', 'mad-inner' ]
+
   it("correctly enriches interface with trait reference data for a tuple nested trait that is the first parameter", () => {
     // Arrange
     const allFunctionsInterfaces = (
