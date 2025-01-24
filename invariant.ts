@@ -73,7 +73,8 @@ export const checkInvariants = (
       "logMessage",
       red(
         `\nFound ${foundTraitReferenceMessage} referencing traits, but no trait implementations were found in the project.
-\nNote: You can add contracts implementing traits either as project contracts or requirements!\n`
+\nNote: You can add contracts implementing traits either as project contracts or as Clarinet requirements. For more details, visit: https://www.hiro.so/clarinet/.
+\n`
       )
     );
     return;
@@ -127,7 +128,7 @@ export const checkInvariants = (
     rendezvousContractId
   );
 
-  const invariantFunctions = getFunctionsListForContract(
+  const invariants = getFunctionsListForContract(
     enrichedInvariantFunctionsInterfaces,
     rendezvousContractId
   );
@@ -142,7 +143,7 @@ export const checkInvariants = (
     return;
   }
 
-  if (invariantFunctions?.length === 0) {
+  if (invariants?.length === 0) {
     radio.emit(
       "logMessage",
       red(
@@ -172,7 +173,7 @@ export const checkInvariants = (
           fc
             .record({
               selectedFunction: fc.constantFrom(...functions),
-              selectedInvariant: fc.constantFrom(...invariantFunctions),
+              selectedInvariant: fc.constantFrom(...invariants),
             })
             .map((selectedFunctions) => ({ ...r, ...selectedFunctions }))
         )
