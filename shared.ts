@@ -1,11 +1,12 @@
 import fc from "fast-check";
 import {
-  BaseType,
   BaseTypesToArbitrary,
   BaseTypesToCV,
   ComplexTypesToArbitrary,
   ComplexTypesToCV,
-  ParameterType,
+  EnrichedBaseType,
+  EnrichedContractInterfaceFunction,
+  EnrichedParameterType,
   ResponseStatus,
   TupleData,
 } from "./shared.types";
@@ -18,9 +19,12 @@ import {
   Cl,
   ClarityValue,
   optionalCVOf,
+  principalCV,
   responseErrorCV,
   responseOkCV,
 } from "@stacks/transactions";
+import { getContractIdsImplementingTrait } from "./traits";
+import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 /**
  * Get the interfaces of contracts deployed by the specified deployer from the
@@ -54,20 +58,25 @@ export const getFunctionsFromContractInterfaces = (
   );
 
 export const getFunctionsListForContract = (
-  functionsMap: Map<string, ContractInterfaceFunction[]>,
+  functionsMap: Map<string, EnrichedContractInterfaceFunction[]>,
   contractId: string
-): ContractInterfaceFunction[] => functionsMap.get(contractId) || [];
+) => functionsMap.get(contractId) || [];
 
 /** For a given function, dynamically generate fast-check arbitraries.
  * @param fn The function interface.
  * @returns Array of fast-check arbitraries.
  */
 export const functionToArbitrary = (
-  fn: ContractInterfaceFunction,
-  addresses: string[]
+  fn: EnrichedContractInterfaceFunction,
+  addresses: string[],
+  projectTraitImplementations: Record<string, ImplementedTraitType[]>
 ): fc.Arbitrary<any>[] =>
   fn.args.map((arg) =>
-    parameterTypeToArbitrary(arg.type as ParameterType, addresses)
+    parameterTypeToArbitrary(
+      arg.type as EnrichedParameterType,
+      addresses,
+      projectTraitImplementations
+    )
   );
 
 /**
@@ -76,8 +85,9 @@ export const functionToArbitrary = (
  * @returns Fast-check arbitrary.
  */
 const parameterTypeToArbitrary = (
-  type: ParameterType,
-  addresses: string[]
+  type: EnrichedParameterType,
+  addresses: string[],
+  projectTraitImplementations: Record<string, ImplementedTraitType[]>
 ): fc.Arbitrary<any> => {
   if (typeof type === "string") {
     // The type is a base type.
@@ -87,8 +97,6 @@ const parameterTypeToArbitrary = (
           "No addresses could be retrieved from the simnet instance!"
         );
       return baseTypesToArbitrary.principal(addresses);
-    } else if (type === "trait_reference") {
-      throw new Error("Unsupported parameter type: trait_reference");
     } else return baseTypesToArbitrary[type];
   } else {
     // The type is a complex type.
@@ -104,17 +112,32 @@ const parameterTypeToArbitrary = (
       return complexTypesToArbitrary["list"](
         type.list.type,
         type.list.length,
-        addresses
+        addresses,
+        projectTraitImplementations
       );
     } else if ("tuple" in type) {
-      return complexTypesToArbitrary["tuple"](type.tuple, addresses);
+      return complexTypesToArbitrary["tuple"](
+        type.tuple,
+        addresses,
+        projectTraitImplementations
+      );
     } else if ("optional" in type) {
-      return complexTypesToArbitrary["optional"](type.optional, addresses);
+      return complexTypesToArbitrary["optional"](
+        type.optional,
+        addresses,
+        projectTraitImplementations
+      );
     } else if ("response" in type) {
       return complexTypesToArbitrary.response(
         type.response.ok,
         type.response.error,
-        addresses
+        addresses,
+        projectTraitImplementations
+      );
+    } else if ("trait_reference" in type) {
+      return complexTypesToArbitrary.trait_reference(
+        type.trait_reference,
+        projectTraitImplementations
       );
     } else {
       throw new Error(`Unsupported complex type: ${JSON.stringify(type)}`);
@@ -130,7 +153,91 @@ const baseTypesToArbitrary: BaseTypesToArbitrary = {
   uint128: fc.nat(),
   bool: fc.boolean(),
   principal: (addresses: string[]) => fc.constantFrom(...addresses),
-  trait_reference: undefined,
+};
+
+/**
+ * Complex types to fast-check arbitraries mapping.
+ */
+const complexTypesToArbitrary: ComplexTypesToArbitrary = {
+  // For buffer types, the length must be doubled because they are represented
+  // in hex. The `argToCV` function expects this format for `buff` ClarityValue
+  // conversion. The UInt8Array will have half the length of the corresponding
+  // hex string. Stacks.js reference:
+  // https://github.com/hirosystems/stacks.js/blob/fd0bf26b5f29fc3c1bf79581d0ad9b89f0d7f15a/packages/common/src/utils.ts#L522
+  buffer: (length: number) => hexaString({ maxLength: 2 * length }),
+  "string-ascii": (length: number) =>
+    fc.string({
+      unit: fc.constantFrom(...charSet),
+      maxLength: length,
+    }),
+  "string-utf8": (length: number) => fc.string({ maxLength: length }),
+  list: (
+    type: EnrichedParameterType,
+    length: number,
+    addresses: string[],
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+  ) =>
+    fc.array(
+      parameterTypeToArbitrary(type, addresses, projectTraitImplementations),
+      {
+        maxLength: length,
+      }
+    ),
+  tuple: (
+    items: { name: string; type: EnrichedParameterType }[],
+    addresses: string[],
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+  ) => {
+    const tupleArbitraries: { [key: string]: fc.Arbitrary<any> } = {};
+    items.forEach((item) => {
+      tupleArbitraries[item.name] = parameterTypeToArbitrary(
+        item.type,
+        addresses,
+        projectTraitImplementations
+      );
+    });
+    return fc.record(tupleArbitraries);
+  },
+  optional: (
+    type: EnrichedParameterType,
+    addresses: string[],
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+  ) =>
+    fc.option(
+      parameterTypeToArbitrary(type, addresses, projectTraitImplementations)
+    ),
+  response: (
+    okType: EnrichedParameterType,
+    errType: EnrichedParameterType,
+    addresses: string[],
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+  ) =>
+    fc.oneof(
+      fc.record({
+        status: fc.constant("ok"),
+        value: parameterTypeToArbitrary(
+          okType,
+          addresses,
+          projectTraitImplementations
+        ),
+      }),
+      fc.record({
+        status: fc.constant("error"),
+        value: parameterTypeToArbitrary(
+          errType,
+          addresses,
+          projectTraitImplementations
+        ),
+      })
+    ),
+  trait_reference: (
+    traitData: ImportedTraitType,
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+  ) => {
+    return fc.constantFrom(
+      ...getContractIdsImplementingTrait(traitData, projectTraitImplementations)
+    );
+  },
 };
 
 /**
@@ -156,56 +263,6 @@ export const hexaString = (
   return fc.string({ ...constraints, unit: hexa() });
 };
 
-/**
- * Complex types to fast-check arbitraries mapping.
- */
-const complexTypesToArbitrary: ComplexTypesToArbitrary = {
-  // For buffer types, the length must be doubled because they are represented
-  // in hex. The `argToCV` function expects this format for `buff` ClarityValue
-  // conversion. The UInt8Array will have half the length of the corresponding
-  // hex string. Stacks.js reference:
-  // https://github.com/hirosystems/stacks.js/blob/fd0bf26b5f29fc3c1bf79581d0ad9b89f0d7f15a/packages/common/src/utils.ts#L522
-  buffer: (length: number) => hexaString({ maxLength: 2 * length }),
-  "string-ascii": (length: number) =>
-    fc.string({
-      unit: fc.constantFrom(...charSet),
-      maxLength: length,
-    }),
-  "string-utf8": (length: number) => fc.string({ maxLength: length }),
-  list: (type: ParameterType, length: number, addresses: string[]) =>
-    fc.array(parameterTypeToArbitrary(type, addresses), { maxLength: length }),
-  tuple: (
-    items: { name: string; type: ParameterType }[],
-    addresses: string[]
-  ) => {
-    const tupleArbitraries: { [key: string]: fc.Arbitrary<any> } = {};
-    items.forEach((item) => {
-      tupleArbitraries[item.name] = parameterTypeToArbitrary(
-        item.type,
-        addresses
-      );
-    });
-    return fc.record(tupleArbitraries);
-  },
-  optional: (type: ParameterType, addresses: string[]) =>
-    fc.option(parameterTypeToArbitrary(type, addresses)),
-  response: (
-    okType: ParameterType,
-    errType: ParameterType,
-    addresses: string[]
-  ) =>
-    fc.oneof(
-      fc.record({
-        status: fc.constant("ok"),
-        value: parameterTypeToArbitrary(okType, addresses),
-      }),
-      fc.record({
-        status: fc.constant("error"),
-        value: parameterTypeToArbitrary(errType, addresses),
-      })
-    ),
-};
-
 /** The character set used for generating ASCII strings.*/
 const charSet =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
@@ -216,8 +273,8 @@ const charSet =
  * @param args Array of arguments.
  * @returns Array of Clarity values.
  */
-export const argsToCV = (fn: ContractInterfaceFunction, args: any[]) =>
-  fn.args.map((arg, i) => argToCV(args[i], arg.type as ParameterType));
+export const argsToCV = (fn: EnrichedContractInterfaceFunction, args: any[]) =>
+  fn.args.map((arg, i) => argToCV(args[i], arg.type as EnrichedParameterType));
 
 /**
  * Convert a function argument to a Clarity value.
@@ -225,7 +282,7 @@ export const argsToCV = (fn: ContractInterfaceFunction, args: any[]) =>
  * @param type Argument type (base or complex).
  * @returns Clarity value.
  */
-const argToCV = (arg: any, type: ParameterType): ClarityValue => {
+const argToCV = (arg: any, type: EnrichedParameterType): ClarityValue => {
   if (isBaseType(type)) {
     // Base type.
     switch (type) {
@@ -264,6 +321,8 @@ const argToCV = (arg: any, type: ParameterType): ClarityValue => {
       const branchType = type.response[status];
       const responseValue = argToCV(arg.value, branchType);
       return complexTypesToCV.response(status, responseValue);
+    } else if ("trait_reference" in type) {
+      return complexTypesToCV.trait_reference(arg);
     } else {
       throw new Error(
         `Unsupported complex parameter type: ${JSON.stringify(type)}`
@@ -302,45 +361,14 @@ const complexTypesToCV: ComplexTypesToCV = {
     else if (status === "error") return responseErrorCV(value);
     else throw new Error(`Unsupported response status: ${status}`);
   },
+  trait_reference: (traitImplementation: string) =>
+    principalCV(traitImplementation),
 };
 
-const isBaseType = (type: ParameterType): type is BaseType => {
-  return ["int128", "uint128", "bool", "principal"].includes(type as BaseType);
-};
-
-/**
- * Checks if any parameter of the function contains a `trait_reference` type.
- * @param fn The function interface.
- * @returns Boolean - true if the function contains a trait reference, false
- * otherwise.
- */
-export const isTraitReferenceFunction = (
-  fn: ContractInterfaceFunction
-): boolean => {
-  const hasTraitReference = (type: ParameterType): boolean => {
-    if (typeof type === "string") {
-      // The type is a base type.
-      return type === "trait_reference";
-    } else {
-      // The type is a complex type.
-      if ("buffer" in type) return false;
-      if ("string-ascii" in type) return false;
-      if ("string-utf8" in type) return false;
-      if ("list" in type) return hasTraitReference(type.list.type);
-      if ("tuple" in type)
-        return type.tuple.some((item) => hasTraitReference(item.type));
-      if ("optional" in type) return hasTraitReference(type.optional);
-      if ("response" in type)
-        return (
-          hasTraitReference(type.response.ok) ||
-          hasTraitReference(type.response.error)
-        );
-      // Default to false for unexpected types.
-      return false;
-    }
-  };
-
-  return fn.args.some((arg) => hasTraitReference(arg.type as ParameterType));
+const isBaseType = (type: EnrichedParameterType): type is EnrichedBaseType => {
+  return ["int128", "uint128", "bool", "principal"].includes(
+    type as EnrichedBaseType
+  );
 };
 
 export const getContractNameFromContractId = (contractId: string): string =>

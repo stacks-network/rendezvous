@@ -1,4 +1,9 @@
 import {
+  ContractInterfaceFunctionAccess,
+  ContractInterfaceFunctionArg,
+  ContractInterfaceFunctionOutput,
+} from "@hirosystems/clarinet-sdk-wasm";
+import {
   boolCV,
   bufferCV,
   ClarityValue,
@@ -14,8 +19,27 @@ import {
   uintCV,
 } from "@stacks/transactions";
 import fc from "fast-check";
+import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 // Types used for Clarity Value conversion.
+
+type ImportedTraitReferenceFunctionArg = {
+  type: {
+    trait_reference: ImportedTraitType;
+  };
+  name: string;
+};
+
+/**
+ * The type of the function interface, after the contract interface is
+ * "enriched" with additional information about trait references.
+ */
+export type EnrichedContractInterfaceFunction = {
+  args: (ContractInterfaceFunctionArg | ImportedTraitReferenceFunctionArg)[];
+  name: string;
+  access: ContractInterfaceFunctionAccess;
+  outputs: ContractInterfaceFunctionOutput;
+};
 
 export type ResponseStatus = "ok" | "error";
 
@@ -41,10 +65,12 @@ export type ComplexTypesToCV = {
     status: ResponseStatus,
     value: ClarityValue
   ) => ReturnType<typeof responseOkCV | typeof responseErrorCV>;
+  trait_reference: (trait: string) => ReturnType<typeof principalCV>;
 };
 
 // Types used for argument generation.
 
+/** The base Clarity parameter types, as found in the contract interface. */
 export type BaseType =
   | "int128"
   | "uint128"
@@ -52,6 +78,14 @@ export type BaseType =
   | "principal"
   | "trait_reference";
 
+/**
+ * The base Clarity parameter types, after the contract interface is "enriched"
+ * with additional information about trait references. The "trait_reference" is
+ * no longer a base type after "enrichment".
+ */
+export type EnrichedBaseType = "int128" | "uint128" | "bool" | "principal";
+
+/** The complex Clarity parameter types, as found in the contract interface. */
 type ComplexType =
   | { buffer: { length: number } }
   | { "string-ascii": { length: number } }
@@ -61,15 +95,32 @@ type ComplexType =
   | { optional: ParameterType }
   | { response: { ok: ParameterType; error: ParameterType } };
 
+/**
+ * The complex Clarity parameter types, after the contract interface is
+ * "enriched" with additional information about trait references. The
+ * "trait_reference" is a complex type after enrichment.
+ */
+type EnrichedComplexType =
+  | { buffer: { length: number } }
+  | { "string-ascii": { length: number } }
+  | { "string-utf8": { length: number } }
+  | { list: { type: EnrichedParameterType; length: number } }
+  | { tuple: { name: string; type: EnrichedParameterType }[] }
+  | { optional: EnrichedParameterType }
+  | { response: { ok: EnrichedParameterType; error: EnrichedParameterType } }
+  | { trait_reference: ImportedTraitType };
+
+/** The Clarity parameter types as found in the contract interface. */
 export type ParameterType = BaseType | ComplexType;
+
+/** The Clarity parameter types after the contract interface is "enriched". */
+export type EnrichedParameterType = EnrichedBaseType | EnrichedComplexType;
 
 export type BaseTypesToArbitrary = {
   int128: ReturnType<typeof fc.integer>;
   uint128: ReturnType<typeof fc.nat>;
   bool: ReturnType<typeof fc.boolean>;
   principal: (addresses: string[]) => ReturnType<typeof fc.constantFrom>;
-  // Trait reference is not yet supported. This is a placeholder.
-  trait_reference: undefined;
 };
 
 export type ComplexTypesToArbitrary = {
@@ -77,18 +128,29 @@ export type ComplexTypesToArbitrary = {
   "string-ascii": (length: number) => fc.Arbitrary<string>;
   "string-utf8": (length: number) => fc.Arbitrary<string>;
   list: (
-    type: ParameterType,
+    type: EnrichedParameterType,
     length: number,
-    addresses: string[]
+    addresses: string[],
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
   ) => fc.Arbitrary<any[]>;
   tuple: (
-    items: { name: string; type: ParameterType }[],
-    addresses: string[]
+    items: { name: string; type: EnrichedParameterType }[],
+    addresses: string[],
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
   ) => fc.Arbitrary<object>;
-  optional: (type: ParameterType, addresses: string[]) => fc.Arbitrary<any>;
+  optional: (
+    type: EnrichedParameterType,
+    addresses: string[],
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+  ) => fc.Arbitrary<any>;
   response: (
-    okType: ParameterType,
-    errType: ParameterType,
-    addresses: string[]
+    okType: EnrichedParameterType,
+    errType: EnrichedParameterType,
+    addresses: string[],
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+  ) => fc.Arbitrary<any>;
+  trait_reference: (
+    traitData: ImportedTraitType,
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>
   ) => fc.Arbitrary<any>;
 };

@@ -8,10 +8,15 @@ import {
   functionToArbitrary,
   getContractNameFromContractId,
   getFunctionsListForContract,
-  isTraitReferenceFunction,
 } from "./shared";
 import { dim, green, red, underline, yellow } from "ansicolor";
 import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
+import {
+  buildTraitReferenceMap,
+  enrichInterfaceWithTraitData,
+  extractProjectTraitImplementations,
+  isTraitReferenceFunction,
+} from "./traits";
 
 export const checkProperties = (
   simnet: Simnet,
@@ -23,12 +28,48 @@ export const checkProperties = (
   runs: number | undefined,
   radio: EventEmitter
 ) => {
+  const testContractId = rendezvousList[0];
+
   // A map where the keys are the test contract identifiers and the values are
   // arrays of their test functions. This map will be used to access the test
   // functions for each test contract in the property-based testing routine.
   const testContractsTestFunctions = filterTestFunctions(
     rendezvousAllFunctions
   );
+
+  const traitReferenceFunctions = testContractsTestFunctions
+    .get(testContractId)!
+    .filter((fn) => isTraitReferenceFunction(fn));
+
+  const projectTraitImplementations =
+    extractProjectTraitImplementations(simnet);
+
+  if (
+    Object.entries(projectTraitImplementations).length === 0 &&
+    traitReferenceFunctions.length > 0
+  ) {
+    radio.emit(
+      "logMessage",
+      red(
+        `\nFound test functions referencing traits, but no trait implementations were found in the project.
+\nNote: You can add contracts implementing traits either as project contracts or as Clarinet requirements. For more details, visit: https://www.hiro.so/clarinet/.
+\n`
+      )
+    );
+    return;
+  }
+
+  const enrichedTestFunctionsInterfaces =
+    traitReferenceFunctions.length > 0
+      ? enrichInterfaceWithTraitData(
+          simnet.getContractAST(sutContractName),
+          buildTraitReferenceMap(
+            testContractsTestFunctions.get(testContractId)!
+          ),
+          testContractsTestFunctions.get(testContractId)!,
+          testContractId
+        )
+      : testContractsTestFunctions;
 
   radio.emit(
     "logMessage",
@@ -94,10 +135,8 @@ export const checkProperties = (
 
   const simnetAddresses = Array.from(simnetAccounts.values());
 
-  const testContractId = rendezvousList[0];
-
   const testFunctions = getFunctionsListForContract(
-    testContractsTestFunctions,
+    enrichedTestFunctionsInterfaces,
     testContractId
   );
 
@@ -105,20 +144,6 @@ export const checkProperties = (
     radio.emit(
       "logMessage",
       red(`No test functions found for the "${sutContractName}" contract.\n`)
-    );
-    return;
-  }
-
-  const eligibleTestFunctions = testFunctions.filter(
-    (fn) => !isTraitReferenceFunction(fn)
-  );
-
-  if (eligibleTestFunctions.length === 0) {
-    radio.emit(
-      "logMessage",
-      red(
-        `No eligible test functions found for the "${sutContractName}" contract. Note: trait references are not supported.\n`
-      )
     );
     return;
   }
@@ -138,9 +163,7 @@ export const checkProperties = (
         .chain((r) =>
           fc
             .record({
-              selectedTestFunction: fc.constantFrom(
-                ...(eligibleTestFunctions as ContractInterfaceFunction[])
-              ),
+              selectedTestFunction: fc.constantFrom(...testFunctions),
             })
             .map((selectedTestFunction) => ({
               ...r,
@@ -151,7 +174,11 @@ export const checkProperties = (
           fc
             .record({
               functionArgsArb: fc.tuple(
-                ...functionToArbitrary(r.selectedTestFunction, simnetAddresses)
+                ...functionToArbitrary(
+                  r.selectedTestFunction,
+                  simnetAddresses,
+                  projectTraitImplementations
+                )
               ),
             })
             .map((args) => ({ ...r, ...args }))
