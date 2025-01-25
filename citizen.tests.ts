@@ -123,14 +123,14 @@ describe("Simnet deployment plan operations", () => {
           },
         },
         {
-          "ft-transfer-many": {
-            path: "contracts/ft-transfer-many.clar",
+          reverse: {
+            path: "contracts/reverse.clar",
             clarity_version: 3,
           },
         },
         {
-          reverse: {
-            path: "contracts/reverse.clar",
+          "send-tokens": {
+            path: "contracts/send-tokens.clar",
             clarity_version: 3,
           },
         },

@@ -1,6 +1,6 @@
 ;; Invariants
 
-(define-read-only (invariant-trait (address principal))
+(define-read-only (invariant-token-supply-vs-balance (address principal))
   (let
     (
       (total-supply
@@ -22,14 +22,14 @@
 ;; Properties
 
 (define-public (test-transfer
-    (token <ft-trait>) (recipient principal) (amount uint)
+    (token <ft-trait>) (to principal) (amount uint)
   )
   (let
     (
       (sender-balance-before
         (unwrap-panic (contract-call? token get-balance tx-sender)))
       (transfer-result
-        (transfer {token: token, recipient: recipient, amount: amount}))
+        (transfer {token: token, to: to, amount: amount}))
       (sender-balance-after
         (unwrap-panic (contract-call? token get-balance tx-sender)))
     )
