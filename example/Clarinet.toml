@@ -9,6 +9,11 @@ contract_id = 'SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.ststx-token'
 [[project.requirements]]
 contract_id = 'SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.sip-010-trait-ft-standard'
 
+# Clarinet currently does not support type checking or dependency resolution
+# for concatenated target and test contracts. To ensure successful deployment
+# of the send-tokens contract (which only relies on rendezvous-token in its
+# corresponding test contract), we set the epoch of rendezvous-token to 2.5.
+# This ensures it precedes the epoch of the send-tokens contract (3.0).
 [contracts.rendezvous-token]
 path = 'contracts/rendezvous-token.clar'
 clarity_version = 2
@@ -34,8 +39,8 @@ path = "contracts/slice.clar"
 clarity_version = 3
 epoch = 3.0
 
-[contracts.ft-transfer-many]
-path = 'contracts/ft-transfer-many.clar'
+[contracts.send-tokens]
+path = "contracts/send-tokens.clar"
 clarity_version = 3
 epoch = 3.0
 
