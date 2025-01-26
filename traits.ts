@@ -12,9 +12,6 @@ import {
 import { Simnet } from "@hirosystems/clarinet-sdk";
 import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
-// FIXME: The presence of a list in the nesting chain affects the trait
-// reference path during trait import data enrichment. This function cannot
-// handle responses or optionals nested under lists.
 /**
  * Enriches contract interface with trait reference data. Before enrichment,
  * the contract interface lacks trait reference data for parameters. This
@@ -70,6 +67,10 @@ export const enrichInterfaceWithTraitData = (
                 : traitReferenceMap[arg.name]?.list,
               arg.type.list.type.tuple
                 ? [...currentPath, "tuple"]
+                : arg.type.list.type.response
+                ? [...currentPath, "response"]
+                : arg.type.list.type.optional
+                ? [...currentPath, "optional"]
                 : [...currentPath, "list"]
             )[0],
           },
@@ -259,16 +260,22 @@ export const getTraitReferenceData = (
             ((parameterNode.expr as List).List[1].expr as List)
           ) {
             const nestedParameterList = (parameterNode.expr as List).List[1]
-              .expr as List;
+              .expr as List | TraitReference;
 
-            // Recursively search for the trait reference in the nested
-            // parameter list.
-            const result = findTraitReference(
-              nestedParameterList.List,
-              path.slice(1)
-            );
+            if ((nestedParameterList as TraitReference).TraitReference) {
+              const [name, importData] = (nestedParameterList as TraitReference)
+                .TraitReference;
+              return [name, importData];
+            } else {
+              // Recursively search for the trait reference in the nested
+              // parameter list.
+              const result = findTraitReference(
+                (nestedParameterList as List).List,
+                path.slice(1)
+              );
 
-            if (result[0] !== undefined) return result;
+              if (result[0] !== undefined) return result;
+            }
           }
         }
       }
