@@ -13,16 +13,16 @@ import { Simnet } from "@hirosystems/clarinet-sdk";
 import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 /**
- * Enriches contract interface with trait reference data. Before enrichment,
+ * Enriches a contract interface with trait reference data. Before enrichment,
  * the contract interface lacks trait reference data for parameters. This
  * function constructs a copy of the contract interface with trait reference
  * data for parameters that are trait references.
  * @param ast The contract AST.
- * @param traitReferenceMap The map of function names to trait reference paths.
+ * @param traitReferenceMap The function names mapped to their trait reference
+ * parameter paths.
  * @param functionInterfaceList The list of function interfaces for a contract.
  * @param targetContractId The contract ID to enrich with trait reference data.
- * @returns A map of contract IDs to a list of enriched contract interface
- * functions.
+ * @returns The contract IDs mapped to a list of enriched function interfaces.
  */
 export const enrichInterfaceWithTraitData = (
   ast: IContractAST,
@@ -350,9 +350,10 @@ export const getTraitReferenceData = (
 
 /**
  * Builds a map of function names to trait reference paths. The trait reference
- * path is the path to the trait reference in the function parameter list.
+ * path is the nesting path of the trait reference in the function parameter
+ * list.
  * @param functionInterfaces The list of function interfaces for a contract.
- * @returns A map of function names to trait reference paths.
+ * @returns The function names mapped to their trait reference parameter paths.
  */
 export const buildTraitReferenceMap = (
   functionInterfaces: ContractInterfaceFunction[]
@@ -492,7 +493,7 @@ export const isTraitReferenceFunction = (
  * Iterates over all project contracts's ASTs excluding the boot ones and
  * extracts a record of contract IDs to their implemented traits.
  * @param simnet The Simnet instance.
- * @returns A record of contract IDs to their implemented traits.
+ * @returns The contract IDs mapped to their implemented traits.
  */
 export const extractProjectTraitImplementations = (simnet: Simnet) => {
   const allProjectContracts = [
