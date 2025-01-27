@@ -70,7 +70,12 @@ export function reporter(
             )
             .join(", ")}`
         );
-        radio.emit("logFailure", `- Caller   : ${r.sutCaller[0]}`);
+        radio.emit(
+          "logFailure",
+          `- Callers  : ${r.sutCallers
+            .map((sutCaller: [string, string]) => sutCaller[0])
+            .join(", ")}`
+        );
         radio.emit(
           "logFailure",
           `- Outputs  : ${r.selectedFunctions

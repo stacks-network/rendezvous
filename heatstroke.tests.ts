@@ -33,10 +33,12 @@ describe("Custom reporter logging", () => {
           }),
           invariantArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
-          sutCaller: fc.constantFrom(
-            ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
+          sutCallers: fc.array(
+            fc.constantFrom(
+              ...new Map(
+                [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+              ).entries()
+            )
           ),
           invariantCaller: fc.constantFrom(
             ...new Map(
@@ -61,7 +63,7 @@ describe("Custom reporter logging", () => {
           };
           invariantArgs: (string | number | boolean)[];
           errorMessage: string;
-          sutCaller: [string, string];
+          sutCallers: [string, string][];
           invariantCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
@@ -86,7 +88,7 @@ describe("Custom reporter logging", () => {
                   access: r.selectedInvariant.access,
                 },
                 invariantArgs: r.invariantArgs,
-                sutCaller: r.sutCaller,
+                sutCallers: r.sutCallers,
                 invariantCaller: r.invariantCaller,
               },
             ],
@@ -114,7 +116,9 @@ describe("Custom reporter logging", () => {
                 JSON.stringify(selectedFunctionArgs)
               )
               .join(", ")}`,
-            `- Caller   : ${r.sutCaller[0]}`,
+            `- Callers  : ${r.sutCallers
+              .map((sutCaller) => sutCaller[0])
+              .join(", ")}`,
             `- Outputs  : ${r.selectedFunctions
               .map((selectedFunction) =>
                 JSON.stringify(selectedFunction.outputs)
@@ -168,10 +172,12 @@ describe("Custom reporter logging", () => {
           }),
           invariantArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
-          sutCaller: fc.constantFrom(
-            ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
+          sutCallers: fc.array(
+            fc.constantFrom(
+              ...new Map(
+                [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+              ).entries()
+            )
           ),
           invariantCaller: fc.constantFrom(
             ...new Map(
@@ -197,7 +203,7 @@ describe("Custom reporter logging", () => {
           };
           invariantArgs: (string | number | boolean)[];
           errorMessage: string;
-          sutCaller: [string, string];
+          sutCallers: [string, string][];
           invariantCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
@@ -223,7 +229,7 @@ describe("Custom reporter logging", () => {
                   access: r.selectedInvariant.access,
                 },
                 invariantArgs: r.invariantArgs,
-                sutCaller: r.sutCaller,
+                sutCallers: r.sutCallers,
                 invariantCaller: r.invariantCaller,
               },
             ],
@@ -252,7 +258,9 @@ describe("Custom reporter logging", () => {
                 JSON.stringify(selectedFunctionArgs)
               )
               .join(", ")}`,
-            `- Caller   : ${r.sutCaller[0]}`,
+            `- Callers  : ${r.sutCallers
+              .map((sutCaller) => sutCaller[0])
+              .join(", ")}`,
             `- Outputs  : ${r.selectedFunctions
               .map((selectedFunction) =>
                 JSON.stringify(selectedFunction.outputs)
@@ -307,10 +315,12 @@ describe("Custom reporter logging", () => {
           }),
           invariantArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
-          sutCaller: fc.constantFrom(
-            ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
+          sutCallers: fc.array(
+            fc.constantFrom(
+              ...new Map(
+                [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+              ).entries()
+            )
           ),
           invariantCaller: fc.constantFrom(
             ...new Map(
@@ -336,7 +346,7 @@ describe("Custom reporter logging", () => {
           };
           invariantArgs: (string | number | boolean)[];
           errorMessage: string;
-          sutCaller: [string, string];
+          sutCallers: [string, string][];
           invariantCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
@@ -362,7 +372,7 @@ describe("Custom reporter logging", () => {
                   access: r.selectedInvariant.access,
                 },
                 invariantArgs: r.invariantArgs,
-                sutCaller: r.sutCaller,
+                sutCallers: r.sutCallers,
                 invariantCaller: r.invariantCaller,
               },
             ],

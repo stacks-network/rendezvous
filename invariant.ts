@@ -179,7 +179,6 @@ export const checkInvariants = (
           // to the first contract in the list. The arbitrary is still needed,
           // being used for reporting purposes in `heatstroke.ts`.
           rendezvousContractId: fc.constant(rendezvousContractId),
-          sutCaller: fc.constantFrom(...eligibleAccounts.entries()),
           invariantCaller: fc.constantFrom(...eligibleAccounts.entries()),
           canMineBlocks: fc.boolean(),
         })
@@ -196,6 +195,13 @@ export const checkInvariants = (
         .chain((r) =>
           fc
             .record({
+              sutCallers: fc.array(
+                fc.constantFrom(...eligibleAccounts.entries()),
+                {
+                  minLength: r.selectedFunctions.length,
+                  maxLength: r.selectedFunctions.length,
+                }
+              ),
               selectedFunctionsArgsList: fc.tuple(
                 ...r.selectedFunctions.map((selectedFunction) =>
                   fc.tuple(
@@ -245,10 +251,9 @@ export const checkInvariants = (
           r.invariantArgs
         );
 
-        // TODO: Generate a different wallet for each SUT function call.
-        const [sutCallerWallet, sutCallerAddress] = r.sutCaller;
-
         r.selectedFunctions.forEach((selectedFunction, index) => {
+          const [sutCallerWallet, sutCallerAddress] = r.sutCallers[index];
+
           const printedFunctionArgs = r.selectedFunctionsArgsList[index]
             .map((arg) => {
               try {
