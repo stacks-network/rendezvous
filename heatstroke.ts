@@ -1,6 +1,7 @@
 import { green } from "ansicolor";
 import { EventEmitter } from "events";
 import { getContractNameFromContractId } from "./shared";
+import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
 
 /**
  * Heatstrokes Reporter
@@ -49,16 +50,34 @@ export function reporter(
         );
         radio.emit(
           "logFailure",
-          `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`
+          `- Functions: ${r.selectedFunctions
+            .map(
+              (selectedFunction: ContractInterfaceFunction) =>
+                selectedFunction.name
+            )
+            .join(", ")} (${r.selectedFunctions
+            .map(
+              (selectedFunction: ContractInterfaceFunction) =>
+                selectedFunction.access
+            )
+            .join(", ")})`
         );
         radio.emit(
           "logFailure",
-          `- Arguments: ${JSON.stringify(r.functionArgsArb)}`
+          `- Arguments: ${r.selectedFunctionsArgsList
+            .map((selectedFunctionArgs: any[]) =>
+              JSON.stringify(selectedFunctionArgs)
+            )
+            .join(", ")}`
         );
         radio.emit("logFailure", `- Caller   : ${r.sutCaller[0]}`);
         radio.emit(
           "logFailure",
-          `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`
+          `- Outputs  : ${r.selectedFunctions
+            .map((selectedFunction: ContractInterfaceFunction) =>
+              JSON.stringify(selectedFunction.outputs)
+            )
+            .join(", ")}`
         );
         radio.emit(
           "logFailure",
@@ -66,7 +85,7 @@ export function reporter(
         );
         radio.emit(
           "logFailure",
-          `- Arguments: ${JSON.stringify(r.invariantArgsArb)}`
+          `- Arguments: ${JSON.stringify(r.invariantArgs)}`
         );
         radio.emit("logFailure", `- Caller   : ${r.invariantCaller[0]}`);
 
