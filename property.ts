@@ -18,9 +18,23 @@ import {
   isTraitReferenceFunction,
 } from "./traits";
 
+/**
+ * Runs property-based tests on the target contract and logs the progress.
+ * Reports the test results through a custom reporter.
+ * @param simnet The simnet instance.
+ * @param targetContractName The name of the target contract.
+ * @param rendezvousList The list of contract IDs for each target contract.
+ * @param rendezvousAllFunctions A map of all target contract IDs to their
+ * function interfaces.
+ * @param seed The seed for reproducible property-based tests.
+ * @param path The path for reproducible property-based tests.
+ * @param runs The number of test runs.
+ * @param radio The custom logging event emitter.
+ * @returns void
+ */
 export const checkProperties = (
   simnet: Simnet,
-  sutContractName: string,
+  targetContractName: string,
   rendezvousList: string[],
   rendezvousAllFunctions: Map<string, ContractInterfaceFunction[]>,
   seed: number | undefined,
@@ -62,7 +76,7 @@ export const checkProperties = (
   const enrichedTestFunctionsInterfaces =
     traitReferenceFunctions.length > 0
       ? enrichInterfaceWithTraitData(
-          simnet.getContractAST(sutContractName),
+          simnet.getContractAST(targetContractName),
           buildTraitReferenceMap(
             testContractsTestFunctions.get(testContractId)!
           ),
@@ -73,7 +87,7 @@ export const checkProperties = (
 
   radio.emit(
     "logMessage",
-    `\nStarting property testing type for the ${sutContractName} contract...\n`
+    `\nStarting property testing type for the ${targetContractName} contract...\n`
   );
 
   // Search for discard functions, for each test function. This map will
@@ -143,7 +157,7 @@ export const checkProperties = (
   if (testFunctions?.length === 0) {
     radio.emit(
       "logMessage",
-      red(`No test functions found for the "${sutContractName}" contract.\n`)
+      red(`No test functions found for the "${targetContractName}" contract.\n`)
     );
     return;
   }
@@ -240,7 +254,7 @@ export const checkProperties = (
               `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
               `${dim(testCallerWallet)} ` +
               `${yellow("[WARN]")} ` +
-              `${sutContractName} ` +
+              `${targetContractName} ` +
               `${underline(r.selectedTestFunction.name)} ` +
               dim(printedTestFunctionArgs)
           );
@@ -268,7 +282,7 @@ export const checkProperties = (
                   `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                   `${dim(testCallerWallet)} ` +
                   `${yellow("[WARN]")} ` +
-                  `${sutContractName} ` +
+                  `${targetContractName} ` +
                   `${underline(r.selectedTestFunction.name)} ` +
                   dim(printedTestFunctionArgs)
               );
@@ -283,7 +297,7 @@ export const checkProperties = (
                   `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                   `${dim(testCallerWallet)} ` +
                   `${green("[PASS]")} ` +
-                  `${sutContractName} ` +
+                  `${targetContractName} ` +
                   `${underline(r.selectedTestFunction.name)} ` +
                   printedTestFunctionArgs
               );
@@ -293,7 +307,7 @@ export const checkProperties = (
               }
             } else {
               throw new Error(
-                `Test failed for ${sutContractName} contract: "${r.selectedTestFunction.name}" returned ${testFunctionCallResultJson.value.value}`
+                `Test failed for ${targetContractName} contract: "${r.selectedTestFunction.name}" returned ${testFunctionCallResultJson.value.value}`
               );
             }
           } catch (error: any) {
@@ -305,7 +319,7 @@ export const checkProperties = (
                   `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                   `${testCallerWallet} ` +
                   `[FAIL] ` +
-                  `${sutContractName} ` +
+                  `${targetContractName} ` +
                   `${underline(r.selectedTestFunction.name)} ` +
                   printedTestFunctionArgs
               )
@@ -344,12 +358,12 @@ export const isTestDiscardedInPlace = (testFunctionCallResultJson: any) =>
   testFunctionCallResultJson.value.value === false;
 
 /**
- * Check if the test function has to be discarded.
+ * Checks if the test function has to be discarded.
  * @param discardFunctionName The discard function name.
  * @param selectedTestFunctionArgs The generated test function arguments.
  * @param contractId The contract identifier.
  * @param simnet The simnet instance.
- * @param selectedCaller The selected caller.
+ * @param selectedCaller The selected caller address.
  * @returns A boolean indicating if the test function has to be discarded.
  */
 const isTestDiscarded = (
@@ -372,7 +386,7 @@ const isTestDiscarded = (
 };
 
 /**
- * Validate the discard function, ensuring that its parameters match the test
+ * Validates a discard function, ensuring that its parameters match the test
  * function's parameters and that its return type is boolean.
  * @param contractId The contract identifier.
  * @param discardFunctionName The discard function name.
@@ -427,21 +441,21 @@ const validateDiscardFunction = (
 };
 
 /**
- * Verify if the test function parameters match the discard function
+ * Checks if the test function parameters match the discard function
  * parameters.
- * @param testFunction The test function's interface.
- * @param discardFunction The discard function's interface.
+ * @param testFunctionInterface The test function's interface.
+ * @param discardFunctionInterface The discard function's interface.
  * @returns A boolean indicating if the parameters match.
  */
 export const isParamsMatch = (
-  testFunction: ContractInterfaceFunction,
-  discardFunction: ContractInterfaceFunction
+  testFunctionInterface: ContractInterfaceFunction,
+  discardFunctionInterface: ContractInterfaceFunction
 ) => {
-  const sortedTestFunctionArgs = [...testFunction.args].sort((a, b) =>
+  const sortedTestFunctionArgs = [...testFunctionInterface.args].sort((a, b) =>
     a.name.localeCompare(b.name)
   );
-  const sortedDiscardFunctionArgs = [...discardFunction.args].sort((a, b) =>
-    a.name.localeCompare(b.name)
+  const sortedDiscardFunctionArgs = [...discardFunctionInterface.args].sort(
+    (a, b) => a.name.localeCompare(b.name)
   );
   return (
     JSON.stringify(sortedTestFunctionArgs) ===
@@ -450,10 +464,10 @@ export const isParamsMatch = (
 };
 
 /**
- * Verify if the discard function's return type is boolean.
- * @param discardFunction The discard function's interface.
+ * Checks if the discard function's return type is boolean.
+ * @param discardFunctionInterface The discard function's interface.
  * @returns A boolean indicating if the return type is boolean.
  */
 export const isReturnTypeBoolean = (
-  discardFunction: ContractInterfaceFunction
-) => discardFunction.outputs.type === "bool";
+  discardFunctionInterface: ContractInterfaceFunction
+) => discardFunctionInterface.outputs.type === "bool";

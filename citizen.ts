@@ -5,23 +5,24 @@ import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
 import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
 import {
   Batch,
+  ContractDeploymentProperties,
   ContractsByEpoch,
   SimnetPlan,
   Transaction,
 } from "./citizen.types";
 
 /**
- * Prepares the simnet environment and assures the target contract is treated
- * as a first-class citizen, by combining it with its tests. This function
- * handles:
+ * Prepares the simnet instance and assures the target contract's corresponding
+ * test contract is treated as a first-class citizen, relying on their
+ * concatenation. This function handles:
  * - Contract sorting by epoch based on the deployment plan.
  * - Combining the target contract with its tests and deploying all contracts
  *   to the simnet.
  *
- * @param manifestDir - The relative path to the manifest directory.
- * @param sutContractName - The target contract name.
+ * @param manifestDir The relative path to the manifest directory.
+ * @param sutContractName The target contract name.
  * @returns The initialized simnet instance with all contracts deployed, with
- * the target contract treated as a first-class citizen.
+ * the test contract treated as a first-class citizen of the target contract.
  */
 export const issueFirstClassCitizenship = async (
   manifestDir: string,
@@ -46,8 +47,9 @@ export const issueFirstClassCitizenship = async (
   await simnet.initEmptySession();
 
   // Combine the target contract with its tests into a single contract. The
-  // resulting contract will replace the target contract in the simnet. This
-  // map stores the contract name and its corresponding source code.
+  // resulting contract will replace the target contract in the simnet.
+
+  /** The contract names mapped to the concatenated source code. */
   const rendezvousSources = new Map(
     [sutContractName]
       .map((contractName) =>
@@ -75,7 +77,7 @@ export const issueFirstClassCitizenship = async (
 
 /**
  * Groups contracts by epoch from the simnet plan.
- * @param simnetPlan - The simnet plan.
+ * @param simnetPlan The simnet plan.
  * @returns A record of contracts grouped by epoch. The record key is the epoch
  * string, and the value is an array of contracts. Each contract is represented
  * as a record with the contract name as the key and a record containing the
@@ -110,33 +112,24 @@ export const groupContractsByEpochFromSimnetPlan = (
 };
 
 /**
- * Deploy the contracts to the simnet in the correct order.
+ * Deploys the contracts to the simnet in the correct order.
  * @param simnet The simnet instance.
- * @param contractsByEpoch - The record of contracts by epoch.
- * @param getContractSourceFn - The function to retrieve the contract source.
+ * @param contractsByEpoch The record of contracts by epoch.
+ * @param getContractSourceFn The function to retrieve the contract source.
  */
 const deployContracts = async (
   simnet: Simnet,
-  contractsByEpoch: Record<
-    EpochString,
-    Record<string, { path: string; clarity_version: 1 | 2 | 3 }>[]
-  >,
+  contractsByEpoch: ContractsByEpoch,
   getContractSourceFn: (
     name: string,
-    props: {
-      path: string;
-      clarity_version: 1 | 2 | 3;
-    }
+    props: ContractDeploymentProperties
   ) => string
 ): Promise<void> => {
   for (const [epoch, contracts] of Object.entries(contractsByEpoch)) {
     // Move to the next epoch and deploy the contracts in the correct order.
     simnet.setEpoch(epoch as EpochString);
     for (const contract of contracts.flatMap(Object.entries)) {
-      const [name, props]: [
-        string,
-        { path: string; clarity_version: 1 | 2 | 3 }
-      ] = contract;
+      const [name, props]: [string, ContractDeploymentProperties] = contract;
 
       const source = getContractSourceFn(name, props);
 
@@ -158,27 +151,25 @@ const deployContracts = async (
 };
 
 /**
- * Conditionally retrieve the contract source based on whether the contract is
+ * Conditionally retrieves the contract source based on whether the contract is
  * a SUT contract or not.
- * @param sutContractNames - The list of SUT contract names.
- * @param rendezvousMap - The rendezvous map.
- * @param contractName - The contract name.
- * @param contractProps - The contract properties.
- * @param manifestDir - The relative path to the manifest directory.
- * @returns The contract source.
+ * @param targetContractNames The list of target contract names.
+ * @param rendezvousSourcesMap The contract names mapped to the concatenated
+ * source code.
+ * @param contractName The contract name.
+ * @param contractProps The contract deployment properties.
+ * @param manifestDir The relative path to the manifest directory.
+ * @returns The contract source code.
  */
 export const getContractSource = (
-  sutContractNames: string[],
-  rendezvousMap: Map<string, string>,
+  targetContractNames: string[],
+  rendezvousSourcesMap: Map<string, string>,
   contractName: string,
-  contractProps: {
-    path: string;
-    clarity_version: 1 | 2 | 3;
-  },
+  contractProps: ContractDeploymentProperties,
   manifestDir: string
 ): string => {
-  if (sutContractNames.includes(contractName)) {
-    const contractSource = rendezvousMap.get(contractName);
+  if (targetContractNames.includes(contractName)) {
+    const contractSource = rendezvousSourcesMap.get(contractName);
     if (!contractSource) {
       throw new Error(`Contract source not found for ${contractName}`);
     }
@@ -191,11 +182,11 @@ export const getContractSource = (
 };
 
 /**
- * Build the Rendezvous data.
+ * Builds the Rendezvous data.
  * @param simnetPlan The parsed simnet plan.
  * @param contractName The contract name.
  * @param manifestDir The relative path to the manifest directory.
- * @returns The Rendezvous data representing an object. The returned object
+ * @returns The Rendezvous data representing a record. The returned record
  * contains the Rendezvous source code and the Rendezvous contract name.
  */
 export const buildRendezvousData = (
@@ -233,7 +224,7 @@ export const buildRendezvousData = (
 };
 
 /**
- * Get the contract source code from the simnet plan.
+ * Retrieves the contract source code using the simnet plan.
  * @param simnetPlan The parsed simnet plan.
  * @param manifestDir The relative path to the manifest directory.
  * @param sutContractName The target contract name.
@@ -266,7 +257,7 @@ const getSimnetPlanContractSource = (
 };
 
 /**
- * Get the test contract source code.
+ * Retrieves the test contract source code.
  * @param simnetPlan The parsed simnet plan.
  * @param sutContractName The target contract name.
  * @param manifestDir The relative path to the manifest directory.
@@ -312,15 +303,15 @@ export const getTestContractSource = (
 };
 
 /**
- * Schedule a Rendezvous between the System Under Test (`SUT`) and the
- * invariants.
- * @param sutContractSource The SUT contract source code.
- * @param invariants The invariants contract source code.
+ * Schedules a Rendezvous between the System Under Test (`SUT`) and the test
+ * contract.
+ * @param targetContractSource The target contract source code.
+ * @param tests The corresponding test contract source code.
  * @returns The Rendezvous source code.
  */
 export function scheduleRendezvous(
-  sutContractSource: string,
-  invariants: string
+  targetContractSource: string,
+  tests: string
 ): string {
   /**
    * The `context` map tracks how many times each function has been called.
@@ -334,5 +325,5 @@ export function scheduleRendezvous(
   (define-public (update-context (function-name (string-ascii 100)) (called uint))
     (ok (map-set context function-name {called: called})))`;
 
-  return `${sutContractSource}\n\n${context}\n\n${invariants}`;
+  return `${targetContractSource}\n\n${context}\n\n${tests}`;
 }

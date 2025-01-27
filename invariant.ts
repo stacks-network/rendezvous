@@ -19,9 +19,23 @@ import {
 } from "./traits";
 import { EnrichedContractInterfaceFunction } from "./shared.types";
 
+/**
+ * Runs invariant testing on the target contract and logs the progress. Reports
+ * the test results through a custom reporter.
+ * @param simnet The Simnet instance.
+ * @param targetContractName The name of the target contract.
+ * @param rendezvousList The list of contract IDs for each target contract.
+ * @param rendezvousAllFunctions The map of all function interfaces for each
+ * target contract.
+ * @param seed The seed for reproducible invariant testing.
+ * @param path The path for reproducible invariant testing.
+ * @param runs The number of test runs.
+ * @param radio The custom logging event emitter.
+ * @returns void
+ */
 export const checkInvariants = (
   simnet: Simnet,
-  sutContractName: string,
+  targetContractName: string,
   rendezvousList: string[],
   rendezvousAllFunctions: Map<string, ContractInterfaceFunction[]>,
   seed: number | undefined,
@@ -83,7 +97,7 @@ export const checkInvariants = (
   const enrichedSutFunctionsInterfaces =
     traitReferenceSutFunctions.length > 0
       ? enrichInterfaceWithTraitData(
-          simnet.getContractAST(sutContractName),
+          simnet.getContractAST(targetContractName),
           buildTraitReferenceMap(
             rendezvousSutFunctions.get(rendezvousContractId)!
           ),
@@ -95,7 +109,7 @@ export const checkInvariants = (
   const enrichedInvariantFunctionsInterfaces =
     traitReferenceInvariantFunctions.length > 0
       ? enrichInterfaceWithTraitData(
-          simnet.getContractAST(sutContractName),
+          simnet.getContractAST(targetContractName),
           buildTraitReferenceMap(
             rendezvousInvariantFunctions.get(rendezvousContractId)!
           ),
@@ -112,7 +126,7 @@ export const checkInvariants = (
 
   radio.emit(
     "logMessage",
-    `\nStarting invariant testing type for the ${sutContractName} contract...\n`
+    `\nStarting invariant testing type for the ${targetContractName} contract...\n`
   );
 
   const simnetAccounts = simnet.getAccounts();
@@ -137,7 +151,7 @@ export const checkInvariants = (
     radio.emit(
       "logMessage",
       red(
-        `No public functions found for the "${sutContractName}" contract. Without public functions, no state transitions can happen inside the contract, and the invariant test is not meaningful.\n`
+        `No public functions found for the "${targetContractName}" contract. Without public functions, no state transitions can happen inside the contract, and the invariant test is not meaningful.\n`
       )
     );
     return;
@@ -147,7 +161,7 @@ export const checkInvariants = (
     radio.emit(
       "logMessage",
       red(
-        `No invariant functions found for the "${sutContractName}" contract. Beware, for your contract may be exposed to unforeseen issues.\n`
+        `No invariant functions found for the "${targetContractName}" contract. Beware, for your contract may be exposed to unforeseen issues.\n`
       )
     );
     return;
@@ -269,7 +283,7 @@ export const checkInvariants = (
               `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
                 `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                 dim(`${sutCallerWallet}        `) +
-                `${sutContractName} ` +
+                `${targetContractName} ` +
                 `${underline(r.selectedFunction.name)} ` +
                 printedFunctionArgs
             );
@@ -280,7 +294,7 @@ export const checkInvariants = (
                 `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
                   `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                   `${sutCallerWallet}        ` +
-                  `${sutContractName} ` +
+                  `${targetContractName} ` +
                   `${underline(r.selectedFunction.name)} ` +
                   printedFunctionArgs
               )
@@ -296,7 +310,7 @@ export const checkInvariants = (
               `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
                 `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                 `${sutCallerWallet}        ` +
-                `${sutContractName} ` +
+                `${targetContractName} ` +
                 `${underline(r.selectedFunction.name)} ` +
                 printedFunctionArgs
             )
@@ -335,7 +349,7 @@ export const checkInvariants = (
                 `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                 `${dim(invariantCallerWallet)} ` +
                 `${green("[PASS]")} ` +
-                `${sutContractName} ` +
+                `${targetContractName} ` +
                 `${underline(r.selectedInvariant.name)} ` +
                 printedInvariantArgs
             );
@@ -343,7 +357,7 @@ export const checkInvariants = (
 
           if (!invariantCallResultJson.value) {
             throw new Error(
-              `Invariant failed for ${sutContractName} contract: "${r.selectedInvariant.name}" returned ${invariantCallResultJson.value}`
+              `Invariant failed for ${targetContractName} contract: "${r.selectedInvariant.name}" returned ${invariantCallResultJson.value}`
             );
           }
         } catch (error: any) {
@@ -357,7 +371,7 @@ export const checkInvariants = (
                 `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                 `${invariantCallerWallet} ` +
                 `[FAIL] ` +
-                `${sutContractName} ` +
+                `${targetContractName} ` +
                 `${underline(r.selectedInvariant.name)} ` +
                 printedInvariantArgs
             )
@@ -383,7 +397,7 @@ export const checkInvariants = (
 };
 
 /**
- * Initialize the local context, setting the number of times each function
+ * Initializes the local context, setting the number of times each function
  * has been called to zero.
  * @param rendezvousSutFunctions The Rendezvous functions.
  * @returns The initialized local context.
@@ -422,14 +436,15 @@ export const initializeClarityContext = (
   });
 
 /**
- * Filter the System Under Test (`SUT`) functions from the map of all
- * contract functions.
+ * Filter the System Under Test (`SUT`) functions from the map of all contract
+ * functions.
  *
  * The SUT functions are the ones that have `public` access since they are
  * capable of changing the contract state, and they are not test functions.
  * @param allFunctionsMap The map containing all the functions for each
+ * Rendezvous contract.
+ * @returns A map containing the filtered SUT functions for each Rendezvous
  * contract.
- * @returns A map containing only the SUT functions for each contract.
  */
 const filterSutFunctions = (
   allFunctionsMap: Map<string, ContractInterfaceFunction[]>

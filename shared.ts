@@ -27,11 +27,10 @@ import { getContractIdsImplementingTrait } from "./traits";
 import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 /**
- * Get the interfaces of contracts deployed by the specified deployer from the
- * simnet.
+ * Retrieves the contract interfaces of the contracts deployed by a specific
+ * deployer from the simnet instance.
  * @param simnet The simnet instance.
- * @param deployer The deployer address.
- * @returns The contracts interfaces.
+ * @returns The contract IDs mapped to their interfaces.
  */
 export const getSimnetDeployerContractsInterfaces = (
   simnet: Simnet
@@ -43,15 +42,16 @@ export const getSimnetDeployerContractsInterfaces = (
   );
 
 /**
- * Get the functions from the smart contract interfaces.
- * @param contractsInterfaces The smart contract interfaces map.
- * @returns A map containing the contracts functions.
+ * Retrieves the function interfaces from the contract interfaces. Filters out
+ * other contract interface data such as data maps, variables, and constants.
+ * @param contractInterfaces The smart contract interfaces map.
+ * @returns The contract IDs mapped to their function interfaces.
  */
 export const getFunctionsFromContractInterfaces = (
-  contractsInterfaces: Map<string, IContractInterface>
+  contractInterfaces: Map<string, IContractInterface>
 ): Map<string, ContractInterfaceFunction[]> =>
   new Map(
-    Array.from(contractsInterfaces, ([contractId, contractInterface]) => [
+    Array.from(contractInterfaces, ([contractId, contractInterface]) => [
       contractId,
       contractInterface.functions,
     ])
@@ -62,16 +62,20 @@ export const getFunctionsListForContract = (
   contractId: string
 ) => functionsMap.get(contractId) || [];
 
-/** For a given function, dynamically generate fast-check arbitraries.
- * @param fn The function interface.
+/** Dynamically generates fast-check arbitraries for a given function
+ * interface.
+ * @param functionInterface The "enriched" function interface.
+ * @param addresses The array of addresses to use for principal types.
+ * @param projectTraitImplementations The contract IDs mapped to the traits
+ * they implement.
  * @returns Array of fast-check arbitraries.
  */
 export const functionToArbitrary = (
-  fn: EnrichedContractInterfaceFunction,
+  functionInterface: EnrichedContractInterfaceFunction,
   addresses: string[],
   projectTraitImplementations: Record<string, ImplementedTraitType[]>
 ): fc.Arbitrary<any>[] =>
-  fn.args.map((arg) =>
+  functionInterface.args.map((arg) =>
     parameterTypeToArbitrary(
       arg.type as EnrichedParameterType,
       addresses,
@@ -80,8 +84,11 @@ export const functionToArbitrary = (
   );
 
 /**
- * For a given type, generate a fast-check arbitrary.
- * @param type The parameter type.
+ * Generates a fast-check arbitrary for a given parameter type.
+ * @param type The "enriched" parameter type.
+ * @param addresses The array of addresses to use for principal types.
+ * @param projectTraitImplementations The contract IDs mapped to the traits
+ * they implement.
  * @returns Fast-check arbitrary.
  */
 const parameterTypeToArbitrary = (
@@ -242,8 +249,8 @@ const complexTypesToArbitrary: ComplexTypesToArbitrary = {
 
 /**
  * Custom hexadecimal string generator. The `hexaString` generator from
- * fast-check has been deprecated. This generator is implemented to precisely
- * match the behavior of the deprecated generator.
+ * fast-check has been deprecated. This generator is implemented to match the
+ * behavior of the deprecated generator.
  *
  * @param constraints Fast-check string constraints.
  * @returns Fast-check arbitrary for hexadecimal strings.
@@ -268,61 +275,78 @@ const charSet =
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
 
 /**
- * Convert function arguments to Clarity values.
- * @param fn The function interface.
- * @param args Array of arguments.
+ * Converts JavaScript generated function arguments to Clarity values.
+ * @param functionInterface The function interface.
+ * @param generatedArguments Array of generated arguments.
  * @returns Array of Clarity values.
  */
-export const argsToCV = (fn: EnrichedContractInterfaceFunction, args: any[]) =>
-  fn.args.map((arg, i) => argToCV(args[i], arg.type as EnrichedParameterType));
+export const argsToCV = (
+  functionInterface: EnrichedContractInterfaceFunction,
+  generatedArguments: any[]
+) =>
+  functionInterface.args.map((arg, i) =>
+    argToCV(generatedArguments[i], arg.type as EnrichedParameterType)
+  );
 
 /**
- * Convert a function argument to a Clarity value.
- * @param arg Generated argument.
+ * Converts a JavaScript generated function argument to a Clarity value.
+ * @param generatedArgument Generated argument.
  * @param type Argument type (base or complex).
  * @returns Clarity value.
  */
-const argToCV = (arg: any, type: EnrichedParameterType): ClarityValue => {
+const argToCV = (
+  generatedArgument: any,
+  type: EnrichedParameterType
+): ClarityValue => {
   if (isBaseType(type)) {
     // Base type.
     switch (type) {
       case "int128":
-        return baseTypesToCV.int128(arg as number);
+        return baseTypesToCV.int128(generatedArgument as number);
       case "uint128":
-        return baseTypesToCV.uint128(arg as number);
+        return baseTypesToCV.uint128(generatedArgument as number);
       case "bool":
-        return baseTypesToCV.bool(arg as boolean);
+        return baseTypesToCV.bool(generatedArgument as boolean);
       case "principal":
-        return baseTypesToCV.principal(arg as string);
+        return baseTypesToCV.principal(generatedArgument as string);
       default:
         throw new Error(`Unsupported base parameter type: ${type}`);
     }
   } else {
     // Complex type.
     if ("buffer" in type) {
-      return complexTypesToCV.buffer(arg);
+      return complexTypesToCV.buffer(generatedArgument);
     } else if ("string-ascii" in type) {
-      return complexTypesToCV["string-ascii"](arg);
+      return complexTypesToCV["string-ascii"](generatedArgument);
     } else if ("string-utf8" in type) {
-      return complexTypesToCV["string-utf8"](arg);
+      return complexTypesToCV["string-utf8"](generatedArgument);
     } else if ("list" in type) {
-      const listItems = arg.map((item: any) => argToCV(item, type.list.type));
+      const listItems = generatedArgument.map((item: any) =>
+        argToCV(item, type.list.type)
+      );
       return complexTypesToCV.list(listItems);
     } else if ("tuple" in type) {
       const tupleData: { [key: string]: ClarityValue } = {};
       type.tuple.forEach((field) => {
-        tupleData[field.name] = argToCV(arg[field.name], field.type);
+        tupleData[field.name] = argToCV(
+          generatedArgument[field.name],
+          field.type
+        );
       });
       return complexTypesToCV.tuple(tupleData);
     } else if ("optional" in type) {
-      return optionalCVOf(arg ? argToCV(arg, type.optional) : undefined);
+      return optionalCVOf(
+        generatedArgument
+          ? argToCV(generatedArgument, type.optional)
+          : undefined
+      );
     } else if ("response" in type) {
-      const status = arg.status as ResponseStatus;
+      const status = generatedArgument.status as ResponseStatus;
       const branchType = type.response[status];
-      const responseValue = argToCV(arg.value, branchType);
+      const responseValue = argToCV(generatedArgument.value, branchType);
       return complexTypesToCV.response(status, responseValue);
     } else if ("trait_reference" in type) {
-      return complexTypesToCV.trait_reference(arg);
+      return complexTypesToCV.trait_reference(generatedArgument);
     } else {
       throw new Error(
         `Unsupported complex parameter type: ${JSON.stringify(type)}`

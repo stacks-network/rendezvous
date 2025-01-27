@@ -42,5 +42,10 @@ export type SimnetPlan = {
 
 export type ContractsByEpoch = Record<
   EpochString,
-  Record<string, { path: string; clarity_version: 1 | 2 | 3 }>[]
+  Record<string, ContractDeploymentProperties>[]
 >;
+
+export type ContractDeploymentProperties = {
+  path: string;
+  clarity_version: 1 | 2 | 3;
+};
