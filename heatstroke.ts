@@ -1,7 +1,12 @@
-import { green } from "ansicolor";
 import { EventEmitter } from "events";
-import { getContractNameFromContractId } from "./shared";
 import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
+import { green } from "ansicolor";
+import {
+  InvariantCounterExample,
+  RunDetails,
+  TestCounterExample,
+} from "./heatstroke.types";
+import { getContractNameFromContractId } from "./shared";
 
 /**
  * Heatstrokes Reporter
@@ -21,15 +26,12 @@ import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
  * @returns void
  */
 export function reporter(
-  //@ts-ignore
-  runDetails,
+  runDetails: RunDetails,
   radio: EventEmitter,
   type: "invariant" | "test"
 ) {
   if (runDetails.failed) {
     // Report general run data.
-    const r = runDetails.counterexample[0];
-
     radio.emit(
       "logFailure",
       `\nError: Property failed after ${runDetails.numRuns} tests.`
@@ -40,6 +42,7 @@ export function reporter(
     }
     switch (type) {
       case "invariant": {
+        const r = runDetails.counterexample[0] as InvariantCounterExample;
         // Report specific run data for the invariant testing type.
         radio.emit("logFailure", `\nCounterexample:`);
         radio.emit(
@@ -113,6 +116,8 @@ export function reporter(
         break;
       }
       case "test": {
+        const r = runDetails.counterexample[0] as TestCounterExample;
+
         // Report specific run data for the property testing type.
         radio.emit("logFailure", `\nCounterexample:`);
         radio.emit(

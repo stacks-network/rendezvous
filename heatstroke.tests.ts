@@ -1,8 +1,9 @@
-import fc from "fast-check";
-import { reporter } from "./heatstroke";
 import { EventEmitter } from "events";
 import { resolve } from "path";
 import { initSimnet } from "@hirosystems/clarinet-sdk";
+import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
+import fc from "fast-check";
+import { reporter } from "./heatstroke";
 import { getContractNameFromContractId } from "./shared";
 
 describe("Custom reporter logging", () => {
@@ -22,6 +23,7 @@ describe("Custom reporter logging", () => {
               name: fc.ascii(),
               access: fc.ascii(),
               outputs: fc.array(fc.ascii()),
+              args: fc.anything(),
             })
           ),
           selectedFunctionsArgsList: fc.tuple(
@@ -30,6 +32,8 @@ describe("Custom reporter logging", () => {
           selectedInvariant: fc.record({
             name: fc.ascii(),
             access: fc.ascii(),
+            outputs: fc.array(fc.ascii()),
+            args: fc.anything(),
           }),
           invariantArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
@@ -55,11 +59,14 @@ describe("Custom reporter logging", () => {
             name: string;
             access: string;
             outputs: string[];
+            args: any;
           }[];
           selectedFunctionsArgsList: (string | number | boolean)[][];
           selectedInvariant: {
             name: string;
             access: string;
+            outputs: string[];
+            args: any;
           };
           invariantArgs: (string | number | boolean)[];
           errorMessage: string;
@@ -81,12 +88,11 @@ describe("Custom reporter logging", () => {
             counterexample: [
               {
                 rendezvousContractId: rendezvousContractId,
-                selectedFunctions: r.selectedFunctions,
+                selectedFunctions:
+                  r.selectedFunctions as any as ContractInterfaceFunction[],
                 selectedFunctionsArgsList: r.selectedFunctionsArgsList,
-                selectedInvariant: {
-                  name: r.selectedInvariant.name,
-                  access: r.selectedInvariant.access,
-                },
+                selectedInvariant:
+                  r.selectedInvariant as any as ContractInterfaceFunction,
                 invariantArgs: r.invariantArgs,
                 sutCallers: r.sutCallers,
                 invariantCaller: r.invariantCaller,
@@ -161,6 +167,7 @@ describe("Custom reporter logging", () => {
               name: fc.ascii(),
               access: fc.ascii(),
               outputs: fc.array(fc.ascii()),
+              args: fc.anything(),
             })
           ),
           selectedFunctionsArgsList: fc.tuple(
@@ -169,6 +176,8 @@ describe("Custom reporter logging", () => {
           selectedInvariant: fc.record({
             name: fc.ascii(),
             access: fc.ascii(),
+            outputs: fc.array(fc.ascii()),
+            args: fc.anything(),
           }),
           invariantArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
@@ -195,11 +204,14 @@ describe("Custom reporter logging", () => {
             name: string;
             access: string;
             outputs: string[];
+            args: any;
           }[];
           selectedFunctionsArgsList: (string | number | boolean)[][];
           selectedInvariant: {
             name: string;
             access: string;
+            outputs: string[];
+            args: any;
           };
           invariantArgs: (string | number | boolean)[];
           errorMessage: string;
@@ -222,12 +234,11 @@ describe("Custom reporter logging", () => {
             counterexample: [
               {
                 rendezvousContractId: rendezvousContractId,
-                selectedFunctions: r.selectedFunctions,
+                selectedFunctions:
+                  r.selectedFunctions as any as ContractInterfaceFunction[],
                 selectedFunctionsArgsList: r.selectedFunctionsArgsList,
-                selectedInvariant: {
-                  name: r.selectedInvariant.name,
-                  access: r.selectedInvariant.access,
-                },
+                selectedInvariant:
+                  r.selectedInvariant as any as ContractInterfaceFunction,
                 invariantArgs: r.invariantArgs,
                 sutCallers: r.sutCallers,
                 invariantCaller: r.invariantCaller,
@@ -304,6 +315,7 @@ describe("Custom reporter logging", () => {
               name: fc.ascii(),
               access: fc.ascii(),
               outputs: fc.array(fc.ascii()),
+              args: fc.anything(),
             })
           ),
           selectedFunctionsArgsList: fc.tuple(
@@ -312,6 +324,8 @@ describe("Custom reporter logging", () => {
           selectedInvariant: fc.record({
             name: fc.ascii(),
             access: fc.ascii(),
+            outputs: fc.array(fc.ascii()),
+            args: fc.anything(),
           }),
           invariantArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
@@ -338,11 +352,14 @@ describe("Custom reporter logging", () => {
             name: string;
             access: string;
             outputs: string[];
+            args: any;
           }[];
           selectedFunctionsArgsList: (string | number | boolean)[][];
           selectedInvariant: {
             name: string;
             access: string;
+            args: any;
+            outputs: string[];
           };
           invariantArgs: (string | number | boolean)[];
           errorMessage: string;
@@ -365,12 +382,11 @@ describe("Custom reporter logging", () => {
             counterexample: [
               {
                 rendezvousContractId: rendezvousContractId,
-                selectedFunction: r.selectedFunctions,
-                functionArgsArb: r.selectedFunctionsArgsList,
-                selectedInvariant: {
-                  name: r.selectedInvariant.name,
-                  access: r.selectedInvariant.access,
-                },
+                selectedFunctions:
+                  r.selectedFunctions as any as ContractInterfaceFunction[],
+                selectedFunctionsArgsList: r.selectedFunctionsArgsList,
+                selectedInvariant:
+                  r.selectedInvariant as any as ContractInterfaceFunction,
                 invariantArgs: r.invariantArgs,
                 sutCallers: r.sutCallers,
                 invariantCaller: r.invariantCaller,
@@ -406,6 +422,7 @@ describe("Custom reporter logging", () => {
             name: fc.ascii(),
             access: fc.ascii(),
             outputs: fc.array(fc.ascii()),
+            args: fc.anything(),
           }),
           functionArgsArb: fc.array(
             fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
@@ -426,6 +443,7 @@ describe("Custom reporter logging", () => {
             name: string;
             access: string;
             outputs: string[];
+            args: any;
           };
           functionArgsArb: (string | number | boolean)[];
           errorMessage: string;
@@ -446,11 +464,8 @@ describe("Custom reporter logging", () => {
             counterexample: [
               {
                 testContractId: testContractId,
-                selectedTestFunction: {
-                  name: r.selectedTestFunction.name,
-                  access: r.selectedTestFunction.access,
-                  outputs: r.selectedTestFunction.outputs,
-                },
+                selectedTestFunction:
+                  r.selectedTestFunction as any as ContractInterfaceFunction,
                 functionArgsArb: r.functionArgsArb,
                 testCaller: r.testCaller,
               },
@@ -508,6 +523,7 @@ describe("Custom reporter logging", () => {
             name: fc.ascii(),
             access: fc.ascii(),
             outputs: fc.array(fc.ascii()),
+            args: fc.anything(),
           }),
           functionArgsArb: fc.array(
             fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
@@ -529,6 +545,7 @@ describe("Custom reporter logging", () => {
             name: string;
             access: string;
             outputs: string[];
+            args: any;
           };
           functionArgsArb: (string | number | boolean)[];
           errorMessage: string;
@@ -550,11 +567,8 @@ describe("Custom reporter logging", () => {
             counterexample: [
               {
                 testContractId: testContractId,
-                selectedTestFunction: {
-                  name: r.selectedTestFunction.name,
-                  access: r.selectedTestFunction.access,
-                  outputs: r.selectedTestFunction.outputs,
-                },
+                selectedTestFunction:
+                  r.selectedTestFunction as any as ContractInterfaceFunction,
                 functionArgsArb: r.functionArgsArb,
                 testCaller: r.testCaller,
               },
@@ -612,6 +626,7 @@ describe("Custom reporter logging", () => {
             name: fc.ascii(),
             access: fc.ascii(),
             outputs: fc.array(fc.ascii()),
+            args: fc.anything(),
           }),
           functionArgsArb: fc.array(
             fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
@@ -632,6 +647,7 @@ describe("Custom reporter logging", () => {
             name: string;
             access: string;
             outputs: string[];
+            args: any;
           };
           functionArgsArb: (string | number | boolean)[];
           errorMessage: string;
@@ -652,11 +668,8 @@ describe("Custom reporter logging", () => {
             counterexample: [
               {
                 testContractId: testContractId,
-                selectedTestFunction: {
-                  name: r.selectedTestFunction.name,
-                  access: r.selectedTestFunction.access,
-                  outputs: r.selectedTestFunction.outputs,
-                },
+                selectedTestFunction:
+                  r.selectedTestFunction as any as ContractInterfaceFunction,
                 functionArgsArb: r.functionArgsArb,
                 testCaller: r.testCaller,
               },
