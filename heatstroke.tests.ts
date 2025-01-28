@@ -424,9 +424,7 @@ describe("Custom reporter logging", () => {
             outputs: fc.array(fc.ascii()),
             args: fc.anything(),
           }),
-          functionArgsArb: fc.array(
-            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
-          ),
+          functionArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
           testCaller: fc.constantFrom(
             ...new Map(
@@ -445,7 +443,7 @@ describe("Custom reporter logging", () => {
             outputs: string[];
             args: any;
           };
-          functionArgsArb: (string | number | boolean)[];
+          functionArgs: (string | number | boolean)[];
           errorMessage: string;
           testCaller: [string, string];
         }) => {
@@ -466,7 +464,7 @@ describe("Custom reporter logging", () => {
                 testContractId: testContractId,
                 selectedTestFunction:
                   r.selectedTestFunction as any as ContractInterfaceFunction,
-                functionArgsArb: r.functionArgsArb,
+                functionArgs: r.functionArgs,
                 testCaller: r.testCaller,
               },
             ],
@@ -485,7 +483,7 @@ describe("Custom reporter logging", () => {
               testContractId
             )}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
-            `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`,
+            `- Arguments     : ${JSON.stringify(r.functionArgs)}`,
             `- Caller        : ${r.testCaller[0]}`,
             `- Outputs       : ${JSON.stringify(
               r.selectedTestFunction.outputs
@@ -525,9 +523,7 @@ describe("Custom reporter logging", () => {
             outputs: fc.array(fc.ascii()),
             args: fc.anything(),
           }),
-          functionArgsArb: fc.array(
-            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
-          ),
+          functionArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
           testCaller: fc.constantFrom(
             ...new Map(
@@ -547,7 +543,7 @@ describe("Custom reporter logging", () => {
             outputs: string[];
             args: any;
           };
-          functionArgsArb: (string | number | boolean)[];
+          functionArgs: (string | number | boolean)[];
           errorMessage: string;
           testCaller: [string, string];
         }) => {
@@ -569,7 +565,7 @@ describe("Custom reporter logging", () => {
                 testContractId: testContractId,
                 selectedTestFunction:
                   r.selectedTestFunction as any as ContractInterfaceFunction,
-                functionArgsArb: r.functionArgsArb,
+                functionArgs: r.functionArgs,
                 testCaller: r.testCaller,
               },
             ],
@@ -589,7 +585,7 @@ describe("Custom reporter logging", () => {
               testContractId
             )}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
-            `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`,
+            `- Arguments     : ${JSON.stringify(r.functionArgs)}`,
             `- Caller        : ${r.testCaller[0]}`,
             `- Outputs       : ${JSON.stringify(
               r.selectedTestFunction.outputs
@@ -628,9 +624,7 @@ describe("Custom reporter logging", () => {
             outputs: fc.array(fc.ascii()),
             args: fc.anything(),
           }),
-          functionArgsArb: fc.array(
-            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
-          ),
+          functionArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
           testCaller: fc.constantFrom(
             ...new Map(
@@ -649,7 +643,7 @@ describe("Custom reporter logging", () => {
             outputs: string[];
             args: any;
           };
-          functionArgsArb: (string | number | boolean)[];
+          functionArgs: (string | number | boolean)[];
           errorMessage: string;
           testCaller: [string, string];
         }) => {
@@ -670,7 +664,7 @@ describe("Custom reporter logging", () => {
                 testContractId: testContractId,
                 selectedTestFunction:
                   r.selectedTestFunction as any as ContractInterfaceFunction,
-                functionArgsArb: r.functionArgsArb,
+                functionArgs: r.functionArgs,
                 testCaller: r.testCaller,
               },
             ],

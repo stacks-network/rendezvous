@@ -14,7 +14,7 @@ type CounterExample = TestCounterExample | InvariantCounterExample;
 export type TestCounterExample = {
   testContractId: string;
   selectedTestFunction: ContractInterfaceFunction;
-  functionArgsArb: any;
+  functionArgs: any;
   testCaller: [string, string];
 };
 
