@@ -130,7 +130,7 @@ export function reporter(
         );
         radio.emit(
           "logFailure",
-          `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`
+          `- Arguments     : ${JSON.stringify(r.functionArgs)}`
         );
         radio.emit("logFailure", `- Caller        : ${r.testCaller[0]}`);
         radio.emit(
