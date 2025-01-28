@@ -242,7 +242,7 @@ export const checkInvariants = (
             .map((burnBlocks) => ({ ...r, ...burnBlocks }))
         ),
       (r) => {
-        const selectedFunctionArgsCV = r.selectedFunctions.map(
+        const selectedFunctionsArgsCV = r.selectedFunctions.map(
           (selectedFunction, index) =>
             argsToCV(selectedFunction, r.selectedFunctionsArgsList[index])
         );
@@ -270,7 +270,7 @@ export const checkInvariants = (
             const { result: functionCallResult } = simnet.callPublicFn(
               r.rendezvousContractId,
               selectedFunction.name,
-              selectedFunctionArgsCV[index],
+              selectedFunctionsArgsCV[index],
               sutCallerAddress
             );
 
