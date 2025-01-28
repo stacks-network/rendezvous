@@ -1,5 +1,11 @@
-import { green } from "ansicolor";
 import { EventEmitter } from "events";
+import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
+import { green } from "ansicolor";
+import {
+  InvariantCounterExample,
+  RunDetails,
+  TestCounterExample,
+} from "./heatstroke.types";
 import { getContractNameFromContractId } from "./shared";
 
 /**
@@ -20,15 +26,12 @@ import { getContractNameFromContractId } from "./shared";
  * @returns void
  */
 export function reporter(
-  //@ts-ignore
-  runDetails,
+  runDetails: RunDetails,
   radio: EventEmitter,
   type: "invariant" | "test"
 ) {
   if (runDetails.failed) {
     // Report general run data.
-    const r = runDetails.counterexample[0];
-
     radio.emit(
       "logFailure",
       `\nError: Property failed after ${runDetails.numRuns} tests.`
@@ -39,6 +42,7 @@ export function reporter(
     }
     switch (type) {
       case "invariant": {
+        const r = runDetails.counterexample[0] as InvariantCounterExample;
         // Report specific run data for the invariant testing type.
         radio.emit("logFailure", `\nCounterexample:`);
         radio.emit(
@@ -49,16 +53,39 @@ export function reporter(
         );
         radio.emit(
           "logFailure",
-          `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`
+          `- Functions: ${r.selectedFunctions
+            .map(
+              (selectedFunction: ContractInterfaceFunction) =>
+                selectedFunction.name
+            )
+            .join(", ")} (${r.selectedFunctions
+            .map(
+              (selectedFunction: ContractInterfaceFunction) =>
+                selectedFunction.access
+            )
+            .join(", ")})`
         );
         radio.emit(
           "logFailure",
-          `- Arguments: ${JSON.stringify(r.functionArgsArb)}`
+          `- Arguments: ${r.selectedFunctionsArgsList
+            .map((selectedFunctionArgs: any[]) =>
+              JSON.stringify(selectedFunctionArgs)
+            )
+            .join(", ")}`
         );
-        radio.emit("logFailure", `- Caller   : ${r.sutCaller[0]}`);
         radio.emit(
           "logFailure",
-          `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`
+          `- Callers  : ${r.sutCallers
+            .map((sutCaller: [string, string]) => sutCaller[0])
+            .join(", ")}`
+        );
+        radio.emit(
+          "logFailure",
+          `- Outputs  : ${r.selectedFunctions
+            .map((selectedFunction: ContractInterfaceFunction) =>
+              JSON.stringify(selectedFunction.outputs)
+            )
+            .join(", ")}`
         );
         radio.emit(
           "logFailure",
@@ -66,7 +93,7 @@ export function reporter(
         );
         radio.emit(
           "logFailure",
-          `- Arguments: ${JSON.stringify(r.invariantArgsArb)}`
+          `- Arguments: ${JSON.stringify(r.invariantArgs)}`
         );
         radio.emit("logFailure", `- Caller   : ${r.invariantCaller[0]}`);
 
@@ -89,6 +116,8 @@ export function reporter(
         break;
       }
       case "test": {
+        const r = runDetails.counterexample[0] as TestCounterExample;
+
         // Report specific run data for the property testing type.
         radio.emit("logFailure", `\nCounterexample:`);
         radio.emit(
@@ -101,7 +130,7 @@ export function reporter(
         );
         radio.emit(
           "logFailure",
-          `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`
+          `- Arguments     : ${JSON.stringify(r.functionArgs)}`
         );
         radio.emit("logFailure", `- Caller        : ${r.testCaller[0]}`);
         radio.emit(

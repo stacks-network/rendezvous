@@ -1,8 +1,9 @@
-import fc from "fast-check";
-import { reporter } from "./heatstroke";
 import { EventEmitter } from "events";
 import { resolve } from "path";
 import { initSimnet } from "@hirosystems/clarinet-sdk";
+import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
+import fc from "fast-check";
+import { reporter } from "./heatstroke";
 import { getContractNameFromContractId } from "./shared";
 
 describe("Custom reporter logging", () => {
@@ -17,26 +18,31 @@ describe("Custom reporter logging", () => {
           numRuns: fc.nat(),
           seed: fc.nat(),
           contractName: fc.ascii(),
-          selectedFunction: fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-            outputs: fc.array(fc.ascii()),
-          }),
-          functionArgsArb: fc.array(
-            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
+          selectedFunctions: fc.array(
+            fc.record({
+              name: fc.ascii(),
+              access: fc.ascii(),
+              outputs: fc.array(fc.ascii()),
+              args: fc.anything(),
+            })
+          ),
+          selectedFunctionsArgsList: fc.tuple(
+            fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean()))
           ),
           selectedInvariant: fc.record({
             name: fc.ascii(),
             access: fc.ascii(),
+            outputs: fc.array(fc.ascii()),
+            args: fc.anything(),
           }),
-          invariantArgsArb: fc.array(
-            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
-          ),
+          invariantArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
-          sutCaller: fc.constantFrom(
-            ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
+          sutCallers: fc.array(
+            fc.constantFrom(
+              ...new Map(
+                [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+              ).entries()
+            )
           ),
           invariantCaller: fc.constantFrom(
             ...new Map(
@@ -49,19 +55,22 @@ describe("Custom reporter logging", () => {
           numRuns: number;
           seed: number;
           contractName: string;
-          selectedFunction: {
+          selectedFunctions: {
             name: string;
             access: string;
             outputs: string[];
-          };
-          functionArgsArb: (string | number | boolean)[];
+            args: any;
+          }[];
+          selectedFunctionsArgsList: (string | number | boolean)[][];
           selectedInvariant: {
             name: string;
             access: string;
+            outputs: string[];
+            args: any;
           };
-          invariantArgsArb: (string | number | boolean)[];
+          invariantArgs: (string | number | boolean)[];
           errorMessage: string;
-          sutCaller: [string, string];
+          sutCallers: [string, string][];
           invariantCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
@@ -79,18 +88,13 @@ describe("Custom reporter logging", () => {
             counterexample: [
               {
                 rendezvousContractId: rendezvousContractId,
-                selectedFunction: {
-                  name: r.selectedFunction.name,
-                  access: r.selectedFunction.access,
-                  outputs: r.selectedFunction.outputs,
-                },
-                functionArgsArb: r.functionArgsArb,
-                selectedInvariant: {
-                  name: r.selectedInvariant.name,
-                  access: r.selectedInvariant.access,
-                },
-                invariantArgsArb: r.invariantArgsArb,
-                sutCaller: r.sutCaller,
+                selectedFunctions:
+                  r.selectedFunctions as any as ContractInterfaceFunction[],
+                selectedFunctionsArgsList: r.selectedFunctionsArgsList,
+                selectedInvariant:
+                  r.selectedInvariant as any as ContractInterfaceFunction,
+                invariantArgs: r.invariantArgs,
+                sutCallers: r.sutCallers,
                 invariantCaller: r.invariantCaller,
               },
             ],
@@ -108,12 +112,26 @@ describe("Custom reporter logging", () => {
             `- Contract : ${getContractNameFromContractId(
               rendezvousContractId
             )}`,
-            `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
-            `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
-            `- Caller   : ${r.sutCaller[0]}`,
-            `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`,
+            `- Functions: ${r.selectedFunctions
+              .map((selectedFunction) => selectedFunction.name)
+              .join(", ")} (${r.selectedFunctions
+              .map((selectedFunction) => selectedFunction.access)
+              .join(", ")})`,
+            `- Arguments: ${r.selectedFunctionsArgsList
+              .map((selectedFunctionArgs) =>
+                JSON.stringify(selectedFunctionArgs)
+              )
+              .join(", ")}`,
+            `- Callers  : ${r.sutCallers
+              .map((sutCaller) => sutCaller[0])
+              .join(", ")}`,
+            `- Outputs  : ${r.selectedFunctions
+              .map((selectedFunction) =>
+                JSON.stringify(selectedFunction.outputs)
+              )
+              .join(", ")}`,
             `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`,
-            `- Arguments: ${JSON.stringify(r.invariantArgsArb)}`,
+            `- Arguments: ${JSON.stringify(r.invariantArgs)}`,
             `- Caller   : ${r.invariantCaller[0]}`,
             `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
             `The invariant "${
@@ -144,26 +162,31 @@ describe("Custom reporter logging", () => {
           numRuns: fc.nat(),
           seed: fc.nat(),
           contractName: fc.ascii(),
-          selectedFunction: fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-            outputs: fc.array(fc.ascii()),
-          }),
-          functionArgsArb: fc.array(
-            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
+          selectedFunctions: fc.array(
+            fc.record({
+              name: fc.ascii(),
+              access: fc.ascii(),
+              outputs: fc.array(fc.ascii()),
+              args: fc.anything(),
+            })
+          ),
+          selectedFunctionsArgsList: fc.tuple(
+            fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean()))
           ),
           selectedInvariant: fc.record({
             name: fc.ascii(),
             access: fc.ascii(),
+            outputs: fc.array(fc.ascii()),
+            args: fc.anything(),
           }),
-          invariantArgsArb: fc.array(
-            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
-          ),
+          invariantArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
-          sutCaller: fc.constantFrom(
-            ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
+          sutCallers: fc.array(
+            fc.constantFrom(
+              ...new Map(
+                [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+              ).entries()
+            )
           ),
           invariantCaller: fc.constantFrom(
             ...new Map(
@@ -177,19 +200,22 @@ describe("Custom reporter logging", () => {
           numRuns: number;
           seed: number;
           contractName: string;
-          selectedFunction: {
+          selectedFunctions: {
             name: string;
             access: string;
             outputs: string[];
-          };
-          functionArgsArb: (string | number | boolean)[];
+            args: any;
+          }[];
+          selectedFunctionsArgsList: (string | number | boolean)[][];
           selectedInvariant: {
             name: string;
             access: string;
+            outputs: string[];
+            args: any;
           };
-          invariantArgsArb: (string | number | boolean)[];
+          invariantArgs: (string | number | boolean)[];
           errorMessage: string;
-          sutCaller: [string, string];
+          sutCallers: [string, string][];
           invariantCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
@@ -208,18 +234,13 @@ describe("Custom reporter logging", () => {
             counterexample: [
               {
                 rendezvousContractId: rendezvousContractId,
-                selectedFunction: {
-                  name: r.selectedFunction.name,
-                  access: r.selectedFunction.access,
-                  outputs: r.selectedFunction.outputs,
-                },
-                functionArgsArb: r.functionArgsArb,
-                selectedInvariant: {
-                  name: r.selectedInvariant.name,
-                  access: r.selectedInvariant.access,
-                },
-                invariantArgsArb: r.invariantArgsArb,
-                sutCaller: r.sutCaller,
+                selectedFunctions:
+                  r.selectedFunctions as any as ContractInterfaceFunction[],
+                selectedFunctionsArgsList: r.selectedFunctionsArgsList,
+                selectedInvariant:
+                  r.selectedInvariant as any as ContractInterfaceFunction,
+                invariantArgs: r.invariantArgs,
+                sutCallers: r.sutCallers,
                 invariantCaller: r.invariantCaller,
               },
             ],
@@ -238,12 +259,26 @@ describe("Custom reporter logging", () => {
             `- Contract : ${getContractNameFromContractId(
               rendezvousContractId
             )}`,
-            `- Function : ${r.selectedFunction.name} (${r.selectedFunction.access})`,
-            `- Arguments: ${JSON.stringify(r.functionArgsArb)}`,
-            `- Caller   : ${r.sutCaller[0]}`,
-            `- Outputs  : ${JSON.stringify(r.selectedFunction.outputs)}`,
+            `- Functions: ${r.selectedFunctions
+              .map((selectedFunction) => selectedFunction.name)
+              .join(", ")} (${r.selectedFunctions
+              .map((selectedFunction) => selectedFunction.access)
+              .join(", ")})`,
+            `- Arguments: ${r.selectedFunctionsArgsList
+              .map((selectedFunctionArgs) =>
+                JSON.stringify(selectedFunctionArgs)
+              )
+              .join(", ")}`,
+            `- Callers  : ${r.sutCallers
+              .map((sutCaller) => sutCaller[0])
+              .join(", ")}`,
+            `- Outputs  : ${r.selectedFunctions
+              .map((selectedFunction) =>
+                JSON.stringify(selectedFunction.outputs)
+              )
+              .join(", ")}`,
             `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`,
-            `- Arguments: ${JSON.stringify(r.invariantArgsArb)}`,
+            `- Arguments: ${JSON.stringify(r.invariantArgs)}`,
             `- Caller   : ${r.invariantCaller[0]}`,
             `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
             `The invariant "${
@@ -275,26 +310,31 @@ describe("Custom reporter logging", () => {
           numRuns: fc.nat(),
           seed: fc.nat(),
           contractName: fc.ascii(),
-          selectedFunction: fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-            outputs: fc.array(fc.ascii()),
-          }),
-          functionArgsArb: fc.array(
-            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
+          selectedFunctions: fc.array(
+            fc.record({
+              name: fc.ascii(),
+              access: fc.ascii(),
+              outputs: fc.array(fc.ascii()),
+              args: fc.anything(),
+            })
+          ),
+          selectedFunctionsArgsList: fc.tuple(
+            fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean()))
           ),
           selectedInvariant: fc.record({
             name: fc.ascii(),
             access: fc.ascii(),
+            outputs: fc.array(fc.ascii()),
+            args: fc.anything(),
           }),
-          invariantArgsArb: fc.array(
-            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
-          ),
+          invariantArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
-          sutCaller: fc.constantFrom(
-            ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
+          sutCallers: fc.array(
+            fc.constantFrom(
+              ...new Map(
+                [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
+              ).entries()
+            )
           ),
           invariantCaller: fc.constantFrom(
             ...new Map(
@@ -308,19 +348,22 @@ describe("Custom reporter logging", () => {
           numRuns: number;
           seed: number;
           contractName: string;
-          selectedFunction: {
+          selectedFunctions: {
             name: string;
             access: string;
             outputs: string[];
-          };
-          functionArgsArb: (string | number | boolean)[];
+            args: any;
+          }[];
+          selectedFunctionsArgsList: (string | number | boolean)[][];
           selectedInvariant: {
             name: string;
             access: string;
+            args: any;
+            outputs: string[];
           };
-          invariantArgsArb: (string | number | boolean)[];
+          invariantArgs: (string | number | boolean)[];
           errorMessage: string;
-          sutCaller: [string, string];
+          sutCallers: [string, string][];
           invariantCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
@@ -339,18 +382,13 @@ describe("Custom reporter logging", () => {
             counterexample: [
               {
                 rendezvousContractId: rendezvousContractId,
-                selectedFunction: {
-                  name: r.selectedFunction.name,
-                  access: r.selectedFunction.access,
-                  outputs: r.selectedFunction.outputs,
-                },
-                functionArgsArb: r.functionArgsArb,
-                selectedInvariant: {
-                  name: r.selectedInvariant.name,
-                  access: r.selectedInvariant.access,
-                },
-                invariantArgsArb: r.invariantArgsArb,
-                sutCaller: r.sutCaller,
+                selectedFunctions:
+                  r.selectedFunctions as any as ContractInterfaceFunction[],
+                selectedFunctionsArgsList: r.selectedFunctionsArgsList,
+                selectedInvariant:
+                  r.selectedInvariant as any as ContractInterfaceFunction,
+                invariantArgs: r.invariantArgs,
+                sutCallers: r.sutCallers,
                 invariantCaller: r.invariantCaller,
               },
             ],
@@ -384,10 +422,9 @@ describe("Custom reporter logging", () => {
             name: fc.ascii(),
             access: fc.ascii(),
             outputs: fc.array(fc.ascii()),
+            args: fc.anything(),
           }),
-          functionArgsArb: fc.array(
-            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
-          ),
+          functionArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
           testCaller: fc.constantFrom(
             ...new Map(
@@ -404,8 +441,9 @@ describe("Custom reporter logging", () => {
             name: string;
             access: string;
             outputs: string[];
+            args: any;
           };
-          functionArgsArb: (string | number | boolean)[];
+          functionArgs: (string | number | boolean)[];
           errorMessage: string;
           testCaller: [string, string];
         }) => {
@@ -424,12 +462,9 @@ describe("Custom reporter logging", () => {
             counterexample: [
               {
                 testContractId: testContractId,
-                selectedTestFunction: {
-                  name: r.selectedTestFunction.name,
-                  access: r.selectedTestFunction.access,
-                  outputs: r.selectedTestFunction.outputs,
-                },
-                functionArgsArb: r.functionArgsArb,
+                selectedTestFunction:
+                  r.selectedTestFunction as any as ContractInterfaceFunction,
+                functionArgs: r.functionArgs,
                 testCaller: r.testCaller,
               },
             ],
@@ -448,7 +483,7 @@ describe("Custom reporter logging", () => {
               testContractId
             )}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
-            `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`,
+            `- Arguments     : ${JSON.stringify(r.functionArgs)}`,
             `- Caller        : ${r.testCaller[0]}`,
             `- Outputs       : ${JSON.stringify(
               r.selectedTestFunction.outputs
@@ -486,10 +521,9 @@ describe("Custom reporter logging", () => {
             name: fc.ascii(),
             access: fc.ascii(),
             outputs: fc.array(fc.ascii()),
+            args: fc.anything(),
           }),
-          functionArgsArb: fc.array(
-            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
-          ),
+          functionArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
           testCaller: fc.constantFrom(
             ...new Map(
@@ -507,8 +541,9 @@ describe("Custom reporter logging", () => {
             name: string;
             access: string;
             outputs: string[];
+            args: any;
           };
-          functionArgsArb: (string | number | boolean)[];
+          functionArgs: (string | number | boolean)[];
           errorMessage: string;
           testCaller: [string, string];
         }) => {
@@ -528,12 +563,9 @@ describe("Custom reporter logging", () => {
             counterexample: [
               {
                 testContractId: testContractId,
-                selectedTestFunction: {
-                  name: r.selectedTestFunction.name,
-                  access: r.selectedTestFunction.access,
-                  outputs: r.selectedTestFunction.outputs,
-                },
-                functionArgsArb: r.functionArgsArb,
+                selectedTestFunction:
+                  r.selectedTestFunction as any as ContractInterfaceFunction,
+                functionArgs: r.functionArgs,
                 testCaller: r.testCaller,
               },
             ],
@@ -553,7 +585,7 @@ describe("Custom reporter logging", () => {
               testContractId
             )}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
-            `- Arguments     : ${JSON.stringify(r.functionArgsArb)}`,
+            `- Arguments     : ${JSON.stringify(r.functionArgs)}`,
             `- Caller        : ${r.testCaller[0]}`,
             `- Outputs       : ${JSON.stringify(
               r.selectedTestFunction.outputs
@@ -590,10 +622,9 @@ describe("Custom reporter logging", () => {
             name: fc.ascii(),
             access: fc.ascii(),
             outputs: fc.array(fc.ascii()),
+            args: fc.anything(),
           }),
-          functionArgsArb: fc.array(
-            fc.oneof(fc.ascii(), fc.nat(), fc.boolean())
-          ),
+          functionArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
           errorMessage: fc.ascii(),
           testCaller: fc.constantFrom(
             ...new Map(
@@ -610,8 +641,9 @@ describe("Custom reporter logging", () => {
             name: string;
             access: string;
             outputs: string[];
+            args: any;
           };
-          functionArgsArb: (string | number | boolean)[];
+          functionArgs: (string | number | boolean)[];
           errorMessage: string;
           testCaller: [string, string];
         }) => {
@@ -630,12 +662,9 @@ describe("Custom reporter logging", () => {
             counterexample: [
               {
                 testContractId: testContractId,
-                selectedTestFunction: {
-                  name: r.selectedTestFunction.name,
-                  access: r.selectedTestFunction.access,
-                  outputs: r.selectedTestFunction.outputs,
-                },
-                functionArgsArb: r.functionArgsArb,
+                selectedTestFunction:
+                  r.selectedTestFunction as any as ContractInterfaceFunction,
+                functionArgs: r.functionArgs,
                 testCaller: r.testCaller,
               },
             ],

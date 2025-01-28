@@ -179,14 +179,15 @@ export const checkInvariants = (
           // to the first contract in the list. The arbitrary is still needed,
           // being used for reporting purposes in `heatstroke.ts`.
           rendezvousContractId: fc.constant(rendezvousContractId),
-          sutCaller: fc.constantFrom(...eligibleAccounts.entries()),
           invariantCaller: fc.constantFrom(...eligibleAccounts.entries()),
           canMineBlocks: fc.boolean(),
         })
         .chain((r) =>
           fc
             .record({
-              selectedFunction: fc.constantFrom(...functions),
+              selectedFunctions: fc.array(fc.constantFrom(...functions), {
+                minLength: 1, // At least one function must be selected.
+              }),
               selectedInvariant: fc.constantFrom(...invariants),
             })
             .map((selectedFunctions) => ({ ...r, ...selectedFunctions }))
@@ -194,14 +195,25 @@ export const checkInvariants = (
         .chain((r) =>
           fc
             .record({
-              functionArgsArb: fc.tuple(
-                ...functionToArbitrary(
-                  r.selectedFunction,
-                  simnetAddresses,
-                  projectTraitImplementations
+              sutCallers: fc.array(
+                fc.constantFrom(...eligibleAccounts.entries()),
+                {
+                  minLength: r.selectedFunctions.length,
+                  maxLength: r.selectedFunctions.length,
+                }
+              ),
+              selectedFunctionsArgsList: fc.tuple(
+                ...r.selectedFunctions.map((selectedFunction) =>
+                  fc.tuple(
+                    ...functionToArbitrary(
+                      selectedFunction,
+                      simnetAddresses,
+                      projectTraitImplementations
+                    )
+                  )
                 )
               ),
-              invariantArgsArb: fc.tuple(
+              invariantArgs: fc.tuple(
                 ...functionToArbitrary(
                   r.selectedInvariant,
                   simnetAddresses,
@@ -230,64 +242,81 @@ export const checkInvariants = (
             .map((burnBlocks) => ({ ...r, ...burnBlocks }))
         ),
       (r) => {
-        const selectedFunctionArgs = argsToCV(
-          r.selectedFunction,
-          r.functionArgsArb
+        const selectedFunctionsArgsCV = r.selectedFunctions.map(
+          (selectedFunction, index) =>
+            argsToCV(selectedFunction, r.selectedFunctionsArgsList[index])
         );
-        const selectedInvariantArgs = argsToCV(
+        const selectedInvariantArgsCV = argsToCV(
           r.selectedInvariant,
-          r.invariantArgsArb
+          r.invariantArgs
         );
 
-        const printedFunctionArgs = r.functionArgsArb
-          .map((arg) => {
-            try {
-              return typeof arg === "object"
-                ? JSON.stringify(arg)
-                : arg.toString();
-            } catch {
-              return "[Circular]";
-            }
-          })
-          .join(" ");
+        r.selectedFunctions.forEach((selectedFunction, index) => {
+          const [sutCallerWallet, sutCallerAddress] = r.sutCallers[index];
 
-        const [sutCallerWallet, sutCallerAddress] = r.sutCaller;
+          const printedFunctionArgs = r.selectedFunctionsArgsList[index]
+            .map((arg) => {
+              try {
+                return typeof arg === "object"
+                  ? JSON.stringify(arg)
+                  : (arg as any).toString();
+              } catch {
+                return "[Circular]";
+              }
+            })
+            .join(" ");
 
-        try {
-          const { result: functionCallResult } = simnet.callPublicFn(
-            r.rendezvousContractId,
-            r.selectedFunction.name,
-            selectedFunctionArgs,
-            sutCallerAddress
-          );
-
-          const functionCallResultJson = cvToJSON(functionCallResult);
-
-          if (functionCallResultJson.success) {
-            localContext[r.rendezvousContractId][r.selectedFunction.name]++;
-
-            simnet.callPublicFn(
+          try {
+            const { result: functionCallResult } = simnet.callPublicFn(
               r.rendezvousContractId,
-              "update-context",
-              [
-                Cl.stringAscii(r.selectedFunction.name),
-                Cl.uint(
-                  localContext[r.rendezvousContractId][r.selectedFunction.name]
-                ),
-              ],
-              simnet.deployer
+              selectedFunction.name,
+              selectedFunctionsArgsCV[index],
+              sutCallerAddress
             );
 
-            radio.emit(
-              "logMessage",
-              `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
-                `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
-                dim(`${sutCallerWallet}        `) +
-                `${targetContractName} ` +
-                `${underline(r.selectedFunction.name)} ` +
-                printedFunctionArgs
-            );
-          } else {
+            const functionCallResultJson = cvToJSON(functionCallResult);
+
+            if (functionCallResultJson.success) {
+              localContext[r.rendezvousContractId][selectedFunction.name]++;
+
+              simnet.callPublicFn(
+                r.rendezvousContractId,
+                "update-context",
+                [
+                  Cl.stringAscii(selectedFunction.name),
+                  Cl.uint(
+                    localContext[r.rendezvousContractId][selectedFunction.name]
+                  ),
+                ],
+                simnet.deployer
+              );
+
+              radio.emit(
+                "logMessage",
+                `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+                  `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
+                  dim(`${sutCallerWallet}        `) +
+                  `${targetContractName} ` +
+                  `${underline(selectedFunction.name)} ` +
+                  printedFunctionArgs
+              );
+            } else {
+              radio.emit(
+                "logMessage",
+                dim(
+                  `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+                    `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
+                    `${sutCallerWallet}        ` +
+                    `${targetContractName} ` +
+                    `${underline(selectedFunction.name)} ` +
+                    printedFunctionArgs
+                )
+              );
+            }
+          } catch (error: any) {
+            // If the function call fails with a runtime error, log a dimmed
+            // message. Since the public function result is ignored, there's
+            // no need to throw an error.
             radio.emit(
               "logMessage",
               dim(
@@ -295,29 +324,14 @@ export const checkInvariants = (
                   `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
                   `${sutCallerWallet}        ` +
                   `${targetContractName} ` +
-                  `${underline(r.selectedFunction.name)} ` +
+                  `${underline(selectedFunction.name)} ` +
                   printedFunctionArgs
               )
             );
           }
-        } catch (error: any) {
-          // If the function call fails with a runtime error, log a dimmed
-          // message. Since the public function result is ignored, there's
-          // no need to throw an error.
-          radio.emit(
-            "logMessage",
-            dim(
-              `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
-                `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
-                `${sutCallerWallet}        ` +
-                `${targetContractName} ` +
-                `${underline(r.selectedFunction.name)} ` +
-                printedFunctionArgs
-            )
-          );
-        }
+        });
 
-        const printedInvariantArgs = r.invariantArgsArb
+        const printedInvariantArgs = r.invariantArgs
           .map((arg) => {
             try {
               return typeof arg === "object"
@@ -336,7 +350,7 @@ export const checkInvariants = (
           const { result: invariantCallResult } = simnet.callReadOnlyFn(
             r.rendezvousContractId,
             r.selectedInvariant.name,
-            selectedInvariantArgs,
+            selectedInvariantArgsCV,
             invariantCallerAddress
           );
 

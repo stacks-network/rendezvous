@@ -187,7 +187,7 @@ export const checkProperties = (
         .chain((r) =>
           fc
             .record({
-              functionArgsArb: fc.tuple(
+              functionArgs: fc.tuple(
                 ...functionToArbitrary(
                   r.selectedTestFunction,
                   simnetAddresses,
@@ -218,10 +218,10 @@ export const checkProperties = (
       (r) => {
         const selectedTestFunctionArgs = argsToCV(
           r.selectedTestFunction,
-          r.functionArgsArb
+          r.functionArgs
         );
 
-        const printedTestFunctionArgs = r.functionArgsArb
+        const printedTestFunctionArgs = r.functionArgs
           .map((arg) => {
             try {
               return typeof arg === "object"
