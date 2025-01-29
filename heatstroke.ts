@@ -107,7 +107,6 @@ export function reporter(
         }" returned:\n\n${runDetails.error
           ?.toString()
           .split("\n")
-          // @ts-ignore
           .map((line) => "    " + line)
           .join("\n")}\n`;
 
@@ -148,7 +147,6 @@ export function reporter(
         }" returned:\n\n${runDetails.error
           ?.toString()
           .split("\n")
-          // @ts-ignore
           .map((line) => "    " + line)
           .join("\n")}\n`;
 
