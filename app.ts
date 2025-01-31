@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { join } from "path";
+import { join, resolve } from "path";
 import { EventEmitter } from "events";
 import { checkProperties } from "./property";
 import { checkInvariants } from "./invariant";
@@ -11,9 +11,33 @@ import {
 import { issueFirstClassCitizenship } from "./citizen";
 import { version } from "./package.json";
 import { red } from "ansicolor";
+import { existsSync } from "fs";
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
+};
+
+/**
+ * Gets the manifest file name for a Clarinet project.
+ * If a custom manifest exists (`Clarinet-<contract-name>.toml`), it is used.
+ * Otherwise, the default `Clarinet.toml` is returned.
+ * @param manifestDir The relative path to the Clarinet project directory.
+ * @param targetContractName The target contract name.
+ * @returns The manifest file name.
+ */
+export const getManifestFileName = (
+  manifestDir: string,
+  targetContractName: string
+) => {
+  const isCustomManifest = existsSync(
+    resolve(manifestDir, `Clarinet-${targetContractName}.toml`)
+  );
+
+  if (isCustomManifest) {
+    return `Clarinet-${targetContractName}.toml`;
+  }
+
+  return "Clarinet.toml";
 };
 
 const helpMessage = `
@@ -90,8 +114,14 @@ export async function main() {
     return;
   }
 
-  /** The relative path to `Clarinet.toml`. */
-  const manifestPath = join(manifestDir, "Clarinet.toml");
+  /**
+   * The relative path to the manifest file, either `Clarinet.toml` or
+   * `Clarinet-<contract-name>.toml`. If the latter exists, it is used.
+   */
+  const manifestPath = join(
+    manifestDir,
+    getManifestFileName(manifestDir, sutContractName)
+  );
   radio.emit("logMessage", `Using manifest path: ${manifestPath}`);
   radio.emit("logMessage", `Target contract: ${sutContractName}`);
 
@@ -110,7 +140,11 @@ export async function main() {
     radio.emit("logMessage", `Using runs: ${runs}`);
   }
 
-  const simnet = await issueFirstClassCitizenship(manifestDir, sutContractName);
+  const simnet = await issueFirstClassCitizenship(
+    manifestDir,
+    manifestPath,
+    sutContractName
+  );
 
   /**
    * The list of contract IDs for the SUT contract names, as per the simnet.

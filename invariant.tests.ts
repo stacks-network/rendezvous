@@ -8,6 +8,7 @@ import {
 import { join } from "path";
 import { issueFirstClassCitizenship } from "./citizen";
 import { Cl } from "@stacks/transactions";
+import { getManifestFileName } from "./app";
 
 describe("Simnet contracts operations", () => {
   it("correctly initializes the local context for a given functions map", async () => {
@@ -39,7 +40,11 @@ describe("Simnet contracts operations", () => {
 
   it("correctly initializes the Clarity context", async () => {
     // Arrange
-    const simnet = await issueFirstClassCitizenship("example", "counter");
+    const simnet = await issueFirstClassCitizenship(
+      "example",
+      join("example", getManifestFileName("example", "counter")),
+      "counter"
+    );
 
     const rendezvousList = Array.from(
       getSimnetDeployerContractsInterfaces(simnet).keys()

@@ -1,5 +1,5 @@
 import { red } from "ansicolor";
-import { main } from "./app";
+import { getManifestFileName, main } from "./app";
 import { version } from "./package.json";
 
 describe("Command-line arguments handling", () => {
@@ -365,4 +365,18 @@ describe("Command-line arguments handling", () => {
       jest.restoreAllMocks();
     }
   );
+});
+
+describe("Custom manifest detection", () => {
+  it("returns the default manifest file name for the example project", () => {
+    // Arrange
+    const manifestDir = "example";
+    const targetContractName = "counter";
+
+    // Act
+    const actual = getManifestFileName(manifestDir, targetContractName);
+
+    // Assert
+    expect(actual).toBe("Clarinet.toml");
+  });
 });
