@@ -20,16 +20,16 @@ import {
  *   to the simnet.
  *
  * @param manifestDir The relative path to the manifest directory.
+ * @param manifestPath The absolute path to the manifest file.
  * @param sutContractName The target contract name.
  * @returns The initialized simnet instance with all contracts deployed, with
  * the test contract treated as a first-class citizen of the target contract.
  */
 export const issueFirstClassCitizenship = async (
   manifestDir: string,
+  manifestPath: string,
   sutContractName: string
 ): Promise<Simnet> => {
-  const manifestPath = join(manifestDir, "Clarinet.toml");
-
   // Initialize the simnet, to generate the simnet plan and instance. The empty
   // session will be set up, and contracts will be deployed in the correct
   // order based on the simnet plan a few lines below.

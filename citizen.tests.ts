@@ -12,6 +12,7 @@ import { join } from "path";
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import yaml from "yaml";
+import { getManifestFileName } from "./app";
 
 describe("Simnet deployment plan operations", () => {
   const manifestDir = "example";
@@ -337,7 +338,11 @@ describe("Simnet deployment plan operations", () => {
     cpSync(manifestDir, tempDir, { recursive: true });
 
     // Exercise
-    const firstClassSimnet = await issueFirstClassCitizenship(tempDir, "cargo");
+    const firstClassSimnet = await issueFirstClassCitizenship(
+      tempDir,
+      join(tempDir, getManifestFileName(tempDir, "cargo")),
+      "cargo"
+    );
     const actual = firstClassSimnet.getContractSource("cargo");
 
     // Verify
