@@ -1,9 +1,8 @@
 import { red } from "ansicolor";
 import { getManifestFileName, main } from "./app";
 import { version } from "./package.json";
-import { cpSync, mkdtempSync, rmdirSync, writeFileSync } from "fs";
-import { join, resolve } from "path";
-import { tmpdir } from "os";
+import { resolve } from "path";
+import fs from "fs";
 
 describe("Command-line arguments handling", () => {
   const initialArgv = process.argv;
@@ -383,43 +382,25 @@ describe("Custom manifest detection", () => {
     expect(actual).toBe("Clarinet.toml");
   });
 
-  it("returns the custom manifest file name for a project that has one", () => {
+  it("returns the custom manifest file name when it exists", () => {
     // Setup
-    const exampleProject = "example";
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
+    const manifestDir = "d290f1ee-6c54-4b01-90e6-d701748f0851";
+    const targetContractName = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
 
-    // Create a custom manifest file complying with the Rendezvous convention:
-    // `Clarinet-<target-contract-name>.toml`.
-    const expected = "Clarinet-counter.toml";
+    const expected = `Clarinet-${targetContractName}.toml`;
+    const expectedPath = resolve(manifestDir, expected);
 
-    cpSync(exampleProject, tempDir, { recursive: true });
-
-    writeFileSync(
-      resolve(tempDir, expected),
-      `
-[project]
-name = "example"
-telemetry = false
-cache_dir = "./.cache"
-
-[contracts.counter]
-path = "contracts/counter.clar"
-clarity_version = 3
-epoch = 3.0
-
-[repl.analysis]
-passes = ["check_checker"]
-check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }
-`
-    );
+    jest
+      .spyOn(fs, "existsSync")
+      .mockImplementation((p: fs.PathLike) => p.toString() === expectedPath);
 
     // Exercise
-    const actual = getManifestFileName(tempDir, "counter");
+    const actual = getManifestFileName(manifestDir, targetContractName);
 
     // Verify
     expect(actual).toBe(expected);
 
     // Teardown
-    rmdirSync(tempDir, { recursive: true });
+    jest.restoreAllMocks();
   });
 });
