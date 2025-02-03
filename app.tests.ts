@@ -1,6 +1,9 @@
 import { red } from "ansicolor";
 import { getManifestFileName, main } from "./app";
 import { version } from "./package.json";
+import { cpSync, mkdtempSync, rmdirSync, writeFileSync } from "fs";
+import { join, resolve } from "path";
+import { tmpdir } from "os";
 
 describe("Command-line arguments handling", () => {
   const initialArgv = process.argv;
@@ -378,5 +381,45 @@ describe("Custom manifest detection", () => {
 
     // Assert
     expect(actual).toBe("Clarinet.toml");
+  });
+
+  it("returns the custom manifest file name for a project that has one", () => {
+    // Setup
+    const exampleProject = "example";
+    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
+
+    // Create a custom manifest file complying with the Rendezvous convention:
+    // `Clarinet-<target-contract-name>.toml`.
+    const expected = "Clarinet-counter.toml";
+
+    cpSync(exampleProject, tempDir, { recursive: true });
+
+    writeFileSync(
+      resolve(tempDir, expected),
+      `
+[project]
+name = "example"
+telemetry = false
+cache_dir = "./.cache"
+
+[contracts.counter]
+path = "contracts/counter.clar"
+clarity_version = 3
+epoch = 3.0
+
+[repl.analysis]
+passes = ["check_checker"]
+check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }
+`
+    );
+
+    // Exercise
+    const actual = getManifestFileName(tempDir, "counter");
+
+    // Verify
+    expect(actual).toBe(expected);
+
+    // Teardown
+    rmdirSync(tempDir, { recursive: true });
   });
 });
