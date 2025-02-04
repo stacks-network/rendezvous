@@ -2,6 +2,10 @@
 
 (define-fungible-token rendezvous)
 
+(define-constant deployer tx-sender)
+
+(define-constant ERR_UNAUTHORIZED (err u400))
+
 ;; SIP-010 methods.
 
 (define-read-only (get-total-supply)
@@ -34,8 +38,22 @@
     (recipient principal)
     (memo (optional (buff 34)))
   )
-  (match (ft-transfer? rendezvous amount sender recipient)
-    response (ok response)
-    error (err error)
+  (begin
+    ;; This print event is required for rendezvous to be a SIP-010 compliant
+    ;; fungible token. Comment out this line and run the following command to
+    ;; see the `dialers` in action:
+    ;; ```rv example rendezvous-token invariant --dial=example/sip010.js```
+    (match memo to-print (print to-print) 0x)
+    (match (ft-transfer? rendezvous amount sender recipient)
+      response (ok response)
+      error (err error)
+    )
+  )
+)
+
+(define-public (mint (recipient principal) (amount uint))
+  (begin
+    (asserts! (is-eq contract-caller deployer) ERR_UNAUTHORIZED)
+    (ft-mint? rendezvous amount recipient)
   )
 )
