@@ -197,6 +197,23 @@ describe("Command-line arguments handling", () => {
       ],
     ],
     [
+      ["manifest path", "contract name", "type=invariant", "dialers file path"],
+      [
+        "node",
+        "app.js",
+        "example",
+        "counter",
+        "invariant",
+        "--dial=example/sip010.js",
+      ],
+      [
+        `Using manifest path: example/Clarinet.toml`,
+        `Target contract: counter`,
+        `Using dial path: example/sip010.js`,
+        `\nStarting invariant testing type for the counter contract...\n`,
+      ],
+    ],
+    [
       ["manifest path", "contract name", "type=test"],
       ["node", "app.js", "example", "counter", "test"],
       [
