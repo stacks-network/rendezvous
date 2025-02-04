@@ -18,6 +18,7 @@ import {
   isTraitReferenceFunction,
 } from "./traits";
 import { EnrichedContractInterfaceFunction } from "./shared.types";
+import { DialerRegistry } from "./dialer";
 
 /**
  * Runs invariant testing on the target contract and logs the progress. Reports
@@ -30,10 +31,11 @@ import { EnrichedContractInterfaceFunction } from "./shared.types";
  * @param seed The seed for reproducible invariant testing.
  * @param path The path for reproducible invariant testing.
  * @param runs The number of test runs.
+ * @param dialerRegistry The custom dialer registry.
  * @param radio The custom logging event emitter.
  * @returns void
  */
-export const checkInvariants = (
+export const checkInvariants = async (
   simnet: Simnet,
   targetContractName: string,
   rendezvousList: string[],
@@ -41,6 +43,7 @@ export const checkInvariants = (
   seed: number | undefined,
   path: string | undefined,
   runs: number | undefined,
+  dialerRegistry: DialerRegistry | undefined,
   radio: EventEmitter
 ) => {
   // A map where the keys are the Rendezvous identifiers and the values are
@@ -171,8 +174,8 @@ export const checkInvariants = (
     reporter(runDetails, radio, "invariant");
   };
 
-  fc.assert(
-    fc.property(
+  await fc.assert(
+    fc.asyncProperty(
       fc
         .record({
           // The target contract identifier. It is a constant value equal
@@ -241,7 +244,7 @@ export const checkInvariants = (
             })
             .map((burnBlocks) => ({ ...r, ...burnBlocks }))
         ),
-      (r) => {
+      async (r) => {
         const selectedFunctionsArgsCV = r.selectedFunctions.map(
           (selectedFunction, index) =>
             argsToCV(selectedFunction, r.selectedFunctionsArgsList[index])
@@ -251,7 +254,7 @@ export const checkInvariants = (
           r.invariantArgs
         );
 
-        r.selectedFunctions.forEach((selectedFunction, index) => {
+        for (const [index, selectedFunction] of r.selectedFunctions.entries()) {
           const [sutCallerWallet, sutCallerAddress] = r.sutCallers[index];
 
           const printedFunctionArgs = r.selectedFunctionsArgsList[index]
@@ -267,14 +270,26 @@ export const checkInvariants = (
             .join(" ");
 
           try {
-            const { result: functionCallResult } = simnet.callPublicFn(
+            if (dialerRegistry !== undefined) {
+              await dialerRegistry.executePreDialers({
+                selectedFunction: selectedFunction,
+                functionCall: undefined,
+                clarityValueArguments: selectedFunctionsArgsCV[index],
+              });
+            }
+          } catch (e: any) {
+            throw new Error(`Error in pre dialer: ${e.message}`);
+          }
+
+          try {
+            const functionCall = simnet.callPublicFn(
               r.rendezvousContractId,
               selectedFunction.name,
               selectedFunctionsArgsCV[index],
               sutCallerAddress
             );
 
-            const functionCallResultJson = cvToJSON(functionCallResult);
+            const functionCallResultJson = cvToJSON(functionCall.result);
 
             if (functionCallResultJson.success) {
               localContext[r.rendezvousContractId][selectedFunction.name]++;
@@ -300,6 +315,18 @@ export const checkInvariants = (
                   `${underline(selectedFunction.name)} ` +
                   printedFunctionArgs
               );
+
+              try {
+                if (dialerRegistry !== undefined) {
+                  await dialerRegistry.executePostDialers({
+                    selectedFunction: selectedFunction,
+                    functionCall: functionCall,
+                    clarityValueArguments: selectedFunctionsArgsCV[index],
+                  });
+                }
+              } catch (e: any) {
+                throw new Error(`Error in post dialer: ${e.message}`);
+              }
             } else {
               radio.emit(
                 "logMessage",
@@ -314,22 +341,31 @@ export const checkInvariants = (
               );
             }
           } catch (error: any) {
-            // If the function call fails with a runtime error, log a dimmed
-            // message. Since the public function result is ignored, there's
-            // no need to throw an error.
-            radio.emit(
-              "logMessage",
-              dim(
-                `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
-                  `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
-                  `${sutCallerWallet}        ` +
-                  `${targetContractName} ` +
-                  `${underline(selectedFunction.name)} ` +
-                  printedFunctionArgs
-              )
-            );
+            // If the pre dialer fails, throw an error.
+            if (error.message.startsWith("Error in pre dialer")) {
+              throw error;
+            }
+            // If the post dialer fails, throw an error.
+            if (error.message.startsWith("Error in post dialer")) {
+              throw error;
+            } else {
+              // If the function call fails with a runtime error, log a dimmed
+              // message. Since the public function result is ignored, there's
+              // no need to throw an error.
+              radio.emit(
+                "logMessage",
+                dim(
+                  `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+                    `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
+                    `${sutCallerWallet}        ` +
+                    `${targetContractName} ` +
+                    `${underline(selectedFunction.name)} ` +
+                    printedFunctionArgs
+                )
+              );
+            }
           }
-        });
+        }
 
         const printedInvariantArgs = r.invariantArgs
           .map((arg) => {
