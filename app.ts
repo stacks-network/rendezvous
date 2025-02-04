@@ -12,6 +12,7 @@ import { issueFirstClassCitizenship } from "./citizen";
 import { version } from "./package.json";
 import { red } from "ansicolor";
 import { existsSync } from "fs";
+import { DialerRegistry } from "./dialer";
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
@@ -140,6 +141,27 @@ export async function main() {
     radio.emit("logMessage", `Using runs: ${runs}`);
   }
 
+  /**
+   * The path to the dialer file. The dialer file allows the user to register
+   * custom pre and post-execution JavaScript functions to be executed before
+   * and after the public function calls during invariant testing.
+   */
+  const dialPath = parseOptionalArgument("dial") || undefined;
+  if (dialPath !== undefined) {
+    radio.emit("logMessage", `Using dial path: ${dialPath}`);
+  }
+
+  /**
+   * The dialer registry, which is used to keep track of all the custom dialers
+   * registered by the user using the `--dial` flag.
+   */
+  const dialerRegistry =
+    dialPath !== undefined ? new DialerRegistry(dialPath) : undefined;
+
+  if (dialerRegistry !== undefined) {
+    dialerRegistry.registerDialers();
+  }
+
   const simnet = await issueFirstClassCitizenship(
     manifestDir,
     manifestPath,
@@ -168,7 +190,7 @@ export async function main() {
   // If "test", call `checkProperties` for property-based testing.
   switch (type) {
     case "invariant": {
-      checkInvariants(
+      await checkInvariants(
         simnet,
         sutContractName,
         rendezvousList,
@@ -176,6 +198,7 @@ export async function main() {
         seed,
         path,
         runs,
+        dialerRegistry,
         radio
       );
       break;
