@@ -1,6 +1,5 @@
 import { join } from "path";
 import { DialerRegistry } from "./dialer";
-import { existsSync } from "fs";
 
 const dialPath = join("example", "dialer.ts");
 
