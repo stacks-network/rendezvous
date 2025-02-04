@@ -1,7 +1,6 @@
 import { existsSync } from "fs";
 import { resolve } from "path";
-
-type Dialer = (context: any) => Promise<void> | void;
+import { Dialer } from "./dialer.types";
 
 export class DialerRegistry {
   private dialPath: string;
