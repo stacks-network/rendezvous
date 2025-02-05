@@ -56,6 +56,8 @@ npx rv <path-to-clarinet-project> <contract-name> <type>
 - `--path` – The path to use for the replay functionality.
 - `--runs` – The number of test iterations to use for exercising the contracts.
   (default: `100`)
+- `--dial` – The path to a JavaScript file containing custom pre- and
+  post-execution functions (dialers).
 
 ---
 
