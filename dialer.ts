@@ -3,7 +3,7 @@ import { resolve } from "path";
 import { Dialer, DialerContext } from "./dialer.types";
 
 export class DialerRegistry {
-  private dialPath: string;
+  private readonly dialPath: string;
   private preDialers: Dialer[] = [];
   private postDialers: Dialer[] = [];
 
