@@ -2,6 +2,10 @@ import { existsSync } from "fs";
 import { resolve } from "path";
 import { Dialer, DialerContext } from "./dialer.types";
 
+// In telephony, a registry is used for maintaining a known set of handlers,
+// devices, or processes. This aligns with this class's purpose. Dialers are
+// loaded/stored and run in a structured way, so "registry" fits both telephony
+// and DI semantics.
 export class DialerRegistry {
   private readonly dialPath: string;
   private preDialers: Dialer[] = [];
