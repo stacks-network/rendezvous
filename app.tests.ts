@@ -10,7 +10,7 @@ describe("Command-line arguments handling", () => {
   const helpMessage = `
   rv v${version}
   
-  Usage: rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--path=<path>] [--runs=<runs>]
+  Usage: rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--path=<path>] [--runs=<runs>] [--dial=<path-to-dialers-file>]
 
   Positional arguments:
     path-to-clarinet-project - The path to the Clarinet project.
@@ -21,6 +21,7 @@ describe("Command-line arguments handling", () => {
     --seed - The seed to use for the replay functionality.
     --path - The path to use for the replay functionality.
     --runs - The runs to use for iterating over the tests. Default: 100.
+    --dial – The path to a JavaScript file containing custom pre- and post-execution functions (dialers).
     --help - Show the help message.
   `;
   const noManifestMessage = red(
