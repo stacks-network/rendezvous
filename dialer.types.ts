@@ -6,6 +6,6 @@ export type Dialer = (context: DialerContext) => Promise<void> | void;
 
 export type DialerContext = {
   clarityValueArguments: ClarityValue[];
-  functionCall: ParsedTransactionResult;
+  functionCall: ParsedTransactionResult | undefined;
   selectedFunction: EnrichedContractInterfaceFunction;
 };
