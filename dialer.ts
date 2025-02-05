@@ -1,6 +1,6 @@
 import { existsSync } from "fs";
 import { resolve } from "path";
-import { Dialer } from "./dialer.types";
+import { Dialer, DialerContext } from "./dialer.types";
 
 export class DialerRegistry {
   private dialPath: string;
@@ -45,7 +45,7 @@ export class DialerRegistry {
     }
   }
 
-  async executePreDialers(context: any) {
+  async executePreDialers(context: DialerContext) {
     if (this.preDialers.length === 0) {
       return;
     }
@@ -55,7 +55,7 @@ export class DialerRegistry {
     }
   }
 
-  async executePostDialers(context: any) {
+  async executePostDialers(context: DialerContext) {
     if (this.postDialers.length === 0) {
       return;
     }
