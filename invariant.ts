@@ -277,8 +277,8 @@ export const checkInvariants = async (
                 clarityValueArguments: selectedFunctionsArgsCV[index],
               });
             }
-          } catch (e: any) {
-            throw new PreDialerError(e.message);
+          } catch (error: any) {
+            throw new PreDialerError(error.message);
           }
 
           try {
@@ -324,8 +324,8 @@ export const checkInvariants = async (
                     clarityValueArguments: selectedFunctionsArgsCV[index],
                   });
                 }
-              } catch (e: any) {
-                throw new PostDialerError(e.message);
+              } catch (error: any) {
+                throw new PostDialerError(error.message);
               }
             } else {
               radio.emit(
