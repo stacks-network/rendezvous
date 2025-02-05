@@ -69,3 +69,17 @@ export class DialerRegistry {
     }
   }
 }
+
+export class PreDialerError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "Pre-dialer error";
+  }
+}
+
+export class PostDialerError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "Post-dialer error";
+  }
+}
