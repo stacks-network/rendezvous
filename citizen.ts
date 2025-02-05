@@ -216,9 +216,9 @@ export const buildRendezvousData = (
       rendezvousSource: rendezvousSource,
       rendezvousContractName: contractName,
     };
-  } catch (e: any) {
+  } catch (error: any) {
     throw new Error(
-      `Error processing "${contractName}" contract: ${e.message}`
+      `Error processing "${contractName}" contract: ${error.message}`
     );
   }
 };
@@ -295,9 +295,9 @@ export const getTestContractSource = (
     return readFileSync(join(manifestDir, testContractPath), {
       encoding: "utf-8",
     }).toString();
-  } catch (e: any) {
+  } catch (error: any) {
     throw new Error(
-      `Error retrieving the corresponding test contract for the "${sutContractName}" contract. ${e.message}`
+      `Error retrieving the corresponding test contract for the "${sutContractName}" contract. ${error.message}`
     );
   }
 };
