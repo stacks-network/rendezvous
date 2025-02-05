@@ -4,8 +4,10 @@
 //
 // This is just an example of the power of custom dialers. In sBTC, the
 // transfer function did not emit the print event, resulting in sBTC not being
-// SIP-010 compliant. This custom dialer allows for the detection of such
-// issues for any fungible token contract in the future.
+// SIP-010 compliant: https://github.com/stacks-network/sbtc/issues/1090.
+//
+// This custom dialer allows for the detection of such issues for any fungible
+// token contract in the future.
 //
 // References:
 // https://github.com/stacksgov/sips/blob/2c3b36c172c0b71369bc26cffa080e8bdd2b3b84/sips/sip-010/sip-010-fungible-token-standard.md?plain=1#L69
