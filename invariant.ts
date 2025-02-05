@@ -18,7 +18,7 @@ import {
   isTraitReferenceFunction,
 } from "./traits";
 import { EnrichedContractInterfaceFunction } from "./shared.types";
-import { DialerRegistry } from "./dialer";
+import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
 
 /**
  * Runs invariant testing on the target contract and logs the progress. Reports
@@ -278,7 +278,7 @@ export const checkInvariants = async (
               });
             }
           } catch (e: any) {
-            throw new Error(`Error in pre dialer: ${e.message}`);
+            throw new PreDialerError(e.message);
           }
 
           try {
@@ -325,7 +325,7 @@ export const checkInvariants = async (
                   });
                 }
               } catch (e: any) {
-                throw new Error(`Error in post dialer: ${e.message}`);
+                throw new PostDialerError(e.message);
               }
             } else {
               radio.emit(
@@ -341,12 +341,10 @@ export const checkInvariants = async (
               );
             }
           } catch (error: any) {
-            // If the pre dialer fails, throw an error.
-            if (error.message.startsWith("Error in pre dialer")) {
-              throw error;
-            }
-            // If the post dialer fails, throw an error.
-            if (error.message.startsWith("Error in post dialer")) {
+            if (
+              error instanceof PreDialerError ||
+              error instanceof PostDialerError
+            ) {
               throw error;
             } else {
               // If the function call fails with a runtime error, log a dimmed
