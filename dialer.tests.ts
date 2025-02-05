@@ -1,4 +1,5 @@
 import { join } from "path";
+import { DialerContext } from "./dialer.types";
 import { DialerRegistry } from "./dialer";
 
 const dialPath = join("example", "dialer.ts");
@@ -15,11 +16,11 @@ describe("DialerRegistry interaction", () => {
   it("correctly executes registered pre-dialer", async () => {
     // Arrange
     const mockPreDialer = jest.fn();
-    const dialerRegistry = new DialerRegistry(dialPath);
-    dialerRegistry.registerPreDialer(mockPreDialer);
+    const registry = new DialerRegistry(dialPath);
+    registry.registerPreDialer(mockPreDialer);
 
     // Act
-    await dialerRegistry.executePreDialers({});
+    await registry.executePreDialers({} as any as DialerContext);
 
     // Assert
     expect(mockPreDialer).toHaveBeenCalledTimes(1);
@@ -28,11 +29,11 @@ describe("DialerRegistry interaction", () => {
   it("correctly executes registered post-dialer", async () => {
     // Arrange
     const mockPostDialer = jest.fn();
-    const dialerRegistry = new DialerRegistry(dialPath);
-    dialerRegistry.registerPostDialer(mockPostDialer);
+    const registry = new DialerRegistry(dialPath);
+    registry.registerPostDialer(mockPostDialer);
 
     // Act
-    await dialerRegistry.executePostDialers({});
+    await registry.executePostDialers({} as any as DialerContext);
 
     // Assert
     expect(mockPostDialer).toHaveBeenCalledTimes(1);
@@ -48,7 +49,7 @@ describe("DialerRegistry interaction", () => {
     registry.registerPreDialer(mockPreDialer2);
 
     // Act
-    await registry.executePreDialers({});
+    await registry.executePreDialers({} as any as DialerContext);
 
     // Assert
     expect(mockPreDialer1).toHaveBeenCalledTimes(1);
@@ -65,7 +66,7 @@ describe("DialerRegistry interaction", () => {
     registry.registerPostDialer(mockPostDialer2);
 
     // Act
-    await registry.executePostDialers({});
+    await registry.executePostDialers({} as any as DialerContext);
 
     // Assert
     expect(mockPostDialer1).toHaveBeenCalledTimes(1);
