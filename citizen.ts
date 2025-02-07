@@ -60,8 +60,6 @@ export const issueFirstClassCitizenship = async (
 
   await simnet.initEmptySession();
 
-  // The `initEmptySession` method will reset the balances of the accounts to
-  // 0. Restore the balances to their original values.
   simnetAddresses.forEach((address) => {
     simnet.mintSTX(address, balancesMap.get(address)!);
   });
