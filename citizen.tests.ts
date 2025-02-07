@@ -376,14 +376,10 @@ describe("Simnet deployment plan operations", () => {
     // Verify
     const balancesMap = new Map(
       Array.from([...firstClassSimnet.getAccounts().values()], (address) => {
-        try {
-          const balanceHex = firstClassSimnet.runSnippet(
-            `(stx-get-balance '${address})`
-          );
-          return [address, cvToValue(hexToCV(balanceHex))];
-        } catch (error) {
-          return [address, BigInt(0)];
-        }
+        const balanceHex = firstClassSimnet.runSnippet(
+          `(stx-get-balance '${address})`
+        );
+        return [address, cvToValue(hexToCV(balanceHex))];
       })
     );
 

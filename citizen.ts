@@ -49,12 +49,8 @@ export const issueFirstClassCitizenship = async (
 
   const balancesMap = new Map(
     Array.from(simnetAddresses, (address) => {
-      try {
-        const balanceHex = simnet.runSnippet(`(stx-get-balance '${address})`);
-        return [address, cvToValue(hexToCV(balanceHex))];
-      } catch (error) {
-        return [address, BigInt(0)];
-      }
+      const balanceHex = simnet.runSnippet(`(stx-get-balance '${address})`);
+      return [address, cvToValue(hexToCV(balanceHex))];
     })
   );
 
