@@ -306,11 +306,14 @@ export const checkProperties = (
                 simnet.mineEmptyBurnBlocks(r.burnBlocks);
               }
             } else {
-              throw new Error(
-                `Test failed for ${targetContractName} contract: "${r.selectedTestFunction.name}" returned ${testFunctionCallResultJson.value.value}`
+              throw new PropertyTestError(
+                `Test failed for ${targetContractName} contract: "${r.selectedTestFunction.name}" returned ${testFunctionCallResultJson.value.value}`,
+                testFunctionCallResultJson.value.value
               );
             }
           } catch (error: any) {
+            const displayedError =
+              error instanceof PropertyTestError ? `(err ${error.code})` : "";
             // Capture the error and log the test failure.
             radio.emit(
               "logMessage",
@@ -321,7 +324,8 @@ export const checkProperties = (
                   `[FAIL] ` +
                   `${targetContractName} ` +
                   `${underline(r.selectedTestFunction.name)} ` +
-                  printedTestFunctionArgs
+                  `${printedTestFunctionArgs} ` +
+                  displayedError
               )
             );
 
@@ -471,3 +475,11 @@ export const isParamsMatch = (
 export const isReturnTypeBoolean = (
   discardFunctionInterface: ContractInterfaceFunction
 ) => discardFunctionInterface.outputs.type === "bool";
+
+class PropertyTestError extends Error {
+  code: any;
+  constructor(message: string, errorCode: any) {
+    super(message);
+    this.code = errorCode;
+  }
+}
