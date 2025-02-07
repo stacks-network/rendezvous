@@ -313,7 +313,9 @@ export const checkProperties = (
             }
           } catch (error: any) {
             const displayedError =
-              error instanceof PropertyTestError ? `(err ${error.code})` : "";
+              error instanceof PropertyTestError
+                ? `(err ${error.errorCode})`
+                : "";
             // Capture the error and log the test failure.
             radio.emit(
               "logMessage",
@@ -477,9 +479,9 @@ export const isReturnTypeBoolean = (
 ) => discardFunctionInterface.outputs.type === "bool";
 
 class PropertyTestError extends Error {
-  code: any;
+  readonly errorCode: any;
   constructor(message: string, errorCode: any) {
     super(message);
-    this.code = errorCode;
+    this.errorCode = errorCode;
   }
 }
