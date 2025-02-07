@@ -13,6 +13,7 @@ import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import yaml from "yaml";
 import { getManifestFileName } from "./app";
+import { cvToValue, hexToCV } from "@stacks/transactions";
 
 describe("Simnet deployment plan operations", () => {
   const manifestDir = "example";
@@ -355,6 +356,40 @@ describe("Simnet deployment plan operations", () => {
     );
     const expected = scheduleRendezvous(cargoSrc, cargoTestsSrc);
     expect(actual).toBe(expected);
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  it(`the first-class citizenship simnet has the correct balances for the registered accounts`, async () => {
+    // Setup
+    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
+    cpSync(manifestDir, tempDir, { recursive: true });
+
+    // Exercise
+    const firstClassSimnet = await issueFirstClassCitizenship(
+      tempDir,
+      join(tempDir, getManifestFileName(tempDir, "cargo")),
+      "cargo"
+    );
+
+    // Verify
+    const balancesMap = new Map(
+      Array.from([...firstClassSimnet.getAccounts().values()], (address) => {
+        try {
+          const balanceHex = firstClassSimnet.runSnippet(
+            `(stx-get-balance '${address})`
+          );
+          return [address, cvToValue(hexToCV(balanceHex))];
+        } catch (error) {
+          return [address, BigInt(0)];
+        }
+      })
+    );
+
+    expect(Array.from(balancesMap.values())).toEqual(
+      Array(firstClassSimnet.getAccounts().size).fill(BigInt(100000000000000))
+    );
 
     // Teardown
     rmSync(tempDir, { recursive: true, force: true });
