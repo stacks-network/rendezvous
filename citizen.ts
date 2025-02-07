@@ -3,6 +3,7 @@ import { join } from "path";
 import yaml from "yaml";
 import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
 import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
+import { cvToValue, hexToCV } from "@stacks/transactions";
 import {
   Batch,
   ContractDeploymentProperties,
@@ -44,7 +45,26 @@ export const issueFirstClassCitizenship = async (
   const sortedContractsByEpoch =
     groupContractsByEpochFromSimnetPlan(simnetPlan);
 
+  const simnetAddresses = [...simnet.getAccounts().values()];
+
+  const balancesMap = new Map(
+    Array.from(simnetAddresses, (address) => {
+      try {
+        const balanceHex = simnet.runSnippet(`(stx-get-balance '${address})`);
+        return [address, cvToValue(hexToCV(balanceHex))];
+      } catch (error) {
+        return [address, BigInt(0)];
+      }
+    })
+  );
+
   await simnet.initEmptySession();
+
+  // The `initEmptySession` method will reset the balances of the accounts to
+  // 0. Restore the balances to their original values.
+  simnetAddresses.forEach((address) => {
+    simnet.mintSTX(address, balancesMap.get(address)!);
+  });
 
   // Combine the target contract with its tests into a single contract. The
   // resulting contract will replace the target contract in the simnet.
