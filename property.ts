@@ -1,7 +1,7 @@
 import { Simnet } from "@hirosystems/clarinet-sdk";
 import { EventEmitter } from "events";
 import fc from "fast-check";
-import { cvToJSON } from "@stacks/transactions";
+import { cvToJSON, cvToString } from "@stacks/transactions";
 import { reporter } from "./heatstroke";
 import {
   argsToCV,
@@ -306,16 +306,24 @@ export const checkProperties = (
                 simnet.mineEmptyBurnBlocks(r.burnBlocks);
               }
             } else {
+              // The function call did not result in (ok true) or (ok false).
+              // Either the test failed or the test function returned an
+              // unexpected value i.e. `(ok 1)`.
+              const displayedError = cvToString(testFunctionCallResult);
+
               throw new PropertyTestError(
-                `Test failed for ${targetContractName} contract: "${r.selectedTestFunction.name}" returned ${testFunctionCallResultJson.value.value}`,
-                testFunctionCallResultJson.value.value
+                `Test failed for ${targetContractName} contract: "${r.selectedTestFunction.name}" returned ${displayedError}`,
+                displayedError
               );
             }
           } catch (error: any) {
             const displayedError =
               error instanceof PropertyTestError
-                ? `(err ${error.errorCode})`
-                : "";
+                ? error.errorCode
+                : error.includes("Runtime")
+                ? "(runtime)"
+                : "(unknown)";
+
             // Capture the error and log the test failure.
             radio.emit(
               "logMessage",
@@ -480,7 +488,7 @@ export const isReturnTypeBoolean = (
 
 class PropertyTestError extends Error {
   readonly errorCode: any;
-  constructor(message: string, errorCode: any) {
+  constructor(message: string, errorCode: string) {
     super(message);
     this.errorCode = errorCode;
   }
