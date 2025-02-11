@@ -319,8 +319,10 @@ export const checkProperties = (
           } catch (error: any) {
             const displayedError =
               error instanceof PropertyTestError
-                ? error.errorCode
-                : error.includes("Runtime")
+                ? error.clarityError
+                : error &&
+                  typeof error === "string" &&
+                  error.toLowerCase().includes("runtime")
                 ? "(runtime)"
                 : "(unknown)";
 
@@ -487,9 +489,9 @@ export const isReturnTypeBoolean = (
 ) => discardFunctionInterface.outputs.type === "bool";
 
 class PropertyTestError extends Error {
-  readonly errorCode: any;
-  constructor(message: string, errorCode: string) {
+  readonly clarityError: string;
+  constructor(message: string, clarityError: string) {
     super(message);
-    this.errorCode = errorCode;
+    this.clarityError = clarityError;
   }
 }
