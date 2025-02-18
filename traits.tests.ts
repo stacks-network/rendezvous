@@ -2045,15 +2045,14 @@ describe("Trait reference processing", () => {
       },
     };
 
-    const expected = [
+    const expected = new Set([
       "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.rendezvous-token",
       "SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.ststx-token",
-    ];
+    ]);
 
     // Act
-    const actual = getContractIdsImplementingTrait(
-      traitData,
-      projectTraitImplementations
+    const actual = new Set(
+      getContractIdsImplementingTrait(traitData, projectTraitImplementations)
     );
 
     // Assert
