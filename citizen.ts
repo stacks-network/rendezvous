@@ -54,7 +54,11 @@ export const issueFirstClassCitizenship = async (
     })
   );
 
-  await simnet.initEmptySession();
+  await simnet.initEmptySession({
+    enabled: false,
+    initial_height: 5,
+    api_url: "",
+  });
 
   simnetAddresses.forEach((address) => {
     simnet.mintSTX(address, balancesMap.get(address)!);
