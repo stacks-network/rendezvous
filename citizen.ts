@@ -11,6 +11,7 @@ import {
   SimnetPlan,
   Transaction,
 } from "./citizen.types";
+import { RemoteDataSettings } from "./app.types";
 
 /**
  * Prepares the simnet instance and assures the target contract's corresponding
@@ -30,11 +31,7 @@ import {
 export const issueFirstClassCitizenship = async (
   manifestDir: string,
   manifestPath: string,
-  remoteDataSettings: {
-    enabled: boolean;
-    api_url: string;
-    initial_height: number;
-  },
+  remoteDataSettings: RemoteDataSettings,
   sutContractName: string
 ): Promise<Simnet> => {
   // Initialize the simnet, to generate the simnet plan and instance. The empty

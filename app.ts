@@ -14,6 +14,7 @@ import { version } from "./package.json";
 import { red, yellow } from "ansicolor";
 import { existsSync, readFileSync } from "fs";
 import { DialerRegistry } from "./dialer";
+import { RemoteDataSettings } from "./app.types";
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
@@ -57,7 +58,7 @@ export const getManifestFileName = (
 export const tryParseRemoteDataSettings = (
   manifestPath: string,
   radio: EventEmitter
-) => {
+): RemoteDataSettings => {
   const clarinetToml = toml.parse(readFileSync(resolve(manifestPath), "utf-8"));
   const remoteDataUserSettings = clarinetToml.repl
     ? clarinetToml.repl["remote_data"] || undefined

@@ -6,6 +6,7 @@ import {
   noRemoteData,
   tryParseRemoteDataSettings,
 } from "./app";
+import { RemoteDataSettings } from "./app.types";
 import { version } from "./package.json";
 import { resolve } from "path";
 import fs from "fs";
@@ -475,11 +476,7 @@ describe("Remote data settings parsing", () => {
     (
       _testCase: string,
       tomlContent: string,
-      processedRemoteDataSettings: {
-        enabled: boolean;
-        api_url: string;
-        initial_height: number;
-      }
+      processedRemoteDataSettings: RemoteDataSettings
     ) => {
       // Setup
       jest
