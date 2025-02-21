@@ -20,6 +20,16 @@ const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
 };
 
 /**
+ * The object used to initialize an empty simnet session with, when no remote
+ * data is enabled in the `Clarinet.toml` file.
+ */
+export const noRemoteData = {
+  enabled: false,
+  api_url: "",
+  initial_height: 1,
+};
+
+/**
  * Gets the manifest file name for a Clarinet project.
  * If a custom manifest exists (`Clarinet-<contract-name>.toml`), it is used.
  * Otherwise, the default `Clarinet.toml` is returned.
@@ -50,16 +60,6 @@ export const parseRemoteDataSettings = (
   const remoteDataUserSettings = clarinetToml.repl
     ? clarinetToml.repl["remote_data"] || undefined
     : undefined;
-
-  /**
-   * The object to initialize an empty simnet session with when no remote data
-   * is enabled in the `Clarinet.toml` file.
-   */
-  const noRemoteData = {
-    enabled: false,
-    api_url: "",
-    initial_height: 1,
-  };
 
   if (
     remoteDataUserSettings !== undefined &&
