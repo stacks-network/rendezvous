@@ -211,8 +211,8 @@ export async function main() {
   const simnet = await issueFirstClassCitizenship(
     manifestDir,
     manifestPath,
-    sutContractName,
-    remoteDataSettings
+    remoteDataSettings,
+    sutContractName
   );
 
   /**
