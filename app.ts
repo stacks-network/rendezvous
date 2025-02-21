@@ -81,11 +81,7 @@ export const parseRemoteDataSettings = (
     );
   }
 
-  const remoteDataSettings = remoteDataUserSettings
-    ? remoteDataUserSettings
-    : noRemoteData;
-
-  return remoteDataSettings;
+  return remoteDataUserSettings || noRemoteData;
 };
 
 const helpMessage = `
