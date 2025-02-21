@@ -1,8 +1,45 @@
 import { red } from "ansicolor";
-import { getManifestFileName, main } from "./app";
+import { getManifestFileName, main, parseRemoteDataSettings } from "./app";
 import { version } from "./package.json";
 import { resolve } from "path";
 import fs from "fs";
+import EventEmitter from "events";
+
+const clarinetTomlRemoteData = {
+  correctSettings: {
+    toml: `
+[repl.remote_data]
+enabled = true
+api_url = 'https://api.hiro.so'
+initial_height = 150000
+`,
+    expectedRemoteDataSettings: {
+      enabled: true,
+      api_url: "https://api.hiro.so",
+      initial_height: 150000,
+    },
+  },
+  noInitialHeightSettings: {
+    toml: `
+[repl.remote_data]
+enabled = true
+api_url = 'https://api.hiro.so'
+`,
+    expectedRemoteDataSettings: {
+      enabled: false,
+      api_url: "",
+      initial_height: 1,
+    },
+  },
+  noRemoteDataSettings: {
+    toml: ``,
+    expectedRemoteDataSettings: {
+      enabled: false,
+      api_url: "",
+      initial_height: 1,
+    },
+  },
+};
 
 describe("Command-line arguments handling", () => {
   const initialArgv = process.argv;
@@ -417,6 +454,66 @@ describe("Custom manifest detection", () => {
 
     // Verify
     expect(actual).toBe(expected);
+
+    // Teardown
+    jest.restoreAllMocks();
+  });
+});
+
+describe("Remote data settings parsing", () => {
+  it.each([
+    [
+      "correctly overrides the no remote data settings when the remote data settings are not provided",
+      clarinetTomlRemoteData.noRemoteDataSettings.toml,
+      clarinetTomlRemoteData.noRemoteDataSettings.expectedRemoteDataSettings,
+    ],
+    [
+      "correctly parses the remote data settings when they are provided",
+      clarinetTomlRemoteData.correctSettings.toml,
+      clarinetTomlRemoteData.correctSettings.expectedRemoteDataSettings,
+    ],
+  ])(
+    "%s",
+    (
+      _testCase: string,
+      tomlContent: string,
+      processedRemoteDataSettings: {
+        enabled: boolean;
+        api_url: string;
+        initial_height: number;
+      }
+    ) => {
+      // Setup
+      jest
+        .spyOn(fs, "readFileSync")
+        .mockImplementation((path: fs.PathOrFileDescriptor) => tomlContent);
+
+      // Exercise
+      const actual = parseRemoteDataSettings("any path", new EventEmitter());
+
+      // Verify
+      expect(actual).toEqual(processedRemoteDataSettings);
+
+      // Teardown
+      jest.restoreAllMocks();
+    }
+  );
+
+  it("throws an error when the remote data settings are not properly set up", () => {
+    // Setup
+    const tomlContent = clarinetTomlRemoteData.noInitialHeightSettings.toml;
+
+    jest
+      .spyOn(fs, "readFileSync")
+      .mockImplementation((path: fs.PathOrFileDescriptor) => tomlContent);
+
+    // Exercise
+    const act = () => parseRemoteDataSettings("any path", new EventEmitter());
+
+    // Verify
+    expect(act).toThrow(
+      `Remote data settings not properly setup in Clarinet.toml! To use remote data, please provide the "api_url", "initial_height", and "enabled' fields under the "repl.remote_data" section in the Clarinet.toml file.`
+    );
 
     // Teardown
     jest.restoreAllMocks();

@@ -8,7 +8,8 @@ import {
 import { join } from "path";
 import { issueFirstClassCitizenship } from "./citizen";
 import { Cl } from "@stacks/transactions";
-import { getManifestFileName } from "./app";
+import { getManifestFileName, parseRemoteDataSettings } from "./app";
+import { EventEmitter } from "stream";
 
 describe("Simnet contracts operations", () => {
   it("correctly initializes the local context for a given functions map", async () => {
@@ -43,7 +44,11 @@ describe("Simnet contracts operations", () => {
     const simnet = await issueFirstClassCitizenship(
       "example",
       join("example", getManifestFileName("example", "counter")),
-      "counter"
+      "counter",
+      parseRemoteDataSettings(
+        join("example", "Clarinet.toml"),
+        new EventEmitter()
+      )
     );
 
     const rendezvousList = Array.from(

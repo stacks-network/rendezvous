@@ -12,8 +12,9 @@ import { join } from "path";
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import yaml from "yaml";
-import { getManifestFileName } from "./app";
+import { getManifestFileName, parseRemoteDataSettings } from "./app";
 import { cvToValue, hexToCV } from "@stacks/transactions";
+import EventEmitter from "events";
 
 describe("Simnet deployment plan operations", () => {
   const manifestDir = "example";
@@ -342,7 +343,11 @@ describe("Simnet deployment plan operations", () => {
     const firstClassSimnet = await issueFirstClassCitizenship(
       tempDir,
       join(tempDir, getManifestFileName(tempDir, "cargo")),
-      "cargo"
+      "cargo",
+      parseRemoteDataSettings(
+        join(manifestDir, "Clarinet.toml"),
+        new EventEmitter()
+      )
     );
     const actual = firstClassSimnet.getContractSource("cargo");
 
@@ -370,7 +375,11 @@ describe("Simnet deployment plan operations", () => {
     const firstClassSimnet = await issueFirstClassCitizenship(
       tempDir,
       join(tempDir, getManifestFileName(tempDir, "cargo")),
-      "cargo"
+      "cargo",
+      parseRemoteDataSettings(
+        join(manifestDir, "Clarinet.toml"),
+        new EventEmitter()
+      )
     );
 
     // Verify
