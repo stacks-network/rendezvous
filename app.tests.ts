@@ -1,5 +1,10 @@
 import { red } from "ansicolor";
-import { getManifestFileName, main, parseRemoteDataSettings } from "./app";
+import {
+  getManifestFileName,
+  main,
+  noRemoteData,
+  parseRemoteDataSettings,
+} from "./app";
 import { version } from "./package.json";
 import { resolve } from "path";
 import fs from "fs";
@@ -25,19 +30,11 @@ initial_height = 150000
 enabled = true
 api_url = 'https://api.hiro.so'
 `,
-    expectedRemoteDataSettings: {
-      enabled: false,
-      api_url: "",
-      initial_height: 1,
-    },
+    expectedRemoteDataSettings: noRemoteData,
   },
   noRemoteDataSettings: {
     toml: ``,
-    expectedRemoteDataSettings: {
-      enabled: false,
-      api_url: "",
-      initial_height: 1,
-    },
+    expectedRemoteDataSettings: noRemoteData,
   },
 };
 
