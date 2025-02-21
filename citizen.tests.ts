@@ -343,11 +343,11 @@ describe("Simnet deployment plan operations", () => {
     const firstClassSimnet = await issueFirstClassCitizenship(
       tempDir,
       join(tempDir, getManifestFileName(tempDir, "cargo")),
-      "cargo",
       tryParseRemoteDataSettings(
         join(manifestDir, "Clarinet.toml"),
         new EventEmitter()
-      )
+      ),
+      "cargo"
     );
     const actual = firstClassSimnet.getContractSource("cargo");
 
@@ -375,11 +375,11 @@ describe("Simnet deployment plan operations", () => {
     const firstClassSimnet = await issueFirstClassCitizenship(
       tempDir,
       join(tempDir, getManifestFileName(tempDir, "cargo")),
-      "cargo",
       tryParseRemoteDataSettings(
         join(manifestDir, "Clarinet.toml"),
         new EventEmitter()
-      )
+      ),
+      "cargo"
     );
 
     // Verify

@@ -44,11 +44,11 @@ describe("Simnet contracts operations", () => {
     const simnet = await issueFirstClassCitizenship(
       "example",
       join("example", getManifestFileName("example", "counter")),
-      "counter",
       tryParseRemoteDataSettings(
         join("example", "Clarinet.toml"),
         new EventEmitter()
-      )
+      ),
+      "counter"
     );
 
     const rendezvousList = Array.from(
