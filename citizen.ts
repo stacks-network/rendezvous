@@ -23,13 +23,19 @@ import {
  * @param manifestDir The relative path to the manifest directory.
  * @param manifestPath The absolute path to the manifest file.
  * @param sutContractName The target contract name.
+ * @param remoteDataSettings The remote data settings.
  * @returns The initialized simnet instance with all contracts deployed, with
  * the test contract treated as a first-class citizen of the target contract.
  */
 export const issueFirstClassCitizenship = async (
   manifestDir: string,
   manifestPath: string,
-  sutContractName: string
+  sutContractName: string,
+  remoteDataSettings: {
+    enabled: boolean;
+    api_url: string;
+    initial_height: number;
+  }
 ): Promise<Simnet> => {
   // Initialize the simnet, to generate the simnet plan and instance. The empty
   // session will be set up, and contracts will be deployed in the correct
@@ -54,11 +60,7 @@ export const issueFirstClassCitizenship = async (
     })
   );
 
-  await simnet.initEmptySession({
-    enabled: false,
-    initial_height: 5,
-    api_url: "",
-  });
+  await simnet.initEmptySession(remoteDataSettings);
 
   simnetAddresses.forEach((address) => {
     simnet.mintSTX(address, balancesMap.get(address)!);

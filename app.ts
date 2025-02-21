@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { join, resolve } from "path";
 import { EventEmitter } from "events";
+import toml from "toml";
 import { checkProperties } from "./property";
 import { checkInvariants } from "./invariant";
 import {
@@ -10,8 +11,8 @@ import {
 } from "./shared";
 import { issueFirstClassCitizenship } from "./citizen";
 import { version } from "./package.json";
-import { red } from "ansicolor";
-import { existsSync } from "fs";
+import { red, yellow } from "ansicolor";
+import { existsSync, readFileSync } from "fs";
 import { DialerRegistry } from "./dialer";
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
@@ -39,6 +40,52 @@ export const getManifestFileName = (
   }
 
   return "Clarinet.toml";
+};
+
+export const parseRemoteDataSettings = (
+  manifestPath: string,
+  radio: EventEmitter
+) => {
+  const clarinetToml = toml.parse(readFileSync(resolve(manifestPath), "utf-8"));
+  const remoteDataUserSettings = clarinetToml.repl
+    ? clarinetToml.repl["remote_data"] || undefined
+    : undefined;
+
+  /**
+   * The object to initialize an empty simnet session with when no remote data
+   * is enabled in the `Clarinet.toml` file.
+   */
+  const noRemoteData = {
+    enabled: false,
+    api_url: "",
+    initial_height: 1,
+  };
+
+  if (
+    remoteDataUserSettings !== undefined &&
+    (!remoteDataUserSettings["initial_height"] ||
+      !remoteDataUserSettings["api_url"] ||
+      !remoteDataUserSettings["enabled"])
+  ) {
+    throw new Error(
+      `Remote data settings not properly setup in Clarinet.toml! To use remote data, please provide the "api_url", "initial_height", and "enabled' fields under the "repl.remote_data" section in the Clarinet.toml file.`
+    );
+  }
+
+  if (remoteDataUserSettings) {
+    radio.emit(
+      "logMessage",
+      yellow(
+        "\nUsing mainnet data. Setting the fuzzing environment will take a while..."
+      )
+    );
+  }
+
+  const remoteDataSettings = remoteDataUserSettings
+    ? remoteDataUserSettings
+    : noRemoteData;
+
+  return remoteDataSettings;
 };
 
 const helpMessage = `
@@ -163,10 +210,13 @@ export async function main() {
     dialerRegistry.registerDialers();
   }
 
+  const remoteDataSettings = parseRemoteDataSettings(manifestPath, radio);
+
   const simnet = await issueFirstClassCitizenship(
     manifestDir,
     manifestPath,
-    sutContractName
+    sutContractName,
+    remoteDataSettings
   );
 
   /**
