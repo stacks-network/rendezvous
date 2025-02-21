@@ -4,7 +4,7 @@ import {
   invalidRemoteDataErrorMessage,
   main,
   noRemoteData,
-  parseRemoteDataSettings,
+  tryParseRemoteDataSettings,
 } from "./app";
 import { version } from "./package.json";
 import { resolve } from "path";
@@ -487,7 +487,7 @@ describe("Remote data settings parsing", () => {
         .mockImplementation((path: fs.PathOrFileDescriptor) => tomlContent);
 
       // Exercise
-      const actual = parseRemoteDataSettings("any path", new EventEmitter());
+      const actual = tryParseRemoteDataSettings("any path", new EventEmitter());
 
       // Verify
       expect(actual).toEqual(processedRemoteDataSettings);
@@ -506,7 +506,8 @@ describe("Remote data settings parsing", () => {
       .mockImplementation((path: fs.PathOrFileDescriptor) => tomlContent);
 
     // Exercise
-    const act = () => parseRemoteDataSettings("any path", new EventEmitter());
+    const act = () =>
+      tryParseRemoteDataSettings("any path", new EventEmitter());
 
     // Verify
     expect(act).toThrow(invalidRemoteDataErrorMessage);

@@ -8,7 +8,7 @@ import {
 import { join } from "path";
 import { issueFirstClassCitizenship } from "./citizen";
 import { Cl } from "@stacks/transactions";
-import { getManifestFileName, parseRemoteDataSettings } from "./app";
+import { getManifestFileName, tryParseRemoteDataSettings } from "./app";
 import { EventEmitter } from "events";
 
 describe("Simnet contracts operations", () => {
@@ -45,7 +45,7 @@ describe("Simnet contracts operations", () => {
       "example",
       join("example", getManifestFileName("example", "counter")),
       "counter",
-      parseRemoteDataSettings(
+      tryParseRemoteDataSettings(
         join("example", "Clarinet.toml"),
         new EventEmitter()
       )

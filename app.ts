@@ -54,7 +54,7 @@ export const getManifestFileName = (
   return "Clarinet.toml";
 };
 
-export const parseRemoteDataSettings = (
+export const tryParseRemoteDataSettings = (
   manifestPath: string,
   radio: EventEmitter
 ) => {
@@ -206,7 +206,7 @@ export async function main() {
     dialerRegistry.registerDialers();
   }
 
-  const remoteDataSettings = parseRemoteDataSettings(manifestPath, radio);
+  const remoteDataSettings = tryParseRemoteDataSettings(manifestPath, radio);
 
   const simnet = await issueFirstClassCitizenship(
     manifestDir,
