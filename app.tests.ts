@@ -479,12 +479,17 @@ describe("Remote data settings parsing", () => {
       processedRemoteDataSettings: RemoteDataSettings
     ) => {
       // Setup
+      const anyPath = `${Date.now()}.toml`;
+
       jest
         .spyOn(fs, "readFileSync")
-        .mockImplementation((path: fs.PathOrFileDescriptor) => tomlContent);
+        .mockImplementation((path: fs.PathOrFileDescriptor) => {
+          expect(path).toBe(resolve(anyPath));
+          return tomlContent;
+        });
 
       // Exercise
-      const actual = tryParseRemoteDataSettings("any path", new EventEmitter());
+      const actual = tryParseRemoteDataSettings(anyPath, new EventEmitter());
 
       // Verify
       expect(actual).toEqual(processedRemoteDataSettings);
@@ -496,15 +501,17 @@ describe("Remote data settings parsing", () => {
 
   it("throws an error when the remote data settings are not properly set up", () => {
     // Setup
-    const tomlContent = clarinetTomlRemoteData.noInitialHeightSettings.toml;
+    const anyPath = `${Date.now()}.toml`;
 
     jest
       .spyOn(fs, "readFileSync")
-      .mockImplementation((path: fs.PathOrFileDescriptor) => tomlContent);
+      .mockImplementation((path: fs.PathOrFileDescriptor) => {
+        expect(path).toBe(resolve(anyPath));
+        return clarinetTomlRemoteData.noInitialHeightSettings.toml;
+      });
 
     // Exercise
-    const act = () =>
-      tryParseRemoteDataSettings("any path", new EventEmitter());
+    const act = () => tryParseRemoteDataSettings(anyPath, new EventEmitter());
 
     // Verify
     expect(act).toThrow(invalidRemoteDataErrorMessage);
