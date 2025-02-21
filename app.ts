@@ -65,9 +65,9 @@ export const tryParseRemoteDataSettings = (
 
   if (
     remoteDataUserSettings !== undefined &&
-    (!remoteDataUserSettings["initial_height"] ||
-      !remoteDataUserSettings["api_url"] ||
-      !remoteDataUserSettings["enabled"])
+    (!remoteDataUserSettings?.["api_url"] ||
+      !remoteDataUserSettings?.["enabled"] ||
+      !remoteDataUserSettings?.["initial_height"])
   ) {
     throw new Error(invalidRemoteDataErrorMessage);
   }
