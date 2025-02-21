@@ -60,9 +60,8 @@ export const tryParseRemoteDataSettings = (
   radio: EventEmitter
 ): RemoteDataSettings => {
   const clarinetToml = toml.parse(readFileSync(resolve(manifestPath), "utf-8"));
-  const remoteDataUserSettings = clarinetToml.repl
-    ? clarinetToml.repl["remote_data"] || undefined
-    : undefined;
+  const remoteDataUserSettings =
+    clarinetToml.repl?.["remote_data"] ?? undefined;
 
   if (
     remoteDataUserSettings !== undefined &&
