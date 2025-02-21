@@ -76,7 +76,7 @@ export const tryParseRemoteDataSettings = (
     radio.emit(
       "logMessage",
       yellow(
-        "\nUsing mainnet data. Setting the fuzzing environment will take a while..."
+        "\nUsing mainnet data. Setting up the environment can take up to a minute..."
       )
     );
   }
