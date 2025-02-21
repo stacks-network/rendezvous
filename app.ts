@@ -29,6 +29,8 @@ export const noRemoteData = {
   initial_height: 1,
 };
 
+export const invalidRemoteDataErrorMessage = `Remote data settings not properly setup in Clarinet.toml! To use remote data, please provide the "api_url", "initial_height", and "enabled' fields under the "repl.remote_data" section in the Clarinet.toml file.`;
+
 /**
  * Gets the manifest file name for a Clarinet project.
  * If a custom manifest exists (`Clarinet-<contract-name>.toml`), it is used.
@@ -67,9 +69,7 @@ export const parseRemoteDataSettings = (
       !remoteDataUserSettings["api_url"] ||
       !remoteDataUserSettings["enabled"])
   ) {
-    throw new Error(
-      `Remote data settings not properly setup in Clarinet.toml! To use remote data, please provide the "api_url", "initial_height", and "enabled' fields under the "repl.remote_data" section in the Clarinet.toml file.`
-    );
+    throw new Error(invalidRemoteDataErrorMessage);
   }
 
   if (remoteDataUserSettings) {
