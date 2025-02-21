@@ -12,7 +12,7 @@ import { join } from "path";
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import yaml from "yaml";
-import { getManifestFileName, parseRemoteDataSettings } from "./app";
+import { getManifestFileName, tryParseRemoteDataSettings } from "./app";
 import { cvToValue, hexToCV } from "@stacks/transactions";
 import EventEmitter from "events";
 
@@ -344,7 +344,7 @@ describe("Simnet deployment plan operations", () => {
       tempDir,
       join(tempDir, getManifestFileName(tempDir, "cargo")),
       "cargo",
-      parseRemoteDataSettings(
+      tryParseRemoteDataSettings(
         join(manifestDir, "Clarinet.toml"),
         new EventEmitter()
       )
@@ -376,7 +376,7 @@ describe("Simnet deployment plan operations", () => {
       tempDir,
       join(tempDir, getManifestFileName(tempDir, "cargo")),
       "cargo",
-      parseRemoteDataSettings(
+      tryParseRemoteDataSettings(
         join(manifestDir, "Clarinet.toml"),
         new EventEmitter()
       )
