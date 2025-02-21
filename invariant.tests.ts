@@ -9,7 +9,7 @@ import { join } from "path";
 import { issueFirstClassCitizenship } from "./citizen";
 import { Cl } from "@stacks/transactions";
 import { getManifestFileName, parseRemoteDataSettings } from "./app";
-import { EventEmitter } from "stream";
+import { EventEmitter } from "events";
 
 describe("Simnet contracts operations", () => {
   it("correctly initializes the local context for a given functions map", async () => {
