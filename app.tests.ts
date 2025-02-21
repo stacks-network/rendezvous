@@ -16,8 +16,8 @@ const clarinetTomlRemoteData = {
   correctSettings: {
     toml: `
 [repl.remote_data]
-enabled = true
 api_url = 'https://api.hiro.so'
+enabled = true
 initial_height = 150000
 `,
     expectedRemoteDataSettings: {
@@ -29,8 +29,8 @@ initial_height = 150000
   noInitialHeightSettings: {
     toml: `
 [repl.remote_data]
-enabled = true
 api_url = 'https://api.hiro.so'
+enabled = true
 `,
     expectedRemoteDataSettings: noRemoteData,
   },
