@@ -20,7 +20,7 @@ api_url = 'https://api.hiro.so'
 enabled = true
 initial_height = 150000
 `,
-    expectedRemoteDataSettings: {
+    expected: {
       enabled: true,
       api_url: "https://api.hiro.so",
       initial_height: 150000,
@@ -32,11 +32,11 @@ initial_height = 150000
 api_url = 'https://api.hiro.so'
 enabled = true
 `,
-    expectedRemoteDataSettings: noRemoteData,
+    expected: noRemoteData,
   },
   noRemoteDataSettings: {
     toml: ``,
-    expectedRemoteDataSettings: noRemoteData,
+    expected: noRemoteData,
   },
 };
 
@@ -464,12 +464,12 @@ describe("Remote data settings parsing", () => {
     [
       "correctly overrides the no remote data settings when the remote data settings are not provided",
       clarinetTomlRemoteData.noRemoteDataSettings.toml,
-      clarinetTomlRemoteData.noRemoteDataSettings.expectedRemoteDataSettings,
+      clarinetTomlRemoteData.noRemoteDataSettings.expected,
     ],
     [
       "correctly parses the remote data settings when they are provided",
       clarinetTomlRemoteData.correctSettings.toml,
-      clarinetTomlRemoteData.correctSettings.expectedRemoteDataSettings,
+      clarinetTomlRemoteData.correctSettings.expected,
     ],
   ])(
     "%s",
