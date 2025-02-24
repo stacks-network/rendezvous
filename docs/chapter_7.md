@@ -127,3 +127,126 @@ rv ./example counter test --runs=1002
 ```
 
 This ensures that enough test cases are executed to trigger the `counter` reset condition.
+
+---
+
+## The `cargo` Contract
+
+The `cargo` contract is a decentralized shipment tracker found in the `example` Clarinet project. Initially, it contained a bug where the `last-shipment-id` variable was not updated when creating a new shipment. This bug has been fixed, but you can re-introduce it to see how Rendezvous detects it:
+
+```clarity
+(define-public (create-new-shipment (starting-location (string-ascii 25))
+                                    (receiver principal))
+  (let
+    (
+      (new-shipment-id (+ (var-get last-shipment-id) u1))
+    )
+    ;; #[filter(starting-location, receiver)]
+    (map-set shipments new-shipment-id {
+      location: starting-location,
+      status: "In Transit",
+      shipper: tx-sender,
+      receiver: receiver
+    })
+
+    ;; The following line fixes the bug in the original implementation.
+    ;; Comment out this line to re-introduce the bug.
+    ;; (var-set last-shipment-id new-shipment-id)
+    (ok "Shipment created successfully")
+  )
+)
+```
+
+To test the buggy version of the contract, **comment out the line that updates `last-shipment-id`**. Then, use invariants and property-based tests to detect the issue.
+
+### Invariants
+
+One invariant that can detect the introduced bug is:
+
+```clarity
+(define-read-only (invariant-last-shipment-id-gt-0-after-create-shipment)
+  (let
+    (
+      (create-shipment-num-calls
+        (default-to u0 (get called (map-get? context "create-new-shipment")))
+      )
+    )
+    (if
+      (is-eq create-shipment-num-calls u0)
+      true
+      (> (var-get last-shipment-id) u0)
+    )
+  )
+)
+```
+
+This invariant uses the **context** utility from Rendezvous, described in the previous chapter. It enforces a fundamental rule of the `cargo` contract:
+
+> If at least one shipment has been created, the `last-shipment-id` must be greater than 0.
+
+**Invariant Logic**
+
+`create-shipment-num-calls = 0`:
+
+- The invariant holds automatically (no shipments created, so no condition to check).
+
+`create-shipment-num-calls > 0`:
+
+- The invariant asserts that `last-shipment-id > 0`.
+- If this check fails, it means `last-shipment-id` was **not updated** after creating a shipment, exposing the bug.
+
+**Running the cargo invariant testing**
+
+To run Rendezvous invariant testing against the `cargo` contract, use:
+
+```bash
+rv ./example cargo invariant
+```
+
+Using this command, Rendezvous will **randomly execute public function calls** in the `cargo` contract while **periodically checking the invariant**. If the invariant fails, it signals that `last-shipment-id` was not updated as expected, revealing the bug.
+
+### Property-Based Tests
+
+A property-based test that can detect the introduced bug is:
+
+```clarity
+(define-public (test-get-last-shipment-id
+    (starting-location (string-ascii 25))
+    (receiver principal)
+  )
+  (let
+    ((shipment-id-before (get-last-shipment-id)))
+    (unwrap!
+      (create-new-shipment starting-location receiver)
+      ERR_CONTRACT_CALL_FAILED
+    )
+    ;; Verify the last shipment ID is incremented by 1.
+    (asserts!
+      (is-eq (get-last-shipment-id) (+ u1 shipment-id-before))
+      ERR_ASSERTION_FAILED
+    )
+    (ok true)
+  )
+)
+```
+
+This test follows a **property-based testing approach**, verifying a key property of `create-new-shipment`:
+
+> Creating a new shipment should always increment `last-shipment-id` by 1.
+
+**Property Test Logic**
+
+1. Record the current shipment ID before calling `create-new-shipment`.
+2. Call `create-new-shipment`, ensuring it does not fail.
+3. Verify that `last-shipment-id` has **increased by 1**.
+   - If this check fails, it means `last-shipment-id` was **not updated**, exposing the bug.
+
+**Running the cargo property-based testing**
+
+To run Rendezvous property-based tests against the `cargo` contract, use:
+
+```bash
+rv ./example cargo test
+```
+
+Using this command, Rendezvous will **randomly select and execute** property-based tests from the `cargo`'s test contract. If `test-get-last-shipment-id` is the only test in the contract, Rendezvous will immediately detect the bug.
