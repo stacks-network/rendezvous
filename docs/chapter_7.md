@@ -250,3 +250,130 @@ rv ./example cargo test
 ```
 
 Using this command, Rendezvous will **randomly select and execute** property-based tests from the `cargo`'s test contract. If `test-get-last-shipment-id` is the only test in the contract, Rendezvous will immediately detect the bug.
+
+---
+
+## The `reverse` Contract
+
+The `reverse` contract included in the `example` Clarinet project contains Clarity utilities for reversing lists of various types. Since it lacks public functions, **invariant testing doesn’t apply**. However, it serves as an ideal "Hello World" example for **property testing using native Clarity**—_reversing a list twice should always return the original list_.
+
+Introducing a bug and detecting it with Rendezvous property-based tests is insightful, not just for finding the issue but for demonstrating the power of **shrinking**. Below is a malicious function that can be introduced into one of the `reverse-uint` private utilities:
+
+```clarity
+(define-read-only (reverse-uint (seq (list 127 uint)))
+ (reverse-list1 seq)
+)
+
+(define-private (reverse-list1 (seq (list 127 uint)))
+  (fold reverse-redx-unsigned-list seq (list))
+)
+
+(define-private (reverse-redx-unsigned-list (item uint) (seq (list 127 uint)))
+  (unwrap-panic
+    (as-max-len?
+      (concat (list item) seq)
+      u4 ;; Introduces a bug by limiting max length incorrectly.
+    )
+  )
+)
+```
+
+This bug **reduces the maximum supported list length** in a private function, leading to an **unwrap failure runtime error** when the list exceeds the new, incorrect limit.
+
+### Property-Based Tests
+
+A property-based test that can detect the introduced bug is:
+
+```clarity
+(define-public (test-reverse-uint (seq (list 127 uint)))
+  (begin
+    (asserts!
+      (is-eq seq (reverse-uint (reverse-uint seq)))
+      ERR_ASSERTION_FAILED
+    )
+    (ok true)
+  )
+)
+```
+
+This test follows a **property-based testing approach**, verifying the "Hello World" of property testing:
+
+> Reversing a list twice should always return the original list
+
+This test example accepts a parameter, which is randomly generated for each run.
+
+**Property Test Logic**
+
+1. Verify that reversing a passed list twice is always equal to the passed list.
+
+**Running the reverse property-based testing**
+
+To run Rendezvous property-based tests against the `reverse` contract, use:
+
+```bash
+rv ./example reverse test
+```
+
+When a property-based test fails, **Rendezvous automatically shrinks the failing test case** to find **the smallest possible counterexample**. This process helps pinpoint the root cause of the bug by **removing unnecessary complexity**. Sample output showcasing the **shrinking** process:
+
+```
+₿     3494 Ӿ     3526   wallet_3 [FAIL] reverse test-reverse-uint [332420496,1825325546,120054597,1173935866,164214015] (runtime)
+₿     3494 Ӿ     3527   wallet_3 [PASS] reverse test-reverse-uint [120054597,1173935866,164214015]
+₿     3494 Ӿ     3529   wallet_3 [FAIL] reverse test-reverse-uint [0,1825325546,120054597,1173935866,164214015] (runtime)
+₿     3494 Ӿ     3530   wallet_3 [PASS] reverse test-reverse-uint [120054597,1173935866,164214015]
+₿     3494 Ӿ     3532   wallet_3 [PASS] reverse test-reverse-uint [0]
+₿     3494 Ӿ     3533   wallet_3 [PASS] reverse test-reverse-uint [0,1173935866,164214015]
+₿     3494 Ӿ     3534   wallet_3 [PASS] reverse test-reverse-uint [0,120054597,1173935866,164214015]
+₿     3494 Ӿ     3535   wallet_3 [FAIL] reverse test-reverse-uint [0,0,120054597,1173935866,164214015] (runtime)
+...
+₿     3494 Ӿ     3537   wallet_3 [PASS] reverse test-reverse-uint [0,120054597,1173935866,164214015]
+₿     3494 Ӿ     3538   wallet_3 [PASS] reverse test-reverse-uint [0]
+₿     3494 Ӿ     3539   wallet_3 [PASS] reverse test-reverse-uint [0,1173935866,164214015]
+₿     3494 Ӿ     3541   wallet_3 [PASS] reverse test-reverse-uint [0,0]
+₿     3494 Ӿ     3542   wallet_3 [PASS] reverse test-reverse-uint [0,0,1173935866,164214015]
+₿     3494 Ӿ     3543   wallet_3 [FAIL] reverse test-reverse-uint [0,0,0,1173935866,164214015] (runtime)
+₿     3494 Ӿ     3545   wallet_3 [PASS] reverse test-reverse-uint [0,0,1173935866,164214015]
+₿     3494 Ӿ     3546   wallet_3 [PASS] reverse test-reverse-uint [0]
+₿     3494 Ӿ     3547   wallet_3 [PASS] reverse test-reverse-uint [0,1173935866,164214015]
+₿     3494 Ӿ     3549   wallet_3 [PASS] reverse test-reverse-uint [0,0]
+₿     3494 Ӿ     3550   wallet_3 [PASS] reverse test-reverse-uint [0,0,1173935866,164214015]
+₿     3494 Ӿ     3551   wallet_3 [PASS] reverse test-reverse-uint [0,0,0]
+₿     3494 Ӿ     3552   wallet_3 [PASS] reverse test-reverse-uint [0,0,0,164214015]
+₿     3494 Ӿ     3553   wallet_3 [FAIL] reverse test-reverse-uint [0,0,0,0,164214015] (runtime)
+₿     3494 Ӿ     3554   wallet_3 [PASS] reverse test-reverse-uint [0,0,164214015]
+...
+₿     3494 Ӿ     3562   wallet_3 [PASS] reverse test-reverse-uint [0,0,0,164214015]
+₿     3494 Ӿ     3563   wallet_3 [PASS] reverse test-reverse-uint [0,0,0,0]
+₿     3494 Ӿ     3564   wallet_3 [FAIL] reverse test-reverse-uint [0,0,0,0,0] (runtime)
+₿     3494 Ӿ     3565   wallet_3 [PASS] reverse test-reverse-uint [0,0,0]
+...
+₿     3494 Ӿ     3574   wallet_3 [PASS] reverse test-reverse-uint [0,0,0,0]
+
+Error: Property failed after 23 tests.
+Seed : 869018352
+
+Counterexample:
+- Test Contract : reverse
+- Test Function : test-reverse-uint (public)
+- Arguments     : [[0,0,0,0,0]]
+- Caller        : wallet_3
+- Outputs       : {"type":{"response":{"ok":"bool","error":"int128"}}}
+
+What happened? Rendezvous went on a rampage and found a weak spot:
+
+The test function "test-reverse-uint" returned:
+
+    Call contract function error: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse::test-reverse-uint((list u0 u0 u0 u0 u0)) -> Error calling contract function: Runtime error while interpreting ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse: Runtime(UnwrapFailure, Some([FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:test-reverse-uint" }, FunctionIdentifier { identifier: "_native_:special_asserts" }, FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:reverse-uint" }, FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:reverse-list1" }, FunctionIdentifier { identifier: "_native_:special_fold" }, FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:reverse-redx-unsigned-list" }, FunctionIdentifier { identifier: "_native_:native_unwrap" }]))
+```
+
+To observe shrinking in action, pay attention to the `FAIL` outputs. The minimal counterexample found is:
+
+```
+[0,0,0,0,0]
+```
+
+This is exactly what we were looking for! The bug we introduced is not related to the **values** in the list but to the **list length**.
+
+By starting with larger, more complex failing test cases and shrinking down to a list of five zeros, Rendezvous reveals that the **issue is with the number of elements, not their values**. This insight is crucial—it tells us that our bug causes failures when the list length exceeds a certain threshold, not when specific numbers are present.
+
+This is the power of **shrinking** in property-based testing: it strips away distractions and zeroes in on the core problem.
