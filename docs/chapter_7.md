@@ -69,7 +69,7 @@ This invariant uses the **context** utility from Rendezvous, described in the pr
 - The invariant asserts that `counter > u0`.
 - This ensures that, despite more increment calls, the counter remains positive.
 
-**Running the counter invariant testing**
+**Running the `counter` invariant testing**
 
 To run Rendezvous invariant testing against the `counter` contract, use:
 
@@ -102,7 +102,7 @@ This test follows a **property-based testing approach**, where a general propert
 
 If the test fails, it means the counter did not increment as expected, revealing unintended behavior such as the counter resetting to `0`.
 
-**Property Test Logic**
+**Property test logic**
 
 1. Record the counter value before calling `increment`.
 2. Call `increment` and ensure it does not fail.
@@ -110,7 +110,7 @@ If the test fails, it means the counter did not increment as expected, revealing
    - If this condition does not hold, the test fails with error `u404`.
    - This catches unexpected changes, such as the counter resetting.
 
-**Running the counter property-based testing**
+**Running the `counter` property-based testing**
 
 To run Rendezvous property-based tests against the counter contract, use:
 
@@ -184,7 +184,7 @@ This invariant uses the **context** utility from Rendezvous, described in the pr
 
 > If at least one shipment has been created, the `last-shipment-id` must be greater than 0.
 
-**Invariant Logic**
+**Invariant logic**
 
 `create-shipment-num-calls = 0`:
 
@@ -195,7 +195,7 @@ This invariant uses the **context** utility from Rendezvous, described in the pr
 - The invariant asserts that `last-shipment-id > 0`.
 - If this check fails, it means `last-shipment-id` was **not updated** after creating a shipment, exposing the bug.
 
-**Running the cargo invariant testing**
+**Running the `cargo` invariant testing**
 
 To run Rendezvous invariant testing against the `cargo` contract, use:
 
@@ -234,14 +234,14 @@ This test follows a **property-based testing approach**, verifying a key propert
 
 > Creating a new shipment should always increment `last-shipment-id` by 1.
 
-**Property Test Logic**
+**Property test logic**
 
 1. Record the current shipment ID before calling `create-new-shipment`.
 2. Call `create-new-shipment`, ensuring it does not fail.
 3. Verify that `last-shipment-id` has **increased by 1**.
    - If this check fails, it means `last-shipment-id` was **not updated**, exposing the bug.
 
-**Running the cargo property-based testing**
+**Running the `cargo` property-based testing**
 
 To run Rendezvous property-based tests against the `cargo` contract, use:
 
@@ -302,11 +302,11 @@ This test follows a **property-based testing approach**, verifying the "Hello Wo
 
 This test example accepts a parameter, which is randomly generated for each run.
 
-**Property Test Logic**
+**Property test logic**
 
 1. Verify that reversing a passed list twice is always equal to the passed list.
 
-**Running the reverse property-based testing**
+**Running the `reverse` property-based testing**
 
 To run Rendezvous property-based tests against the `reverse` contract, use:
 
@@ -314,7 +314,9 @@ To run Rendezvous property-based tests against the `reverse` contract, use:
 rv ./example reverse test
 ```
 
-When a property-based test fails, **Rendezvous automatically shrinks the failing test case** to find **the smallest possible counterexample**. This process helps pinpoint the root cause of the bug by **removing unnecessary complexity**. Sample output showcasing the **shrinking** process:
+**Shrinking at its finest**
+
+When a property-based test fails, **Rendezvous automatically shrinks the failing test case** to find **the smallest possible counterexample**. This process helps pinpoint the root cause of the bug by **removing unnecessary complexity**. Sample Rendezvous output showcasing the **shrinking** process:
 
 ```
 ₿     3494 Ӿ     3526   wallet_3 [FAIL] reverse test-reverse-uint [332420496,1825325546,120054597,1173935866,164214015] (runtime)
@@ -366,7 +368,7 @@ The test function "test-reverse-uint" returned:
     Call contract function error: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse::test-reverse-uint((list u0 u0 u0 u0 u0)) -> Error calling contract function: Runtime error while interpreting ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse: Runtime(UnwrapFailure, Some([FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:test-reverse-uint" }, FunctionIdentifier { identifier: "_native_:special_asserts" }, FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:reverse-uint" }, FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:reverse-list1" }, FunctionIdentifier { identifier: "_native_:special_fold" }, FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:reverse-redx-unsigned-list" }, FunctionIdentifier { identifier: "_native_:native_unwrap" }]))
 ```
 
-To observe shrinking in action, pay attention to the `FAIL` outputs. The minimal counterexample found is:
+To observe shrinking in action, pay attention to the `FAIL` logs. The minimal counterexample found is:
 
 ```
 [0,0,0,0,0]
