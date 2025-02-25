@@ -101,3 +101,46 @@ With this command, Rendezvous will:
 - **Periodically check the defined invariants** to ensure the contract's internal state remains valid.
 
 If an invariant check fails, it means the contract's state has **deviated from expected behavior**, revealing potential bugs.
+
+### Options
+
+Rendezvous also provides additional options to customize test execution:
+
+**1. Customizing the Number of Runs**
+
+By default, Rendezvous runs **100** test iterations. You can modify this using the `--runs` option:
+
+```bash
+rv root contract test --runs=500
+```
+
+This increases the number of test cases to **500**.
+
+**2. Replaying a Specific Sequence of Events**
+
+To reproduce a previous test sequence, you can use the `--seed` option. This ensures that the same random values are used across test runs:
+
+```bash
+rv root contract test --seed=12345
+```
+
+**3. Using Dialers**
+
+Dialers allow you to define `pre- and post-execution functions` using JavaScript. To use a custom dialer file:
+
+```bash
+rv root contract test --dial=./custom-dialer.js
+```
+
+<!-- TODO: Explain SIP-010 post-dialer -->
+
+### Summary
+
+| Argument/Option              | Description                                                                      | Example                                           |
+| ---------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `<path-to-clarinet-project>` | Path to the Clarinet project (where `Clarinet.toml` is located).                 | `rv root contract test`                           |
+| `<contract-name>`            | Name of the contract to test (as in `Clarinet.toml`).                            | `rv root contract test`                           |
+| `<type>`                     | Type of test (`test` for property-based tests, `invariant` for invariant tests). | `rv root contract test`                           |
+| `--runs=<num>`               | Sets the number of test iterations (default: 100).                               | `rv root contract test --runs=500`                |
+| `--seed=<num>`               | Uses a specific seed for reproducibility.                                        | `rv root contract test --seed=12345`              |
+| `--dial=<file>`              | Loads JavaScript dialers from a file for pre/post-processing.                    | `rv root contract test --dial=./custom-dialer.js` |
