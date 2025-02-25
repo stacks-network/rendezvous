@@ -126,13 +126,79 @@ rv root contract test --seed=12345
 
 **3. Using Dialers**
 
-Dialers allow you to define `pre- and post-execution functions` using JavaScript. To use a custom dialer file:
+Dialers allow you to define **pre- and post-execution functions** using JavaScript. To use a custom dialer file, run:
 
 ```bash
 rv root contract test --dial=./custom-dialer.js
 ```
 
-<!-- TODO: Explain SIP-010 post-dialer -->
+A good example of a dialer can be found in the Rendezvous repository, within the example Clarinet project, inside the [sip010.js file](https://github.com/stacks-network/rendezvous/blob/272b9247cdfcd5d12da89254e622e712d6e29e5e/example/sip010.js).
+
+In that file, you’ll find a **post-dialer** designed as a **sanity check** for SIP-010 token contracts. It ensures that the `transfer` function correctly emits the required **print event** containing the `memo`, as specified in [SIP-010](https://github.com/stacksgov/sips/blob/6ea251726353bd1ad1852aabe3d6cf1ebfe02830/sips/sip-010/sip-010-fungible-token-standard.md?plain=1#L69).
+
+**How Dialers Work**
+
+During **invariant testing**, Rendezvous picks up dialers when executing public function calls:
+
+- **Pre-dialers** run **before** each function call.
+- **Post-dialers** run **after** each function call.
+
+Both have access to an object containing:
+
+- `selectedFunction` – The function being executed.
+- `functionCall` – The result of the function call (`undefined` for **pre-dialers**).
+- `clarityValueArguments` – The generated Clarity values used as arguments.
+
+**Example: Post-Dialer for SIP-010**
+
+Below is a **post-dialer** that verifies SIP-010 compliance by ensuring that the `transfer` function emits a print event containing the `memo`.
+
+```js
+async function postTransferSip010PrintEvent(context) {
+  const { selectedFunction, functionCall, clarityValueArguments } = context;
+
+  // Ensure this check runs only for the "transfer" function.
+  if (selectedFunction.name !== "transfer") return;
+
+  const functionCallEvents = functionCall.events;
+  const memoParameterIndex = 3; // The memo parameter is the fourth argument.
+
+  const memoGeneratedArgumentCV = clarityValueArguments[memoParameterIndex];
+
+  // If the memo argument is `none`, there's nothing to validate.
+  if (memoGeneratedArgumentCV.type === 9) return;
+
+  // Ensure the memo argument is an option (`some`).
+  if (memoGeneratedArgumentCV.type !== 10) {
+    throw new Error("The memo argument must be an option type!");
+  }
+
+  // Convert the `some` value to hex for comparison.
+  const hexMemoArgumentValue = cvToHex(memoGeneratedArgumentCV.value);
+
+  // Find the print event in the function call events.
+  const sip010PrintEvent = functionCallEvents.find(
+    (ev) => ev.event === "print_event"
+  );
+
+  if (!sip010PrintEvent) {
+    throw new Error(
+      "No print event found. The transfer function must emit the SIP-010 print event containing the memo!"
+    );
+  }
+
+  const sip010PrintEventValue = sip010PrintEvent.data.raw_value;
+
+  // Validate that the emitted print event matches the memo argument.
+  if (sip010PrintEventValue !== hexMemoArgumentValue) {
+    throw new Error(
+      `Print event memo value does not match the memo argument: ${hexMemoArgumentValue} !== ${sip010PrintEventValue}`
+    );
+  }
+}
+```
+
+This dialer ensures that any SIP-010 token contract properly emits the **memo print event** during transfers, helping to catch deviations from the standard.
 
 ### Summary
 
