@@ -257,7 +257,7 @@ Using this command, Rendezvous will **randomly select and execute** property-bas
 
 The `reverse` contract included in the `example` Clarinet project contains Clarity utilities for reversing lists of various types. Since it lacks public functions, **invariant testing doesn’t apply**. However, it serves as an ideal "Hello World" example for **property testing using native Clarity**—_reversing a list twice should always return the original list_.
 
-Introducing a bug and detecting it with Rendezvous property-based tests is insightful, not just for finding the issue but for demonstrating the power of **shrinking**. Below is a malicious function that can be introduced into one of the `reverse-uint` private utilities:
+Introducing a bug and detecting it with Rendezvous property-based tests is insightful, not just for finding the issue but for demonstrating the power of **shrinking**. Below is an example of how to introduce a bug into one of the `reverse-uint` private utilities:
 
 ```clarity
 (define-read-only (reverse-uint (seq (list 127 uint)))
