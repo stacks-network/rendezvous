@@ -124,6 +124,27 @@ To reproduce a previous test sequence, you can use the `--seed` option. This ens
 rv root contract test --seed=12345
 ```
 
+**How to Find the Replay Seed**
+
+When Rendezvous detects an issue, it includes the seed needed to reproduce the test in the failure report. Here’s an example of a failure report with the seed:
+
+```
+Error: Property failed after 2 tests.
+Seed : 426141810
+
+Counterexample:
+...
+
+What happened? Rendezvous went on a rampage and found a weak spot:
+...
+```
+
+In this case, the seed is `426141810`. You can use it to rerun the exact same test scenario:
+
+```bash
+rv root contract test --seed=426141810
+```
+
 **3. Using Dialers**
 
 Dialers allow you to define **pre- and post-execution functions** using JavaScript. To use a custom dialer file, run:
