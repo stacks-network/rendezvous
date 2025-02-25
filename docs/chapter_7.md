@@ -298,7 +298,7 @@ A property-based test that can detect the introduced bug is:
 
 This test follows a **property-based testing approach**, verifying the "Hello World" of property testing:
 
-> Reversing a list twice should always return the original list
+> Reversing a list twice should always return the original list.
 
 This test example accepts a parameter, which is randomly generated for each run.
 
