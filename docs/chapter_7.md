@@ -379,3 +379,192 @@ This is exactly what we were looking for! The bug we introduced is not related t
 By starting with larger, more complex failing test cases and shrinking down to a list of five zeros, Rendezvous reveals that the **issue is with the number of elements, not their values**. This insight is crucial—it tells us that our bug causes failures when the list length exceeds a certain threshold, not when specific numbers are present.
 
 This is the power of **shrinking** in property-based testing: it strips away distractions and zeroes in on the core problem.
+
+---
+
+## The `slice` Contract
+
+The `slice` contract included in the `example` Clarinet project contains Clarity utilities for slicing lists of various types. Same as `reverse`, it lacks public functions, so **invariant testing doesn’t apply**. Using Rendezvous and property-based tests to test this contract will highlight the **discarding** mechanism of the Clarity property-based tests.
+
+Let's introduce a bug in the `slice` contract:
+
+```clarity
+(define-read-only (slice-uint (seq (list 127 uint)) (skip int) (n int))
+  (begin
+    (assert- (and (<= 0 skip) (<= skip 127)) "Out of bounds: skip")
+    (assert- (and (<= 0 n) (<= n 127)) "Out of bounds: n")
+    (slice-list1 seq skip n)
+  )
+)
+
+(define-private (slice-list1
+                 (seq (list 127 uint))
+                 (skip int)
+                 (n int))
+  (begin
+    (assert- (and (<= 0 skip) (<= skip 127)) "Out of bounds: skip")
+    (assert- (and (<= 0 n) (<= n 127)) "Out of bounds: n")
+    (let
+      (
+        (end
+          (-
+            (min-num-integer-integer (+ skip n) (to-int (len seq)))
+            1
+          )
+        )
+      )
+      (if
+        (>= end 1) ;; Introduce a bug that forces `skip` to always be 1 in this comparison.
+        (let
+          ((i (range-1-integer-integer skip end)))
+          (map for-step-integer-list1 i (repeat127-list1 seq))
+        )
+        (list)
+      )
+    )
+  )
+)
+```
+
+The issue lies in the conditional check `(>= end 1)`, where the `skip` value is hardcoded to `1` instead of using the user-provided input. This leads to unexpected behavior:
+
+- Lists that should include elements from earlier positions **incorrectly skip the first item**.
+- Certain inputs may trigger an **unwrap failure runtime error** when slicing beyond valid bounds.
+
+### Property-Based Tests
+
+The following property-based test evaluates the correctness of `slice-uint`:
+
+```clarity
+(define-public (test-slice-list-uint (seq (list 127 uint)) (skip int) (n int))
+  (if
+    ;; Discard the test if the input is invalid by returning `(ok false)`.
+    (or
+      (not (and (<= 0 n) (<= n 127)))
+      (not (and (<= 0 skip) (<= skip 127)))
+    )
+    (ok false)
+    (let
+      ((result (slice-uint seq skip n)))
+      (if
+        ;; Case 1: If skip > length of seq, result should be an empty list.
+        (> (to-uint skip) (len seq))
+        (asserts! (is-eq result (list )) ERR_ASSERTION_FAILED_1)
+        (if
+          ;; Case 2: If n > length of seq - skip, result length should be
+          ;; length of seq - skip.
+          (> (to-uint n) (- (len seq) (to-uint skip)))
+          (asserts!
+            (is-eq (len result) (- (len seq) (to-uint skip)))
+            ERR_ASSERTION_FAILED_2
+          )
+          ;; Case 3: If n <= length of seq - skip, result length should be n.
+          (asserts! (is-eq (len result) (to-uint n)) ERR_ASSERTION_FAILED_3)
+        )
+      )
+      (ok true)
+    )
+  )
+)
+```
+
+**Property test logic**
+
+Test Case Discarding:
+
+- If `skip` or `n` are out of valid bounds (`0 ≤ skip, n ≤ 127`), the test is discarded (returns `(ok false)`).
+- This ensures only meaningful cases are tested.
+
+Valid Cases and Expected Behavior:
+
+- **Case 1**: When `skip` exceeds the length of the list, the result should be an empty list.
+- **Case 2**: When `n` is larger than the remaining elements after `skip`, the result should contain all the remaining elements.
+- **Case 3**: When `n` is within valid bounds, the result should contain exactly `n` elements.
+
+**Running the `slice` property-based testing**
+
+To run Rendezvous property-based tests against the `reverse` contract, use:
+
+```bash
+rv ./example slice test
+```
+
+**Discarding at its finest**
+
+A key aspect introduced in this test is the **discarding** mechanism. Let's revisit the rules for discarding property-based tests in Rendezvous:
+
+> _A Rendezvous property-based test is considered discarded when one of the following is true:_
+>
+> 1. The test returns `(ok false)`.
+> 2. The test's discard function returns `false` (detailed explanation in [Chapter 6](chapter_6.md)).
+
+**Discarding property-based tests using discard functions**
+
+An example of a property-based test with an attached discard function can also be found in `slice.tests.clar`:
+
+```clarity
+;; Some tests, like 'test-slice-list-int', are valid only for specific inputs.
+;; Rendezvous generates a wide range of inputs, which may include values that
+;; are unsuitable for those tests.
+;; To skip the test when inputs are invalid, the first way is to define a
+;; 'discard' function:
+;; - Must be read-only.
+;; - Name should match the property test function's, prefixed with "can-".
+;; - Parameters should mirror those of the property test.
+;; - Returns true only if inputs are valid, allowing the test to run.
+(define-read-only (can-test-slice-list-int
+    (seq (list 127 int))
+    (skip int)
+    (n int)
+  )
+  (and
+    (and (<= 0 n) (<= n 127))
+    (and (<= 0 skip) (<= skip 127))
+  )
+)
+
+(define-public (test-slice-list-int (seq (list 127 int)) (skip int) (n int))
+  (let
+    ((result (slice seq skip n)))
+    (if
+      ;; Case 1: If skip > length of seq, result should be an empty list.
+      (> (to-uint skip) (len seq))
+      (asserts! (is-eq result (list )) ERR_ASSERTION_FAILED_1)
+      (if
+        ;; Case 2: If n > length of seq - skip, result length should be
+        ;; length of seq - skip.
+        (> (to-uint n) (- (len seq) (to-uint skip)))
+        (asserts!
+          (is-eq (len result) (- (len seq) (to-uint skip)))
+          ERR_ASSERTION_FAILED_2
+        )
+        ;; Case 3: If n <= length of seq - skip, result length should be n.
+        (asserts! (is-eq (len result) (to-uint n)) ERR_ASSERTION_FAILED_3)
+      )
+    )
+    (ok true)
+  )
+)
+```
+
+The **discarding** mechanism helps filter out invalid test cases, making property-based tests more efficient and ensuring the test results are correctly displayed. Sample output:
+
+```
+₿        5 Ӿ      115   wallet_1 [WARN] slice test-slice-list-bool [true,false,false] -17 -1286688432
+₿        5 Ӿ      116   wallet_4 [WARN] slice test-slice-list-bool [false,false] 985789078 1631962668
+₿        5 Ӿ      117   wallet_1 [WARN] slice test-slice-string b^:hD\"Y. 1744256708 676842982
+₿        5 Ӿ      118   wallet_1 [FAIL] slice test-slice-list-uint [1818238100,1267097220,587282248,376122205,358580924,724240912,1327852627,89884546] 17 22 (runtime)
+₿        5 Ӿ      119   wallet_8 [WARN] slice test-slice-buff cfe44 -13 15
+₿        5 Ӿ      120   wallet_1 [WARN] slice test-slice-buff cfe44 -13 15
+₿        5 Ӿ      121   wallet_1 [WARN] slice test-slice-ascii 33!rt -13 15
+₿        5 Ӿ      122   wallet_1 [PASS] slice test-slice-list-uint [] 17 22
+₿      105 Ӿ      223   wallet_1 [FAIL] slice test-slice-list-uint [358580924,724240912,1327852627,89884546] 17 22 (runtime)
+₿      105 Ӿ      224   wallet_1 [FAIL] slice test-slice-list-uint [1327852627,89884546] 17 22 (runtime)
+₿      105 Ӿ      225   wallet_1 [PASS] slice test-slice-list-uint [89884546] 17 22
+₿      205 Ӿ      326   wallet_1 [FAIL] slice test-slice-list-uint [0,89884546] 17 22 (runtime)
+₿      205 Ӿ      327   wallet_1 [PASS] slice test-slice-list-uint [89884546] 17 22
+₿      305 Ӿ      428   wallet_1 [PASS] slice test-slice-list-uint [0] 17 22
+₿      405 Ӿ      529   wallet_1 [FAIL] slice test-slice-list-uint [0,0] 17 22 (runtime)
+```
+
+Tests marked as `WARN` are discarded, meaning they didn’t meet the criteria to be executed. This gives the user a clear view of how often the test actually ran and helps identify patterns in discarded cases.
