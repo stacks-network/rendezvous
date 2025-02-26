@@ -351,3 +351,73 @@ By tracking function calls, the context helps invariants ensure **stronger corre
 ```
 
 By embedding execution tracking into the contract, Rendezvous enables **more effective smart contract testing**, making it easier to catch bugs and check the contract correctness.
+
+### Discarding Property-Based Tests
+
+Rendezvous generates a wide range of inputs, but not all inputs are valid for every test. To **skip tests with invalid inputs**, there are two approaches:
+
+**1. Discard Function**
+
+A **separate function** determines whether a test should run.
+
+> Rules for a Discard Function:
+>
+> - Must be **read-only**.
+> - Name must match the property test function, prefixed with `"can-"`.
+> - Parameters must **mirror** the property test’s parameters.
+> - Must return `true` **only if inputs are valid**, allowing the test to run.
+
+**Discard function example**
+
+```clarity
+(define-read-only (can-test-add (n uint))
+  (> n u1)  ;; Only allow tests where n > 1
+)
+
+(define-public (test-add (n uint))
+  (let
+    ((counter-before (get-counter)))
+    (try! (add n))
+    (asserts! (is-eq (get-counter) (+ counter-before n)) (err u403))
+    (ok true)
+  )
+)
+```
+
+Here, `can-test-add` ensures that the test **never executes** for `n <= 1`.
+
+**2. In-Place Discarding**
+
+Instead of using a separate function, **the test itself decides whether to run**. If the inputs are invalid, the test returns `(ok false)`, discarding itself.
+
+**In-place discarding example**
+
+```clarity
+(define-public (test-add (n uint))
+  (let
+    ((counter-before (get-counter)))
+    (ok
+      (if
+        (<= n u1)  ;; If n <= 1, discard the test.
+        false
+        (begin
+          (try! (add n))
+          (asserts! (is-eq (get-counter) (+ counter-before n)) (err u403))
+          true
+        )
+      )
+    )
+  )
+)
+```
+
+In this case, if `n <= 1`, the test **discards itself** by returning `(ok false)`, skipping execution.
+
+**Discarding summary**
+
+| **Discard Mechanism**   | **When to Use**                                                   |
+| ----------------------- | ----------------------------------------------------------------- |
+| **Discard Function**    | When skipping execution **before** running the test is necessary. |
+| **In-Place Discarding** | When discarding logic is simple and part of the test itself.      |
+
+In general, **in-place discarding is preferred** because it keeps test logic together and is easier to maintain. Use a **discard function** only when it's important to prevent execution entirely.
