@@ -83,7 +83,7 @@ This tells Rendezvous to:
 
 **Running invariant tests**
 
-Invariant tests verify that certain properties of a contract remain consistent across multiple states. They are also defined in the test file:
+To run invariant tests for the `contract` contract, ensure that your invariant functions are defined in:
 
 ```
 ./root/contracts/contract.tests.clar
