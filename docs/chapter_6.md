@@ -231,3 +231,123 @@ This dialer ensures that any SIP-010 token contract properly emits the **memo pr
 | `--runs=<num>`               | Sets the number of test iterations (default: 100).                               | `rv root contract test --runs=500`                |
 | `--seed=<num>`               | Uses a specific seed for reproducibility.                                        | `rv root contract test --seed=12345`              |
 | `--dial=<file>`              | Loads JavaScript dialers from a file for pre/post-processing.                    | `rv root contract test --dial=./custom-dialer.js` |
+
+---
+
+## Understanding Rendezvous
+
+Rendezvous treats **property-based tests** and **invariants** as first-class citizens of the target contract. This follows the principle that _effective tests should be written in the same language as the system under test and run as part of it_.
+
+When Rendezvous initializes a **Simnet session** using a given Clarinet project, it **does not modify any contract** listed in Clarinet.toml—except for the **target contract**. During testing, Rendezvous updates the target contract by merging:
+
+1. **The original contract source code**
+2. **The test contract** (which includes property-based tests and invariants)
+3. **The Rendezvous context**, which helps track function calls and execution details
+
+**Example**
+
+Let’s say we have a contract named `checker` with the following source:
+
+```clarity
+;; checker.clar
+
+(define-public (check-it (flag bool))
+  (if flag (ok 1) (err u100))
+)
+```
+
+And its test contract, `checker.tests`:
+
+```clarity
+;; checker.tests.clar
+
+(define-public (test-1)
+  (ok true)
+)
+
+(define-read-only (invariant-1)
+  true
+)
+```
+
+When Rendezvous runs the tests, it **automatically generates a modified contract** that includes the original contract, the tests, and an additional **context** for tracking execution. The final contract source deployed in the Simnet session will look like this:
+
+```
+(define-public (check-it (flag bool))
+  (if flag (ok 1) (err u100))
+)
+
+(define-map context (string-ascii 100) {
+    called: uint
+    ;; other data
+  }
+)
+
+(define-public (update-context (function-name (string-ascii 100)) (called uint))
+  (ok (map-set context function-name {called: called}))
+)
+
+(define-public (test-1)
+  (ok true)
+)
+
+(define-read-only (invariant-1)
+  true
+)
+```
+
+While the original contract source and test functions are familiar, the **context** is new. Let's take a closer look at it.
+
+### The Rendezvous Context
+
+Rendezvous introduces a **context** to track function calls and execution details during testing. This allows for better tracking of execution details and invariant validation.
+
+**How the Context Works**
+
+When a function is successfully executed during a test, Rendezvous records its execution details in a **Clarity map**. This map helps track how often specific functions are called successfully and can be extended for additional tracking in the future.
+
+Here’s how the context is structured:
+
+```clarity
+(define-map context (string-ascii 100) {
+    called: uint
+    ;; Additional fields can be added here
+})
+
+(define-public (update-context (function-name (string-ascii 100)) (called uint))
+  (ok (map-set context function-name {called: called}))
+)
+```
+
+**Breaking it down**
+
+- **`context` map** → Keeps track of execution data, storing how many times each function has been called successfully.
+- **`update-context` function** → Updates the `context` map whenever a function executes, ensuring accurate tracking.
+
+**Using the context to write invariants**
+
+By tracking function calls, the context helps invariants ensure **stronger correctness guarantees**. For example, an invariant can verify that a counter **stays above zero by checking the number of successful `increment` and `decrement` calls**.
+
+**Example invariant using the `context`**
+
+```clarity
+(define-read-only (invariant-counter-gt-zero)
+  (let
+    (
+      (increment-num-calls
+        (default-to u0 (get called (map-get? context "increment")))
+      )
+      (decrement-num-calls
+        (default-to u0 (get called (map-get? context "decrement")))
+      )
+    )
+    (if
+      (<= increment-num-calls decrement-num-calls)
+      true
+      (> (var-get counter) u0)
+    )
+  )
+)
+```
+
+By embedding execution tracking into the contract, Rendezvous enables **more effective smart contract testing**, making it easier to catch bugs and check the contract correctness.
