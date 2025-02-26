@@ -423,3 +423,64 @@ In this case, if `n <= 1`, the test **discards itself** by returning `(ok false)
 | **In-Place Discarding** | When discarding logic is simple and part of the test itself.      |
 
 In general, **in-place discarding is preferred** because it keeps test logic together and is easier to maintain. Use a **discard function** only when it's important to prevent execution entirely.
+
+### Custom Manifest Files
+
+Some smart contracts need a special `Clarinet.toml` file to allow Rendezvous to create state transitions in the contract. Rendezvous supports this feature by **automatically searching for `Clarinet-<target-contract-name>.toml` first**. This allows you to use test doubles while keeping tests easy to manage.
+
+**Why use a custom manifest?**
+
+A great example is the **sBTC contract suite**.
+
+For testing the [`sbtc-token`](https://github.com/stacks-network/sbtc/blob/b624e4a8f08eb589a435719b200873e8aa5b3305/contracts/contracts/sbtc-token.clar#L30-L35) contract, the `sbtc-registry` authorization function [`is-protocol-caller`](https://github.com/stacks-network/sbtc/blob/b624e4a8f08eb589a435719b200873e8aa5b3305/contracts/contracts/sbtc-registry.clar#L361-L369) is **too restrictive**. Normally, it only allows calls from protocol contracts, making it **impossible to directly test certain state transitions** in `sbtc-token`.
+
+To work around this, you need two things:
+
+**1. A test double for `sbtc-registry`**
+
+You can create an `sbtc-registry` test double called `sbtc-registry-double.clar`:
+
+```clarity
+;; contracts/sbtc-registry-double.clar
+
+...
+
+(define-constant deployer tx-sender)
+
+;; Allows the deployer to act as a protocol contract for testing
+(define-read-only (is-protocol-caller (contract-flag (buff 1)) (contract principal))
+  (begin
+    (asserts! (is-eq tx-sender deployer) (err u1234567))  ;; Enforces deployer check
+    (ok true)
+  )
+)
+
+...
+```
+
+This **loosens** the restriction just enough for testing by allowing the `deployer` to act as a protocol caller, while still enforcing an access check.
+
+**2. A Custom Manifest File**
+
+Next, create `Clarinet-sbtc-token.toml` to tell Rendezvous to use the test double **only when targeting `sbtc-token`**:
+
+```toml
+# Clarinet-sbtc-token.toml
+
+...
+
+[contracts.sbtc-registry]
+path = 'contracts/sbtc-registry-double.clar'
+clarity_version = 3
+epoch = 3.0
+
+...
+```
+
+**How It Works**
+
+- When testing `sbtc-token`, Rendezvous **first checks** if `Clarinet-sbtc-token.toml` exists.
+- If found, it **uses this file** to initialize Simnet.
+- If not, it **falls back** to the standard `Clarinet.toml`.
+
+This ensures that the test double is only used when testing `sbtc-token`, keeping tests realistic while allowing necessary state transitions.
