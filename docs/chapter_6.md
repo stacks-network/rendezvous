@@ -236,7 +236,7 @@ This dialer ensures that any SIP-010 token contract properly emits the **memo pr
 
 ## Understanding Rendezvous
 
-Rendezvous treats **property-based tests** and **invariants** as first-class citizens of the target contract. This follows the principle that _effective tests should be written in the same language as the system under test and run as part of it_.
+Rendezvous makes **property-based tests** and **invariant tests** first-class. Tests are written in the same language as the system under test. This helps developers master the contract language. It also pushes boundaries—programmers shape their thoughts first, then express them using the language's tools.
 
 When Rendezvous initializes a **Simnet session** using a given Clarinet project, it **does not modify any contract** listed in Clarinet.toml—except for the **target contract**. During testing, Rendezvous updates the target contract by merging:
 
