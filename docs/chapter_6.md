@@ -62,6 +62,8 @@ The `<type>` argument specifies the testing technique to use. The available opti
 - `test` – Runs property-based tests.
 - `invariant` – Runs invariant tests.
 
+For a deeper understanding of these techniques and when to use each, see [Testing Methodologies](chapter_4.md).
+
 **Running property-based tests**
 
 To run property-based tests for the `contract` contract, ensure that your test functions are defined in:
