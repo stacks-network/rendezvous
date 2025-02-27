@@ -2,6 +2,34 @@
 
 The Rendezvous repo has a Clarinet project, `example`, that shows how to test Clarity smart contracts natively. Each contract, like `xyz.clar`, has a matching test contract, `xyz.tests.clar`.
 
+## What's Inside
+
+- [The `counter` Contract](#the-counter-contract)
+  - [Invariants](#invariants)
+    - [Invariant logic](#invariant-logic)
+    - [Checking the invariants](#checking-the-invariants)
+  - [Property-Based Tests](#property-based-tests)
+    - [Test logic](#test-logic)
+    - [Checking the properties](#checking-the-properties)
+
+- [The `cargo` Contract](#the-cargo-contract)
+  - [Invariants](#invariants-1)
+    - [Invariant logic](#invariant-logic-1)
+    - [Checking the invariants](#checking-the-invariants-1)
+  - [Property-Based Tests](#property-based-tests-1)
+    - [Test logic](#test-logic-1)
+    - [Checking the properties](#checking-the-properties-1)
+
+- [The `reverse` Contract](#the-reverse-contract)
+  - [Property-Based Tests](#property-based-tests-2)
+    - [Test logic](#test-logic-2)
+    - [Checking the properties (shrinking)](#checking-the-properties-2)
+
+- [The `slice` Contract](#the-slice-contract)
+  - [Property-Based Tests](#property-based-tests-3)
+    - [Test logic](#test-logic-3)
+    - [Checking the properties (discarding)](#checking-the-properties-3)
+
 ---
 
 ## The `counter` Contract
@@ -57,7 +85,7 @@ This invariant uses the **context** utility from Rendezvous, described in the pr
 
 > If, at the time of the check, the `increment` function has been called successfully more times than `decrement`, the counter value should be greater than 0.
 
-**Invariant logic**
+#### Invariant logic
 
 `increment-num-calls ≤ decrement-num-calls`:
 
@@ -69,7 +97,7 @@ This invariant uses the **context** utility from Rendezvous, described in the pr
 - The invariant asserts that `counter > u0`.
 - This ensures that, despite more increment calls, the counter remains positive.
 
-**Checking the invariants**
+#### Checking the invariants
 
 To check the `counter` contract's invariants, run:
 
@@ -102,7 +130,7 @@ This test is a **property-based test**, where a _property_ (a truth, or characte
 
 If the test fails, it means the counter did not increment as expected, revealing unintended behavior such as the counter resetting to `0`.
 
-**Test logic**
+#### Test logic
 
 1. Record the counter value before calling `increment`.
 2. Call `increment` and ensure it does not fail.
@@ -110,7 +138,7 @@ If the test fails, it means the counter did not increment as expected, revealing
    - If this condition does not hold, the test fails with error `u404`.
    - This catches unexpected changes, such as the counter resetting.
 
-**To check the `counter` contract's property-based test, run**
+#### Checking the properties
 
 To run Rendezvous property-based tests against the counter contract, use:
 
@@ -184,7 +212,7 @@ This invariant uses the **context** utility from Rendezvous, described in the pr
 
 > If at least one shipment has been created, the `last-shipment-id` must be greater than 0.
 
-**Invariant logic**
+#### Invariant logic
 
 `create-shipment-num-calls = 0`:
 
@@ -195,7 +223,7 @@ This invariant uses the **context** utility from Rendezvous, described in the pr
 - The invariant asserts that `last-shipment-id > 0`.
 - If this check fails, it means `last-shipment-id` was **not updated** after creating a shipment, exposing the bug.
 
-**Running the `cargo` invariant testing**
+#### Checking the invariants
 
 To run Rendezvous invariant testing against the `cargo` contract, use:
 
@@ -234,14 +262,14 @@ This test follows a **property-based testing approach**, verifying a key propert
 
 > Creating a new shipment should always increment `last-shipment-id` by 1.
 
-**Test logic**
+### Test logic
 
 1. Record the current shipment ID before calling `create-new-shipment`.
 2. Call `create-new-shipment`, ensuring it does not fail.
 3. Verify that `last-shipment-id` has **increased by 1**.
    - If this check fails, it means `last-shipment-id` was **not updated**, exposing the bug.
 
-**Running the `cargo` property-based testing**
+#### Checking the properties
 
 To run Rendezvous property-based tests against the `cargo` contract, use:
 
@@ -302,11 +330,11 @@ This test follows a **property-based testing approach**, verifying the "Hello Wo
 
 This test example accepts a parameter, which is randomly generated for each run.
 
-**Test logic**
+#### Test logic
 
 1. Verify that reversing a passed list twice is always equal to the passed list.
 
-**Running the `reverse` property-based testing**
+#### Checking the properties
 
 To run Rendezvous property-based tests against the `reverse` contract, use:
 
@@ -468,7 +496,7 @@ The following property-based test evaluates the correctness of `slice-uint`:
 )
 ```
 
-**Test logic**
+#### Test logic
 
 Test Case Discarding:
 
@@ -481,7 +509,7 @@ Valid Cases and Expected Behavior:
 - **Case 2**: When `n` is larger than the remaining elements after `skip`, the result should contain all the remaining elements.
 - **Case 3**: When `n` is within valid bounds, the result should contain exactly `n` elements.
 
-**Running the `slice` property-based testing**
+#### Checking the properties
 
 To run Rendezvous property-based tests against the `reverse` contract, use:
 
