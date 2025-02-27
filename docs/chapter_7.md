@@ -81,7 +81,7 @@ Using this command, Rendezvous will **randomly execute public function calls** i
 
 ### Property-Based Tests
 
-One property test that can detect the introduced bug is:
+Another way to detect the introduced bug is by writing this property-based test:
 
 ```clarity
 (define-public (test-increment)
@@ -96,7 +96,7 @@ One property test that can detect the introduced bug is:
 )
 ```
 
-This test is a **property-based test**, where a *property* (a truth, or characteristic) of the `increment` function is tested across different inputs.
+This test is a **property-based test**, where a _property_ (a truth, or characteristic) of the `increment` function is tested across different inputs.
 
 > The counter should always increase by 1 after a successful call to `increment`.
 
