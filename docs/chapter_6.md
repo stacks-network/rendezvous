@@ -100,7 +100,7 @@ rv ./root contract invariant
 With this command, Rendezvous will:
 
 - Randomly **execute public function calls** in the `contract` contract.
-- **Periodically check the defined invariants** to ensure the contract's internal state remains valid.
+- **Randomly check the defined invariants** to ensure the contract's internal state remains valid.
 
 If an invariant check fails, it means the contract's state has **deviated from expected behavior**, revealing potential bugs.
 
