@@ -1,6 +1,6 @@
 # Examples
 
-The Rendezvous repository includes a Clarinet project called `example`, which demonstrates different ways to test Clarity smart contracts using native Clarity. Each contract, such as `contractName.clar`, has a corresponding test contract, `contractName.tests.clar`, containing its invariants and property-based tests.
+The Rendezvous repo has a Clarinet project, `example`, that shows how to test Clarity smart contracts natively. Each contract, like `xyz.clar`, has a matching test contract, `xyz.tests.clar`.
 
 ---
 
