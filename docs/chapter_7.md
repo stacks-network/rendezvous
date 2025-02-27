@@ -120,7 +120,7 @@ rv ./example counter test
 
 Using this command, Rendezvous will **randomly select and execute** property-based tests from the `counter`'s test contract. This process will detect the bug in the faulty increment function. However, if the test contract contains only `test-increment`, **the number of runs must be increased**. By default, Rendezvous executes **100 runs**, which is not sufficient to expose the issue.
 
-To reliably catch the bug, set the `--runs` options to at least **1002**:
+To make sure you always catch the bug, set the `--runs` option to something higher than `1001`, e.g. **1002**:
 
 ```bash
 rv ./example counter test --runs=1002
