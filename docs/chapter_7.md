@@ -23,7 +23,7 @@ The `counter` contract is a simple Clarity example found in the `example` Clarin
 )
 ```
 
-To test the buggy version of the contract, replace the valid `increment` function with the faulty version. Then, you can write Clarity invariants or property-based tests to detect the issue.
+To test the buggy version of the contract, replace the valid `increment` function with the faulty version. Then, you can write Clarity invariants and property-based tests to detect the issue.
 
 ### Invariants
 
@@ -69,9 +69,9 @@ This invariant uses the **context** utility from Rendezvous, described in the pr
 - The invariant asserts that `counter > u0`.
 - This ensures that, despite more increment calls, the counter remains positive.
 
-**Running the `counter` invariant testing**
+**Checking the invariants**
 
-To run Rendezvous invariant testing against the `counter` contract, use:
+To check the `counter` contract's invariants, run:
 
 ```bash
 rv ./example counter invariant
@@ -110,7 +110,7 @@ If the test fails, it means the counter did not increment as expected, revealing
    - If this condition does not hold, the test fails with error `u404`.
    - This catches unexpected changes, such as the counter resetting.
 
-**Running the `counter` property-based testing**
+**To check the `counter` contract's property-based test, run**
 
 To run Rendezvous property-based tests against the counter contract, use:
 
