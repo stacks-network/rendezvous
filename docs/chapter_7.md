@@ -96,7 +96,7 @@ One property test that can detect the introduced bug is:
 )
 ```
 
-This test follows a **property-based testing approach**, where a general property of the `increment` function is tested across different scenarios.
+This test is a **property-based test**, where a *property* (a truth, or characteristic) of the `increment` function is tested across different inputs.
 
 > The counter should always increase by 1 after a successful call to `increment`.
 
