@@ -102,7 +102,7 @@ This test is a **property-based test**, where a _property_ (a truth, or characte
 
 If the test fails, it means the counter did not increment as expected, revealing unintended behavior such as the counter resetting to `0`.
 
-**Property test logic**
+**Test logic**
 
 1. Record the counter value before calling `increment`.
 2. Call `increment` and ensure it does not fail.
@@ -234,7 +234,7 @@ This test follows a **property-based testing approach**, verifying a key propert
 
 > Creating a new shipment should always increment `last-shipment-id` by 1.
 
-**Property test logic**
+**Test logic**
 
 1. Record the current shipment ID before calling `create-new-shipment`.
 2. Call `create-new-shipment`, ensuring it does not fail.
@@ -302,7 +302,7 @@ This test follows a **property-based testing approach**, verifying the "Hello Wo
 
 This test example accepts a parameter, which is randomly generated for each run.
 
-**Property test logic**
+**Test logic**
 
 1. Verify that reversing a passed list twice is always equal to the passed list.
 
@@ -468,7 +468,7 @@ The following property-based test evaluates the correctness of `slice-uint`:
 )
 ```
 
-**Property test logic**
+**Test logic**
 
 Test Case Discarding:
 
