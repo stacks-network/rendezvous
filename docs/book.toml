@@ -1,0 +1,14 @@
+[book]
+authors = ["Radu Bahmata", "Nikos Baxevanis"]
+language = "en"
+multilingual = false
+src = "."
+title = "Rendezvous: The Clarity Fuzzer"
+
+[build]
+build-dir = "dist"
+
+[output.html]
+additional-css = ["custom.css"]
+edit-url-template = "https://github.com/stacks-network/rendezvous/blob/master/docs/{path}"
+git-repository-url = "https://github.com/stacks-network/rendezvous/tree/master/docs"

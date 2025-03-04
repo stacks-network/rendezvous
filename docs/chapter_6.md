@@ -1,6 +1,33 @@
 # Usage
 
-This chapter explains how to use Rendezvous in different situations. By the end, you’ll know when and how to use its features effectively.
+This chapter explains how to use Rendezvous in different situations. By the end, you'll know when and how to use its features effectively.
+
+## What's Inside
+
+[Running Rendezvous](#running-rendezvous)
+  - [Positional Arguments](#positional-arguments)
+  - [Options](#options)
+  - [Summary](#summary)
+
+[Understanding Rendezvous](#understanding-rendezvous)
+  - [Example](#example)
+
+[The Rendezvous Context](#the-rendezvous-context)
+  - [How the Context Works](#how-the-context-works)
+  - [Using the context to write invariants](#using-the-context-to-write-invariants)
+
+[Discarding Property-Based Tests](#discarding-property-based-tests)
+  - [Discard Function](#discard-function)
+  - [In-Place Discarding](#in-place-discarding)
+  - [Discarding summary](#discarding-summary)
+
+[Custom Manifest Files](#custom-manifest-files)
+  - [Why use a custom manifest?](#why-use-a-custom-manifest)
+  - [A test double for `sbtc-registry`](#a-test-double-for-sbtc-registry)
+  - [A Custom Manifest File](#a-custom-manifest-file)
+  - [How It Works](#how-it-works)
+
+---
 
 ## Running Rendezvous
 
@@ -244,7 +271,7 @@ When Rendezvous initializes a **Simnet session** using a given Clarinet project,
 2. **The test contract** (which includes property-based tests and invariants)
 3. **The Rendezvous context**, which helps track function calls and execution details
 
-**Example**
+### Example
 
 Let’s say we have a contract named `checker` with the following source:
 
@@ -298,11 +325,11 @@ When Rendezvous runs the tests, it **automatically generates a modified contract
 
 While the original contract source and test functions are familiar, the **context** is new. Let's take a closer look at it.
 
-### The Rendezvous Context
+## The Rendezvous Context
 
 Rendezvous introduces a **context** to track function calls and execution details during testing. This allows for better tracking of execution details and invariant validation.
 
-**How the Context Works**
+### How the Context Works
 
 When a function is successfully executed during a test, Rendezvous records its execution details in a **Clarity map**. This map helps track how often specific functions are called successfully and can be extended for additional tracking in the future.
 
@@ -324,7 +351,7 @@ Here’s how the context is structured:
 - **`context` map** → Keeps track of execution data, storing how many times each function has been called successfully.
 - **`update-context` function** → Updates the `context` map whenever a function executes, ensuring accurate tracking.
 
-**Using the context to write invariants**
+### Using the context to write invariants
 
 By tracking function calls, the context helps invariants ensure **stronger correctness guarantees**. For example, an invariant can verify that a counter **stays above zero by checking the number of successful `increment` and `decrement` calls**.
 
@@ -352,11 +379,11 @@ By tracking function calls, the context helps invariants ensure **stronger corre
 
 By embedding execution tracking into the contract, Rendezvous enables **more effective smart contract testing**, making it easier to catch bugs and check the contract correctness.
 
-### Discarding Property-Based Tests
+## Discarding Property-Based Tests
 
 Rendezvous generates a wide range of inputs, but not all inputs are valid for every test. To **skip tests with invalid inputs**, there are two approaches:
 
-**1. Discard Function**
+### Discard Function
 
 A **separate function** determines whether a test should run.
 
@@ -386,7 +413,7 @@ A **separate function** determines whether a test should run.
 
 Here, `can-test-add` ensures that the test **never executes** for `n <= 1`.
 
-**2. In-Place Discarding**
+### In-Place Discarding
 
 Instead of using a separate function, **the test itself decides whether to run**. If the inputs are invalid, the test returns `(ok false)`, discarding itself.
 
@@ -413,7 +440,7 @@ Instead of using a separate function, **the test itself decides whether to run**
 
 In this case, if `n <= 1`, the test **discards itself** by returning `(ok false)`, skipping execution.
 
-**Discarding summary**
+### Discarding summary
 
 | **Discard Mechanism**   | **When to Use**                                                   |
 | ----------------------- | ----------------------------------------------------------------- |
@@ -422,11 +449,11 @@ In this case, if `n <= 1`, the test **discards itself** by returning `(ok false)
 
 In general, **in-place discarding is preferred** because it keeps test logic together and is easier to maintain. Use a **discard function** only when it's important to prevent execution entirely.
 
-### Custom Manifest Files
+## Custom Manifest Files
 
 Some smart contracts need a special `Clarinet.toml` file to allow Rendezvous to create state transitions in the contract. Rendezvous supports this feature by **automatically searching for `Clarinet-<target-contract-name>.toml` first**. This allows you to use test doubles while keeping tests easy to manage.
 
-**Why use a custom manifest?**
+### Why use a custom manifest?
 
 A great example is the **sBTC contract suite**.
 
@@ -434,7 +461,7 @@ For testing the [`sbtc-token`](https://github.com/stacks-network/sbtc/blob/b624e
 
 To work around this, you need two things:
 
-**1. A test double for `sbtc-registry`**
+### A test double for `sbtc-registry`
 
 You can create an `sbtc-registry` test double called `sbtc-registry-double.clar`:
 
@@ -458,7 +485,7 @@ You can create an `sbtc-registry` test double called `sbtc-registry-double.clar`
 
 This **loosens** the restriction just enough for testing by allowing the `deployer` to act as a protocol caller, while still enforcing an access check.
 
-**2. A Custom Manifest File**
+### A Custom Manifest File
 
 Next, create `Clarinet-sbtc-token.toml` to tell Rendezvous to use the test double **only when targeting `sbtc-token`**:
 
@@ -475,7 +502,7 @@ epoch = 3.0
 ...
 ```
 
-**How It Works**
+### How It Works
 
 - When testing `sbtc-token`, Rendezvous **first checks** if `Clarinet-sbtc-token.toml` exists.
 - If found, it **uses this file** to initialize Simnet.
