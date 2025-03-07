@@ -1,5 +1,4 @@
-name: Sanity checks
-
+name: Sanity checks and docs publishing
 on:
   push:
     branches:
@@ -70,3 +69,48 @@ jobs:
           rv . cargo invariant
           rv . reverse test
           rv . slice test
+
+  publish-docs:
+    needs: [tests, examples]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup mdBook
+        uses: peaceiris/actions-mdbook@v2
+        with:
+          mdbook-version: 'latest'
+
+      - name: Build docs
+        run: |
+          mdbook build docs
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Deploy to GitHub Pages
+        run: |
+          # The gh-pages branch has no meaningful history since it's completely
+          # regenerated from scratch on each commit to master. History would be
+          # noise, not signal. The source of truth is the master branch and the
+          # build system, making the gh-pages content purely ephemeral output.
+          # Force pushing an orphan branch gives us exactly what we need: clean
+          # snapshot of the documentation at each point in time without all the
+          # baggage of incorrect or outdated history.
+
+          # Create orphan branch (no history).
+          git checkout --orphan gh-pages
+          # Remove all files from the working tree.
+          git rm -rf .
+          # Copy the built site to the root.
+          cp -r docs/dist/* .
+          # Add all files.
+          git add .
+          # Commit with empty message (since no history on gh-pages anyways).
+          git commit --allow-empty-message -m ""
+          # Force push to gh-pages branch (again since no history).
+          git push origin gh-pages --force
