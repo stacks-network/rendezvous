@@ -18,7 +18,7 @@ The idea behind Rendezvous originates from several inspiring sources:
 
 - **Trail of Bits**: For creating Echidna[^6], which initially utilized Hedgehog, furthering the development of smart contract fuzzers.
 
-- **LNow**: For the initial discussions and ideas on this topic in 2022.
+- **Łukasz Nowicki**: For the initial discussions and ideas on this topic in 2022.
 
 We are deeply grateful to the Stacks Open Internet Foundation for supporting our work and providing crucial assistance, and to the open-source community for their continuous support and contributions.
 
