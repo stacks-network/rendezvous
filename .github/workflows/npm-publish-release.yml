@@ -4,6 +4,7 @@ on:
     types: [published]
 jobs:
   publish:
+    environment: "Publish to NPM"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
