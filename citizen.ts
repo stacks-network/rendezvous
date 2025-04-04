@@ -124,9 +124,7 @@ export const issueFirstClassCitizenship = async (
 
   // Filter out addresses with zero balance. They do not need to be restored.
   const sbtcBalancesToRestore: Map<string, number> = new Map(
-    Array.from(sbtcBalancesMap.entries()).filter(
-      ([_, balance]) => balance !== 0
-    )
+    [...sbtcBalancesMap.entries()].filter(([_, balance]) => balance !== 0)
   );
 
   // After all the contracts and requirements are deployed, if the test wallets
@@ -410,7 +408,7 @@ const restoreSbtcBalances = (
   const usedTxIds: Set<string> = new Set();
 
   // For each address present in the balances map, restore the balance.
-  Array.from(sbtcBalancesMap.entries())
+  [...sbtcBalancesMap.entries()]
     // Re-assure the map does not contain nil balances.
     .filter(([_, balance]) => balance !== 0)
     .forEach(([address, balance]) => {
