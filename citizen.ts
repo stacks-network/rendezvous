@@ -4,7 +4,6 @@ import yaml from "yaml";
 import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
 import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
 import {
-  bufferCV,
   BufferCV,
   Cl,
   ClarityType,
@@ -12,8 +11,6 @@ import {
   cvToValue,
   hexToCV,
   OptionalCV,
-  principalCV,
-  uintCV,
 } from "@stacks/transactions";
 import {
   Batch,
@@ -23,7 +20,6 @@ import {
   Transaction,
 } from "./citizen.types";
 import { RemoteDataSettings } from "./app.types";
-import { hexToBytes } from "@stacks/common";
 
 /**
  * Prepares the simnet instance and assures the target contract's corresponding
@@ -445,7 +441,7 @@ const mintSbtc = (
     "get-burn-header",
     [
       // (height uint)
-      uintCV(blockHeight),
+      Cl.uint(blockHeight),
     ],
     simnet.deployer
   ).result as OptionalCV<BufferCV>;
@@ -460,19 +456,19 @@ const mintSbtc = (
       "complete-deposit-wrapper",
       [
         // (txid (buff 32))
-        bufferCV(hexToBytes(txId)),
+        Cl.bufferFromHex(txId),
         // (vout-index uint)
-        uintCV(1),
+        Cl.uint(1),
         // (amount uint)
-        uintCV(amountSats),
+        Cl.uint(amountSats),
         // (recipient principal)
-        principalCV(recipient),
+        Cl.principal(recipient),
         // (burn-hash (buff 32))
         burnHash.value,
         // (burn-height uint)
-        uintCV(blockHeight),
+        Cl.uint(blockHeight),
         // (sweep-txid (buff 32))
-        bufferCV(hexToBytes(sweepTxId)),
+        Cl.bufferFromHex(sweepTxId),
       ],
       "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4"
     ).result
