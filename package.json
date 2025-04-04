@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@hirosystems/clarinet-sdk": "2.15.2",
+    "@stacks/common": "^7.0.2",
     "@stacks/transactions": "^6.16.1",
     "ansicolor": "^2.0.3",
     "fast-check": "^3.20.0",
