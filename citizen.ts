@@ -398,18 +398,15 @@ const restoreSbtcBalances = (
   simnet: Simnet,
   sbtcBalancesMap: Map<string, number>
 ) => {
-  // To deposit sBTC, one needs a txId and a sweep txId. A deposit transaction
-  // must have a unique txId and sweep txId. A set will be used to track the
-  // already used ids. This set will be used in `getUniqueRandomHex`.
-  const usedTxIds: Set<string> = new Set();
-
   // For each address present in the balances map, restore the balance.
   [...sbtcBalancesMap.entries()]
     // Re-assure the map does not contain nil balances.
     .filter(([_, balance]) => balance !== 0)
     .forEach(([address, balance]) => {
-      const txId = getUniqueRandomHex(usedTxIds);
-      const sweepTxId = getUniqueRandomHex(usedTxIds);
+      // To deposit sBTC, one needs a txId and a sweep txId. A deposit transaction
+      // must have a unique txId and sweep txId.
+      const txId = getUniqueHex();
+      const sweepTxId = getUniqueHex();
       mintSbtc(simnet, balance, address, txId, sweepTxId);
     });
 };
@@ -485,25 +482,17 @@ const mintSbtc = (
  * Utility function that generates a random, unique hex to be used as txId in
  * `mintSbtc`.
  *
- * @param usedTxIds A set containing the already used hex strings.
- *
  * @returns A random hex string.
  */
-const getUniqueRandomHex = (usedTxIds: Set<string>): string => {
+const getUniqueHex = (): string => {
   let hex: string;
 
-  // Keep trying to generate random hex strings until the generated one is not
-  // present in the `usedTxIds` set.
-  do {
-    // Generate a 32-byte (64 character) random hex string.
-    const bytes = new Uint8Array(32);
-    crypto.getRandomValues(bytes);
-    hex = Array.from(bytes)
-      .map((byte) => byte.toString(16).padStart(2, "0"))
-      .join("");
-  } while (usedTxIds.has(hex));
+  // Generate a 32-byte (64 character) random hex string.
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  hex = Array.from(bytes)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
 
-  // Add to used set to ensure uniqueness.
-  usedTxIds.add(hex);
   return hex;
 };
