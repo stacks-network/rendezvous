@@ -427,18 +427,20 @@ const mintSbtc = (
   txId: string,
   sweepTxId: string
 ) => {
-  const blockHeight = simnet.blockHeight;
-
   // Calling `get-burn-header` only works for past block heights. We mine one
-  // empty Bitcoin block along with a Stacks one to make sure this happens.
-  simnet.mineEmptyBurnBlocks(1);
+  // empty Stacks block if the initial height is 0.
+  if (simnet.blockHeight === 0) {
+    simnet.mineEmptyBlock();
+  }
+
+  const previousStacksHeight = simnet.blockHeight - 1;
 
   const burnHash = simnet.callReadOnlyFn(
     "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-deposit",
     "get-burn-header",
     [
       // (height uint)
-      Cl.uint(blockHeight),
+      Cl.uint(previousStacksHeight),
     ],
     simnet.deployer
   ).result as OptionalCV<BufferCV>;
@@ -463,7 +465,7 @@ const mintSbtc = (
         // (burn-hash (buff 32))
         burnHash.value,
         // (burn-height uint)
-        Cl.uint(blockHeight),
+        Cl.uint(previousStacksHeight),
         // (sweep-txid (buff 32))
         Cl.bufferFromHex(sweepTxId),
       ],
