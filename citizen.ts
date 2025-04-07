@@ -59,14 +59,14 @@ export const issueFirstClassCitizenship = async (
   const simnetAddresses = [...simnet.getAccounts().values()];
 
   const stxBalancesMap = new Map(
-    Array.from(simnetAddresses, (address) => {
+    simnetAddresses.map((address) => {
       const balanceHex = simnet.runSnippet(`(stx-get-balance '${address})`);
       return [address, cvToValue(hexToCV(balanceHex))];
     })
   );
 
   const sbtcBalancesMap = new Map(
-    Array.from(simnetAddresses, (address) => {
+    simnetAddresses.map((address) => {
       try {
         const { result: getBalanceResult } = simnet.callReadOnlyFn(
           "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token",
