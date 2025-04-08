@@ -30,7 +30,13 @@ export const noRemoteData = {
   initial_height: 1,
 };
 
-export const invalidRemoteDataErrorMessage = `Remote data settings not properly setup in Clarinet.toml! To use remote data, please provide the "api_url", "initial_height", and "enabled" fields under the "repl.remote_data" section in the Clarinet.toml file.`;
+export const invalidRemoteDataWarningMessage = `\nRemote data settings existing in Clarinet.toml, but remote data feature will not be used! To use remote data, please make sure the following fields are set:
+
+- enabled = true
+- api_url = <stacks-api-url>
+- initial_height = <stacks-block-height-to-fork-from>
+
+under the "repl.remote_data" section in the Clarinet.toml file.`;
 
 /**
  * Gets the manifest file name for a Clarinet project.
@@ -63,16 +69,14 @@ export const tryParseRemoteDataSettings = (
   const remoteDataUserSettings =
     clarinetToml.repl?.["remote_data"] ?? undefined;
 
-  if (
-    remoteDataUserSettings !== undefined &&
-    (!remoteDataUserSettings?.["api_url"] ||
-      !remoteDataUserSettings?.["enabled"] ||
-      !remoteDataUserSettings?.["initial_height"])
-  ) {
-    throw new Error(invalidRemoteDataErrorMessage);
-  }
+  const invalidRemoteDataSetup =
+    !remoteDataUserSettings?.["api_url"] ||
+    !remoteDataUserSettings?.["enabled"] ||
+    !remoteDataUserSettings?.["initial_height"];
 
-  if (remoteDataUserSettings) {
+  if (remoteDataUserSettings !== undefined && invalidRemoteDataSetup) {
+    radio.emit("logMessage", yellow(invalidRemoteDataWarningMessage));
+  } else if (remoteDataUserSettings) {
     radio.emit(
       "logMessage",
       yellow(
@@ -81,7 +85,11 @@ export const tryParseRemoteDataSettings = (
     );
   }
 
-  return remoteDataUserSettings || noRemoteData;
+  if (!remoteDataUserSettings || invalidRemoteDataSetup) {
+    return noRemoteData;
+  }
+
+  return remoteDataUserSettings;
 };
 
 const helpMessage = `
