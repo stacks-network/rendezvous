@@ -3,7 +3,15 @@ import { join } from "path";
 import yaml from "yaml";
 import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
 import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
-import { cvToValue, hexToCV } from "@stacks/transactions";
+import {
+  BufferCV,
+  Cl,
+  ClarityType,
+  cvToJSON,
+  cvToValue,
+  hexToCV,
+  OptionalCV,
+} from "@stacks/transactions";
 import {
   Batch,
   ContractDeploymentProperties,
@@ -50,17 +58,38 @@ export const issueFirstClassCitizenship = async (
 
   const simnetAddresses = [...simnet.getAccounts().values()];
 
-  const balancesMap = new Map(
-    Array.from(simnetAddresses, (address) => {
+  const stxBalancesMap = new Map(
+    simnetAddresses.map((address) => {
       const balanceHex = simnet.runSnippet(`(stx-get-balance '${address})`);
       return [address, cvToValue(hexToCV(balanceHex))];
+    })
+  );
+
+  const sbtcBalancesMap = new Map(
+    simnetAddresses.map((address) => {
+      try {
+        const { result: getBalanceResult } = simnet.callReadOnlyFn(
+          "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token",
+          "get-balance",
+          [Cl.principal(address)],
+          address
+        );
+
+        // If the previous read-only call works, the user is working with
+        // sBTC. This means we can proceed with restoring sBTC balances.
+        const sbtcBalance = cvToJSON(getBalanceResult).value.value;
+
+        return [address, sbtcBalance];
+      } catch (e) {
+        return [address, 0];
+      }
     })
   );
 
   await simnet.initEmptySession(remoteDataSettings);
 
   simnetAddresses.forEach((address) => {
-    simnet.mintSTX(address, balancesMap.get(address)!);
+    simnet.mintSTX(address, stxBalancesMap.get(address)!);
   });
 
   // Combine the target contract with its tests into a single contract. The
@@ -88,6 +117,18 @@ export const issueFirstClassCitizenship = async (
       manifestDir
     )
   );
+
+  // Filter out addresses with zero balance. They do not need to be restored.
+  const sbtcBalancesToRestore: Map<string, number> = new Map(
+    [...sbtcBalancesMap.entries()].filter(([_, balance]) => balance !== 0)
+  );
+
+  // After all the contracts and requirements are deployed, if the test wallets
+  // had sBTC balances previously, restore them. If no test wallet previously
+  // owned sBTC, skip this step.
+  if ([...sbtcBalancesToRestore.keys()].length > 0) {
+    restoreSbtcBalances(simnet, sbtcBalancesToRestore);
+  }
 
   return simnet;
 };
@@ -344,3 +385,116 @@ export function scheduleRendezvous(
 
   return `${targetContractSource}\n\n${context}\n\n${tests}`;
 }
+
+/**
+ * Utility function that restores the test wallets' initial sBTC balances in
+ * the re-initialized first-class citizenship simnet.
+ *
+ * @param simnet The simnet instance.
+ * @param sbtcBalancesMap A map containing the test wallets' balances to be
+ * restored.
+ */
+const restoreSbtcBalances = (
+  simnet: Simnet,
+  sbtcBalancesMap: Map<string, number>
+) => {
+  // For each address present in the balances map, restore the balance.
+  [...sbtcBalancesMap.entries()]
+    // Re-assure the map does not contain nil balances.
+    .filter(([_, balance]) => balance !== 0)
+    .forEach(([address, balance]) => {
+      // To deposit sBTC, one needs a txId and a sweep txId. A deposit transaction
+      // must have a unique txId and sweep txId.
+      const txId = getUniqueHex();
+      const sweepTxId = getUniqueHex();
+      mintSbtc(simnet, balance, address, txId, sweepTxId);
+    });
+};
+
+/**
+ * Utility function to deposit an amount of sBTC to a Stacks address.
+ *
+ * @param simnet The simnet instance.
+ * @param amountSats The amount to mint in sats.
+ * @param recipient The Stacks address to mint sBTC to.
+ * @param txId A unique hex to use for the deposit.
+ * @param sweepTxId A unique hex to use for the deposit.
+ */
+const mintSbtc = (
+  simnet: Simnet,
+  amountSats: number,
+  recipient: string,
+  txId: string,
+  sweepTxId: string
+) => {
+  // Calling `get-burn-header` only works for past block heights. We mine one
+  // empty Stacks block if the initial height is 0.
+  if (simnet.blockHeight === 0) {
+    simnet.mineEmptyBlock();
+  }
+
+  const previousStacksHeight = simnet.blockHeight - 1;
+
+  const burnHash = simnet.callReadOnlyFn(
+    "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-deposit",
+    "get-burn-header",
+    [
+      // (height uint)
+      Cl.uint(previousStacksHeight),
+    ],
+    simnet.deployer
+  ).result as OptionalCV<BufferCV>;
+
+  if (burnHash === null || burnHash.type === ClarityType.OptionalNone) {
+    throw new Error("Something went wrong trying to retrieve the burn header.");
+  }
+
+  const completeDepositTx = cvToJSON(
+    simnet.callPublicFn(
+      "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-deposit",
+      "complete-deposit-wrapper",
+      [
+        // (txid (buff 32))
+        Cl.bufferFromHex(txId),
+        // (vout-index uint)
+        Cl.uint(1),
+        // (amount uint)
+        Cl.uint(amountSats),
+        // (recipient principal)
+        Cl.principal(recipient),
+        // (burn-hash (buff 32))
+        burnHash.value,
+        // (burn-height uint)
+        Cl.uint(previousStacksHeight),
+        // (sweep-txid (buff 32))
+        Cl.bufferFromHex(sweepTxId),
+      ],
+      "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4"
+    ).result
+  );
+
+  // If the deposit transaction fails, an unexpected outcome can happen. Throw
+  // an error if the transaction is not successful.
+  if (!completeDepositTx.success) {
+    throw new Error("Something went wrong trying to restore sBTC balances.");
+  }
+};
+
+/**
+ * Utility function that generates a random, unique hex to be used as txId in
+ * `mintSbtc`.
+ *
+ * @returns A random hex string.
+ */
+const getUniqueHex = (): string => {
+  let hex: string;
+
+  // Generate a 32-byte (64 character) random hex string.
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  hex = Array.from(bytes)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+
+  return hex;
+};
