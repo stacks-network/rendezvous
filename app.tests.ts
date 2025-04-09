@@ -1,7 +1,7 @@
-import { red } from "ansicolor";
+import { red, yellow } from "ansicolor";
 import {
   getManifestFileName,
-  invalidRemoteDataErrorMessage,
+  invalidRemoteDataWarningMessage,
   main,
   noRemoteData,
   tryParseRemoteDataSettings,
@@ -36,6 +36,15 @@ enabled = true
   },
   noRemoteDataSettings: {
     toml: ``,
+    expected: noRemoteData,
+  },
+  enabledFalseSettings: {
+    toml: `
+[repl.remote_data]
+api_url = 'https://api.hiro.so'
+enabled = false
+initial_height = 595012
+`,
     expected: noRemoteData,
   },
 };
@@ -471,6 +480,11 @@ describe("Remote data settings parsing", () => {
       clarinetTomlRemoteData.correctSettings.toml,
       clarinetTomlRemoteData.correctSettings.expected,
     ],
+    [
+      "correctly overrides the no remote data settings when enabled is false",
+      clarinetTomlRemoteData.enabledFalseSettings.toml,
+      clarinetTomlRemoteData.enabledFalseSettings.expected,
+    ],
   ])(
     "%s",
     (
@@ -499,22 +513,31 @@ describe("Remote data settings parsing", () => {
     }
   );
 
-  it("throws an error when the remote data settings are not properly set up", () => {
+  it("logs warning message when the remote data settings are not properly set up", () => {
     // Setup
     const anyPath = `${Date.now()}.toml`;
 
-    jest
-      .spyOn(fs, "readFileSync")
-      .mockImplementation((path: fs.PathOrFileDescriptor) => {
-        expect(path).toBe(resolve(anyPath));
-        return clarinetTomlRemoteData.noInitialHeightSettings.toml;
-      });
+    jest.spyOn(fs, "readFileSync").mockImplementation((path) => {
+      expect(path).toBe(resolve(anyPath));
+      return clarinetTomlRemoteData.enabledFalseSettings.toml;
+    });
+
+    const emittedLogMessages: string[] = [];
+    const mockRadio = new EventEmitter();
+    jest.spyOn(mockRadio, "emit").mockImplementation((event, message) => {
+      if (event === "logMessage") {
+        emittedLogMessages.push(message);
+      }
+      return true; // EventEmitter.emit returns boolean.
+    });
 
     // Exercise
-    const act = () => tryParseRemoteDataSettings(anyPath, new EventEmitter());
+    tryParseRemoteDataSettings(anyPath, mockRadio);
 
     // Verify
-    expect(act).toThrow(invalidRemoteDataErrorMessage);
+    expect(emittedLogMessages).toContain(
+      yellow(invalidRemoteDataWarningMessage)
+    );
 
     // Teardown
     jest.restoreAllMocks();
