@@ -275,6 +275,10 @@ export const checkProperties = (
               testFunctionCallResultJson
             );
 
+            const testFunctionCallClarityResult = cvToString(
+              testFunctionCallResult
+            );
+
             if (discardedInPlace) {
               radio.emit(
                 "logMessage",
@@ -284,7 +288,8 @@ export const checkProperties = (
                   `${yellow("[WARN]")} ` +
                   `${targetContractName} ` +
                   `${underline(r.selectedTestFunction.name)} ` +
-                  dim(printedTestFunctionArgs)
+                  `${dim(printedTestFunctionArgs)} ` +
+                  yellow(testFunctionCallClarityResult)
               );
             } else if (
               !discardedInPlace &&
@@ -299,7 +304,8 @@ export const checkProperties = (
                   `${green("[PASS]")} ` +
                   `${targetContractName} ` +
                   `${underline(r.selectedTestFunction.name)} ` +
-                  printedTestFunctionArgs
+                  `${printedTestFunctionArgs} ` +
+                  green(testFunctionCallClarityResult)
               );
 
               if (r.canMineBlocks) {
@@ -309,11 +315,9 @@ export const checkProperties = (
               // The function call did not result in (ok true) or (ok false).
               // Either the test failed or the test function returned an
               // unexpected value i.e. `(ok 1)`.
-              const displayedError = cvToString(testFunctionCallResult);
-
               throw new PropertyTestError(
-                `Test failed for ${targetContractName} contract: "${r.selectedTestFunction.name}" returned ${displayedError}`,
-                displayedError
+                `Test failed for ${targetContractName} contract: "${r.selectedTestFunction.name}" returned ${testFunctionCallClarityResult}`,
+                testFunctionCallClarityResult
               );
             }
           } catch (error: any) {

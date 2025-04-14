@@ -6,7 +6,7 @@ import {
   getFunctionsListForContract,
 } from "./shared";
 import { LocalContext } from "./invariant.types";
-import { Cl, cvToJSON } from "@stacks/transactions";
+import { Cl, cvToJSON, cvToString } from "@stacks/transactions";
 import { reporter } from "./heatstroke";
 import fc from "fast-check";
 import { dim, green, red, underline } from "ansicolor";
@@ -291,6 +291,15 @@ export const checkInvariants = async (
 
             const functionCallResultJson = cvToJSON(functionCall.result);
 
+            // Reaching this point means the function call went through, but it
+            // may still have returned an error result. Get the result, convert
+            // it to Clarity string format, and report it to improve the user
+            // experiance by providing important information about the function
+            // call during the run.
+            const selectedFunctionClarityResult = cvToString(
+              functionCall.result
+            );
+
             if (functionCallResultJson.success) {
               localContext[r.rendezvousContractId][selectedFunction.name]++;
 
@@ -306,6 +315,7 @@ export const checkInvariants = async (
                 simnet.deployer
               );
 
+              // Function call passed.
               radio.emit(
                 "logMessage",
                 `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
@@ -313,7 +323,8 @@ export const checkInvariants = async (
                   dim(`${sutCallerWallet}        `) +
                   `${targetContractName} ` +
                   `${underline(selectedFunction.name)} ` +
-                  printedFunctionArgs
+                  `${printedFunctionArgs} ` +
+                  green(selectedFunctionClarityResult)
               );
 
               try {
@@ -328,6 +339,7 @@ export const checkInvariants = async (
                 throw new PostDialerError(error.message);
               }
             } else {
+              // Function call failed.
               radio.emit(
                 "logMessage",
                 dim(
@@ -336,7 +348,8 @@ export const checkInvariants = async (
                     `${sutCallerWallet}        ` +
                     `${targetContractName} ` +
                     `${underline(selectedFunction.name)} ` +
-                    printedFunctionArgs
+                    `${printedFunctionArgs} ` +
+                    red(selectedFunctionClarityResult)
                 )
               );
             }
@@ -347,9 +360,15 @@ export const checkInvariants = async (
             ) {
               throw error;
             } else {
+              const displayedError =
+                error &&
+                typeof error === "string" &&
+                error.toLowerCase().includes("runtime")
+                  ? "(runtime)"
+                  : "(unknown)";
               // If the function call fails with a runtime error, log a dimmed
-              // message. Since the public function result is ignored, there's
-              // no need to throw an error.
+              // message. Since the public function result is only logged and
+              // does not affect the run, there's no need to throw an error.
               radio.emit(
                 "logMessage",
                 dim(
@@ -358,7 +377,8 @@ export const checkInvariants = async (
                     `${sutCallerWallet}        ` +
                     `${targetContractName} ` +
                     `${underline(selectedFunction.name)} ` +
-                    printedFunctionArgs
+                    `${printedFunctionArgs} ` +
+                    red(displayedError)
                 )
               );
             }
@@ -390,6 +410,8 @@ export const checkInvariants = async (
 
           const invariantCallResultJson = cvToJSON(invariantCallResult);
 
+          const invariantCallClarityResult = cvToString(invariantCallResult);
+
           if (invariantCallResultJson.value === true) {
             radio.emit(
               "logMessage",
@@ -399,31 +421,48 @@ export const checkInvariants = async (
                 `${green("[PASS]")} ` +
                 `${targetContractName} ` +
                 `${underline(r.selectedInvariant.name)} ` +
-                printedInvariantArgs
+                `${printedInvariantArgs} ` +
+                green(invariantCallClarityResult)
             );
-          }
+          } else {
+            radio.emit(
+              "logMessage",
+              red(
+                `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+                  `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
+                  `${invariantCallerWallet} ` +
+                  `[FAIL] ` +
+                  `${targetContractName} ` +
+                  `${underline(r.selectedInvariant.name)} ` +
+                  `${printedInvariantArgs} ` +
+                  red(invariantCallClarityResult)
+              )
+            );
 
-          if (!invariantCallResultJson.value) {
-            throw new Error(
-              `Invariant failed for ${targetContractName} contract: "${r.selectedInvariant.name}" returned ${invariantCallResultJson.value}`
+            // Invariant call went through, but returned something other than
+            // `true`. Create a custom error to distinguish this case from
+            // runtime errors.
+            throw new FalsifiedInvariantError(
+              `Invariant failed for ${targetContractName} contract: "${r.selectedInvariant.name}" returned ${invariantCallClarityResult}`
             );
           }
         } catch (error: any) {
-          // Handle both negative results from the invariant function and
-          // general runtime failures. Focus is on capturing the invariant
-          // function's result, including any runtime errors it caused.
-          radio.emit(
-            "logMessage",
-            red(
-              `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
-                `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
-                `${invariantCallerWallet} ` +
-                `[FAIL] ` +
-                `${targetContractName} ` +
-                `${underline(r.selectedInvariant.name)} ` +
-                printedInvariantArgs
-            )
-          );
+          // Log errors that aren't already handled as falsified invariants.
+          // This prevents duplicate error messages for the same failure.
+          if (!(error instanceof FalsifiedInvariantError)) {
+            radio.emit(
+              "logMessage",
+              red(
+                `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
+                  `Ӿ ${simnet.blockHeight.toString().padStart(8)}   ` +
+                  `${invariantCallerWallet} ` +
+                  `[FAIL] ` +
+                  `${targetContractName} ` +
+                  `${underline(r.selectedInvariant.name)} ` +
+                  printedInvariantArgs
+              )
+            );
+          }
 
           // Re-throw the error for fast-check to catch and process.
           throw error;
@@ -520,3 +559,9 @@ const filterInvariantFunctions = (
       ),
     ])
   );
+
+class FalsifiedInvariantError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
