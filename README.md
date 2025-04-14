@@ -106,4 +106,10 @@ rv example counter invariant
 
 ---
 
+### Documentation
+
+For full documentation, see the official [Rendezvous Book](https://stacks-network.github.io/rendezvous/).
+
+---
+
 [^1]: Hughes, J. (2004). _Testing the Hard Stuff and Staying Sane_. In Proceedings of the ACM SIGPLAN Workshop on Haskell (Haskell '04).
