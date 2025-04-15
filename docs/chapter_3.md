@@ -48,8 +48,7 @@ While testing directly in Clarity offers many benefits, the Clarinet SDK's TypeS
 
 The Clarinet SDK provides robust TypeScript-based testing capabilities that are particularly valuable for:
 
-- **Testing from the outside**: Simulating how external applications would interact with your contracts, including reading events emitted by contracts (which is why Rendezvous offers the dialers feature as a bridge)
-- **User interface testing**: Validating how frontend applications interact with contracts
+- **Testing from the outside**: Simulating how users or external applications would interact with your contracts, including reading events emitted by contracts (which is why Rendezvous offers the dialers feature as a bridge)
 - **Complex orchestration scenarios**: Setting up sophisticated test environments with multiple actors and interactions
 
 ### Finding the Right Balance
