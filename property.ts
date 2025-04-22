@@ -97,7 +97,7 @@ export const checkProperties = (
     Array.from(rendezvousAllFunctions, ([contractId, functions]) => [
       contractId,
       functions.filter(
-        (f) => f.access === "read_only" && f.name.startsWith("can-")
+        ({ access, name }) => access === "read_only" && name.startsWith("can-")
       ),
     ])
   );
