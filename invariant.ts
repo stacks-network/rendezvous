@@ -555,7 +555,8 @@ const filterInvariantFunctions = (
     Array.from(allFunctionsMap, ([contractId, functions]) => [
       contractId,
       functions.filter(
-        (f) => f.access === "read_only" && f.name.startsWith("invariant-")
+        ({ access, name }) =>
+          access === "read_only" && name.startsWith("invariant-")
       ),
     ])
   );

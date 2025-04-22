@@ -228,8 +228,9 @@ export async function main() {
    */
   const rendezvousList = Array.from(
     getSimnetDeployerContractsInterfaces(simnet).keys()
-  ).filter((deployedContract) =>
-    [sutContractName].includes(getContractNameFromContractId(deployedContract))
+  ).filter(
+    (deployedContract) =>
+      getContractNameFromContractId(deployedContract) === sutContractName
   );
 
   const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
