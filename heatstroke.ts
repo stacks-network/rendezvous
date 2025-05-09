@@ -154,6 +154,10 @@ export function reporter(
         break;
       }
     }
+
+    // Set non-zero exit code to properly signal test failure to shells,
+    // scripts, CI systems, and other tools that check process exit status.
+    process.exitCode = 1;
   } else {
     radio.emit(
       "logMessage",
