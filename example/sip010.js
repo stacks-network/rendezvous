@@ -34,14 +34,14 @@ async function postTransferSip010PrintEvent(context) {
     context.clarityValueArguments[memoParameterIndex];
 
   // The `memo` argument is optional. If `none`, nothing has to be printed.
-  if (memoGeneratedArgumentCV.type === 9) {
+  if (memoGeneratedArgumentCV.type === "none") {
     return;
   }
 
   // If not `none`, the `memo` argument must be `some`. Otherwise, the
   // generated clarity argument is not an option type, so it does not comply
   // with the SIP-010 fungible token trait.
-  if (memoGeneratedArgumentCV.type !== 10) {
+  if (memoGeneratedArgumentCV.type !== "some") {
     throw new Error("The memo argument has to be an option type!");
   }
 

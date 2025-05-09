@@ -69,6 +69,7 @@ jobs:
           rv . cargo invariant
           rv . reverse test
           rv . slice test
+          rv . rendezvous-token invariant --dial=./sip010.js
 
   publish-docs:
     needs: [tests, examples]
