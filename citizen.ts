@@ -77,7 +77,12 @@ export const issueFirstClassCitizenship = async (
 
         // If the previous read-only call works, the user is working with
         // sBTC. This means we can proceed with restoring sBTC balances.
-        const sbtcBalance = cvToJSON(getBalanceResult).value.value;
+        const sbtcBalanceJSON = cvToJSON(getBalanceResult);
+
+        // The `get-balance` function returns a response containing the uint
+        // balance of the address. In the JSON representation, the balance is
+        // represented as a string. We need to parse it to an integer.
+        const sbtcBalance = parseInt(sbtcBalanceJSON.value.value, 10);
 
         return [address, sbtcBalance];
       } catch (e) {
