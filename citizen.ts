@@ -65,26 +65,7 @@ export const issueFirstClassCitizenship = async (
     })
   );
 
-  const sbtcBalancesMap = new Map(
-    simnetAddresses.map((address) => {
-      try {
-        const { result: getBalanceResult } = simnet.callReadOnlyFn(
-          "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token",
-          "get-balance",
-          [Cl.principal(address)],
-          address
-        );
-
-        // If the previous read-only call works, the user is working with
-        // sBTC. This means we can proceed with restoring sBTC balances.
-        const sbtcBalance = cvToJSON(getBalanceResult).value.value;
-
-        return [address, sbtcBalance];
-      } catch (e) {
-        return [address, 0];
-      }
-    })
-  );
+  const sbtcBalancesMap = getSbtcBalancesFromSimnet(simnet);
 
   await simnet.initEmptySession(remoteDataSettings);
 
@@ -385,6 +366,43 @@ export function scheduleRendezvous(
 
   return `${targetContractSource}\n\n${context}\n\n${tests}`;
 }
+
+/**
+ * Maps the simnet accounts to their sBTC balances. The function tries to call
+ * the `get-balance` function of the `sbtc-token` contract for each address. If
+ * the call fails, it returns a balance of 0 for that address. The call fails
+ * if the user is not working with sBTC.
+ * @param simnet The simnet instance.
+ * @returns A map of addresses to their sBTC balances.
+ */
+export const getSbtcBalancesFromSimnet = (
+  simnet: Simnet
+): Map<string, number> =>
+  new Map(
+    [...simnet.getAccounts().values()].map((address) => {
+      try {
+        const { result: getBalanceResult } = simnet.callReadOnlyFn(
+          "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token",
+          "get-balance",
+          [Cl.principal(address)],
+          address
+        );
+
+        // If the previous read-only call works, the user is working with
+        // sBTC. This means we can proceed with restoring sBTC balances.
+        const sbtcBalanceJSON = cvToJSON(getBalanceResult);
+
+        // The `get-balance` function returns a response containing the uint
+        // balance of the address. In the JSON representation, the balance is
+        // represented as a string. We need to parse it to an integer.
+        const sbtcBalance = parseInt(sbtcBalanceJSON.value.value, 10);
+
+        return [address, sbtcBalance];
+      } catch (e) {
+        return [address, 0];
+      }
+    })
+  );
 
 /**
  * Utility function that restores the test wallets' initial sBTC balances in

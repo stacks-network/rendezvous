@@ -2,6 +2,7 @@ import fc from "fast-check";
 import {
   buildRendezvousData,
   getContractSource,
+  getSbtcBalancesFromSimnet,
   getTestContractSource,
   groupContractsByEpochFromSimnetPlan,
   issueFirstClassCitizenship,
@@ -366,7 +367,7 @@ describe("Simnet deployment plan operations", () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it(`the first-class citizenship simnet has the correct balances for the registered accounts`, async () => {
+  it(`the first-class citizenship simnet has the correct STX balances for the registered accounts`, async () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
@@ -395,6 +396,37 @@ describe("Simnet deployment plan operations", () => {
     expect(Array.from(balancesMap.values())).toEqual(
       Array(firstClassSimnet.getAccounts().size).fill(BigInt(100000000000000))
     );
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  it(`the first-class citizenship simnet has the correct sBTC balances for the registered accounts`, async () => {
+    // Setup
+    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
+    cpSync(manifestDir, tempDir, { recursive: true });
+
+    // Exercise
+    const firstClassSimnet = await issueFirstClassCitizenship(
+      tempDir,
+      join(tempDir, getManifestFileName(tempDir, "counter")),
+      tryParseRemoteDataSettings(
+        join(manifestDir, "Clarinet.toml"),
+        new EventEmitter()
+      ),
+      "counter"
+    );
+
+    // Verify
+    const sbtcBalancesMap = getSbtcBalancesFromSimnet(firstClassSimnet);
+
+    // The expected balance is 0 (number) for all accounts, since the example
+    // Clarinet project does not operate with sBTC.
+    const numAccounts = firstClassSimnet.getAccounts().size;
+    const numZeroBalanceAccounts = Array.from(sbtcBalancesMap.values()).filter(
+      (balance) => balance === 0
+    ).length;
+    expect(numZeroBalanceAccounts).toBe(numAccounts);
 
     // Teardown
     rmSync(tempDir, { recursive: true, force: true });
