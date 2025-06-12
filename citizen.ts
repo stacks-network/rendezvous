@@ -1,5 +1,6 @@
 import { readFileSync } from "fs";
-import { join } from "path";
+import { basename, join, resolve } from "path";
+import toml from "toml";
 import yaml from "yaml";
 import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
 import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
@@ -93,16 +94,24 @@ export const issueFirstClassCitizenship = async (
       ])
   );
 
+  const clarinetToml = parseClarintConfig(manifestPath);
+  const cacheDir = clarinetToml.project?.cache_dir || "./.cache";
+
   // Deploy the contracts to the empty simnet session in the correct order.
-  await deployContracts(simnet, sortedContractsByEpoch, (name, sender, props) =>
-    getContractSource(
-      [sutContractName],
-      rendezvousSources,
-      name,
-      sender,
-      props,
-      manifestDir
-    )
+  await deployContracts(
+    simnet,
+    sortedContractsByEpoch,
+    manifestDir,
+    cacheDir,
+    (name, sender, props) =>
+      getContractSource(
+        [sutContractName],
+        rendezvousSources,
+        name,
+        sender,
+        props,
+        manifestDir
+      )
   );
 
   // Filter out addresses with zero balance. They do not need to be restored.
@@ -162,9 +171,11 @@ export const groupContractsByEpochFromDeploymentPlan = (
  * @param contractsByEpoch The record of contracts by epoch.
  * @param getContractSourceFn The function to retrieve the contract source.
  */
-const deployContracts = async (
+export const deployContracts = async (
   simnet: Simnet,
   contractsByEpoch: ContractsByEpoch,
+  manifestDir: string,
+  cacheDir: string,
   getContractSourceFn: (
     name: string,
     sender: string,
@@ -177,11 +188,21 @@ const deployContracts = async (
     for (const contract of contracts.flatMap(Object.entries)) {
       const [name, props]: [string, ContractDeploymentProperties] = contract;
 
-      // For requirement contracts, use the original sender. The sender address
-      // is included in the path:
-      // "./.cache/requirements/<address>.contract-name.clar".
-      const sender = props.path.includes(".cache")
-        ? props.path.split("requirements")[1].slice(1).split(".")[0]
+      // Resolve paths to absolute for proper comparison.
+      const absoluteContractPath = resolve(manifestDir, props.path);
+      const absoluteRequirementsPath = resolve(
+        manifestDir,
+        cacheDir,
+        "requirements"
+      );
+
+      // Check if contract is in requirements directory.
+      const isRequirement = absoluteContractPath.startsWith(
+        absoluteRequirementsPath
+      );
+
+      const sender = isRequirement
+        ? basename(props.path).split(".")[0]
         : simnet.deployer;
 
       const source = getContractSourceFn(name, sender, props);
@@ -627,4 +648,12 @@ const getUniqueHex = (): string => {
     .join("");
 
   return hex;
+};
+
+/**
+ * Parses the Clarinet.toml file to extract configuration.
+ */
+const parseClarintConfig = (manifestPath: string) => {
+  const clarintTomlContent = readFileSync(manifestPath, { encoding: "utf-8" });
+  return toml.parse(clarintTomlContent) as any;
 };
