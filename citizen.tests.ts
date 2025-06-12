@@ -1,26 +1,28 @@
 import fc from "fast-check";
 import {
   buildRendezvousData,
+  deployContracts,
   getContractSource,
   getSbtcBalancesFromSimnet,
   getTestContractSource,
-  groupContractsByEpochFromSimnetPlan,
+  groupContractsByEpochFromDeploymentPlan,
   issueFirstClassCitizenship,
   scheduleRendezvous,
 } from "./citizen";
 import { initSimnet } from "@hirosystems/clarinet-sdk";
 import { join } from "path";
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
+import fs, { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import yaml from "yaml";
 import { getManifestFileName, tryParseRemoteDataSettings } from "./app";
+import { ContractsByEpoch, DeploymentPlan } from "./citizen.types";
 import { cvToValue, hexToCV } from "@stacks/transactions";
 import EventEmitter from "events";
 
 describe("Simnet deployment plan operations", () => {
   const manifestDir = "example";
   const manifestFileName = "Clarinet.toml";
-  const simnetPlanFileName = "default.simnet-plan.yaml";
+  const deploymentPlanFileName = "default.simnet-plan.yaml";
   const context = `(define-map context (string-ascii 100) {
     called: uint
     ;; other data
@@ -46,23 +48,27 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
-    const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
+    const deploymentPlanPath = join(
+      tempDir,
+      "deployments",
+      deploymentPlanFileName
+    );
 
-    rmSync(simnetPlanPath, { force: true });
-    if (existsSync(simnetPlanPath)) {
-      throw new Error("Simnet plan file already exists");
+    rmSync(deploymentPlanPath, { force: true });
+    if (existsSync(deploymentPlanPath)) {
+      throw new Error("Deployment plan file already exists");
     }
 
     const manifestPath = join(tempDir, manifestFileName);
     await initSimnet(manifestPath);
 
     // Exercise
-    const simnetPlanContent = readFileSync(simnetPlanPath, {
+    const deploymentPlanContent = readFileSync(deploymentPlanPath, {
       encoding: "utf-8",
     }).toString();
 
     // Verify
-    expect(simnetPlanContent).toBeDefined();
+    expect(deploymentPlanContent).toBeDefined();
 
     // Teardown
     rmSync(tempDir, { recursive: true, force: true });
@@ -72,16 +78,21 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
-    const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
+    const deploymentPlanPath = join(
+      tempDir,
+      "deployments",
+      deploymentPlanFileName
+    );
     const manifestPath = join(tempDir, manifestFileName);
 
     await initSimnet(manifestPath);
-    const parsedSimnetPlan = yaml.parse(
-      readFileSync(simnetPlanPath, { encoding: "utf-8" }).toString()
+    const parsedDeploymentPlan = yaml.parse(
+      readFileSync(deploymentPlanPath, { encoding: "utf-8" }).toString()
     );
 
     // Exercise
-    const actual = groupContractsByEpochFromSimnetPlan(parsedSimnetPlan);
+    const actual =
+      groupContractsByEpochFromDeploymentPlan(parsedDeploymentPlan);
 
     // Verify
     const expected = {
@@ -157,14 +168,22 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
-    const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
+    const deploymentPlanPath = join(
+      tempDir,
+      "deployments",
+      deploymentPlanFileName
+    );
 
-    const parsedSimnetPlan = yaml.parse(
-      readFileSync(simnetPlanPath, { encoding: "utf-8" }).toString()
+    const parsedDeploymentPlan = yaml.parse(
+      readFileSync(deploymentPlanPath, { encoding: "utf-8" }).toString()
     );
 
     // Exercise
-    const actual = getTestContractSource(parsedSimnetPlan, "counter", tempDir);
+    const actual = getTestContractSource(
+      parsedDeploymentPlan,
+      "counter",
+      tempDir
+    );
 
     // Verify
     const expected = readFileSync(
@@ -182,24 +201,28 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
-    const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
+    const deploymentPlanPath = join(
+      tempDir,
+      "deployments",
+      deploymentPlanFileName
+    );
     const manifestPath = join(tempDir, manifestFileName);
 
-    await initSimnet(manifestPath);
+    const simnet = await initSimnet(manifestPath);
 
-    const parsedSimnetPlan = yaml.parse(
-      readFileSync(simnetPlanPath, { encoding: "utf-8" }).toString()
+    const parsedDeploymentPlan = yaml.parse(
+      readFileSync(deploymentPlanPath, { encoding: "utf-8" }).toString()
     );
 
     // Exercise
     const rendezvousSources = new Map(
       ["counter"]
         .map((contractName) =>
-          buildRendezvousData(parsedSimnetPlan, contractName, manifestDir)
+          buildRendezvousData(parsedDeploymentPlan, contractName, manifestDir)
         )
         .map((rendezvousContractData) => [
-          rendezvousContractData.rendezvousContractName,
-          rendezvousContractData.rendezvousSource,
+          rendezvousContractData.rendezvousContractId,
+          rendezvousContractData.rendezvousSourceCode,
         ])
     );
 
@@ -213,7 +236,7 @@ describe("Simnet deployment plan operations", () => {
       { encoding: "utf-8" }
     );
     const rendezvousSrc = scheduleRendezvous(counterSrc, counterTestsSrc);
-    const expected = new Map([["counter", rendezvousSrc]]);
+    const expected = new Map([[`${simnet.deployer}.counter`, rendezvousSrc]]);
 
     expect(rendezvousSources).toEqual(expected);
 
@@ -225,28 +248,32 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
-    const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
+    const deploymentPlanPath = join(
+      tempDir,
+      "deployments",
+      deploymentPlanFileName
+    );
     const manifestPath = join(tempDir, manifestFileName);
 
-    await initSimnet(manifestPath);
+    const simnet = await initSimnet(manifestPath);
 
-    const parsedSimnetPlan = yaml.parse(
-      readFileSync(simnetPlanPath, { encoding: "utf-8" }).toString()
+    const parsedDeploymentPlan = yaml.parse(
+      readFileSync(deploymentPlanPath, { encoding: "utf-8" }).toString()
     );
 
     const rendezvousSources = new Map(
       ["counter"]
         .map((contractName) =>
-          buildRendezvousData(parsedSimnetPlan, contractName, manifestDir)
+          buildRendezvousData(parsedDeploymentPlan, contractName, manifestDir)
         )
         .map((rendezvousContractData) => [
-          rendezvousContractData.rendezvousContractName,
-          rendezvousContractData.rendezvousSource,
+          rendezvousContractData.rendezvousContractId,
+          rendezvousContractData.rendezvousSourceCode,
         ])
     );
 
     const contractsByEpoch =
-      groupContractsByEpochFromSimnetPlan(parsedSimnetPlan);
+      groupContractsByEpochFromDeploymentPlan(parsedDeploymentPlan);
 
     const counterContractData = contractsByEpoch["3.0"].find(
       (contract) => contract.counter
@@ -257,6 +284,7 @@ describe("Simnet deployment plan operations", () => {
       ["counter"],
       rendezvousSources,
       "counter",
+      simnet.deployer,
       {
         path: counterContractData.path,
         clarity_version: counterContractData.clarity_version,
@@ -285,28 +313,32 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
-    const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
+    const deploymentPlanPath = join(
+      tempDir,
+      "deployments",
+      deploymentPlanFileName
+    );
     const manifestPath = join(tempDir, manifestFileName);
 
-    await initSimnet(manifestPath);
+    const simnet = await initSimnet(manifestPath);
 
-    const parsedSimnetPlan = yaml.parse(
-      readFileSync(simnetPlanPath, { encoding: "utf-8" }).toString()
+    const parsedDeploymentPlan = yaml.parse(
+      readFileSync(deploymentPlanPath, { encoding: "utf-8" }).toString()
     );
 
     const rendezvousSources = new Map(
       ["counter"]
         .map((contractName) =>
-          buildRendezvousData(parsedSimnetPlan, contractName, manifestDir)
+          buildRendezvousData(parsedDeploymentPlan, contractName, manifestDir)
         )
         .map((rendezvousContractData) => [
-          rendezvousContractData.rendezvousContractName,
-          rendezvousContractData.rendezvousSource,
+          rendezvousContractData.rendezvousContractId,
+          rendezvousContractData.rendezvousSourceCode,
         ])
     );
 
     const contractsByEpoch =
-      groupContractsByEpochFromSimnetPlan(parsedSimnetPlan);
+      groupContractsByEpochFromDeploymentPlan(parsedDeploymentPlan);
 
     const cargoContractData = contractsByEpoch["3.0"].find(
       (contract) => contract.cargo
@@ -317,6 +349,7 @@ describe("Simnet deployment plan operations", () => {
       ["counter"],
       rendezvousSources,
       "cargo",
+      simnet.deployer,
       {
         path: cargoContractData.path,
         clarity_version: cargoContractData.clarity_version,
@@ -430,5 +463,245 @@ describe("Simnet deployment plan operations", () => {
 
     // Teardown
     rmSync(tempDir, { recursive: true, force: true });
+  });
+});
+
+describe("Requirement detection", () => {
+  it("should identify requirement contracts in default cache directory", async () => {
+    // Setup
+    const mockSimnet = {
+      setEpoch: jest.fn(),
+      deployContract: jest.fn(),
+      deployer: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
+    };
+
+    const mockGetContractSource = jest
+      .fn()
+      .mockReturnValue("(define-read-only (test) (ok true))");
+
+    const manifestDir = "/project";
+    const cacheDir = ".cache";
+    const contractsByEpoch: ContractsByEpoch = {
+      "2.0": [
+        {
+          "requirement-contract": {
+            path: "./.cache/requirements/SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.requirement-contract.clar",
+            clarity_version: 2,
+          },
+        },
+      ],
+      "2.05": [],
+      "2.1": [],
+      "2.2": [],
+      "2.3": [],
+      "2.4": [],
+      "2.5": [],
+      "3.0": [],
+    };
+
+    // Exercise
+    await deployContracts(
+      mockSimnet as any,
+      contractsByEpoch,
+      manifestDir,
+      cacheDir,
+      mockGetContractSource
+    );
+
+    // Verify
+    expect(mockSimnet.deployContract).toHaveBeenCalledWith(
+      "requirement-contract",
+      "(define-read-only (test) (ok true))",
+      { clarityVersion: 2 },
+      // Different than the deployer address, as it is a requirement contract.
+      "SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG"
+    );
+
+    // Teardown
+    jest.clearAllMocks();
+  });
+
+  it("should identify regular contracts not in requirements", async () => {
+    // Setup
+    const mockSimnet = {
+      setEpoch: jest.fn(),
+      deployContract: jest.fn(),
+      deployer: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
+    };
+
+    const mockGetContractSource = jest
+      .fn()
+      .mockReturnValue("(define-read-only (test) (ok true))");
+
+    const manifestDir = "/project";
+    const cacheDir = ".cache";
+    const contractsByEpoch: ContractsByEpoch = {
+      "2.0": [],
+      "2.05": [],
+      "2.1": [],
+      "2.2": [],
+      "2.3": [],
+      "2.4": [],
+      "2.5": [],
+      "3.0": [
+        {
+          "project-contract": {
+            path: "contracts/regular-contract.clar",
+            clarity_version: 3,
+          },
+        },
+      ],
+    };
+
+    // Exercise
+    await deployContracts(
+      mockSimnet as any,
+      contractsByEpoch,
+      manifestDir,
+      cacheDir,
+      mockGetContractSource
+    );
+
+    // Verify
+    expect(mockSimnet.deployContract).toHaveBeenCalledWith(
+      "project-contract",
+      "(define-read-only (test) (ok true))",
+      { clarityVersion: 3 },
+      mockSimnet.deployer
+    );
+
+    // Teardown
+    jest.clearAllMocks();
+  });
+
+  it("should handle custom cache directory", async () => {
+    // Setup
+    const mockSimnet = {
+      setEpoch: jest.fn(),
+      deployContract: jest.fn(),
+      deployer: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
+    };
+
+    const mockGetContractSource = jest
+      .fn()
+      .mockReturnValue("(define-read-only (test) (ok true))");
+
+    const manifestDir = "/project";
+    const cacheDir = "custom-cache";
+    const contractsByEpoch: ContractsByEpoch = {
+      "2.0": [],
+      "2.05": [],
+      "2.1": [
+        {
+          "custom-requirement": {
+            path: "custom-cache/requirements/SP1234567890ABCDEF.custom-requirement.clar",
+            clarity_version: 2,
+          },
+        },
+      ],
+      "2.2": [],
+      "2.3": [],
+      "2.4": [],
+      "2.5": [],
+      "3.0": [],
+    };
+
+    // Exercise
+    await deployContracts(
+      mockSimnet as any,
+      contractsByEpoch,
+      manifestDir,
+      cacheDir,
+      mockGetContractSource
+    );
+
+    // Verify
+    expect(mockSimnet.deployContract).toHaveBeenCalledWith(
+      "custom-requirement",
+      "(define-read-only (test) (ok true))",
+      { clarityVersion: 2 },
+      "SP1234567890ABCDEF"
+    );
+
+    // Teardown
+    jest.clearAllMocks();
+  });
+});
+
+describe("Project contract priority over requirements", () => {
+  it("should prioritize project contract over requirement when names match", () => {
+    // Setup
+    jest.spyOn(fs, "readFileSync").mockImplementation(() => "");
+
+    const deployerAddress = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM";
+    const mockDeploymentPlan: DeploymentPlan = {
+      genesis: {
+        wallets: [
+          {
+            name: "deployer",
+            address: deployerAddress,
+            balance: "",
+          },
+          {
+            name: "wallet_1",
+            address: "ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC",
+            balance: "",
+          },
+        ],
+        contracts: [],
+      },
+      plan: {
+        batches: [
+          {
+            epoch: "2.1",
+            transactions: [
+              {
+                "emulated-contract-publish": {
+                  "contract-name": "shared-name-contract",
+                  // Requirement contract sender. Different from deployer.
+                  "emulated-sender": "SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG",
+                  "clarity-version": 2,
+                  path: ".cache/requirements/SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.shared-name-contract.clar",
+                },
+              },
+            ],
+            id: 0,
+          },
+          {
+            epoch: "3.0",
+            transactions: [
+              {
+                "emulated-contract-publish": {
+                  "contract-name": "shared-name-contract",
+                  "emulated-sender": deployerAddress,
+                  "clarity-version": 3,
+                  path: "contracts/shared-name-contract.clar",
+                },
+              },
+            ],
+            id: 0,
+          },
+        ],
+      },
+      id: 0,
+      name: "",
+      network: "",
+    };
+
+    const contractName = "shared-name-contract";
+
+    // Exercise
+    const result = buildRendezvousData(
+      mockDeploymentPlan,
+      contractName,
+      "/project"
+    );
+
+    // Verify
+    const expectedRendezvousId = `${deployerAddress}.${contractName}`;
+    expect(result.rendezvousContractId).toBe(expectedRendezvousId);
+
+    // Teardown
+    jest.clearAllMocks();
   });
 });

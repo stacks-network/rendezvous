@@ -11,7 +11,7 @@ type Genesis = {
   contracts: string[];
 };
 
-type EmulatedContractPublish = {
+export type EmulatedContractPublish = {
   "contract-name": string;
   "emulated-sender": string;
   path: string;
@@ -32,7 +32,7 @@ type Plan = {
   batches: Batch[];
 };
 
-export type SimnetPlan = {
+export type DeploymentPlan = {
   id: number;
   name: string;
   network: string;
