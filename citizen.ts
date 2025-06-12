@@ -94,7 +94,9 @@ export const issueFirstClassCitizenship = async (
       ])
   );
 
-  const clarinetToml = parseClarintConfig(manifestPath);
+  const clarinetToml = toml.parse(
+    readFileSync(manifestPath, { encoding: "utf-8" })
+  ) as any;
   const cacheDir = clarinetToml.project?.cache_dir || "./.cache";
 
   // Deploy the contracts to the empty simnet session in the correct order.
@@ -648,12 +650,4 @@ const getUniqueHex = (): string => {
     .join("");
 
   return hex;
-};
-
-/**
- * Parses the Clarinet.toml file to extract configuration.
- */
-const parseClarintConfig = (manifestPath: string) => {
-  const clarintTomlContent = readFileSync(manifestPath, { encoding: "utf-8" });
-  return toml.parse(clarintTomlContent) as any;
 };
