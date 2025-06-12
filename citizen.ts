@@ -16,6 +16,7 @@ import {
   Batch,
   ContractDeploymentProperties,
   ContractsByEpoch,
+  EmulatedContractPublish,
   SimnetPlan,
   Transaction,
 } from "./citizen.types";
@@ -79,21 +80,26 @@ export const issueFirstClassCitizenship = async (
   /** The contract names mapped to the concatenated source code. */
   const rendezvousSources = new Map(
     [sutContractName]
+      // For each target contract name, execute the processing steps to get the
+      // concatenated contract source code and the contract ID.
       .map((contractName) =>
         buildRendezvousData(simnetPlan, contractName, manifestDir)
       )
+      // Use the contract ID as a key, mapping to the concatenated contract
+      // source code.
       .map((rendezvousContractData) => [
-        rendezvousContractData.rendezvousContractName,
-        rendezvousContractData.rendezvousSource,
+        rendezvousContractData.rendezvousContractId,
+        rendezvousContractData.rendezvousSourceCode,
       ])
   );
 
-  // Deploy the contracts to the simnet in the correct order.
-  await deployContracts(simnet, sortedContractsByEpoch, (name, props) =>
+  // Deploy the contracts to the empty simnet session in the correct order.
+  await deployContracts(simnet, sortedContractsByEpoch, (name, sender, props) =>
     getContractSource(
       [sutContractName],
       rendezvousSources,
       name,
+      sender,
       props,
       manifestDir
     )
@@ -161,6 +167,7 @@ const deployContracts = async (
   contractsByEpoch: ContractsByEpoch,
   getContractSourceFn: (
     name: string,
+    sender: string,
     props: ContractDeploymentProperties
   ) => string
 ): Promise<void> => {
@@ -170,14 +177,14 @@ const deployContracts = async (
     for (const contract of contracts.flatMap(Object.entries)) {
       const [name, props]: [string, ContractDeploymentProperties] = contract;
 
-      const source = getContractSourceFn(name, props);
-
       // For requirement contracts, use the original sender. The sender address
       // is included in the path:
       // "./.cache/requirements/<address>.contract-name.clar".
       const sender = props.path.includes(".cache")
         ? props.path.split("requirements")[1].slice(1).split(".")[0]
         : simnet.deployer;
+
+      const source = getContractSourceFn(name, sender, props);
 
       simnet.deployContract(
         name,
@@ -193,9 +200,11 @@ const deployContracts = async (
  * Conditionally retrieves the contract source based on whether the contract is
  * a SUT contract or not.
  * @param targetContractNames The list of target contract names.
- * @param rendezvousSourcesMap The contract names mapped to the concatenated
- * source code.
+ * @param rendezvousSourcesMap The target contract IDs mapped to the resulting
+ * concatenated source code.
  * @param contractName The contract name.
+ * @param contractSender The emulated sender of the contract according to the
+ * deployment plan.
  * @param contractProps The contract deployment properties.
  * @param manifestDir The relative path to the manifest directory.
  * @returns The contract source code.
@@ -204,11 +213,21 @@ export const getContractSource = (
   targetContractNames: string[],
   rendezvousSourcesMap: Map<string, string>,
   contractName: string,
+  contractSender: string,
   contractProps: ContractDeploymentProperties,
   manifestDir: string
 ): string => {
-  if (targetContractNames.includes(contractName)) {
-    const contractSource = rendezvousSourcesMap.get(contractName);
+  const contractId = `${contractSender}.${contractName}`;
+
+  // Checking if a contract is a SUT one just by using the name is not enough.
+  // There can be multiple contracts with the same name, but different senders
+  // in the simnet plan. The contract ID is the unique identifier used to store
+  // the concatenated Rendezvous source codes in the `rendezvousSourcesMap`.
+  if (
+    targetContractNames.includes(contractName) &&
+    rendezvousSourcesMap.has(contractId)
+  ) {
+    const contractSource = rendezvousSourcesMap.get(contractId);
     if (!contractSource) {
       throw new Error(`Contract source not found for ${contractName}`);
     }
@@ -226,18 +245,18 @@ export const getContractSource = (
  * @param contractName The contract name.
  * @param manifestDir The relative path to the manifest directory.
  * @returns The Rendezvous data representing a record. The returned record
- * contains the Rendezvous source code and the Rendezvous contract name.
+ * contains the Rendezvous source code and the unique Rendezvous contract ID.
  */
 export const buildRendezvousData = (
   simnetPlan: SimnetPlan,
   contractName: string,
   manifestDir: string
-) => {
+): { rendezvousContractId: string; rendezvousSourceCode: string } => {
   try {
     const sutContractSource = getSimnetPlanContractSource(
       simnetPlan,
-      manifestDir,
-      contractName
+      contractName,
+      manifestDir
     );
 
     const testContractSource = getTestContractSource(
@@ -251,9 +270,18 @@ export const buildRendezvousData = (
       testContractSource
     );
 
+    const rendezvousContractEmulatedSender =
+      getSutContractDeploymentPlanEmulatedPublish(simnetPlan, contractName)[
+        "emulated-sender"
+      ];
+
+    // Use the contract ID as a unique identifier of the contract within the
+    // deployment plan.
+    const rendezvousContractId = `${rendezvousContractEmulatedSender}.${contractName}`;
+
     return {
-      rendezvousSource: rendezvousSource,
-      rendezvousContractName: contractName,
+      rendezvousContractId: rendezvousContractId,
+      rendezvousSourceCode: rendezvousSource,
     };
   } catch (error: any) {
     throw new Error(
@@ -265,32 +293,21 @@ export const buildRendezvousData = (
 /**
  * Retrieves the contract source code using the simnet plan.
  * @param simnetPlan The parsed simnet plan.
- * @param manifestDir The relative path to the manifest directory.
  * @param sutContractName The target contract name.
+ * @param manifestDir The relative path to the manifest directory.
  * @returns The contract source code.
  */
 const getSimnetPlanContractSource = (
   simnetPlan: SimnetPlan,
-  manifestDir: string,
-  sutContractName: string
+  sutContractName: string,
+  manifestDir: string
 ) => {
-  // Filter for transactions that contain "emulated-contract-publish".
-  const contractInfo = simnetPlan.plan.batches
-    .flatMap((batch: Batch) => batch.transactions)
-    .find(
-      (transaction: Transaction) =>
-        transaction["emulated-contract-publish"] &&
-        transaction["emulated-contract-publish"]["contract-name"] ===
-          sutContractName
-    )?.["emulated-contract-publish"];
+  const sutContractPath = getSutContractDeploymentPlanEmulatedPublish(
+    simnetPlan,
+    sutContractName
+  ).path;
 
-  if (contractInfo == undefined) {
-    throw new Error(
-      `"${sutContractName}" contract not found in Clarinet.toml.`
-    );
-  }
-
-  return readFileSync(join(manifestDir, contractInfo.path), {
+  return readFileSync(join(manifestDir, sutContractPath), {
     encoding: "utf-8",
   }).toString();
 };
@@ -307,27 +324,42 @@ export const getTestContractSource = (
   sutContractName: string,
   manifestDir: string
 ): string => {
-  const contractInfo = simnetPlan.plan.batches
-    .flatMap((batch: Batch) => batch.transactions)
-    .find(
-      (transaction: Transaction) =>
-        transaction["emulated-contract-publish"] &&
-        transaction["emulated-contract-publish"]["contract-name"] ===
-          sutContractName
-    )?.["emulated-contract-publish"];
+  const sutContractPath = getSutContractDeploymentPlanEmulatedPublish(
+    simnetPlan,
+    sutContractName
+  ).path;
+  const clarityExtension = ".clar";
 
-  const sutContractPath = contractInfo!.path;
-  const extension = ".clar";
-
-  if (!sutContractPath.endsWith(extension)) {
+  if (!sutContractPath.endsWith(clarityExtension)) {
     throw new Error(
       `Invalid contract extension for the "${sutContractName}" contract.`
     );
   }
 
+  // If the sutContractPath is located under .cache/requirements/ path, search
+  // for the test contract in the classic `contracts` directory.
+  if (sutContractPath.includes(".cache")) {
+    const relativePath = sutContractPath.split(".cache/requirements/")[1];
+    const relativePathTestContract = relativePath.replace(
+      clarityExtension,
+      `.tests${clarityExtension}`
+    );
+
+    return readFileSync(
+      join(manifestDir, "contracts", relativePathTestContract),
+      {
+        encoding: "utf-8",
+      }
+    ).toString();
+  }
+
+  // If the contract is not under the `.cache/requirements/` path, we assume it
+  // is located in a regular path specified in the manifest file. Just search
+  // for the test contract near the SUT one, following the naming
+  // convention: `<contract-name>.tests.clar`.
   const testContractPath = sutContractPath.replace(
-    extension,
-    `.tests${extension}`
+    clarityExtension,
+    `.tests${clarityExtension}`
   );
 
   try {
@@ -339,6 +371,85 @@ export const getTestContractSource = (
       `Error retrieving the corresponding test contract for the "${sutContractName}" contract. ${error.message}`
     );
   }
+};
+
+/**
+ * Retrieves the emulated contract publish data of the target contract from the
+ * simnet plan. If multiple contracts share the same name in the simnet plan,
+ * this utility will prioritize the one defined in `Clarinet.toml` as a project
+ * contract over a requirement. The prioritization is made comparing the simnet
+ * plan emulated sender with the deployer of the Clarinet project.
+ * @param simnetPlan The parsed simnet plan.
+ * @param sutContractName The target contract name.
+ * @returns The emulated contract publish data of the SUT contract as present
+ * in the simnet plan.
+ */
+const getSutContractDeploymentPlanEmulatedPublish = (
+  simnetPlan: SimnetPlan,
+  sutContractName: string
+): EmulatedContractPublish => {
+  // Filter all emulated contract publish transactions matching the target
+  // contract name from the simnet plan.
+  const contractPublishMatchesByName = simnetPlan.plan.batches
+    .flatMap((batch: Batch) => batch.transactions)
+    .filter(
+      (transaction: Transaction) =>
+        transaction["emulated-contract-publish"] &&
+        transaction["emulated-contract-publish"]["contract-name"] ===
+          sutContractName
+    );
+
+  // If no matches are found, something went wrong.
+  if (contractPublishMatchesByName.length === 0) {
+    throw new Error(
+      `"${sutContractName}" contract not found in Clarinet.toml.`
+    );
+  }
+
+  // If multiple matches are found, search for the one deployed by the deployer
+  // defined in the `Devnet.toml` file and present in the simnet plan. This is
+  // the project contract.
+  if (contractPublishMatchesByName.length > 1) {
+    const deployer = simnetPlan.genesis.wallets.find(
+      (wallet) => wallet.name === "deployer"
+    )?.address;
+
+    if (!deployer) {
+      throw new Error(
+        `Something went wrong. Deployer not found in the deployment plan.`
+      );
+    }
+
+    // From the list of filtered emulated contract publish transactions with
+    // having the same name, select the one deployed by the deployer.
+    const targetContractDeploymentData = contractPublishMatchesByName.find(
+      (transaction: Transaction) =>
+        transaction["emulated-contract-publish"]!["emulated-sender"]! ===
+        deployer
+    )?.["emulated-contract-publish"];
+
+    // This is an edge case that can happen in practice. If the project has two
+    // requirements that share the same contract name, Rendezvous will not be
+    // able to select the one to be fuzzed. The recommendation for users would
+    // be to include the target contract in the Clarinet project.
+    if (!targetContractDeploymentData) {
+      throw new Error(
+        `Multiple contracts named "${sutContractName}" found in the deployment plan, no one deployed by the deployer.`
+      );
+    }
+
+    return targetContractDeploymentData;
+  }
+
+  // Only one match was found, return the path to the contract.
+  const contractNameMatch =
+    contractPublishMatchesByName[0]["emulated-contract-publish"];
+
+  if (!contractNameMatch) {
+    throw new Error(`Could not locate "${sutContractName}" contract.`);
+  }
+
+  return contractNameMatch;
 };
 
 /**

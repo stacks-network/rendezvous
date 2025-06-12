@@ -185,7 +185,7 @@ describe("Simnet deployment plan operations", () => {
     const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
     const manifestPath = join(tempDir, manifestFileName);
 
-    await initSimnet(manifestPath);
+    const simnet = await initSimnet(manifestPath);
 
     const parsedSimnetPlan = yaml.parse(
       readFileSync(simnetPlanPath, { encoding: "utf-8" }).toString()
@@ -198,8 +198,8 @@ describe("Simnet deployment plan operations", () => {
           buildRendezvousData(parsedSimnetPlan, contractName, manifestDir)
         )
         .map((rendezvousContractData) => [
-          rendezvousContractData.rendezvousContractName,
-          rendezvousContractData.rendezvousSource,
+          rendezvousContractData.rendezvousContractId,
+          rendezvousContractData.rendezvousSourceCode,
         ])
     );
 
@@ -213,7 +213,7 @@ describe("Simnet deployment plan operations", () => {
       { encoding: "utf-8" }
     );
     const rendezvousSrc = scheduleRendezvous(counterSrc, counterTestsSrc);
-    const expected = new Map([["counter", rendezvousSrc]]);
+    const expected = new Map([[`${simnet.deployer}.counter`, rendezvousSrc]]);
 
     expect(rendezvousSources).toEqual(expected);
 
@@ -228,7 +228,7 @@ describe("Simnet deployment plan operations", () => {
     const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
     const manifestPath = join(tempDir, manifestFileName);
 
-    await initSimnet(manifestPath);
+    const simnet = await initSimnet(manifestPath);
 
     const parsedSimnetPlan = yaml.parse(
       readFileSync(simnetPlanPath, { encoding: "utf-8" }).toString()
@@ -240,8 +240,8 @@ describe("Simnet deployment plan operations", () => {
           buildRendezvousData(parsedSimnetPlan, contractName, manifestDir)
         )
         .map((rendezvousContractData) => [
-          rendezvousContractData.rendezvousContractName,
-          rendezvousContractData.rendezvousSource,
+          rendezvousContractData.rendezvousContractId,
+          rendezvousContractData.rendezvousSourceCode,
         ])
     );
 
@@ -257,6 +257,7 @@ describe("Simnet deployment plan operations", () => {
       ["counter"],
       rendezvousSources,
       "counter",
+      simnet.deployer,
       {
         path: counterContractData.path,
         clarity_version: counterContractData.clarity_version,
@@ -288,7 +289,7 @@ describe("Simnet deployment plan operations", () => {
     const simnetPlanPath = join(tempDir, "deployments", simnetPlanFileName);
     const manifestPath = join(tempDir, manifestFileName);
 
-    await initSimnet(manifestPath);
+    const simnet = await initSimnet(manifestPath);
 
     const parsedSimnetPlan = yaml.parse(
       readFileSync(simnetPlanPath, { encoding: "utf-8" }).toString()
@@ -300,8 +301,8 @@ describe("Simnet deployment plan operations", () => {
           buildRendezvousData(parsedSimnetPlan, contractName, manifestDir)
         )
         .map((rendezvousContractData) => [
-          rendezvousContractData.rendezvousContractName,
-          rendezvousContractData.rendezvousSource,
+          rendezvousContractData.rendezvousContractId,
+          rendezvousContractData.rendezvousSourceCode,
         ])
     );
 
@@ -317,6 +318,7 @@ describe("Simnet deployment plan operations", () => {
       ["counter"],
       rendezvousSources,
       "cargo",
+      simnet.deployer,
       {
         path: cargoContractData.path,
         clarity_version: cargoContractData.clarity_version,

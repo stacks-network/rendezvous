@@ -11,7 +11,7 @@ type Genesis = {
   contracts: string[];
 };
 
-type EmulatedContractPublish = {
+export type EmulatedContractPublish = {
   "contract-name": string;
   "emulated-sender": string;
   path: string;
