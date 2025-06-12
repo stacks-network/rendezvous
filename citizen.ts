@@ -17,7 +17,7 @@ import {
   ContractDeploymentProperties,
   ContractsByEpoch,
   EmulatedContractPublish,
-  SimnetPlan,
+  DeploymentPlan,
   Transaction,
 } from "./citizen.types";
 import { RemoteDataSettings } from "./app.types";
@@ -43,19 +43,19 @@ export const issueFirstClassCitizenship = async (
   remoteDataSettings: RemoteDataSettings,
   sutContractName: string
 ): Promise<Simnet> => {
-  // Initialize the simnet, to generate the simnet plan and instance. The empty
-  // session will be set up, and contracts will be deployed in the correct
-  // order based on the simnet plan a few lines below.
+  // Initialize the simnet, to generate the deployment plan and instance. The
+  // empty session will be set up, and contracts will be deployed in the
+  // correct order based on the deployment plan a few lines below.
   const simnet = await initSimnet(manifestPath);
 
-  const simnetPlan = yaml.parse(
+  const deploymentPlan = yaml.parse(
     readFileSync(join(manifestDir, "deployments", "default.simnet-plan.yaml"), {
       encoding: "utf-8",
     })
   );
 
   const sortedContractsByEpoch =
-    groupContractsByEpochFromSimnetPlan(simnetPlan);
+    groupContractsByEpochFromDeploymentPlan(deploymentPlan);
 
   const simnetAddresses = [...simnet.getAccounts().values()];
 
@@ -83,7 +83,7 @@ export const issueFirstClassCitizenship = async (
       // For each target contract name, execute the processing steps to get the
       // concatenated contract source code and the contract ID.
       .map((contractName) =>
-        buildRendezvousData(simnetPlan, contractName, manifestDir)
+        buildRendezvousData(deploymentPlan, contractName, manifestDir)
       )
       // Use the contract ID as a key, mapping to the concatenated contract
       // source code.
@@ -121,17 +121,17 @@ export const issueFirstClassCitizenship = async (
 };
 
 /**
- * Groups contracts by epoch from the simnet plan.
- * @param simnetPlan The simnet plan.
+ * Groups contracts by epoch from the deployment plan.
+ * @param deploymentPlan The parsed deployment plan.
  * @returns A record of contracts grouped by epoch. The record key is the epoch
  * string, and the value is an array of contracts. Each contract is represented
  * as a record with the contract name as the key and a record containing the
  * contract path and clarity version as the value.
  */
-export const groupContractsByEpochFromSimnetPlan = (
-  simnetPlan: SimnetPlan
+export const groupContractsByEpochFromDeploymentPlan = (
+  deploymentPlan: DeploymentPlan
 ): ContractsByEpoch => {
-  return simnetPlan.plan.batches.reduce(
+  return deploymentPlan.plan.batches.reduce(
     (acc: ContractsByEpoch, batch: Batch) => {
       const epoch = batch.epoch;
       const contracts = batch.transactions
@@ -221,8 +221,9 @@ export const getContractSource = (
 
   // Checking if a contract is a SUT one just by using the name is not enough.
   // There can be multiple contracts with the same name, but different senders
-  // in the simnet plan. The contract ID is the unique identifier used to store
-  // the concatenated Rendezvous source codes in the `rendezvousSourcesMap`.
+  // in the deployment plan. The contract ID is the unique identifier used to
+  // store the concatenated Rendezvous source codes in the
+  // `rendezvousSourcesMap`.
   if (
     targetContractNames.includes(contractName) &&
     rendezvousSourcesMap.has(contractId)
@@ -241,26 +242,26 @@ export const getContractSource = (
 
 /**
  * Builds the Rendezvous data.
- * @param simnetPlan The parsed simnet plan.
+ * @param deploymentPlan The parsed deployment plan.
  * @param contractName The contract name.
  * @param manifestDir The relative path to the manifest directory.
  * @returns The Rendezvous data representing a record. The returned record
  * contains the Rendezvous source code and the unique Rendezvous contract ID.
  */
 export const buildRendezvousData = (
-  simnetPlan: SimnetPlan,
+  deploymentPlan: DeploymentPlan,
   contractName: string,
   manifestDir: string
 ): { rendezvousContractId: string; rendezvousSourceCode: string } => {
   try {
-    const sutContractSource = getSimnetPlanContractSource(
-      simnetPlan,
+    const sutContractSource = getDeploymentPlanContractSource(
+      deploymentPlan,
       contractName,
       manifestDir
     );
 
     const testContractSource = getTestContractSource(
-      simnetPlan,
+      deploymentPlan,
       contractName,
       manifestDir
     );
@@ -271,7 +272,7 @@ export const buildRendezvousData = (
     );
 
     const rendezvousContractEmulatedSender =
-      getSutContractDeploymentPlanEmulatedPublish(simnetPlan, contractName)[
+      getSutContractDeploymentPlanEmulatedPublish(deploymentPlan, contractName)[
         "emulated-sender"
       ];
 
@@ -291,19 +292,19 @@ export const buildRendezvousData = (
 };
 
 /**
- * Retrieves the contract source code using the simnet plan.
- * @param simnetPlan The parsed simnet plan.
+ * Retrieves the contract source code using the deployment plan.
+ * @param deploymentPlan The parsed deployment plan.
  * @param sutContractName The target contract name.
  * @param manifestDir The relative path to the manifest directory.
  * @returns The contract source code.
  */
-const getSimnetPlanContractSource = (
-  simnetPlan: SimnetPlan,
+const getDeploymentPlanContractSource = (
+  deploymentPlan: DeploymentPlan,
   sutContractName: string,
   manifestDir: string
 ) => {
   const sutContractPath = getSutContractDeploymentPlanEmulatedPublish(
-    simnetPlan,
+    deploymentPlan,
     sutContractName
   ).path;
 
@@ -314,18 +315,18 @@ const getSimnetPlanContractSource = (
 
 /**
  * Retrieves the test contract source code.
- * @param simnetPlan The parsed simnet plan.
+ * @param deploymentPlan The parsed deployment plan.
  * @param sutContractName The target contract name.
  * @param manifestDir The relative path to the manifest directory.
  * @returns The test contract source code.
  */
 export const getTestContractSource = (
-  simnetPlan: SimnetPlan,
+  deploymentPlan: DeploymentPlan,
   sutContractName: string,
   manifestDir: string
 ): string => {
   const sutContractPath = getSutContractDeploymentPlanEmulatedPublish(
-    simnetPlan,
+    deploymentPlan,
     sutContractName
   ).path;
   const clarityExtension = ".clar";
@@ -375,22 +376,22 @@ export const getTestContractSource = (
 
 /**
  * Retrieves the emulated contract publish data of the target contract from the
- * simnet plan. If multiple contracts share the same name in the simnet plan,
- * this utility will prioritize the one defined in `Clarinet.toml` as a project
- * contract over a requirement. The prioritization is made comparing the simnet
- * plan emulated sender with the deployer of the Clarinet project.
- * @param simnetPlan The parsed simnet plan.
+ * deployment plan. If multiple contracts share the same name in the deployment
+ * plan, this utility will prioritize the one defined in `Clarinet.toml` as a
+ * project contract over a requirement. The prioritization is made comparing
+ * the deployment plan emulated sender with the deployer of the Clarinet project.
+ * @param deploymentPlan The parsed deployment plan.
  * @param sutContractName The target contract name.
  * @returns The emulated contract publish data of the SUT contract as present
- * in the simnet plan.
+ * in the deployment plan.
  */
 const getSutContractDeploymentPlanEmulatedPublish = (
-  simnetPlan: SimnetPlan,
+  deploymentPlan: DeploymentPlan,
   sutContractName: string
 ): EmulatedContractPublish => {
   // Filter all emulated contract publish transactions matching the target
-  // contract name from the simnet plan.
-  const contractPublishMatchesByName = simnetPlan.plan.batches
+  // contract name from the deployment plan.
+  const contractPublishMatchesByName = deploymentPlan.plan.batches
     .flatMap((batch: Batch) => batch.transactions)
     .filter(
       (transaction: Transaction) =>
@@ -407,10 +408,10 @@ const getSutContractDeploymentPlanEmulatedPublish = (
   }
 
   // If multiple matches are found, search for the one deployed by the deployer
-  // defined in the `Devnet.toml` file and present in the simnet plan. This is
-  // the project contract.
+  // defined in the `Devnet.toml` file and present in the deployment plan. This
+  // is the project contract.
   if (contractPublishMatchesByName.length > 1) {
-    const deployer = simnetPlan.genesis.wallets.find(
+    const deployer = deploymentPlan.genesis.wallets.find(
       (wallet) => wallet.name === "deployer"
     )?.address;
 

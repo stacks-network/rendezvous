@@ -32,7 +32,7 @@ type Plan = {
   batches: Batch[];
 };
 
-export type SimnetPlan = {
+export type DeploymentPlan = {
   id: number;
   name: string;
   network: string;
