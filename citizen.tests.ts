@@ -1,6 +1,7 @@
 import fc from "fast-check";
 import {
   buildRendezvousData,
+  deployContracts,
   getContractSource,
   getSbtcBalancesFromSimnet,
   getTestContractSource,
@@ -10,10 +11,11 @@ import {
 } from "./citizen";
 import { initSimnet } from "@hirosystems/clarinet-sdk";
 import { join } from "path";
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
+import fs, { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import yaml from "yaml";
 import { getManifestFileName, tryParseRemoteDataSettings } from "./app";
+import { ContractsByEpoch, DeploymentPlan } from "./citizen.types";
 import { cvToValue, hexToCV } from "@stacks/transactions";
 import EventEmitter from "events";
 
@@ -461,5 +463,245 @@ describe("Simnet deployment plan operations", () => {
 
     // Teardown
     rmSync(tempDir, { recursive: true, force: true });
+  });
+});
+
+describe("Requirement detection", () => {
+  it("should identify requirement contracts in default cache directory", async () => {
+    // Setup
+    const mockSimnet = {
+      setEpoch: jest.fn(),
+      deployContract: jest.fn(),
+      deployer: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
+    };
+
+    const mockGetContractSource = jest
+      .fn()
+      .mockReturnValue("(define-read-only (test) (ok true))");
+
+    const manifestDir = "/project";
+    const cacheDir = ".cache";
+    const contractsByEpoch: ContractsByEpoch = {
+      "2.0": [
+        {
+          "requirement-contract": {
+            path: "./.cache/requirements/SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.requirement-contract.clar",
+            clarity_version: 2,
+          },
+        },
+      ],
+      "2.05": [],
+      "2.1": [],
+      "2.2": [],
+      "2.3": [],
+      "2.4": [],
+      "2.5": [],
+      "3.0": [],
+    };
+
+    // Exercise
+    await deployContracts(
+      mockSimnet as any,
+      contractsByEpoch,
+      manifestDir,
+      cacheDir,
+      mockGetContractSource
+    );
+
+    // Verify
+    expect(mockSimnet.deployContract).toHaveBeenCalledWith(
+      "requirement-contract",
+      "(define-read-only (test) (ok true))",
+      { clarityVersion: 2 },
+      // Different than the deployer address, as it is a requirement contract.
+      "SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG"
+    );
+
+    // Teardown
+    jest.clearAllMocks();
+  });
+
+  it("should identify regular contracts not in requirements", async () => {
+    // Setup
+    const mockSimnet = {
+      setEpoch: jest.fn(),
+      deployContract: jest.fn(),
+      deployer: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
+    };
+
+    const mockGetContractSource = jest
+      .fn()
+      .mockReturnValue("(define-read-only (test) (ok true))");
+
+    const manifestDir = "/project";
+    const cacheDir = ".cache";
+    const contractsByEpoch: ContractsByEpoch = {
+      "2.0": [],
+      "2.05": [],
+      "2.1": [],
+      "2.2": [],
+      "2.3": [],
+      "2.4": [],
+      "2.5": [],
+      "3.0": [
+        {
+          "project-contract": {
+            path: "contracts/regular-contract.clar",
+            clarity_version: 3,
+          },
+        },
+      ],
+    };
+
+    // Exercise
+    await deployContracts(
+      mockSimnet as any,
+      contractsByEpoch,
+      manifestDir,
+      cacheDir,
+      mockGetContractSource
+    );
+
+    // Verify
+    expect(mockSimnet.deployContract).toHaveBeenCalledWith(
+      "project-contract",
+      "(define-read-only (test) (ok true))",
+      { clarityVersion: 3 },
+      mockSimnet.deployer
+    );
+
+    // Teardown
+    jest.clearAllMocks();
+  });
+
+  it("should handle custom cache directory", async () => {
+    // Setup
+    const mockSimnet = {
+      setEpoch: jest.fn(),
+      deployContract: jest.fn(),
+      deployer: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
+    };
+
+    const mockGetContractSource = jest
+      .fn()
+      .mockReturnValue("(define-read-only (test) (ok true))");
+
+    const manifestDir = "/project";
+    const cacheDir = "custom-cache";
+    const contractsByEpoch: ContractsByEpoch = {
+      "2.0": [],
+      "2.05": [],
+      "2.1": [
+        {
+          "custom-requirement": {
+            path: "custom-cache/requirements/SP1234567890ABCDEF.custom-requirement.clar",
+            clarity_version: 2,
+          },
+        },
+      ],
+      "2.2": [],
+      "2.3": [],
+      "2.4": [],
+      "2.5": [],
+      "3.0": [],
+    };
+
+    // Exercise
+    await deployContracts(
+      mockSimnet as any,
+      contractsByEpoch,
+      manifestDir,
+      cacheDir,
+      mockGetContractSource
+    );
+
+    // Verify
+    expect(mockSimnet.deployContract).toHaveBeenCalledWith(
+      "custom-requirement",
+      "(define-read-only (test) (ok true))",
+      { clarityVersion: 2 },
+      "SP1234567890ABCDEF"
+    );
+
+    // Teardown
+    jest.clearAllMocks();
+  });
+});
+
+describe("Project contract priority over requirements", () => {
+  it("should prioritize project contract over requirement when names match", () => {
+    // Setup
+    jest.spyOn(fs, "readFileSync").mockImplementation(() => "");
+
+    const deployerAddress = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM";
+    const mockDeploymentPlan: DeploymentPlan = {
+      genesis: {
+        wallets: [
+          {
+            name: "deployer",
+            address: deployerAddress,
+            balance: "",
+          },
+          {
+            name: "wallet_1",
+            address: "ST2JHG361ZXG51QTKY2NQCVBPPRRE2KZB1HR05NNC",
+            balance: "",
+          },
+        ],
+        contracts: [],
+      },
+      plan: {
+        batches: [
+          {
+            epoch: "2.1",
+            transactions: [
+              {
+                "emulated-contract-publish": {
+                  "contract-name": "shared-name-contract",
+                  // Requirement contract sender. Different from deployer.
+                  "emulated-sender": "SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG",
+                  "clarity-version": 2,
+                  path: ".cache/requirements/SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.shared-name-contract.clar",
+                },
+              },
+            ],
+            id: 0,
+          },
+          {
+            epoch: "3.0",
+            transactions: [
+              {
+                "emulated-contract-publish": {
+                  "contract-name": "shared-name-contract",
+                  "emulated-sender": deployerAddress,
+                  "clarity-version": 3,
+                  path: "contracts/shared-name-contract.clar",
+                },
+              },
+            ],
+            id: 0,
+          },
+        ],
+      },
+      id: 0,
+      name: "",
+      network: "",
+    };
+
+    const contractName = "shared-name-contract";
+
+    // Exercise
+    const result = buildRendezvousData(
+      mockDeploymentPlan,
+      contractName,
+      "/project"
+    );
+
+    // Verify
+    const expectedRendezvousId = `${deployerAddress}.${contractName}`;
+    expect(result.rendezvousContractId).toBe(expectedRendezvousId);
+
+    // Teardown
+    jest.clearAllMocks();
   });
 });
