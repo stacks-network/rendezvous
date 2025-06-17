@@ -580,23 +580,20 @@ const mintSbtc = (
   txId: string,
   sweepTxId: string
 ) => {
-  // Calling `get-burn-header` only works for past block heights. We mine one
-  // empty Stacks block if the initial height is 0.
-  if (simnet.blockHeight === 0) {
-    simnet.mineEmptyBlock();
+  // Calling `get-burn-block-info?` only works for past burn heights. We mine
+  // one empty Bitcoin block if the initial height is 0 and use the previous
+  // burn height to retrieve the burn header hash.
+  if (simnet.burnBlockHeight === 0) {
+    simnet.mineEmptyBurnBlock();
   }
 
-  const previousStacksHeight = simnet.blockHeight - 1;
+  const previousBurnHeight = simnet.burnBlockHeight - 1;
 
-  const burnHash = simnet.callReadOnlyFn(
-    "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-deposit",
-    "get-burn-header",
-    [
-      // (height uint)
-      Cl.uint(previousStacksHeight),
-    ],
-    simnet.deployer
-  ).result as OptionalCV<BufferCV>;
+  const burnHash = hexToCV(
+    simnet.runSnippet(
+      `(get-burn-block-info? header-hash u${previousBurnHeight})`
+    )
+  ) as OptionalCV<BufferCV>;
 
   if (burnHash === null || burnHash.type === ClarityType.OptionalNone) {
     throw new Error("Something went wrong trying to retrieve the burn header.");
@@ -618,7 +615,7 @@ const mintSbtc = (
         // (burn-hash (buff 32))
         burnHash.value,
         // (burn-height uint)
-        Cl.uint(previousStacksHeight),
+        Cl.uint(previousBurnHeight),
         // (sweep-txid (buff 32))
         Cl.bufferFromHex(sweepTxId),
       ],
