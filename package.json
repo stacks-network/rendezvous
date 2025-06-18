@@ -1,6 +1,6 @@
 {
   "name": "@stacks/rendezvous",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "description": "Meet your contract's vulnerabilities head-on.",
   "main": "app.js",
   "bin": {
