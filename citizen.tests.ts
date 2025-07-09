@@ -118,6 +118,72 @@ describe("Simnet deployment plan operations", () => {
       ],
       "2.5": [
         {
+          "extension-trait": {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.extension-trait.clar",
+          },
+        },
+        {
+          "proposal-trait": {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.proposal-trait.clar",
+          },
+        },
+        {
+          "executor-dao": {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.executor-dao.clar",
+          },
+        },
+        {
+          "trait-sip-010": {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.trait-sip-010.clar",
+          },
+        },
+        {
+          "amm-registry-v2-01": {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.amm-registry-v2-01.clar",
+          },
+        },
+        {
+          "trait-flash-loan-user": {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.trait-flash-loan-user.clar",
+          },
+        },
+        {
+          "trait-semi-fungible": {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.trait-semi-fungible.clar",
+          },
+        },
+        {
+          "amm-vault-v2-01": {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.amm-vault-v2-01.clar",
+          },
+        },
+        {
+          "token-amm-pool-v2-01": {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.token-amm-pool-v2-01.clar",
+          },
+        },
+        {
+          "amm-pool-v2-01": {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.amm-pool-v2-01.clar",
+          },
+        },
+        {
+          "token-wstx-v2": {
+            clarity_version: 2,
+            path: "./.cache/requirements/SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.token-wstx-v2.clar",
+          },
+        },
+        {
           "rendezvous-token": {
             clarity_version: 2,
             path: "contracts/rendezvous-token.clar",
@@ -125,6 +191,12 @@ describe("Simnet deployment plan operations", () => {
         },
       ],
       "3.0": [
+        {
+          "liquidity-locker": {
+            clarity_version: 3,
+            path: "./.cache/requirements/SP1E0XBN9T4B10E9QMR7XMFJPMA19D77WY3KP2QKC.liquidity-locker.clar",
+          },
+        },
         {
           cargo: {
             path: "contracts/cargo.clar",
@@ -153,6 +225,26 @@ describe("Simnet deployment plan operations", () => {
           slice: {
             path: "contracts/slice.clar",
             clarity_version: 3,
+          },
+        },
+      ],
+      "3.1": [
+        {
+          "clarity-stacks": {
+            clarity_version: 3,
+            path: "./.cache/requirements/SP1E0XBN9T4B10E9QMR7XMFJPMA19D77WY3KP2QKC.clarity-stacks.clar",
+          },
+        },
+        {
+          "clarity-stacks-helper": {
+            clarity_version: 3,
+            path: "./.cache/requirements/SP1E0XBN9T4B10E9QMR7XMFJPMA19D77WY3KP2QKC.clarity-stacks-helper.clar",
+          },
+        },
+        {
+          "self-listing-helper-v3a": {
+            clarity_version: 3,
+            path: "contracts/self-listing-helper-v3a.clar",
           },
         },
       ],
