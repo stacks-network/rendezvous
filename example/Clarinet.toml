@@ -9,6 +9,26 @@ contract_id = 'SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.ststx-token'
 [[project.requirements]]
 contract_id = 'SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.sip-010-trait-ft-standard'
 
+[[project.requirements]]
+contract_id = 'SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.executor-dao'
+
+[[project.requirements]]
+contract_id = 'SP1E0XBN9T4B10E9QMR7XMFJPMA19D77WY3KP2QKC.liquidity-locker'
+
+[[project.requirements]]
+contract_id = 'SP1E0XBN9T4B10E9QMR7XMFJPMA19D77WY3KP2QKC.clarity-stacks'
+
+[[project.requirements]]
+contract_id = 'SP1E0XBN9T4B10E9QMR7XMFJPMA19D77WY3KP2QKC.clarity-stacks-helper'
+
+[[project.requirements]]
+contract_id = 'SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.amm-pool-v2-01'
+
+# Implementation of the trait referenced by `self-listing-helper-v3a.clar`.
+# This allows Rendezvous to run tests against the self-listing contract.
+[[project.requirements]]
+contract_id = 'SP102V8P0F7JX67ARQ77WEA3D3CFB5XW39REDT0AM.token-wstx-v2'
+
 # Clarinet currently does not support type checking or dependency resolution
 # for concatenated target and test contracts. To ensure successful deployment
 # of the send-tokens contract (which only relies on rendezvous-token in its
@@ -43,6 +63,11 @@ epoch = 3.0
 path = "contracts/send-tokens.clar"
 clarity_version = 3
 epoch = 3.0
+
+[contracts.self-listing-helper-v3a]
+path = "contracts/self-listing-helper-v3a.clar"
+clarity_version = 3
+epoch = 3.1
 
 [repl.analysis]
 passes = ["check_checker"]
