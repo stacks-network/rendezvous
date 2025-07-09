@@ -41,6 +41,24 @@ export const enrichInterfaceWithTraitData = (
     return args.map((arg) => {
       const listNested = !arg.name;
       const currentPath = listNested ? path : [...path, arg.name];
+      // Exit early if the traitReferenceMap does not have anything we are
+      // looking for. It means that the current parameter does not have an
+      // associated trait reference.
+      if (
+        !traitReferenceMap ||
+        (!traitReferenceMap[arg.name] &&
+          !traitReferenceMap.tuple &&
+          !traitReferenceMap.list &&
+          !traitReferenceMap.response &&
+          !traitReferenceMap.optional &&
+          !traitReferenceMap[arg.name]?.tuple &&
+          !traitReferenceMap[arg.name]?.list &&
+          !traitReferenceMap[arg.name]?.response &&
+          !traitReferenceMap[arg.name]?.optional &&
+          traitReferenceMap !== "trait_reference")
+      ) {
+        return arg;
+      }
       if (arg.type && arg.type.tuple) {
         return {
           ...arg,
