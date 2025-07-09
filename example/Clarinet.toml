@@ -1,7 +1,7 @@
 [project]
-name = "example"
+name = 'example'
 telemetry = false
-cache_dir = "./.cache"
+cache_dir = './.cache'
 
 [[project.requirements]]
 contract_id = 'SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.ststx-token'
@@ -40,35 +40,35 @@ clarity_version = 2
 epoch = 2.5
 
 [contracts.cargo]
-path = "contracts/cargo.clar"
+path = 'contracts/cargo.clar'
 clarity_version = 3
 epoch = 3.0
 
 [contracts.counter]
-path = "contracts/counter.clar"
+path = 'contracts/counter.clar'
 clarity_version = 3
 epoch = 3.0
 
 [contracts.reverse]
-path = "contracts/reverse.clar"
+path = 'contracts/reverse.clar'
 clarity_version = 3
 epoch = 3.0
 
 [contracts.slice]
-path = "contracts/slice.clar"
+path = 'contracts/slice.clar'
 clarity_version = 3
 epoch = 3.0
 
 [contracts.send-tokens]
-path = "contracts/send-tokens.clar"
+path = 'contracts/send-tokens.clar'
 clarity_version = 3
 epoch = 3.0
 
 [contracts.self-listing-helper-v3a]
-path = "contracts/self-listing-helper-v3a.clar"
+path = 'contracts/self-listing-helper-v3a.clar'
 clarity_version = 3
 epoch = 3.1
 
 [repl.analysis]
-passes = ["check_checker"]
+passes = ['check_checker']
 check_checker = { trusted_sender = false, trusted_caller = false, callee_filter = false }
