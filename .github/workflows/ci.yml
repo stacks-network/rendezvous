@@ -84,7 +84,7 @@ jobs:
       - name: Setup mdBook
         uses: peaceiris/actions-mdbook@v2
         with:
-          mdbook-version: "latest"
+          mdbook-version: 'latest'
 
       - name: Build docs
         run: |
@@ -92,8 +92,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'actions@github.com'
 
       - name: Deploy to GitHub Pages
         run: |
@@ -114,6 +114,6 @@ jobs:
           # Add all files.
           git add .
           # Commit with empty message (since no history on gh-pages anyways).
-          git commit --allow-empty-message -m ""
+          git commit --allow-empty-message -m ''
           # Force push to gh-pages branch (again since no history).
           git push origin gh-pages --force
