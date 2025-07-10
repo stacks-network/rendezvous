@@ -69,6 +69,8 @@ jobs:
           rv . cargo invariant
           rv . reverse test
           rv . slice test
+          rv . self-listing-helper-v3a test
+          rv . self-listing-helper-v3a invariant
           rv . rendezvous-token invariant --dial=./sip010.js
 
   publish-docs:
@@ -82,7 +84,7 @@ jobs:
       - name: Setup mdBook
         uses: peaceiris/actions-mdbook@v2
         with:
-          mdbook-version: 'latest'
+          mdbook-version: "latest"
 
       - name: Build docs
         run: |
