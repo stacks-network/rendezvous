@@ -27,3 +27,25 @@ export type InvariantCounterExample = {
   invariantArgs: any;
   invariantCaller: [string, string];
 };
+
+type SutFunctionStatistics = {
+  successful: Map<string, number>;
+  failed: Map<string, number>;
+};
+
+type InvariantFunctionStatistics = {
+  successful: Map<string, number>;
+  failed: Map<string, number>;
+};
+
+type TestFunctionStatistics = {
+  successful: Map<string, number>;
+  discarded: Map<string, number>;
+  failed: Map<string, number>;
+};
+
+export type Statistics = {
+  sut?: SutFunctionStatistics;
+  invariant?: InvariantFunctionStatistics;
+  test?: TestFunctionStatistics;
+};

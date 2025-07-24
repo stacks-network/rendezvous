@@ -4,6 +4,7 @@ import { green } from "ansicolor";
 import {
   InvariantCounterExample,
   RunDetails,
+  Statistics,
   TestCounterExample,
 } from "./heatstroke.types";
 import { getContractNameFromContractId } from "./shared";
@@ -28,7 +29,8 @@ import { getContractNameFromContractId } from "./shared";
 export function reporter(
   runDetails: RunDetails,
   radio: EventEmitter,
-  type: "invariant" | "test"
+  type: "invariant" | "test",
+  statistics: Statistics
 ) {
   if (runDetails.failed) {
     // Report general run data.
@@ -168,4 +170,113 @@ export function reporter(
       )
     );
   }
+  reportCommandRuns(statistics, type, radio);
+  radio.emit("logMessage", "\n");
+}
+
+const ARROW = "▶";
+const LIGHTNING = "⚡";
+const SUCCESS_SYMBOL = "✓";
+const FAIL_SYMBOL = "✗";
+const WARN_SYMBOL = "⚠";
+
+function reportCommandRuns(
+  statistics: Statistics,
+  type: "invariant" | "test",
+  radio: EventEmitter
+) {
+  radio.emit("logMessage", `\nEXECUTION STATISTICS ${LIGHTNING}\n`);
+
+  switch (type) {
+    case "invariant": {
+      if (!statistics.invariant || !statistics.sut) {
+        radio.emit(
+          "logMessage",
+          "└─ No telemetry data available for this operation"
+        );
+        return;
+      }
+
+      radio.emit("logMessage", "│ PUBLIC FUNCTION CALLS");
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} SUCCESSFUL`);
+      logAsTree(Object.fromEntries(statistics.sut.successful), radio);
+
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `├─ ${FAIL_SYMBOL} FAILED (IGNORED)`);
+      logAsTree(Object.fromEntries(statistics.sut.failed), radio);
+
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", "│ INVARIANT VALIDATION CALLS");
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} VALIDATED`);
+      logAsTree(Object.fromEntries(statistics.invariant.successful), radio);
+
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `└─ ${FAIL_SYMBOL} FALSIFIED`);
+      logAsTree(Object.fromEntries(statistics.invariant.failed), radio, true);
+      break;
+    }
+
+    case "test": {
+      if (!statistics.test) {
+        radio.emit(
+          "logMessage",
+          "└─ No telemetry data available for this operation"
+        );
+        return;
+      }
+
+      radio.emit("logMessage", "│ PROPERTY TEST CALLS");
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} VALIDATED`);
+      logAsTree(Object.fromEntries(statistics.test.successful), radio);
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `├─ ${WARN_SYMBOL} DISCARDED`);
+      logAsTree(Object.fromEntries(statistics.test.discarded), radio);
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `└─ ${FAIL_SYMBOL} FAILED`);
+      logAsTree(Object.fromEntries(statistics.test.failed), radio, true);
+      break;
+    }
+  }
+}
+
+function logAsTree(
+  tree: object,
+  radio: EventEmitter,
+  isLastSection: boolean = false,
+  baseIndent: string = "   "
+) {
+  const printTree = (
+    node: any,
+    indent: string = baseIndent,
+    isLastParent: boolean = true,
+    radio: EventEmitter
+  ) => {
+    const keys = Object.keys(node);
+    keys.forEach((key, index) => {
+      const isLast = index === keys.length - 1;
+      const connector = isLast ? "└─" : "├─";
+      const nextIndent = indent + (isLastParent ? "   " : "│  ");
+
+      const leadingChar = isLastSection ? " " : "│";
+
+      if (typeof node[key] === "object" && node[key] !== null) {
+        radio.emit(
+          "logMessage",
+          `${leadingChar} ${indent}${connector} ${ARROW} ${key}`
+        );
+        printTree(node[key], nextIndent, isLast, radio);
+      } else {
+        const count = node[key];
+        radio.emit(
+          "logMessage",
+          `${leadingChar} ${indent}${connector} ${key}: x${count}`
+        );
+      }
+    });
+  };
+
+  printTree(tree, baseIndent, true, radio);
 }
