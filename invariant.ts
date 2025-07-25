@@ -62,11 +62,15 @@ export const checkInvariants = async (
   // to access the SUT functions for each Rendezvous contract afterwards.
   const rendezvousSutFunctions = filterSutFunctions(rendezvousAllFunctions);
 
-  for (const fns of rendezvousSutFunctions.values()) {
-    for (const fn of fns) {
-      statistics.sut!.successful.set(fn.name, 0);
-      statistics.sut!.failed.set(fn.name, 0);
-    }
+  // The Rendezvous identifier is the first one in the list. Only one contract
+  // can be fuzzed at a time.
+  const rendezvousContractId = rendezvousList[0];
+
+  for (const functionInterface of rendezvousSutFunctions.get(
+    rendezvousContractId
+  )!) {
+    statistics.sut!.successful.set(functionInterface.name, 0);
+    statistics.sut!.failed.set(functionInterface.name, 0);
   }
 
   // A map where the keys are the Rendezvous identifiers and the values are
@@ -76,16 +80,12 @@ export const checkInvariants = async (
     rendezvousAllFunctions
   );
 
-  for (const fns of rendezvousInvariantFunctions.values()) {
-    for (const fn of fns) {
-      statistics.invariant!.successful.set(fn.name, 0);
-      statistics.invariant!.failed.set(fn.name, 0);
-    }
+  for (const functionInterface of rendezvousInvariantFunctions.get(
+    rendezvousContractId
+  )!) {
+    statistics.invariant!.successful.set(functionInterface.name, 0);
+    statistics.invariant!.failed.set(functionInterface.name, 0);
   }
-
-  // The Rendezvous identifier is the first one in the list. Only one contract
-  // can be fuzzed at a time.
-  const rendezvousContractId = rendezvousList[0];
 
   const traitReferenceSutFunctions = rendezvousSutFunctions
     .get(rendezvousContractId)!
