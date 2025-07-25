@@ -49,3 +49,11 @@ export type Statistics = {
   invariant?: InvariantFunctionStatistics;
   test?: TestFunctionStatistics;
 };
+
+/**
+ * Options for configuring tree statistics reporting.
+ */
+export interface StatisticsTreeOptions {
+  isLastSection?: boolean;
+  baseIndent?: string;
+}

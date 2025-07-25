@@ -6,6 +6,7 @@ import {
   RunDetails,
   Statistics,
   TestCounterExample,
+  StatisticsTreeOptions,
 } from "./heatstroke.types";
 import { getContractNameFromContractId } from "./shared";
 
@@ -170,7 +171,7 @@ export function reporter(
       )
     );
   }
-  reportCommandRuns(statistics, type, radio);
+  reportStatistics(statistics, type, radio);
   radio.emit("logMessage", "\n");
 }
 
@@ -180,11 +181,17 @@ const SUCCESS_SYMBOL = "✓";
 const FAIL_SYMBOL = "✗";
 const WARN_SYMBOL = "⚠";
 
-function reportCommandRuns(
+/**
+ * Reports execution statistics in a tree-like format.
+ * @param statistics The statistics object containing test execution data.
+ * @param type The type of test being reported.
+ * @param radio The event emitter for logging messages.
+ */
+function reportStatistics(
   statistics: Statistics,
   type: "invariant" | "test",
   radio: EventEmitter
-) {
+): void {
   radio.emit("logMessage", `\nEXECUTION STATISTICS ${LIGHTNING}\n`);
 
   switch (type) {
@@ -214,7 +221,9 @@ function reportCommandRuns(
 
       radio.emit("logMessage", "│");
       radio.emit("logMessage", `└─ ${FAIL_SYMBOL} FALSIFIED`);
-      logAsTree(Object.fromEntries(statistics.invariant.failed), radio, true);
+      logAsTree(Object.fromEntries(statistics.invariant.failed), radio, {
+        isLastSection: true,
+      });
       break;
     }
 
@@ -231,35 +240,46 @@ function reportCommandRuns(
       radio.emit("logMessage", "│");
       radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} VALIDATED`);
       logAsTree(Object.fromEntries(statistics.test.successful), radio);
+
       radio.emit("logMessage", "│");
       radio.emit("logMessage", `├─ ${WARN_SYMBOL} DISCARDED`);
       logAsTree(Object.fromEntries(statistics.test.discarded), radio);
+
       radio.emit("logMessage", "│");
       radio.emit("logMessage", `└─ ${FAIL_SYMBOL} FAILED`);
-      logAsTree(Object.fromEntries(statistics.test.failed), radio, true);
+      logAsTree(Object.fromEntries(statistics.test.failed), radio, {
+        isLastSection: true,
+      });
       break;
     }
   }
 }
 
+/**
+ * Displays a tree structure of data.
+ * @param tree The object to display as a tree.
+ * @param radio The event emitter for logging messages.
+ * @param options Configuration options for tree display.
+ */
 function logAsTree(
-  tree: object,
+  tree: Record<string, any>,
   radio: EventEmitter,
-  isLastSection: boolean = false,
-  baseIndent: string = "   "
-) {
+  options: StatisticsTreeOptions = {}
+): void {
+  const { isLastSection = false, baseIndent = "   " } = options;
+
   const printTree = (
-    node: any,
+    node: Record<string, any>,
     indent: string = baseIndent,
     isLastParent: boolean = true,
     radio: EventEmitter
-  ) => {
+  ): void => {
     const keys = Object.keys(node);
+
     keys.forEach((key, index) => {
       const isLast = index === keys.length - 1;
       const connector = isLast ? "└─" : "├─";
       const nextIndent = indent + (isLastParent ? "   " : "│  ");
-
       const leadingChar = isLastSection ? " " : "│";
 
       if (typeof node[key] === "object" && node[key] !== null) {
@@ -269,7 +289,7 @@ function logAsTree(
         );
         printTree(node[key], nextIndent, isLast, radio);
       } else {
-        const count = node[key];
+        const count = node[key] as number;
         radio.emit(
           "logMessage",
           `${leadingChar} ${indent}${connector} ${key}: x${count}`
