@@ -114,7 +114,7 @@ export const helpMessage = `
 const parseBooleanOption = (argName: string): boolean =>
   process.argv.slice(4).includes(`--${argName}`);
 
-const parseOptionalArgument = (argName: string) => {
+const parseOption = (argName: string) => {
   return process.argv
     .find(
       (arg, idx) => idx >= 4 && arg.toLowerCase().startsWith(`--${argName}`)
@@ -182,17 +182,17 @@ export async function main() {
   radio.emit("logMessage", `Using manifest path: ${manifestPath}`);
   radio.emit("logMessage", `Target contract: ${sutContractName}`);
 
-  const seed = parseInt(parseOptionalArgument("seed")!, 10) || undefined;
+  const seed = parseInt(parseOption("seed")!, 10) || undefined;
   if (seed !== undefined) {
     radio.emit("logMessage", `Using seed: ${seed}`);
   }
 
-  const path = parseOptionalArgument("path") || undefined;
+  const path = parseOption("path") || undefined;
   if (path !== undefined) {
     radio.emit("logMessage", `Using path: ${path}`);
   }
 
-  const runs = parseInt(parseOptionalArgument("runs")!, 10) || undefined;
+  const runs = parseInt(parseOption("runs")!, 10) || undefined;
   if (runs !== undefined) {
     radio.emit("logMessage", `Using runs: ${runs}`);
   }
@@ -207,7 +207,7 @@ export async function main() {
    * custom pre and post-execution JavaScript functions to be executed before
    * and after the public function calls during invariant testing.
    */
-  const dialPath = parseOptionalArgument("dial") || undefined;
+  const dialPath = parseOption("dial") || undefined;
   if (dialPath !== undefined) {
     radio.emit("logMessage", `Using dial path: ${dialPath}`);
   }
