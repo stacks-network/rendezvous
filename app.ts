@@ -197,8 +197,8 @@ export async function main() {
     radio.emit("logMessage", `Using runs: ${runs}`);
   }
 
-  const endOnFailure = parseBooleanOption("bail");
-  if (endOnFailure) {
+  const bail = parseBooleanOption("bail");
+  if (bail) {
     radio.emit("logMessage", `Bailing on first failure.`);
   }
 
@@ -263,7 +263,7 @@ export async function main() {
         seed,
         path,
         runs,
-        endOnFailure,
+        bail,
         dialerRegistry,
         radio
       );
@@ -279,7 +279,7 @@ export async function main() {
         seed,
         path,
         runs,
-        endOnFailure,
+        bail,
         radio
       );
       break;
