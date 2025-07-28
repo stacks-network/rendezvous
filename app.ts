@@ -92,7 +92,7 @@ export const tryParseRemoteDataSettings = (
   return remoteDataUserSettings;
 };
 
-const helpMessage = `
+export const helpMessage = `
   rv v${version}
   
   Usage: rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--path=<path>] [--runs=<runs>] [--dial=<path-to-dialers-file>] [--help]

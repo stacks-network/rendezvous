@@ -1,13 +1,13 @@
 import { red, yellow } from "ansicolor";
 import {
   getManifestFileName,
+  helpMessage,
   invalidRemoteDataWarningMessage,
   main,
   noRemoteData,
   tryParseRemoteDataSettings,
 } from "./app";
 import { RemoteDataSettings } from "./app.types";
-import { version } from "./package.json";
 import { resolve } from "path";
 import fs from "fs";
 import EventEmitter from "events";
@@ -52,24 +52,6 @@ initial_height = 595012
 describe("Command-line arguments handling", () => {
   const initialArgv = process.argv;
 
-  const helpMessage = `
-  rv v${version}
-  
-  Usage: rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--path=<path>] [--runs=<runs>] [--dial=<path-to-dialers-file>] [--help]
-
-  Positional arguments:
-    path-to-clarinet-project - The path to the Clarinet project.
-    contract-name - The name of the contract to be fuzzed.
-    type - The type to use for exercising the contracts. Possible values: test, invariant.
-
-  Options:
-    --seed - The seed to use for the replay functionality.
-    --path - The path to use for the replay functionality.
-    --runs - The runs to use for iterating over the tests. Default: 100.
-    --bail - Stop after the first failure.
-    --dial – The path to a JavaScript file containing custom pre- and post-execution functions (dialers).
-    --help - Show the help message.
-  `;
   const noManifestMessage = red(
     `\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.`
   );
