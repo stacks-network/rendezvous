@@ -66,6 +66,7 @@ describe("Command-line arguments handling", () => {
     --seed - The seed to use for the replay functionality.
     --path - The path to use for the replay functionality.
     --runs - The runs to use for iterating over the tests. Default: 100.
+    --bail - Stop after the first failure.
     --dial – The path to a JavaScript file containing custom pre- and post-execution functions (dialers).
     --help - Show the help message.
   `;
