@@ -476,12 +476,12 @@ export const checkInvariants = async (
       }
     ),
     {
-      verbose: true,
+      endOnFailure: endOnFailure,
+      numRuns: runs,
+      path: path,
       reporter: radioReporter,
       seed: seed,
-      path: path,
-      numRuns: runs,
-      endOnFailure: endOnFailure,
+      verbose: true,
     }
   );
 };
