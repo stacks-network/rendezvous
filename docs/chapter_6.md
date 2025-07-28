@@ -34,7 +34,7 @@ This chapter explains how to use Rendezvous in different situations. By the end,
 To run Rendezvous, use the following command:
 
 ```bash
-rv <path-to-clarinet-project> <contract-name> <type> [--seed] [--runs] [--dial]
+rv <path-to-clarinet-project> <contract-name> <type> [--seed] [--runs] [--bail] [--dial]
 ```
 
 Let's break down each part of the command.
@@ -172,7 +172,17 @@ In this case, the seed is `426141810`. You can use it to rerun the exact same te
 rv root contract test --seed=426141810
 ```
 
-**3. Using Dialers**
+**3. Stop After First Failure**
+
+By default, Rendezvous will start the shrinking process after finding a failure. To stop immediately when the first failure is detected, use the `--bail` option:
+
+```bash
+rv root contract test --bail
+```
+
+This is useful when you want to examine the first failure without waiting for the complete test run and shrinking process to finish.
+
+**4. Using Dialers**
 
 Dialers allow you to define **pre- and post-execution functions** using JavaScript **during invariant testing**. To use a custom dialer file, run:
 
