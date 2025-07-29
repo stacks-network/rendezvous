@@ -5,8 +5,8 @@ import {
   InvariantCounterExample,
   RunDetails,
   Statistics,
-  TestCounterExample,
   StatisticsTreeOptions,
+  TestCounterExample,
 } from "./heatstroke.types";
 import { getContractNameFromContractId } from "./shared";
 
@@ -175,11 +175,10 @@ export function reporter(
   radio.emit("logMessage", "\n");
 }
 
-const ARROW = "▶";
-const LIGHTNING = "⚡";
-const SUCCESS_SYMBOL = "✓";
-const FAIL_SYMBOL = "✗";
-const WARN_SYMBOL = "⚠";
+const ARROW = "->";
+const SUCCESS_SYMBOL = "+";
+const FAIL_SYMBOL = "-";
+const WARN_SYMBOL = "!";
 
 /**
  * Reports execution statistics in a tree-like format.
@@ -192,15 +191,12 @@ function reportStatistics(
   type: "invariant" | "test",
   radio: EventEmitter
 ): void {
-  radio.emit("logMessage", `\nEXECUTION STATISTICS ${LIGHTNING}\n`);
+  radio.emit("logMessage", `\nEXECUTION STATISTICS\n`);
 
   switch (type) {
     case "invariant": {
       if (!statistics.invariant || !statistics.sut) {
-        radio.emit(
-          "logMessage",
-          "└─ No telemetry data available for this operation"
-        );
+        radio.emit("logMessage", "└─ No statistics available for this run");
         return;
       }
 
