@@ -191,61 +191,110 @@ function reportStatistics(
   type: "invariant" | "test",
   radio: EventEmitter
 ): void {
+  if (
+    (type === "invariant" && (!statistics.invariant || !statistics.sut)) ||
+    (type === "test" && !statistics.test)
+  ) {
+    radio.emit("logMessage", "No statistics available for this run");
+    return;
+  }
+
   radio.emit("logMessage", `\nEXECUTION STATISTICS\n`);
 
   switch (type) {
     case "invariant": {
-      if (!statistics.invariant || !statistics.sut) {
-        radio.emit("logMessage", "└─ No statistics available for this run");
-        return;
-      }
+      radio.emit(
+        "logMessage",
+        "The following statistics show the execution results from invariant testing, where random sequences of function calls are generated to verify that system-wide general truths (invariants) remain true regardless of operation order.\n"
+      );
 
       radio.emit("logMessage", "│ PUBLIC FUNCTION CALLS");
       radio.emit("logMessage", "│");
       radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} SUCCESSFUL`);
-      logAsTree(Object.fromEntries(statistics.sut.successful), radio);
+      logAsTree(Object.fromEntries(statistics.sut!.successful), radio);
 
       radio.emit("logMessage", "│");
       radio.emit("logMessage", `├─ ${FAIL_SYMBOL} IGNORED`);
-      logAsTree(Object.fromEntries(statistics.sut.failed), radio);
+      logAsTree(Object.fromEntries(statistics.sut!.failed), radio);
 
       radio.emit("logMessage", "│");
       radio.emit("logMessage", "│ INVARIANT CHECKS");
       radio.emit("logMessage", "│");
       radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} PASSED`);
-      logAsTree(Object.fromEntries(statistics.invariant.successful), radio);
+      logAsTree(Object.fromEntries(statistics.invariant!.successful), radio);
 
       radio.emit("logMessage", "│");
       radio.emit("logMessage", `└─ ${FAIL_SYMBOL} FAILED`);
-      logAsTree(Object.fromEntries(statistics.invariant.failed), radio, {
+      logAsTree(Object.fromEntries(statistics.invariant!.failed), radio, {
         isLastSection: true,
       });
+
+      radio.emit("logMessage", "\nLEGEND:");
+      radio.emit(
+        "logMessage",
+        "   • SUCCESSFUL calls executed without errors and advanced the test"
+      );
+      radio.emit(
+        "logMessage",
+        "   • IGNORED calls failed execution but did not affect the test"
+      );
+      radio.emit(
+        "logMessage",
+        "   • PASSED invariants maintained system integrity"
+      );
+      radio.emit(
+        "logMessage",
+        "   • FAILED invariants indicate potential contract vulnerabilities"
+      );
+      if (computeTotalCount(statistics.invariant!.failed) > 0) {
+        radio.emit(
+          "logFailure",
+          "\n! FAILED invariants require immediate attention as they indicate that your contract can enter an invalid state under certain conditions."
+        );
+      }
       break;
     }
 
     case "test": {
-      if (!statistics.test) {
-        radio.emit(
-          "logMessage",
-          "└─ No telemetry data available for this operation"
-        );
-        return;
-      }
+      radio.emit(
+        "logMessage",
+        "The following statistics show the execution results from property-based testing, where random inputs are generated for property test functions to verify that specific properties hold true across a wide range of test scenarios.\n"
+      );
 
       radio.emit("logMessage", "│ PROPERTY TEST CALLS");
       radio.emit("logMessage", "│");
       radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} PASSED`);
-      logAsTree(Object.fromEntries(statistics.test.successful), radio);
+      logAsTree(Object.fromEntries(statistics.test!.successful), radio);
 
       radio.emit("logMessage", "│");
       radio.emit("logMessage", `├─ ${WARN_SYMBOL} DISCARDED`);
-      logAsTree(Object.fromEntries(statistics.test.discarded), radio);
+      logAsTree(Object.fromEntries(statistics.test!.discarded), radio);
 
       radio.emit("logMessage", "│");
       radio.emit("logMessage", `└─ ${FAIL_SYMBOL} FAILED`);
-      logAsTree(Object.fromEntries(statistics.test.failed), radio, {
+      logAsTree(Object.fromEntries(statistics.test!.failed), radio, {
         isLastSection: true,
       });
+
+      radio.emit("logMessage", "\nLEGEND:");
+      radio.emit(
+        "logMessage",
+        "   • PASSED tests verify that properties hold for the given inputs"
+      );
+      radio.emit(
+        "logMessage",
+        "   • DISCARDED tests were skipped due to invalid preconditions"
+      );
+      radio.emit(
+        "logMessage",
+        "   • FAILED tests indicate property violations or unexpected behavior"
+      );
+      if (computeTotalCount(statistics.test!.failed) > 0) {
+        radio.emit(
+          "logFailure",
+          "\n! FAILED tests indicate that your function properties don't hold for all inputs. Review the counterexamples above for debugging."
+        );
+      }
       break;
     }
   }
@@ -296,3 +345,16 @@ function logAsTree(
 
   printTree(tree, baseIndent, true, radio);
 }
+
+/**
+ * Computes the total number of failures from a failure map.
+ * @param failedMap Map containing failure counts by test name
+ * @returns The sum of all failure counts
+ */
+const computeTotalCount = (failedMap: Map<string, number>): number => {
+  let totalFailures = 0;
+  for (const count of failedMap.values()) {
+    totalFailures += count;
+  }
+  return totalFailures;
+};
