@@ -29,6 +29,8 @@ import {
  * @param seed The seed for reproducible property-based tests.
  * @param path The path for reproducible property-based tests.
  * @param runs The number of test runs.
+ * @param bail Stop execution after the first failure and prevent further
+ * shrinking.
  * @param radio The custom logging event emitter.
  * @returns void
  */
@@ -40,6 +42,7 @@ export const checkProperties = (
   seed: number | undefined,
   path: string | undefined,
   runs: number | undefined,
+  bail: boolean,
   radio: EventEmitter
 ) => {
   const testContractId = rendezvousList[0];
@@ -352,11 +355,12 @@ export const checkProperties = (
       }
     ),
     {
-      verbose: true,
+      endOnFailure: bail,
+      numRuns: runs,
+      path: path,
       reporter: radioReporter,
       seed: seed,
-      path: path,
-      numRuns: runs,
+      verbose: true,
     }
   );
 };

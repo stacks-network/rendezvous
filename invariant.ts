@@ -31,6 +31,8 @@ import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
  * @param seed The seed for reproducible invariant testing.
  * @param path The path for reproducible invariant testing.
  * @param runs The number of test runs.
+ * @param bail Stop execution after the first failure and prevent further
+ * shrinking.
  * @param dialerRegistry The custom dialer registry.
  * @param radio The custom logging event emitter.
  * @returns void
@@ -43,6 +45,7 @@ export const checkInvariants = async (
   seed: number | undefined,
   path: string | undefined,
   runs: number | undefined,
+  bail: boolean,
   dialerRegistry: DialerRegistry | undefined,
   radio: EventEmitter
 ) => {
@@ -474,11 +477,12 @@ export const checkInvariants = async (
       }
     ),
     {
-      verbose: true,
+      endOnFailure: bail,
+      numRuns: runs,
+      path: path,
       reporter: radioReporter,
       seed: seed,
-      path: path,
-      numRuns: runs,
+      verbose: true,
     }
   );
 };

@@ -106,11 +106,15 @@ const helpMessage = `
     --seed - The seed to use for the replay functionality.
     --path - The path to use for the replay functionality.
     --runs - The runs to use for iterating over the tests. Default: 100.
+    --bail - Stop after the first failure.
     --dial – The path to a JavaScript file containing custom pre- and post-execution functions (dialers).
     --help - Show the help message.
   `;
 
-const parseOptionalArgument = (argName: string) => {
+const parseBooleanOption = (argName: string): boolean =>
+  process.argv.slice(4).includes(`--${argName}`);
+
+const parseOption = (argName: string) => {
   return process.argv
     .find(
       (arg, idx) => idx >= 4 && arg.toLowerCase().startsWith(`--${argName}`)
@@ -178,19 +182,24 @@ export async function main() {
   radio.emit("logMessage", `Using manifest path: ${manifestPath}`);
   radio.emit("logMessage", `Target contract: ${sutContractName}`);
 
-  const seed = parseInt(parseOptionalArgument("seed")!, 10) || undefined;
+  const seed = parseInt(parseOption("seed")!, 10) || undefined;
   if (seed !== undefined) {
     radio.emit("logMessage", `Using seed: ${seed}`);
   }
 
-  const path = parseOptionalArgument("path") || undefined;
+  const path = parseOption("path") || undefined;
   if (path !== undefined) {
     radio.emit("logMessage", `Using path: ${path}`);
   }
 
-  const runs = parseInt(parseOptionalArgument("runs")!, 10) || undefined;
+  const runs = parseInt(parseOption("runs")!, 10) || undefined;
   if (runs !== undefined) {
     radio.emit("logMessage", `Using runs: ${runs}`);
+  }
+
+  const bail = parseBooleanOption("bail");
+  if (bail) {
+    radio.emit("logMessage", `Bailing on first failure.`);
   }
 
   /**
@@ -198,7 +207,7 @@ export async function main() {
    * custom pre and post-execution JavaScript functions to be executed before
    * and after the public function calls during invariant testing.
    */
-  const dialPath = parseOptionalArgument("dial") || undefined;
+  const dialPath = parseOption("dial") || undefined;
   if (dialPath !== undefined) {
     radio.emit("logMessage", `Using dial path: ${dialPath}`);
   }
@@ -254,6 +263,7 @@ export async function main() {
         seed,
         path,
         runs,
+        bail,
         dialerRegistry,
         radio
       );
@@ -269,6 +279,7 @@ export async function main() {
         seed,
         path,
         runs,
+        bail,
         radio
       );
       break;
