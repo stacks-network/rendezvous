@@ -206,17 +206,17 @@ function reportStatistics(
       logAsTree(Object.fromEntries(statistics.sut.successful), radio);
 
       radio.emit("logMessage", "│");
-      radio.emit("logMessage", `├─ ${FAIL_SYMBOL} FAILED (IGNORED)`);
+      radio.emit("logMessage", `├─ ${FAIL_SYMBOL} IGNORED`);
       logAsTree(Object.fromEntries(statistics.sut.failed), radio);
 
       radio.emit("logMessage", "│");
-      radio.emit("logMessage", "│ INVARIANT VALIDATION CALLS");
+      radio.emit("logMessage", "│ INVARIANT CHECKS");
       radio.emit("logMessage", "│");
-      radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} VALIDATED`);
+      radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} PASSED`);
       logAsTree(Object.fromEntries(statistics.invariant.successful), radio);
 
       radio.emit("logMessage", "│");
-      radio.emit("logMessage", `└─ ${FAIL_SYMBOL} FALSIFIED`);
+      radio.emit("logMessage", `└─ ${FAIL_SYMBOL} FAILED`);
       logAsTree(Object.fromEntries(statistics.invariant.failed), radio, {
         isLastSection: true,
       });
@@ -234,7 +234,7 @@ function reportStatistics(
 
       radio.emit("logMessage", "│ PROPERTY TEST CALLS");
       radio.emit("logMessage", "│");
-      radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} VALIDATED`);
+      radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} PASSED`);
       logAsTree(Object.fromEntries(statistics.test.successful), radio);
 
       radio.emit("logMessage", "│");
