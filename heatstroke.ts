@@ -4,6 +4,8 @@ import { green } from "ansicolor";
 import {
   InvariantCounterExample,
   RunDetails,
+  Statistics,
+  StatisticsTreeOptions,
   TestCounterExample,
 } from "./heatstroke.types";
 import { getContractNameFromContractId } from "./shared";
@@ -28,7 +30,8 @@ import { getContractNameFromContractId } from "./shared";
 export function reporter(
   runDetails: RunDetails,
   radio: EventEmitter,
-  type: "invariant" | "test"
+  type: "invariant" | "test",
+  statistics: Statistics
 ) {
   if (runDetails.failed) {
     // Report general run data.
@@ -168,4 +171,180 @@ export function reporter(
       )
     );
   }
+  reportStatistics(statistics, type, radio);
+  radio.emit("logMessage", "\n");
 }
+
+const ARROW = "->";
+const SUCCESS_SYMBOL = "+";
+const FAIL_SYMBOL = "-";
+const WARN_SYMBOL = "!";
+
+/**
+ * Reports execution statistics in a tree-like format.
+ * @param statistics The statistics object containing test execution data.
+ * @param type The type of test being reported.
+ * @param radio The event emitter for logging messages.
+ */
+function reportStatistics(
+  statistics: Statistics,
+  type: "invariant" | "test",
+  radio: EventEmitter
+): void {
+  if (
+    (type === "invariant" && (!statistics.invariant || !statistics.sut)) ||
+    (type === "test" && !statistics.test)
+  ) {
+    radio.emit("logMessage", "No statistics available for this run");
+    return;
+  }
+
+  radio.emit("logMessage", `\nEXECUTION STATISTICS\n`);
+
+  switch (type) {
+    case "invariant": {
+      radio.emit("logMessage", "│ PUBLIC FUNCTION CALLS");
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} SUCCESSFUL`);
+      logAsTree(Object.fromEntries(statistics.sut!.successful), radio);
+
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `├─ ${FAIL_SYMBOL} IGNORED`);
+      logAsTree(Object.fromEntries(statistics.sut!.failed), radio);
+
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", "│ INVARIANT CHECKS");
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} PASSED`);
+      logAsTree(Object.fromEntries(statistics.invariant!.successful), radio);
+
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `└─ ${FAIL_SYMBOL} FAILED`);
+      logAsTree(Object.fromEntries(statistics.invariant!.failed), radio, {
+        isLastSection: true,
+      });
+
+      radio.emit("logMessage", "\nLEGEND:\n");
+      radio.emit(
+        "logMessage",
+        "  SUCCESSFUL calls executed and advanced the test"
+      );
+      radio.emit(
+        "logMessage",
+        "  IGNORED    calls failed but did not affect the test"
+      );
+      radio.emit(
+        "logMessage",
+        "  PASSED     invariants maintained system integrity"
+      );
+      radio.emit(
+        "logMessage",
+        "  FAILED     invariants indicate contract vulnerabilities"
+      );
+      if (computeTotalCount(statistics.invariant!.failed) > 0) {
+        radio.emit(
+          "logFailure",
+          "\n! FAILED invariants require immediate attention as they indicate that your contract can enter an invalid state under certain conditions."
+        );
+      }
+      break;
+    }
+
+    case "test": {
+      radio.emit("logMessage", "│ PROPERTY TEST CALLS");
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} PASSED`);
+      logAsTree(Object.fromEntries(statistics.test!.successful), radio);
+
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `├─ ${WARN_SYMBOL} DISCARDED`);
+      logAsTree(Object.fromEntries(statistics.test!.discarded), radio);
+
+      radio.emit("logMessage", "│");
+      radio.emit("logMessage", `└─ ${FAIL_SYMBOL} FAILED`);
+      logAsTree(Object.fromEntries(statistics.test!.failed), radio, {
+        isLastSection: true,
+      });
+
+      radio.emit("logMessage", "\nLEGEND:\n");
+      radio.emit(
+        "logMessage",
+        "  PASSED    properties verified for given inputs"
+      );
+      radio.emit(
+        "logMessage",
+        "  DISCARDED skipped due to invalid preconditions"
+      );
+      radio.emit(
+        "logMessage",
+        "  FAILED    property violations or unexpected behavior"
+      );
+      if (computeTotalCount(statistics.test!.failed) > 0) {
+        radio.emit(
+          "logFailure",
+          "\n! FAILED tests indicate that your function properties don't hold for all inputs. Review the counterexamples above for debugging."
+        );
+      }
+      break;
+    }
+  }
+}
+
+/**
+ * Displays a tree structure of data.
+ * @param tree The object to display as a tree.
+ * @param radio The event emitter for logging messages.
+ * @param options Configuration options for tree display.
+ */
+function logAsTree(
+  tree: Record<string, any>,
+  radio: EventEmitter,
+  options: StatisticsTreeOptions = {}
+): void {
+  const { isLastSection = false, baseIndent = "   " } = options;
+
+  const printTree = (
+    node: Record<string, any>,
+    indent: string = baseIndent,
+    isLastParent: boolean = true,
+    radio: EventEmitter
+  ): void => {
+    const keys = Object.keys(node);
+
+    keys.forEach((key, index) => {
+      const isLast = index === keys.length - 1;
+      const connector = isLast ? "└─" : "├─";
+      const nextIndent = indent + (isLastParent ? "   " : "│  ");
+      const leadingChar = isLastSection ? " " : "│";
+
+      if (typeof node[key] === "object" && node[key] !== null) {
+        radio.emit(
+          "logMessage",
+          `${leadingChar} ${indent}${connector} ${ARROW} ${key}`
+        );
+        printTree(node[key], nextIndent, isLast, radio);
+      } else {
+        const count = node[key] as number;
+        radio.emit(
+          "logMessage",
+          `${leadingChar} ${indent}${connector} ${key}: x${count}`
+        );
+      }
+    });
+  };
+
+  printTree(tree, baseIndent, true, radio);
+}
+
+/**
+ * Computes the total number of failures from a failure map.
+ * @param failedMap Map containing failure counts by test name
+ * @returns The sum of all failure counts
+ */
+const computeTotalCount = (failedMap: Map<string, number>): number => {
+  let totalFailures = 0;
+  for (const count of failedMap.values()) {
+    totalFailures += count;
+  }
+  return totalFailures;
+};

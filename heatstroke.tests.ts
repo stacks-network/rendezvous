@@ -102,7 +102,7 @@ describe("Custom reporter logging", () => {
           };
 
           // Act
-          reporter(runDetails, radio, "invariant");
+          reporter(runDetails, radio, "invariant", {});
 
           // Assert
           const expectedMessages = [
@@ -248,7 +248,7 @@ describe("Custom reporter logging", () => {
           };
 
           // Act
-          reporter(runDetails, radio, "invariant");
+          reporter(runDetails, radio, "invariant", {});
 
           // Assert
           const expectedMessages = [
@@ -396,7 +396,7 @@ describe("Custom reporter logging", () => {
           };
 
           // Act
-          reporter(runDetails, radio, "invariant");
+          reporter(runDetails, radio, "invariant", {});
 
           // Assert
           expect(emittedErrorLogs).toEqual([]);
@@ -472,7 +472,7 @@ describe("Custom reporter logging", () => {
           };
 
           // Act
-          reporter(runDetails, radio, "test");
+          reporter(runDetails, radio, "test", {});
 
           // Assert
           const expectedMessages = [
@@ -573,7 +573,7 @@ describe("Custom reporter logging", () => {
           };
 
           // Act
-          reporter(runDetails, radio, "test");
+          reporter(runDetails, radio, "test", {});
 
           // Assert
           const expectedMessages = [
@@ -672,7 +672,7 @@ describe("Custom reporter logging", () => {
           };
 
           // Act
-          reporter(runDetails, radio, "test");
+          reporter(runDetails, radio, "test", {});
 
           // Assert
 

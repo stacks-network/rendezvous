@@ -3,6 +3,7 @@ import { EventEmitter } from "events";
 import fc from "fast-check";
 import { cvToJSON, cvToString } from "@stacks/transactions";
 import { reporter } from "./heatstroke";
+import { Statistics } from "./heatstroke.types";
 import {
   argsToCV,
   functionToArbitrary,
@@ -45,6 +46,13 @@ export const checkProperties = (
   bail: boolean,
   radio: EventEmitter
 ) => {
+  const statistics: Statistics = {
+    test: {
+      successful: new Map<string, number>(),
+      discarded: new Map<string, number>(),
+      failed: new Map<string, number>(),
+    },
+  };
   const testContractId = rendezvousList[0];
 
   // A map where the keys are the test contract identifiers and the values are
@@ -53,6 +61,14 @@ export const checkProperties = (
   const testContractsTestFunctions = filterTestFunctions(
     rendezvousAllFunctions
   );
+
+  for (const functionInterface of testContractsTestFunctions.get(
+    testContractId
+  )!) {
+    statistics.test!.successful.set(functionInterface.name, 0);
+    statistics.test!.discarded.set(functionInterface.name, 0);
+    statistics.test!.failed.set(functionInterface.name, 0);
+  }
 
   const traitReferenceFunctions = testContractsTestFunctions
     .get(testContractId)!
@@ -166,7 +182,7 @@ export const checkProperties = (
   }
 
   const radioReporter = (runDetails: any) => {
-    reporter(runDetails, radio, "test");
+    reporter(runDetails, radio, "test", statistics);
   };
 
   fc.assert(
@@ -251,6 +267,10 @@ export const checkProperties = (
         );
 
         if (discarded) {
+          statistics.test!.discarded.set(
+            r.selectedTestFunction.name,
+            statistics.test!.discarded.get(r.selectedTestFunction.name)! + 1
+          );
           radio.emit(
             "logMessage",
             `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
@@ -283,6 +303,10 @@ export const checkProperties = (
             );
 
             if (discardedInPlace) {
+              statistics.test!.discarded.set(
+                r.selectedTestFunction.name,
+                statistics.test!.discarded.get(r.selectedTestFunction.name)! + 1
+              );
               radio.emit(
                 "logMessage",
                 `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
@@ -299,6 +323,11 @@ export const checkProperties = (
               testFunctionCallResultJson.success &&
               testFunctionCallResultJson.value.value === true
             ) {
+              statistics.test!.successful.set(
+                r.selectedTestFunction.name,
+                statistics.test!.successful.get(r.selectedTestFunction.name)! +
+                  1
+              );
               radio.emit(
                 "logMessage",
                 `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
@@ -315,6 +344,10 @@ export const checkProperties = (
                 simnet.mineEmptyBurnBlocks(r.burnBlocks);
               }
             } else {
+              statistics.test!.failed.set(
+                r.selectedTestFunction.name,
+                statistics.test!.failed.get(r.selectedTestFunction.name)! + 1
+              );
               // The function call did not result in (ok true) or (ok false).
               // Either the test failed or the test function returned an
               // unexpected value i.e. `(ok 1)`.

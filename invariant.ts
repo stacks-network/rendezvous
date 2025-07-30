@@ -19,6 +19,7 @@ import {
 } from "./traits";
 import { EnrichedContractInterfaceFunction } from "./shared.types";
 import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
+import { Statistics } from "./heatstroke.types";
 
 /**
  * Runs invariant testing on the target contract and logs the progress. Reports
@@ -49,10 +50,31 @@ export const checkInvariants = async (
   dialerRegistry: DialerRegistry | undefined,
   radio: EventEmitter
 ) => {
+  const statistics: Statistics = {
+    sut: {
+      successful: new Map<string, number>(),
+      failed: new Map<string, number>(),
+    },
+    invariant: {
+      successful: new Map<string, number>(),
+      failed: new Map<string, number>(),
+    },
+  };
   // A map where the keys are the Rendezvous identifiers and the values are
   // arrays of their SUT (System Under Test) functions. This map will be used
   // to access the SUT functions for each Rendezvous contract afterwards.
   const rendezvousSutFunctions = filterSutFunctions(rendezvousAllFunctions);
+
+  // The Rendezvous identifier is the first one in the list. Only one contract
+  // can be fuzzed at a time.
+  const rendezvousContractId = rendezvousList[0];
+
+  for (const functionInterface of rendezvousSutFunctions.get(
+    rendezvousContractId
+  )!) {
+    statistics.sut!.successful.set(functionInterface.name, 0);
+    statistics.sut!.failed.set(functionInterface.name, 0);
+  }
 
   // A map where the keys are the Rendezvous identifiers and the values are
   // arrays of their invariant functions. This map will be used to access the
@@ -61,9 +83,12 @@ export const checkInvariants = async (
     rendezvousAllFunctions
   );
 
-  // The Rendezvous identifier is the first one in the list. Only one contract
-  // can be fuzzed at a time.
-  const rendezvousContractId = rendezvousList[0];
+  for (const functionInterface of rendezvousInvariantFunctions.get(
+    rendezvousContractId
+  )!) {
+    statistics.invariant!.successful.set(functionInterface.name, 0);
+    statistics.invariant!.failed.set(functionInterface.name, 0);
+  }
 
   const traitReferenceSutFunctions = rendezvousSutFunctions
     .get(rendezvousContractId)!
@@ -174,7 +199,7 @@ export const checkInvariants = async (
   }
 
   const radioReporter = (runDetails: any) => {
-    reporter(runDetails, radio, "invariant");
+    reporter(runDetails, radio, "invariant", statistics);
   };
 
   await fc.assert(
@@ -304,6 +329,10 @@ export const checkInvariants = async (
             );
 
             if (functionCallResultJson.success) {
+              statistics.sut!.successful.set(
+                selectedFunction.name,
+                statistics.sut!.successful.get(selectedFunction.name)! + 1
+              );
               localContext[r.rendezvousContractId][selectedFunction.name]++;
 
               simnet.callPublicFn(
@@ -343,6 +372,10 @@ export const checkInvariants = async (
               }
             } else {
               // Function call failed.
+              statistics.sut!.failed.set(
+                selectedFunction.name,
+                statistics.sut!.failed.get(selectedFunction.name)! + 1
+              );
               radio.emit(
                 "logMessage",
                 dim(
@@ -416,6 +449,11 @@ export const checkInvariants = async (
           const invariantCallClarityResult = cvToString(invariantCallResult);
 
           if (invariantCallResultJson.value === true) {
+            statistics.invariant!.successful.set(
+              r.selectedInvariant.name,
+              statistics.invariant!.successful.get(r.selectedInvariant.name)! +
+                1
+            );
             radio.emit(
               "logMessage",
               `₿ ${simnet.burnBlockHeight.toString().padStart(8)} ` +
@@ -428,6 +466,10 @@ export const checkInvariants = async (
                 green(invariantCallClarityResult)
             );
           } else {
+            statistics.invariant!.failed.set(
+              r.selectedInvariant.name,
+              statistics.invariant!.failed.get(r.selectedInvariant.name)! + 1
+            );
             radio.emit(
               "logMessage",
               red(
