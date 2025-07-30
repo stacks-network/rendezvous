@@ -203,11 +203,6 @@ function reportStatistics(
 
   switch (type) {
     case "invariant": {
-      radio.emit(
-        "logMessage",
-        "The following statistics show the execution results from invariant testing, where random sequences of function calls are generated to verify that system-wide general truths (invariants) remain true regardless of operation order.\n"
-      );
-
       radio.emit("logMessage", "│ PUBLIC FUNCTION CALLS");
       radio.emit("logMessage", "│");
       radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} SUCCESSFUL`);
@@ -256,11 +251,6 @@ function reportStatistics(
     }
 
     case "test": {
-      radio.emit(
-        "logMessage",
-        "The following statistics show the execution results from property-based testing, where random inputs are generated for property test functions to verify that specific properties hold true across a wide range of test scenarios.\n"
-      );
-
       radio.emit("logMessage", "│ PROPERTY TEST CALLS");
       radio.emit("logMessage", "│");
       radio.emit("logMessage", `├─ ${SUCCESS_SYMBOL} PASSED`);
