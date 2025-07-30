@@ -227,19 +227,19 @@ function reportStatistics(
       radio.emit("logMessage", "\nLEGEND:");
       radio.emit(
         "logMessage",
-        "   • SUCCESSFUL calls executed without errors and advanced the test"
+        "   • SUCCESSFUL calls executed without errors and advanced the test."
       );
       radio.emit(
         "logMessage",
-        "   • IGNORED calls failed execution but did not affect the test"
+        "   • IGNORED calls failed execution but did not affect the test."
       );
       radio.emit(
         "logMessage",
-        "   • PASSED invariants maintained system integrity"
+        "   • PASSED invariants maintained system integrity."
       );
       radio.emit(
         "logMessage",
-        "   • FAILED invariants indicate potential contract vulnerabilities"
+        "   • FAILED invariants indicate potential contract vulnerabilities."
       );
       if (computeTotalCount(statistics.invariant!.failed) > 0) {
         radio.emit(
@@ -269,15 +269,15 @@ function reportStatistics(
       radio.emit("logMessage", "\nLEGEND:");
       radio.emit(
         "logMessage",
-        "   • PASSED tests verify that properties hold for the given inputs"
+        "   • PASSED tests verify that properties hold for the given inputs."
       );
       radio.emit(
         "logMessage",
-        "   • DISCARDED tests were skipped due to invalid preconditions"
+        "   • DISCARDED tests were skipped due to invalid preconditions."
       );
       radio.emit(
         "logMessage",
-        "   • FAILED tests indicate property violations or unexpected behavior"
+        "   • FAILED tests indicate property violations or unexpected behavior."
       );
       if (computeTotalCount(statistics.test!.failed) > 0) {
         radio.emit(
