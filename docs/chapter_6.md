@@ -27,6 +27,11 @@ This chapter explains how to use Rendezvous in different situations. By the end,
   - [A Custom Manifest File](#a-custom-manifest-file)
   - [How It Works](#how-it-works)
 
+[Trait Reference Parameters](#trait-reference-parameters)
+  - [How Trait Reference Selection Works](#how-trait-reference-selection-works)
+  - [Example](#example-1)
+  - [Adding More Implementations](#adding-more-implementations)
+
 ---
 
 ## Running Rendezvous
@@ -519,3 +524,29 @@ epoch = 3.0
 - If not, it **falls back** to the standard `Clarinet.toml`.
 
 This ensures that the test double is only used when testing `sbtc-token`, keeping tests realistic while allowing necessary state transitions.
+
+## Trait Reference Parameters
+
+Rendezvous automatically generates arguments for function calls using [fast-check](https://github.com/dubzzz/fast-check). It handles most Clarity types without any setup from you. However, **trait references** require special handling since Rendezvous cannot generate them automatically.
+
+### How Trait Reference Selection Works
+
+When your functions accept trait reference parameters, you must include at least one trait implementation in your Clarinet project. This can be either a project contract or a requirement.
+
+Here's how Rendezvous handles trait references:
+
+1. **Project Scanning** – Before testing begins, Rendezvous scans your project for functions that use trait references.
+2. **Implementation Discovery** – It searches the contract AST for matching trait implementations and adds them to a selection pool.
+3. **Random Selection** – During test execution, Rendezvous randomly picks an implementation from the pool and uses it as a function argument.
+
+This process allows Rendezvous to create meaningful state transitions and validate your invariants or property-based tests.
+
+### Example
+
+The `example` Clarinet project demonstrates this feature. The [send-tokens](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.clar) contract contains [one public function](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.clar#L3-L7) and [one property-based test](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.tests.clar#L24-L47) that both accept trait references.
+
+To enable testing, the project includes [rendezvous-token](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/rendezvous-token.clar), which implements the required trait. 
+
+### Adding More Implementations
+
+You can include multiple trait implementations in your project. The more implementations you add, the more randomness Rendezvous can introduce during testing. This helps ensure your contract works correctly with different trait implementation contracts.
