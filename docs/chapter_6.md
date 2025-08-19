@@ -527,7 +527,7 @@ This ensures that the test double is only used when testing `sbtc-token`, keepin
 
 ## Trait Reference Parameters
 
-Rendezvous automatically generates arguments for function calls using [fast-check](https://github.com/dubzzz/fast-check). It handles most Clarity types without any setup from you. However, **trait references** require special handling since Rendezvous cannot generate them automatically.
+Rendezvous automatically generates arguments for function calls. It handles most Clarity types without any setup from you. However, **trait references** require special handling since Rendezvous cannot generate them automatically.
 
 ### How Trait Reference Selection Works
 
