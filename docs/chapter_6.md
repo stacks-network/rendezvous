@@ -545,8 +545,8 @@ This process allows Rendezvous to create meaningful state transitions and valida
 
 The `example` Clarinet project demonstrates this feature. The [send-tokens](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.clar) contract contains [one public function](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.clar#L3-L7) and [one property-based test](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.tests.clar#L24-L47) that both accept trait references.
 
-To enable testing, the project includes [rendezvous-token](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/rendezvous-token.clar), which implements the required trait. 
+To enable testing, the project includes [rendezvous-token](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/rendezvous-token.clar), which implements the required trait.
 
 ### Adding More Implementations
 
-You can include multiple trait implementations in your project. The more implementations you add, the more randomness Rendezvous can introduce during testing. This helps ensure your contract works correctly with different trait implementation contracts.
+You can include multiple eligible trait implementations in your project. Adding more implementations allows Rendezvous to introduce greater randomness during testing and increases behavioral diversity. If a function that accepts a trait implementation parameter is called X times, those calls are distributed across the available implementations. As the number of implementations grows, Rendezvous has more options to choose from on each call, producing a wider range of behaviors — and uncovering edge cases that may be missed when relying on a single implementation.
