@@ -227,6 +227,12 @@ describe("Simnet deployment plan operations", () => {
             clarity_version: 3,
           },
         },
+        {
+          "stx-defi": {
+            clarity_version: 3,
+            path: "contracts/stx-defi.clar",
+          },
+        },
       ],
       "3.1": [
         {
