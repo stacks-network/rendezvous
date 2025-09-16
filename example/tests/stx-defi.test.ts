@@ -1,4 +1,5 @@
-// Originally copied from hirosystems clarity-examples repository:
+// Originally copied from hirosystems clarity-examples repository, further
+// updated to match the idiomatic style of this project:
 // https://github.com/hirosystems/clarity-examples/blob/ccd9ecf0bf136d7f28ef116706ed2936f6d8781a/examples/stx-defi/tests/stx-defi.test.ts
 
 import { Cl } from "@stacks/transactions";
@@ -8,68 +9,153 @@ const accounts = simnet.getAccounts();
 const address1 = accounts.get("wallet_1")!;
 
 describe("stx-defi tests", () => {
-  it("verifies deposit", () => {
-    const depositResponse = simnet.callPublicFn(
+  it("deposit is called successfully", () => {
+    // Arrange
+    const amountToDeposit = 1000;
+
+    // Act
+    const { result } = simnet.callPublicFn(
       "stx-defi",
       "deposit",
-      [Cl.uint(1000)],
+      [Cl.uint(amountToDeposit)],
       address1
     );
-    console.log("deposit response: " + Cl.prettyPrint(depositResponse.result));
 
-    const totalDeposits1 = simnet.getDataVar("stx-defi", "total-deposits");
-    expect(totalDeposits1).toBeUint(1000);
-
-    simnet.callPublicFn("stx-defi", "deposit", [Cl.uint(1000)], address1);
-    const totalDeposits2 = simnet.getDataVar("stx-defi", "total-deposits");
-    expect(totalDeposits2).toBeUint(2000);
+    // Assert
+    expect(result).toBeOk(Cl.bool(true));
   });
 
-  it("borrows 10 and verifies the amount owed to be 10", () => {
-    // address1 deposits 1000 to "their principal", which will be "locked" in the contract (on the chain)
-    simnet.callPublicFn("stx-defi", "deposit", [Cl.uint(1000)], address1);
-    var totalDeposits = simnet.getDataVar("stx-defi", "total-deposits");
-    expect(totalDeposits).toBeUint(1000);
+  it("deposit updates the total-deposits variable", () => {
+    // Arrange
+    const amountToDeposit = 1000;
 
-    // address1 attempts to borrow 10 from their initial deposit for 1000 (which is "locked" in the contract, on the chain)
-    const borrowResponse = simnet.callPublicFn(
+    // Act
+    simnet.callPublicFn(
       "stx-defi",
-      "borrow",
-      [Cl.uint(10)],
+      "deposit",
+      [Cl.uint(amountToDeposit)],
       address1
     );
-    console.log("borrow response: " + Cl.prettyPrint(borrowResponse.result));
 
-    // verify the amount owed is exactly what the address1 borrowed, which is 10 (because borrow and owed check are happening on the
-    // "same block", so no interest will be applied)
+    // Assert
+    const totalDeposits1 = simnet.getDataVar("stx-defi", "total-deposits");
+    expect(totalDeposits1).toBeUint(amountToDeposit);
+  });
+
+  it("second deposit updates the total-deposits variable", () => {
+    // Arrange
+    const amountToDeposit = 1000;
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    // Act
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    // Assert
+    const totalDeposits = simnet.getDataVar("stx-defi", "total-deposits");
+    expect(totalDeposits).toBeUint(2 * amountToDeposit);
+  });
+
+  it("owed amount is correct after borrowing half of the total deposits", () => {
+    // Arrange
+    const amountToDeposit = 1000;
+    const amountToBorrow = amountToDeposit / 2;
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    // Act
+    simnet.callPublicFn(
+      "stx-defi",
+      "borrow",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    // Assert
     const { result } = simnet.callReadOnlyFn(
       "stx-defi",
       "get-amount-owed",
       [],
       address1
     );
-    console.log("owed amount: " + Cl.prettyPrint(result));
-    expect(result).toBeOk(Cl.uint(10));
+
+    expect(result).toBeOk(Cl.uint(amountToBorrow));
   });
 
-  it("verifies repayment is successful", () => {
-    simnet.callPublicFn("stx-defi", "deposit", [Cl.uint(1000)], address1);
-    const borrowResponse = simnet.callPublicFn(
+  it("no owed amount after attempting to borrow more than half of the total deposits", () => {
+    // Arrange
+    const amountToDeposit = 1000;
+    const amountToBorrow = amountToDeposit / 2 + 1;
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    // Act
+    simnet.callPublicFn(
       "stx-defi",
       "borrow",
-      [Cl.uint(10)],
+      [Cl.uint(amountToBorrow)],
       address1
     );
-    expect(borrowResponse).toBeOk;
 
-    const repayResponse = simnet.callPublicFn(
+    // Assert
+    const { result } = simnet.callReadOnlyFn(
+      "stx-defi",
+      "get-amount-owed",
+      [],
+      address1
+    );
+
+    expect(result).toBeOk(Cl.uint(0));
+  });
+
+  it("repayment clears the owed amount", () => {
+    // Arrange
+    const amountToDeposit = 1000;
+    const amountToBorrow = amountToDeposit / 2;
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "borrow",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    // Act
+    simnet.callPublicFn(
       "stx-defi",
       "repay",
-      [Cl.uint(10)],
+      [Cl.uint(amountToBorrow)],
       address1
     );
-    expect(repayResponse).toBeOk;
 
+    // Assert
     const { result } = simnet.callReadOnlyFn(
       "stx-defi",
       "get-amount-owed",
@@ -79,29 +165,118 @@ describe("stx-defi tests", () => {
     expect(result).toBeOk(Cl.uint(0));
   });
 
-  it("verifies no yields to claim yet", () => {
-    simnet.callPublicFn("stx-defi", "deposit", [Cl.uint(1000)], address1);
-    const borrowResponse = simnet.callPublicFn(
+  it("owes interest if repayment does not happen within the same burn block", () => {
+    // Arrange
+    const amountToDeposit = 1000;
+    const amountToBorrow = amountToDeposit / 2;
+    const blocksToPass = 5;
+    const accruedInterest = 2;
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    // Act
+    simnet.callPublicFn(
       "stx-defi",
       "borrow",
-      [Cl.uint(10)],
+      [Cl.uint(amountToBorrow)],
       address1
     );
-    expect(borrowResponse).toBeOk;
 
-    const repayResponse = simnet.callPublicFn(
+    simnet.mineEmptyBurnBlocks(blocksToPass);
+
+    // Assert
+    const { result: owedAmount } = simnet.callReadOnlyFn(
+      "stx-defi",
+      "get-amount-owed",
+      [],
+      address1
+    );
+
+    expect(owedAmount).toBeOk(Cl.uint(amountToBorrow + accruedInterest));
+  });
+
+  it("no yield to claim if no burn blocks pass", () => {
+    // Arrange
+    const amountToDeposit = 1000;
+    const amountToBorrow = amountToDeposit / 2;
+    const errNonPositiveAmount = 3;
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "borrow",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    simnet.callPublicFn(
       "stx-defi",
       "repay",
-      [Cl.uint(10)],
+      [Cl.uint(amountToBorrow)],
       address1
     );
-    expect(repayResponse).toBeOk;
 
-    const foo = simnet.callPublicFn("stx-defi", "claim-yield", [], address1);
-    console.log("yield response : " + Cl.prettyPrint(foo.result));
-    // It is expected to error with `u3` (because there is no yeild; ie: value < 0); only when there are claims, which
-    // will only occur when the loan was active for some time (for a few blocks in the chain), and that the default
-    // 10% loan interest were applied to the principal loan
-    expect(foo.result).toBeErr;
+    // Act
+    const { result } = simnet.callPublicFn(
+      "stx-defi",
+      "claim-yield",
+      [],
+      address1
+    );
+
+    // Assert
+    expect(result).toBeErr(Cl.uint(errNonPositiveAmount));
+  });
+
+  it("can claim yield after if repayment happens after a few burn blocks", () => {
+    // Arrange
+    const amountToDeposit = 1000;
+    const amountToBorrow = amountToDeposit / 2;
+    const blocksToPass = 5;
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "borrow",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    simnet.mineEmptyBurnBlocks(blocksToPass);
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "repay",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    // Act
+    const { result } = simnet.callPublicFn(
+      "stx-defi",
+      "claim-yield",
+      [],
+      address1
+    );
+
+    // Assert
+    expect(result).toBeOk(Cl.bool(true));
   });
 });
