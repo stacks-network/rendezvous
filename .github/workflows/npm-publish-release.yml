@@ -2,9 +2,14 @@ name: npm-publish
 on:
   release:
     types: [published]
+
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   publish:
-    environment: 'Publish to NPM'
+    environment: "Publish to NPM"
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -13,11 +18,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
       - run: npm ci
       - run: npm test
       - run: npm run build
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
