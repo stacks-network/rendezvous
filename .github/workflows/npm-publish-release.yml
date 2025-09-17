@@ -2,6 +2,11 @@ name: npm-publish
 on:
   release:
     types: [published]
+
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   publish:
     environment: "Publish to NPM"
@@ -19,5 +24,3 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
