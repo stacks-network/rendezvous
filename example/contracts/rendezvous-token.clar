@@ -42,7 +42,7 @@
     ;; This print event is required for rendezvous to be a SIP-010 compliant
     ;; fungible token. Comment out this line and run the following command to
     ;; see the `dialers` in action:
-    ;; ```rv example rendezvous-token invariant --dial=example/sip010.js```
+    ;; ```rv example rendezvous-token invariant --dial=example/sip010.cjs```
     (match memo to-print (print to-print) 0x)
     (match (ft-transfer? rendezvous amount sender recipient)
       response (ok response)
