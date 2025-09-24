@@ -67,7 +67,11 @@ export const issueFirstClassCitizenship = async (
     })
   );
 
-  const sbtcBalancesMap = getSbtcBalancesFromSimnet(simnet);
+  // If the sbtc-token contract is included in the deployment plan, we need to
+  // restore the sBTC balances. Otherwise, use an empty map.
+  const sbtcBalancesMap = isSbtcProject(deploymentPlan)
+    ? getSbtcBalancesFromSimnet(simnet)
+    : new Map();
 
   await simnet.initEmptySession(remoteDataSettings);
 
@@ -501,6 +505,24 @@ export function scheduleRendezvous(
 
   return `${targetContractSource}\n\n${context}\n\n${tests}`;
 }
+
+/**
+ * Checks if the project is an sBTC project. This is done by checking if the
+ * deployment plan contains the `sbtc-token` contract.
+ * @param deploymentPlan The parsed deployment plan.
+ * @returns True if the project is an sBTC project, false otherwise.
+ */
+export const isSbtcProject = (deploymentPlan: DeploymentPlan): boolean => {
+  return deploymentPlan.plan.batches.some((batch: Batch) =>
+    batch.transactions.some(
+      (transaction: Transaction) =>
+        transaction["emulated-contract-publish"]?.["contract-name"] ===
+          "sbtc-token" &&
+        transaction["emulated-contract-publish"]?.["emulated-sender"] ===
+          "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4"
+    )
+  );
+};
 
 /**
  * Maps the simnet accounts to their sBTC balances. The function tries to call

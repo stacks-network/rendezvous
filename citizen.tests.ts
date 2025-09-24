@@ -6,6 +6,7 @@ import {
   getSbtcBalancesFromSimnet,
   getTestContractSource,
   groupContractsByEpochFromDeploymentPlan,
+  isSbtcProject,
   issueFirstClassCitizenship,
   scheduleRendezvous,
 } from "./citizen";
@@ -532,7 +533,7 @@ describe("Simnet deployment plan operations", () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it(`the first-class citizenship simnet has the correct sBTC balances for the registered accounts`, async () => {
+  it(`the sBTC balances getter returns a map with 0 balances for non-sBTC projects`, async () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
@@ -558,6 +559,39 @@ describe("Simnet deployment plan operations", () => {
       (balance) => balance === 0
     ).length;
     expect(numZeroBalanceAccounts).toBe(numAccounts);
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  it(`sBTC project checker returns false for non-sBTC projects`, async () => {
+    // Setup
+    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
+    cpSync(manifestDir, tempDir, { recursive: true });
+
+    // Exercise
+    const firstClassSimnet = await issueFirstClassCitizenship(
+      tempDir,
+      join(tempDir, getManifestFileName(tempDir, "counter")),
+      tryParseRemoteDataSettings(
+        join(manifestDir, "Clarinet.toml"),
+        new EventEmitter()
+      ),
+      "counter"
+    );
+
+    const parsedDeploymentPlan = yaml.parse(
+      readFileSync(join(tempDir, "deployments", "default.simnet-plan.yaml"), {
+        encoding: "utf-8",
+      })
+    );
+
+    // Verify
+    const actual = isSbtcProject(parsedDeploymentPlan);
+
+    // The expected result is false, since the example Clarinet project does
+    // not operate with sBTC.
+    expect(actual).toBe(false);
 
     // Teardown
     rmSync(tempDir, { recursive: true, force: true });
