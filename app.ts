@@ -33,7 +33,6 @@ export const noRemoteData = {
 export const invalidRemoteDataWarningMessage = `\nRemote data settings existing in Clarinet.toml, but remote data feature will not be used! To use remote data, please make sure the following fields are set:
 
 - enabled = true
-- api_url = <stacks-api-url>
 - initial_height = <stacks-block-height-to-fork-from>
 
 under the "repl.remote_data" section in the Clarinet.toml file.`;
@@ -69,8 +68,11 @@ export const tryParseRemoteDataSettings = (
   const remoteDataUserSettings =
     clarinetToml.repl?.["remote_data"] ?? undefined;
 
+  // Default to Hiro API when no URL is provided (matches Clarinet behavior).
+  // This ensures correct deployment plan processing and remote data decisions.
+  const apiUrl = remoteDataUserSettings?.["api_url"] || "https://api.hiro.so";
+
   const invalidRemoteDataSetup =
-    !remoteDataUserSettings?.["api_url"] ||
     !remoteDataUserSettings?.["enabled"] ||
     !remoteDataUserSettings?.["initial_height"];
 
@@ -88,6 +90,8 @@ export const tryParseRemoteDataSettings = (
   if (!remoteDataUserSettings || invalidRemoteDataSetup) {
     return noRemoteData;
   }
+
+  remoteDataUserSettings.api_url = apiUrl;
 
   return remoteDataUserSettings;
 };
