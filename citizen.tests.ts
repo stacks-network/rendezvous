@@ -10,9 +10,9 @@ import {
   scheduleRendezvous,
 } from "./citizen";
 import { initSimnet } from "@hirosystems/clarinet-sdk";
-import { join } from "path";
-import fs, { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "fs";
-import { tmpdir } from "os";
+import { join, resolve } from "path";
+import fs, { existsSync, readFileSync, rmSync } from "fs";
+import { createIsolatedTestEnvironment } from "./test.utils";
 import yaml from "yaml";
 import { getManifestFileName, tryParseRemoteDataSettings } from "./app";
 import { ContractsByEpoch, DeploymentPlan } from "./citizen.types";
@@ -46,8 +46,10 @@ describe("Simnet deployment plan operations", () => {
 
   it("retrieves the simnet deployment plan", async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    cpSync(manifestDir, tempDir, { recursive: true });
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "simnet-test-"
+    );
     const deploymentPlanPath = join(
       tempDir,
       "deployments",
@@ -76,8 +78,10 @@ describe("Simnet deployment plan operations", () => {
 
   it("groups the contracts by epoch", async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    cpSync(manifestDir, tempDir, { recursive: true });
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "simnet-test-"
+    );
     const deploymentPlanPath = join(
       tempDir,
       "deployments",
@@ -264,8 +268,10 @@ describe("Simnet deployment plan operations", () => {
 
   it("retrieves the test contract source from the simnet deployment plan", () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    cpSync(manifestDir, tempDir, { recursive: true });
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "simnet-test-"
+    );
     const deploymentPlanPath = join(
       tempDir,
       "deployments",
@@ -297,8 +303,10 @@ describe("Simnet deployment plan operations", () => {
 
   it("builds the rendezvous data", async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    cpSync(manifestDir, tempDir, { recursive: true });
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "simnet-test-"
+    );
     const deploymentPlanPath = join(
       tempDir,
       "deployments",
@@ -344,8 +352,10 @@ describe("Simnet deployment plan operations", () => {
 
   it("retrieves the contract source for a target contract", async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    cpSync(manifestDir, tempDir, { recursive: true });
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "simnet-test-"
+    );
     const deploymentPlanPath = join(
       tempDir,
       "deployments",
@@ -409,8 +419,10 @@ describe("Simnet deployment plan operations", () => {
 
   it("retrieves the contract source for a non-target contract", async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    cpSync(manifestDir, tempDir, { recursive: true });
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "simnet-test-"
+    );
     const deploymentPlanPath = join(
       tempDir,
       "deployments",
@@ -468,8 +480,10 @@ describe("Simnet deployment plan operations", () => {
 
   it("issues first-class citizenship", async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    cpSync(manifestDir, tempDir, { recursive: true });
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "simnet-test-"
+    );
 
     // Exercise
     const firstClassSimnet = await issueFirstClassCitizenship(
@@ -500,8 +514,10 @@ describe("Simnet deployment plan operations", () => {
 
   it(`the first-class citizenship simnet has the correct STX balances for the registered accounts`, async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    cpSync(manifestDir, tempDir, { recursive: true });
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "simnet-test-"
+    );
 
     // Exercise
     const firstClassSimnet = await issueFirstClassCitizenship(
@@ -534,8 +550,10 @@ describe("Simnet deployment plan operations", () => {
 
   it(`the sBTC balances getter returns a map with 0 balances for non-sBTC projects`, async () => {
     // Setup
-    const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
-    cpSync(manifestDir, tempDir, { recursive: true });
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "simnet-test-"
+    );
 
     // Exercise
     const firstClassSimnet = await issueFirstClassCitizenship(

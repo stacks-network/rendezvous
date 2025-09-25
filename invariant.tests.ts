@@ -5,16 +5,22 @@ import {
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
-import { join } from "path";
+import { join, resolve } from "path";
+import { rmSync } from "fs";
 import { issueFirstClassCitizenship } from "./citizen";
 import { Cl } from "@stacks/transactions";
 import { getManifestFileName, tryParseRemoteDataSettings } from "./app";
 import { EventEmitter } from "events";
+import { createIsolatedTestEnvironment } from "./test.utils";
 
 describe("Simnet contracts operations", () => {
   it("correctly initializes the local context for a given functions map", async () => {
-    // Arrange
-    const manifestPath = join("example", "Clarinet.toml");
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "invariant-test-"
+    );
+    const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsAllFunctions = getFunctionsFromContractInterfaces(
@@ -30,22 +36,29 @@ describe("Simnet contracts operations", () => {
       )
     );
 
-    // Act
+    // Exercise
     const actualInitialContext = initializeLocalContext(
       sutContractsAllFunctions
     );
 
-    // Assert
+    // Verify
     expect(actualInitialContext).toEqual(expectedInitialContext);
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
   });
 
   it("correctly initializes the Clarity context", async () => {
-    // Arrange
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "invariant-test-"
+    );
     const simnet = await issueFirstClassCitizenship(
-      "example",
-      join("example", getManifestFileName("example", "counter")),
+      tempDir,
+      join(tempDir, getManifestFileName(tempDir, "counter")),
       tryParseRemoteDataSettings(
-        join("example", "Clarinet.toml"),
+        join(tempDir, "Clarinet.toml"),
         new EventEmitter()
       ),
       "counter"
@@ -65,7 +78,7 @@ describe("Simnet contracts operations", () => {
       )
     );
 
-    // Act
+    // Exercise
     initializeClarityContext(simnet, rendezvousAllFunctions);
 
     const actualContext = Array.from(rendezvousAllFunctions).flatMap(
@@ -84,7 +97,7 @@ describe("Simnet contracts operations", () => {
         })
     );
 
-    // Assert
+    // Verify
 
     // The JS representation of Clarity `(some (tuple (called uint)))`, where
     // `called` is initialized to 0.
@@ -101,5 +114,8 @@ describe("Simnet contracts operations", () => {
     );
 
     expect(actualContext).toEqual(expectedContext);
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
   });
 });

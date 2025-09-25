@@ -4,8 +4,10 @@ import {
   isReturnTypeBoolean,
   isTestDiscardedInPlace,
 } from "./property";
-import { resolve } from "path";
+import { rmSync } from "fs";
+import { join, resolve } from "path";
 import fc from "fast-check";
+import { createIsolatedTestEnvironment } from "./test.utils";
 import {
   ContractInterfaceFunction,
   ContractInterfaceFunctionAccess,
@@ -211,8 +213,12 @@ describe("Test discarding related operations", () => {
   });
 
   it("in place discard function returns true if the function call result is (ok false)", async () => {
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
-
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "property-test-"
+    );
+    const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
 
     simnet.deployContract(
@@ -231,16 +237,23 @@ describe("Test discarding related operations", () => {
 
     const functionCallResultJson = cvToJSON(functionCallResult);
 
-    // Act
+    // Exercise
     const dircardedInPlace = isTestDiscardedInPlace(functionCallResultJson);
 
-    // Assert
+    // Verify
     expect(dircardedInPlace).toBe(true);
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
   });
 
   it("in place discard function returns false if the function call result is (ok true)", async () => {
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
-
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "property-test-"
+    );
+    const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
 
     simnet.deployContract(
@@ -259,10 +272,13 @@ describe("Test discarding related operations", () => {
 
     const functionCallResultJson = cvToJSON(functionCallResult);
 
-    // Act
+    // Exercise
     const dircardedInPlace = isTestDiscardedInPlace(functionCallResultJson);
 
-    // Assert
+    // Verify
     expect(dircardedInPlace).toBe(false);
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
   });
 });
