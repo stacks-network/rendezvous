@@ -69,9 +69,11 @@ export const issueFirstClassCitizenship = async (
 
   // If the sbtc-token contract is included in the deployment plan, we need to
   // restore the sBTC balances. Otherwise, use an empty map.
-  const sbtcBalancesMap = isSbtcProject(deploymentPlan)
-    ? getSbtcBalancesFromSimnet(simnet)
-    : new Map();
+  const sbtcBalancesMap = getSbtcBalancesFromSimnet(
+    simnet,
+    deploymentPlan,
+    remoteDataSettings
+  );
 
   await simnet.initEmptySession(remoteDataSettings);
 
@@ -507,19 +509,25 @@ export function scheduleRendezvous(
 }
 
 /**
- * Checks if the project is an sBTC project. This is done by checking if the
- * deployment plan contains the `sbtc-token` contract.
+ * Checks if a contract can be found in the deployment plan.
  * @param deploymentPlan The parsed deployment plan.
- * @returns True if the project is an sBTC project, false otherwise.
+ * @param contractAddress The address of the contract.
+ * @param contractName The name of the contract.
+ * @returns True if the contract can be found in the deployment plan, false
+ * otherwise.
  */
-export const isSbtcProject = (deploymentPlan: DeploymentPlan): boolean => {
+const isContractInDeploymentPlan = (
+  deploymentPlan: DeploymentPlan,
+  contractAddress: string,
+  contractName: string
+): boolean => {
   return deploymentPlan.plan.batches.some((batch: Batch) =>
     batch.transactions.some(
       (transaction: Transaction) =>
         transaction["emulated-contract-publish"]?.["contract-name"] ===
-          "sbtc-token" &&
+          contractName &&
         transaction["emulated-contract-publish"]?.["emulated-sender"] ===
-          "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4"
+          contractAddress
     )
   );
 };
@@ -530,12 +538,33 @@ export const isSbtcProject = (deploymentPlan: DeploymentPlan): boolean => {
  * the call fails, it returns a balance of 0 for that address. The call fails
  * if the user is not working with sBTC.
  * @param simnet The simnet instance.
+ * @param deploymentPlan The parsed deployment plan.
+ * @param remoteDataSettings The remote data settings.
  * @returns A map of addresses to their sBTC balances.
  */
 export const getSbtcBalancesFromSimnet = (
-  simnet: Simnet
-): Map<string, number> =>
-  new Map(
+  simnet: Simnet,
+  deploymentPlan: DeploymentPlan,
+  remoteDataSettings: RemoteDataSettings
+): Map<string, number> => {
+  // If the user is not using remote data and the deployment plan does not
+  // contain the `sbtc-token` contract, return a map with 0 balances for all
+  // addresses. When remote data is enabled, the sbtc-token contract will not
+  // necessarily be present in the deployment plan.
+  if (
+    !remoteDataSettings.enabled &&
+    !isContractInDeploymentPlan(
+      deploymentPlan,
+      "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4",
+      "sbtc-token"
+    )
+  ) {
+    return new Map(
+      [...simnet.getAccounts().values()].map((address) => [address, 0])
+    );
+  }
+
+  return new Map(
     [...simnet.getAccounts().values()].map((address) => {
       try {
         const { result: getBalanceResult } = simnet.callReadOnlyFn(
@@ -560,6 +589,7 @@ export const getSbtcBalancesFromSimnet = (
       }
     })
   );
+};
 
 /**
  * Utility function that restores the test wallets' initial sBTC balances in
