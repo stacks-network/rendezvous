@@ -57,9 +57,8 @@ export const tryParseRemoteDataSettings = (
 ): RemoteDataSettings => {
   const clarinetToml = toml.parse(readFileSync(resolve(manifestPath), "utf-8"));
   const remoteDataUserSettings = clarinetToml.repl?.remote_data ?? undefined;
-  const remoteDataDisabled = !remoteDataUserSettings?.enabled;
 
-  if (remoteDataUserSettings && !remoteDataDisabled) {
+  if (remoteDataUserSettings && remoteDataUserSettings?.enabled === true) {
     radio.emit(
       "logMessage",
       yellow(
