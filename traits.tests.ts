@@ -3,7 +3,8 @@ import {
   IContractAST,
 } from "@hirosystems/clarinet-sdk-wasm";
 import { initSimnet } from "@hirosystems/clarinet-sdk";
-import { resolve } from "path";
+import { rmSync } from "fs";
+import { join, resolve } from "path";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
@@ -11,6 +12,7 @@ import {
   getContractIdsImplementingTrait,
   isTraitReferenceFunction,
 } from "./traits";
+import { createIsolatedTestEnvironment } from "./test.utils";
 
 describe("Trait reference processing", () => {
   it("correctly builds the trait reference map for a direct trait that is the first parameter", () => {
@@ -2138,10 +2140,12 @@ describe("Trait reference processing", () => {
   });
 
   it("correctly retrieves the contracts implementing a trait from the Clarinet project", async () => {
-    // Arrange
-    const simnet = await initSimnet(
-      resolve(__dirname, "example", "Clarinet.toml")
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      "traits-test-"
     );
+    const simnet = await initSimnet(join(tempDir, "Clarinet.toml"));
 
     const projectTraitImplementations =
       extractProjectTraitImplementations(simnet);
@@ -2170,13 +2174,16 @@ describe("Trait reference processing", () => {
       "SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.ststx-token",
     ]);
 
-    // Act
+    // Exercise
     const actual = new Set(
       getContractIdsImplementingTrait(traitData, projectTraitImplementations)
     );
 
-    // Assert
+    // Verify
     expect(actual).toEqual(expected);
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
   });
 });
 
