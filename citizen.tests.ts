@@ -532,7 +532,7 @@ describe("Simnet deployment plan operations", () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it(`the first-class citizenship simnet has the correct sBTC balances for the registered accounts`, async () => {
+  it(`the sBTC balances getter returns a map with 0 balances for non-sBTC projects`, async () => {
     // Setup
     const tempDir = mkdtempSync(join(tmpdir(), "simnet-test-"));
     cpSync(manifestDir, tempDir, { recursive: true });
@@ -548,8 +548,23 @@ describe("Simnet deployment plan operations", () => {
       "counter"
     );
 
+    const parsedDeploymentPlan = yaml.parse(
+      readFileSync(join(tempDir, "deployments", "default.simnet-plan.yaml"), {
+        encoding: "utf-8",
+      })
+    );
+
+    const remoteDataSettings = tryParseRemoteDataSettings(
+      join(manifestDir, "Clarinet.toml"),
+      new EventEmitter()
+    );
+
     // Verify
-    const sbtcBalancesMap = getSbtcBalancesFromSimnet(firstClassSimnet);
+    const sbtcBalancesMap = getSbtcBalancesFromSimnet(
+      firstClassSimnet,
+      parsedDeploymentPlan,
+      remoteDataSettings
+    );
 
     // The expected balance is 0 (number) for all accounts, since the example
     // Clarinet project does not operate with sBTC.
