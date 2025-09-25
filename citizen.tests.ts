@@ -595,6 +595,8 @@ describe("Requirement detection", () => {
       "2.4": [],
       "2.5": [],
       "3.0": [],
+      "3.1": [],
+      "3.2": [],
     };
 
     // Exercise
@@ -649,6 +651,8 @@ describe("Requirement detection", () => {
           },
         },
       ],
+      "3.1": [],
+      "3.2": [],
     };
 
     // Exercise
@@ -702,6 +706,8 @@ describe("Requirement detection", () => {
       "2.4": [],
       "2.5": [],
       "3.0": [],
+      "3.1": [],
+      "3.2": [],
     };
 
     // Exercise
