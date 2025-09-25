@@ -1,7 +1,6 @@
 import { red, yellow } from "ansicolor";
 import {
   getManifestFileName,
-  invalidRemoteDataWarningMessage,
   main,
   noRemoteData,
   tryParseRemoteDataSettings,
@@ -13,7 +12,7 @@ import fs from "fs";
 import EventEmitter from "events";
 
 const clarinetTomlRemoteData = {
-  correctSettings: {
+  fullSettings: {
     toml: `
 [repl.remote_data]
 api_url = 'https://api.hiro.so'
@@ -32,7 +31,10 @@ initial_height = 150000
 api_url = 'https://api.hiro.so'
 enabled = true
 `,
-    expected: noRemoteData,
+    expected: {
+      enabled: true,
+      api_url: "https://api.hiro.so",
+    },
   },
   noRemoteDataSettings: {
     toml: ``,
@@ -45,7 +47,20 @@ api_url = 'https://api.hiro.so'
 enabled = false
 initial_height = 595012
 `,
-    expected: noRemoteData,
+    expected: {
+      enabled: false,
+      api_url: "https://api.hiro.so",
+      initial_height: 595012,
+    },
+  },
+  onlyEnabledSettings: {
+    toml: `
+[repl.remote_data]
+enabled = true
+`,
+    expected: {
+      enabled: true,
+    },
   },
 };
 
@@ -565,19 +580,29 @@ describe("Custom manifest detection", () => {
 describe("Remote data settings parsing", () => {
   it.each([
     [
-      "correctly overrides the no remote data settings when the remote data settings are not provided",
+      "correctly returns no remote data settings when the remote data settings are not provided",
       clarinetTomlRemoteData.noRemoteDataSettings.toml,
       clarinetTomlRemoteData.noRemoteDataSettings.expected,
     ],
     [
       "correctly parses the remote data settings when they are provided",
-      clarinetTomlRemoteData.correctSettings.toml,
-      clarinetTomlRemoteData.correctSettings.expected,
+      clarinetTomlRemoteData.fullSettings.toml,
+      clarinetTomlRemoteData.fullSettings.expected,
     ],
     [
-      "correctly overrides the no remote data settings when enabled is false",
+      "correctly returns remote data settings as-is when enabled is false",
       clarinetTomlRemoteData.enabledFalseSettings.toml,
       clarinetTomlRemoteData.enabledFalseSettings.expected,
+    ],
+    [
+      "correctly returns remote data settings as-is when initial_height is not provided",
+      clarinetTomlRemoteData.noInitialHeightSettings.toml,
+      clarinetTomlRemoteData.noInitialHeightSettings.expected,
+    ],
+    [
+      "correctly returns remote data settings as-is when only enabled is provided",
+      clarinetTomlRemoteData.onlyEnabledSettings.toml,
+      clarinetTomlRemoteData.onlyEnabledSettings.expected,
     ],
   ])(
     "%s",
@@ -606,34 +631,4 @@ describe("Remote data settings parsing", () => {
       jest.restoreAllMocks();
     }
   );
-
-  it("logs warning message when the remote data settings are not properly set up", () => {
-    // Setup
-    const anyPath = `${Date.now()}.toml`;
-
-    jest.spyOn(fs, "readFileSync").mockImplementation((path) => {
-      expect(path).toBe(resolve(anyPath));
-      return clarinetTomlRemoteData.enabledFalseSettings.toml;
-    });
-
-    const emittedLogMessages: string[] = [];
-    const mockRadio = new EventEmitter();
-    jest.spyOn(mockRadio, "emit").mockImplementation((event, message) => {
-      if (event === "logMessage") {
-        emittedLogMessages.push(message);
-      }
-      return true; // EventEmitter.emit returns boolean.
-    });
-
-    // Exercise
-    tryParseRemoteDataSettings(anyPath, mockRadio);
-
-    // Verify
-    expect(emittedLogMessages).toContain(
-      yellow(invalidRemoteDataWarningMessage)
-    );
-
-    // Teardown
-    jest.restoreAllMocks();
-  });
 });

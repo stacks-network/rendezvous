@@ -26,16 +26,7 @@ const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
  */
 export const noRemoteData = {
   enabled: false,
-  api_url: "",
-  initial_height: 1,
 };
-
-export const invalidRemoteDataWarningMessage = `\nRemote data settings existing in Clarinet.toml, but remote data feature will not be used! To use remote data, please make sure the following fields are set:
-
-- enabled = true
-- initial_height = <stacks-block-height-to-fork-from>
-
-under the "repl.remote_data" section in the Clarinet.toml file.`;
 
 /**
  * Gets the manifest file name for a Clarinet project.
@@ -65,20 +56,10 @@ export const tryParseRemoteDataSettings = (
   radio: EventEmitter
 ): RemoteDataSettings => {
   const clarinetToml = toml.parse(readFileSync(resolve(manifestPath), "utf-8"));
-  const remoteDataUserSettings =
-    clarinetToml.repl?.["remote_data"] ?? undefined;
+  const remoteDataUserSettings = clarinetToml.repl?.remote_data ?? undefined;
+  const remoteDataDisabled = !remoteDataUserSettings?.enabled;
 
-  // Default to Hiro API when no URL is provided (matches Clarinet behavior).
-  // This ensures correct deployment plan processing and remote data decisions.
-  const apiUrl = remoteDataUserSettings?.["api_url"] || "https://api.hiro.so";
-
-  const invalidRemoteDataSetup =
-    !remoteDataUserSettings?.["enabled"] ||
-    !remoteDataUserSettings?.["initial_height"];
-
-  if (remoteDataUserSettings !== undefined && invalidRemoteDataSetup) {
-    radio.emit("logMessage", yellow(invalidRemoteDataWarningMessage));
-  } else if (remoteDataUserSettings) {
+  if (remoteDataUserSettings && !remoteDataDisabled) {
     radio.emit(
       "logMessage",
       yellow(
@@ -87,11 +68,12 @@ export const tryParseRemoteDataSettings = (
     );
   }
 
-  if (!remoteDataUserSettings || invalidRemoteDataSetup) {
+  // If no remote data settings are provided, we still need to return an object
+  // with the `enabled` property set to `false`. That is what simnet expects
+  // at least in order to initialize an empty simnet session.
+  if (!remoteDataUserSettings) {
     return noRemoteData;
   }
-
-  remoteDataUserSettings.api_url = apiUrl;
 
   return remoteDataUserSettings;
 };
