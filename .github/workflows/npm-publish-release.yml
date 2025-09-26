@@ -3,16 +3,12 @@ on:
   release:
     types: [published]
 
-permissions:
-  id-token: write
-  contents: read
-
 jobs:
   publish:
     environment: "Publish to NPM"
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
@@ -24,3 +20,19 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm publish --provenance --access public
+
+      - name: Update example to use published version
+        run: |
+          # Wait for npm to propagate the new version.
+          sleep 30
+
+          cd example
+          npm install @stacks/rendezvous@latest
+          cd ..
+
+          # Commit the updated package-lock.json.
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add example/package-lock.json
+          git commit -m "chore: update example to use latest published version" || exit 0
+          git push
