@@ -8,8 +8,8 @@
   },
   "scripts": {
     "build": "npx -p typescript tsc --project tsconfig.json && node -e \"if (process.platform !== 'win32') require('fs').chmodSync('./dist/app.js', 0o755);\"",
-    "test": "npx jest --testTimeout=15000",
-    "test:coverage": "npx tsc --project tsconfig.json && npx jest --coverage"
+    "test": "npx jest",
+    "test:coverage": "npx jest --coverage"
   },
   "keywords": [
     "stacks",
