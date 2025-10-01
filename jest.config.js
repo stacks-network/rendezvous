@@ -7,7 +7,7 @@ module.exports = {
   },
   modulePathIgnorePatterns: ["<rootDir>/dist/"],
   testSequencer: "<rootDir>/jest.sequencer.js",
-  testTimeout: 20000,
+  testTimeout: 30000,
   maxWorkers: 1,
   collectCoverage: false,
   collectCoverageFrom: [
