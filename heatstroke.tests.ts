@@ -1,15 +1,26 @@
 import { EventEmitter } from "events";
-import { resolve } from "path";
+import { rmSync } from "fs";
+import { join, resolve } from "path";
 import { initSimnet } from "@hirosystems/clarinet-sdk";
 import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
 import fc from "fast-check";
 import { reporter } from "./heatstroke";
 import { getContractNameFromContractId } from "./shared";
+import { createIsolatedTestEnvironment } from "./test.utils";
+
+const isolatedTestEnvPrefix = "rendezvous-test-heatstroke-";
 
 describe("Custom reporter logging", () => {
   it("handles cases with missing path on failure for invariant testing type", async () => {
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      isolatedTestEnvPrefix
+    );
+    const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
+
+    jest.spyOn(process, "exitCode", "set").mockImplementation(() => {});
 
     fc.assert(
       fc.property(
@@ -101,10 +112,10 @@ describe("Custom reporter logging", () => {
             error: new Error(r.errorMessage),
           };
 
-          // Act
+          // Exercise
           reporter(runDetails, radio, "invariant", {});
 
-          // Assert
+          // Verify
           const expectedMessages = [
             `\nError: Property failed after ${r.numRuns} tests.`,
             `Seed : ${r.seed}`,
@@ -148,11 +159,22 @@ describe("Custom reporter logging", () => {
       ),
       { numRuns: 10 }
     );
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
+    jest.restoreAllMocks();
   });
 
   it("handles cases with a specified path on failure for invariant testing type", async () => {
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      isolatedTestEnvPrefix
+    );
+    const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
+
+    jest.spyOn(process, "exitCode", "set").mockImplementation(() => {});
 
     fc.assert(
       fc.property(
@@ -247,10 +269,10 @@ describe("Custom reporter logging", () => {
             error: new Error(r.errorMessage),
           };
 
-          // Act
+          // Exercise
           reporter(runDetails, radio, "invariant", {});
 
-          // Assert
+          // Verify
           const expectedMessages = [
             `\nError: Property failed after ${r.numRuns} tests.`,
             `Seed : ${r.seed}`,
@@ -296,10 +318,19 @@ describe("Custom reporter logging", () => {
       ),
       { numRuns: 10 }
     );
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
+    jest.restoreAllMocks();
   });
 
   it("does not log anything on success for invariant testing type", async () => {
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      isolatedTestEnvPrefix
+    );
+    const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
 
     fc.assert(
@@ -395,21 +426,31 @@ describe("Custom reporter logging", () => {
             error: new Error(r.errorMessage),
           };
 
-          // Act
+          // Exercise
           reporter(runDetails, radio, "invariant", {});
 
-          // Assert
+          // Verify
           expect(emittedErrorLogs).toEqual([]);
           radio.removeAllListeners();
         }
       ),
       { numRuns: 10 }
     );
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
   });
 
   it("handles cases with missing path on failure for property testing type", async () => {
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      isolatedTestEnvPrefix
+    );
+    const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
+
+    jest.spyOn(process, "exitCode", "set").mockImplementation(() => {});
 
     fc.assert(
       fc.property(
@@ -471,10 +512,10 @@ describe("Custom reporter logging", () => {
             error: new Error(r.errorMessage),
           };
 
-          // Act
+          // Exercise
           reporter(runDetails, radio, "test", {});
 
-          // Assert
+          // Verify
           const expectedMessages = [
             `\nError: Property failed after ${r.numRuns} tests.`,
             `Seed : ${r.seed}`,
@@ -503,11 +544,22 @@ describe("Custom reporter logging", () => {
       ),
       { numRuns: 10 }
     );
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
+    jest.restoreAllMocks();
   });
 
   it("handles cases with a specified path on failure for property testing type", async () => {
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      isolatedTestEnvPrefix
+    );
+    const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
+
+    jest.spyOn(process, "exitCode", "set").mockImplementation(() => {});
 
     fc.assert(
       fc.property(
@@ -572,10 +624,10 @@ describe("Custom reporter logging", () => {
             error: new Error(r.errorMessage),
           };
 
-          // Act
+          // Exercise
           reporter(runDetails, radio, "test", {});
 
-          // Assert
+          // Verify
           const expectedMessages = [
             `\nError: Property failed after ${r.numRuns} tests.`,
             `Seed : ${r.seed}`,
@@ -605,10 +657,19 @@ describe("Custom reporter logging", () => {
       ),
       { numRuns: 10 }
     );
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
+    jest.restoreAllMocks();
   });
 
   it("does not log anything on success for property testing type", async () => {
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      isolatedTestEnvPrefix
+    );
+    const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
 
     fc.assert(
@@ -671,15 +732,18 @@ describe("Custom reporter logging", () => {
             error: new Error(r.errorMessage),
           };
 
-          // Act
+          // Exercise
           reporter(runDetails, radio, "test", {});
 
-          // Assert
+          // Verify
 
           expect(emittedErrorLogs).toEqual([]);
         }
       ),
       { numRuns: 10 }
     );
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
   });
 });

@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        node: [23, 22, 20, 18]
+        node: [23, 22, 20]
 
     steps:
       - name: Checkout code
@@ -39,7 +39,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node: [23, 22, 20, 18]
+        node: [23, 22, 20]
 
     steps:
       - name: Checkout code

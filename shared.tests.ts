@@ -6,13 +6,21 @@ import {
   hexaString,
   getContractNameFromContractId,
 } from "./shared";
-import { resolve } from "path";
+import { rmSync } from "fs";
+import { join, resolve } from "path";
 import fc from "fast-check";
+import { createIsolatedTestEnvironment } from "./test.utils";
+
+const isolatedTestEnvPrefix = "rendezvous-test-shared-";
 
 describe("Simnet contracts operations", () => {
   it("retrieves the contracts from the simnet", async () => {
-    // Arrange
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      isolatedTestEnvPrefix
+    );
+    const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const expectedDeployerContracts = new Map(
       Array.from(simnet.getContractsInterfaces()).filter(
@@ -20,17 +28,24 @@ describe("Simnet contracts operations", () => {
       )
     );
 
-    // Act
+    // Exercise
     const actualDeployerContracts =
       getSimnetDeployerContractsInterfaces(simnet);
 
-    // Assert
+    // Verify
     expect(actualDeployerContracts).toEqual(expectedDeployerContracts);
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
   });
 
   it("retrieves the contract functions from the simnet", async () => {
-    // Arrange
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      isolatedTestEnvPrefix
+    );
+    const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsList = Array.from(sutContractsInterfaces.keys());
@@ -44,18 +59,25 @@ describe("Simnet contracts operations", () => {
       (contractId) => allFunctionsMap.get(contractId) || []
     );
 
-    // Act
+    // Exercise
     const actualContractFunctionsList = sutContractsList.map((contractId) =>
       getFunctionsListForContract(allFunctionsMap, contractId)
     );
 
-    // Assert
+    // Verify
     expect(actualContractFunctionsList).toEqual(expectedContractFunctionsList);
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
   });
 
   it("extracts the functions from the contract interfaces", async () => {
-    // Arrange
-    const manifestPath = resolve(__dirname, "./example/Clarinet.toml");
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      isolatedTestEnvPrefix
+    );
+    const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const expectedAllFunctionsMap = new Map(
@@ -65,13 +87,16 @@ describe("Simnet contracts operations", () => {
       ])
     );
 
-    // Act
+    // Exercise
     const actualAllFunctionsMap = getFunctionsFromContractInterfaces(
       sutContractsInterfaces
     );
 
-    // Assert
+    // Verify
     expect(actualAllFunctionsMap).toEqual(expectedAllFunctionsMap);
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
   });
 });
 
