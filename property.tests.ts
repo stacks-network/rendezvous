@@ -16,6 +16,8 @@ import {
 } from "@hirosystems/clarinet-sdk-wasm";
 import { cvToJSON } from "@stacks/transactions";
 
+const isolatedTestEnvPrefix = "rendezvous-test-property-";
+
 describe("Test discarding related operations", () => {
   it("boolean output checker returns true when the function's output is boolean", () => {
     fc.assert(
@@ -216,7 +218,7 @@ describe("Test discarding related operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "property-test-"
+      isolatedTestEnvPrefix
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -251,7 +253,7 @@ describe("Test discarding related operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "property-test-"
+      isolatedTestEnvPrefix
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);

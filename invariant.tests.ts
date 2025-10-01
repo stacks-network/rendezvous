@@ -13,12 +13,14 @@ import { getManifestFileName, tryParseRemoteDataSettings } from "./app";
 import { EventEmitter } from "events";
 import { createIsolatedTestEnvironment } from "./test.utils";
 
+const isolatedTestEnvPrefix = "rendezvous-test-invariant-";
+
 describe("Simnet contracts operations", () => {
   it("correctly initializes the local context for a given functions map", async () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "invariant-test-"
+      isolatedTestEnvPrefix
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -52,7 +54,7 @@ describe("Simnet contracts operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "invariant-test-"
+      isolatedTestEnvPrefix
     );
     const simnet = await issueFirstClassCitizenship(
       tempDir,

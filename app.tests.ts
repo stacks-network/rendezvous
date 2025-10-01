@@ -12,6 +12,7 @@ import fs, { rmSync } from "fs";
 import EventEmitter from "events";
 import { createIsolatedTestEnvironment } from "./test.utils";
 
+const isolatedTestEnvPrefix = "rendezvous-test-app-";
 const clarinetTomlRemoteData = {
   fullSettings: {
     toml: `
@@ -534,7 +535,7 @@ describe("Command-line arguments handling", () => {
       // Setup
       const tempDir = createIsolatedTestEnvironment(
         resolve(__dirname, "example"),
-        "app-test-"
+        isolatedTestEnvPrefix
       );
 
       // Update argv to use the isolated test environment.

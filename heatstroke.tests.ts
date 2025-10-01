@@ -8,12 +8,14 @@ import { reporter } from "./heatstroke";
 import { getContractNameFromContractId } from "./shared";
 import { createIsolatedTestEnvironment } from "./test.utils";
 
+const isolatedTestEnvPrefix = "rendezvous-test-heatstroke-";
+
 describe("Custom reporter logging", () => {
   it("handles cases with missing path on failure for invariant testing type", async () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "heatstroke-test-"
+      isolatedTestEnvPrefix
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -167,7 +169,7 @@ describe("Custom reporter logging", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "heatstroke-test-"
+      isolatedTestEnvPrefix
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -326,7 +328,7 @@ describe("Custom reporter logging", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "heatstroke-test-"
+      isolatedTestEnvPrefix
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -443,7 +445,7 @@ describe("Custom reporter logging", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "heatstroke-test-"
+      isolatedTestEnvPrefix
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -552,7 +554,7 @@ describe("Custom reporter logging", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "heatstroke-test-"
+      isolatedTestEnvPrefix
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -665,7 +667,7 @@ describe("Custom reporter logging", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "heatstroke-test-"
+      isolatedTestEnvPrefix
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);

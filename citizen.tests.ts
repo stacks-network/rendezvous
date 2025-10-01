@@ -19,6 +19,8 @@ import { ContractsByEpoch, DeploymentPlan } from "./citizen.types";
 import { cvToValue, hexToCV } from "@stacks/transactions";
 import EventEmitter from "events";
 
+const isolatedTestEnvPrefix = "rendezvous-test-citizen-";
+
 describe("Simnet deployment plan operations", () => {
   const manifestDir = "example";
   const manifestFileName = "Clarinet.toml";
@@ -48,7 +50,7 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "simnet-test-"
+      isolatedTestEnvPrefix
     );
     const deploymentPlanPath = join(
       tempDir,
@@ -80,7 +82,7 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "simnet-test-"
+      isolatedTestEnvPrefix
     );
     const deploymentPlanPath = join(
       tempDir,
@@ -270,7 +272,7 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "simnet-test-"
+      isolatedTestEnvPrefix
     );
     const deploymentPlanPath = join(
       tempDir,
@@ -305,7 +307,7 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "simnet-test-"
+      isolatedTestEnvPrefix
     );
     const deploymentPlanPath = join(
       tempDir,
@@ -354,7 +356,7 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "simnet-test-"
+      isolatedTestEnvPrefix
     );
     const deploymentPlanPath = join(
       tempDir,
@@ -421,7 +423,7 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "simnet-test-"
+      isolatedTestEnvPrefix
     );
     const deploymentPlanPath = join(
       tempDir,
@@ -482,7 +484,7 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "simnet-test-"
+      isolatedTestEnvPrefix
     );
 
     // Exercise
@@ -516,7 +518,7 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "simnet-test-"
+      isolatedTestEnvPrefix
     );
 
     // Exercise
@@ -552,7 +554,7 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "simnet-test-"
+      isolatedTestEnvPrefix
     );
 
     // Exercise

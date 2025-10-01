@@ -11,12 +11,14 @@ import { join, resolve } from "path";
 import fc from "fast-check";
 import { createIsolatedTestEnvironment } from "./test.utils";
 
+const isolatedTestEnvPrefix = "rendezvous-test-shared-";
+
 describe("Simnet contracts operations", () => {
   it("retrieves the contracts from the simnet", async () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "shared-test-"
+      isolatedTestEnvPrefix
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -41,7 +43,7 @@ describe("Simnet contracts operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "shared-test-"
+      isolatedTestEnvPrefix
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -73,7 +75,7 @@ describe("Simnet contracts operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "shared-test-"
+      isolatedTestEnvPrefix
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);

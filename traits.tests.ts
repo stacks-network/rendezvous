@@ -14,6 +14,8 @@ import {
 } from "./traits";
 import { createIsolatedTestEnvironment } from "./test.utils";
 
+const isolatedTestEnvPrefix = "rendezvous-test-traits-";
+
 describe("Trait reference processing", () => {
   it("correctly builds the trait reference map for a direct trait that is the first parameter", () => {
     // Arrange
@@ -2143,7 +2145,7 @@ describe("Trait reference processing", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      "traits-test-"
+      isolatedTestEnvPrefix
     );
     const simnet = await initSimnet(join(tempDir, "Clarinet.toml"));
 
