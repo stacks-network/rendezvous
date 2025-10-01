@@ -6,7 +6,8 @@ module.exports = {
     "^.+.tsx?$": ["ts-jest", {}],
   },
   modulePathIgnorePatterns: ["<rootDir>/dist/"],
-  testTimeout: 15000,
+  testSequencer: "<rootDir>/jest.sequencer.js",
+  testTimeout: 20000,
   maxWorkers: 1,
   collectCoverage: false,
   collectCoverageFrom: [

@@ -1,4 +1,8 @@
-import { red, yellow } from "ansicolor";
+// This test suite uses the main function, resulting in initializing the
+// example Clarinet project cache and the deployment plan. To make sure this
+// happens only once, `jest.sequencer.js` is used to ensure that this test
+// suite runs first.
+import { red } from "ansicolor";
 import {
   getManifestFileName,
   main,
