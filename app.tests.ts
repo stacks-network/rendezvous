@@ -1,7 +1,3 @@
-// This test suite uses the main function, resulting in initializing the
-// example Clarinet project cache and the deployment plan. To make sure this
-// happens only once, `jest.sequencer.js` is used to ensure that this test
-// suite runs first.
 import { red } from "ansicolor";
 import {
   getManifestFileName,
@@ -12,8 +8,9 @@ import {
 import { RemoteDataSettings } from "./app.types";
 import { version } from "./package.json";
 import { resolve } from "path";
-import fs from "fs";
+import fs, { rmSync } from "fs";
 import EventEmitter from "events";
+import { createIsolatedTestEnvironment } from "./test.utils";
 
 const clarinetTomlRemoteData = {
   fullSettings: {
@@ -96,6 +93,7 @@ describe("Command-line arguments handling", () => {
   const noContractNameMessage = red(
     `\nNo target contract name provided. Please provide the contract name to be fuzzed.`
   );
+  const manifestDirPlaceholder = "isolated-example";
 
   it.each([
     ["manifest path", ["node", "app.js"]],
@@ -174,12 +172,12 @@ describe("Command-line arguments handling", () => {
     ],
     [
       ["manifest path"],
-      ["node", "app.js", "example"],
+      ["node", "app.js", manifestDirPlaceholder],
       [noContractNameMessage, helpMessage],
     ],
     [
       ["manifest path", "contract name"],
-      ["node", "app.js", "example", "counter"],
+      ["node", "app.js", manifestDirPlaceholder, "counter"],
       [
         red(
           `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
@@ -189,7 +187,7 @@ describe("Command-line arguments handling", () => {
     ],
     [
       ["manifest path", "contract name", "seed", "bail"],
-      ["node", "app.js", "example", "counter", "--bail"],
+      ["node", "app.js", manifestDirPlaceholder, "counter", "--bail"],
       [
         red(
           `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
@@ -199,7 +197,7 @@ describe("Command-line arguments handling", () => {
     ],
     [
       ["manifest path", "contract name", "seed"],
-      ["node", "app.js", "example", "counter", "--seed=123"],
+      ["node", "app.js", manifestDirPlaceholder, "counter", "--seed=123"],
       [
         red(
           `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
@@ -209,7 +207,14 @@ describe("Command-line arguments handling", () => {
     ],
     [
       ["manifest path", "contract name", "seed", "path"],
-      ["node", "app.js", "example", "counter", "--seed=123", "--path=84:0"],
+      [
+        "node",
+        "app.js",
+        manifestDirPlaceholder,
+        "counter",
+        "--seed=123",
+        "--path=84:0",
+      ],
       [
         red(
           `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
@@ -219,7 +224,7 @@ describe("Command-line arguments handling", () => {
     ],
     [
       ["manifest path", "contract name", "runs"],
-      ["node", "app.js", "example", "counter", "--runs=10"],
+      ["node", "app.js", manifestDirPlaceholder, "counter", "--runs=10"],
       [
         red(
           `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
@@ -229,7 +234,7 @@ describe("Command-line arguments handling", () => {
     ],
     [
       ["manifest path", "contract name", "path"],
-      ["node", "app.js", "example", "counter", "--path=84:0"],
+      ["node", "app.js", manifestDirPlaceholder, "counter", "--path=84:0"],
       [
         red(
           `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
@@ -242,7 +247,7 @@ describe("Command-line arguments handling", () => {
       [
         "node",
         "app.js",
-        "example",
+        manifestDirPlaceholder,
         "counter",
         "--seed=123",
         "--path=84:0",
@@ -257,27 +262,34 @@ describe("Command-line arguments handling", () => {
     ],
     [
       ["manifest path", "contract name", "type=invariant"],
-      ["node", "app.js", "example", "counter", "invariant"],
+      ["node", "app.js", manifestDirPlaceholder, "counter", "invariant"],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `\nStarting invariant testing type for the counter contract...\n`,
       ],
     ],
     [
       ["manifest path", "contract name", "type=InVaRiAnT (case-insensitive)"],
-      ["node", "app.js", "example", "counter", "InVaRiAnT"],
+      ["node", "app.js", manifestDirPlaceholder, "counter", "InVaRiAnT"],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `\nStarting invariant testing type for the counter contract...\n`,
       ],
     ],
     [
       ["manifest path", "contract name", "type=invariant", "bail"],
-      ["node", "app.js", "example", "counter", "invariant", "--bail"],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        "node",
+        "app.js",
+        manifestDirPlaceholder,
+        "counter",
+        "invariant",
+        "--bail",
+      ],
+      [
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Bailing on first failure.`,
         `\nStarting invariant testing type for the counter contract...\n`,
@@ -288,13 +300,13 @@ describe("Command-line arguments handling", () => {
       [
         "node",
         "app.js",
-        "example",
+        manifestDirPlaceholder,
         "counter",
         "invariant",
         "--dial=example/sip010.cjs",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using dial path: example/sip010.cjs`,
         `\nStarting invariant testing type for the counter contract...\n`,
@@ -302,27 +314,27 @@ describe("Command-line arguments handling", () => {
     ],
     [
       ["manifest path", "contract name", "type=test"],
-      ["node", "app.js", "example", "counter", "test"],
+      ["node", "app.js", manifestDirPlaceholder, "counter", "test"],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `\nStarting property testing type for the counter contract...\n`,
       ],
     ],
     [
       ["manifest path", "contract name", "type=tESt (case-insensitive)"],
-      ["node", "app.js", "example", "counter", "tESt"],
+      ["node", "app.js", manifestDirPlaceholder, "counter", "tESt"],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `\nStarting property testing type for the counter contract...\n`,
       ],
     ],
     [
       ["manifest path", "contract name", "type=test", "bail"],
-      ["node", "app.js", "example", "counter", "test", "--bail"],
+      ["node", "app.js", manifestDirPlaceholder, "counter", "test", "--bail"],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Bailing on first failure.`,
         `\nStarting property testing type for the counter contract...\n`,
@@ -333,14 +345,14 @@ describe("Command-line arguments handling", () => {
       [
         "node",
         "app.js",
-        "example",
+        manifestDirPlaceholder,
         "counter",
         "invariant",
         "--seed=123",
         "--path=84:0",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
@@ -358,14 +370,14 @@ describe("Command-line arguments handling", () => {
       [
         "node",
         "app.js",
-        "example",
+        manifestDirPlaceholder,
         "counter",
         "invARiaNT",
         "--seed=123",
         "--path=84:0",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
@@ -377,14 +389,14 @@ describe("Command-line arguments handling", () => {
       [
         "node",
         "app.js",
-        "example",
+        manifestDirPlaceholder,
         "counter",
         "test",
         "--seed=123",
         "--path=84:0",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
@@ -396,14 +408,14 @@ describe("Command-line arguments handling", () => {
       [
         "node",
         "app.js",
-        "example",
+        manifestDirPlaceholder,
         "reverse",
         "test",
         "--seed=123",
         "--path=84:0",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: reverse`,
         `Using seed: 123`,
         `Using path: 84:0`,
@@ -415,14 +427,14 @@ describe("Command-line arguments handling", () => {
       [
         "node",
         "app.js",
-        "example",
+        manifestDirPlaceholder,
         "slice",
         "test",
         "--seed=123",
         "--path=84:0",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: slice`,
         `Using seed: 123`,
         `Using path: 84:0`,
@@ -440,14 +452,14 @@ describe("Command-line arguments handling", () => {
       [
         "node",
         "app.js",
-        "example",
+        manifestDirPlaceholder,
         "counter",
         "teSt",
         "--seed=123",
         "--path=84:0",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
@@ -467,7 +479,7 @@ describe("Command-line arguments handling", () => {
       [
         "node",
         "app.js",
-        "example",
+        manifestDirPlaceholder,
         "counter",
         "test",
         "--seed=123",
@@ -476,7 +488,7 @@ describe("Command-line arguments handling", () => {
         "--bail",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
@@ -498,7 +510,7 @@ describe("Command-line arguments handling", () => {
       [
         "node",
         "app.js",
-        "example",
+        manifestDirPlaceholder,
         "counter",
         "invariant",
         "--seed=123",
@@ -507,7 +519,7 @@ describe("Command-line arguments handling", () => {
         "--bail",
       ],
       [
-        `Using manifest path: example/Clarinet.toml`,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
         `Using path: 84:0`,
@@ -517,30 +529,49 @@ describe("Command-line arguments handling", () => {
       ],
     ],
   ])(
-    "logs the correct values when arguments %p are provided",
+    "prints the correct logs when arguments %p are provided",
     async (_testCase: string[], argv: string[], expectedLogs: string[]) => {
-      // Arrange
-      process.argv = argv;
+      // Setup
+      const tempDir = createIsolatedTestEnvironment(
+        resolve(__dirname, "example"),
+        "app-test-"
+      );
+
+      // Update argv to use the isolated test environment.
+      const updatedArgv = argv.map((arg) =>
+        arg === manifestDirPlaceholder ? tempDir : arg
+      );
+      process.argv = updatedArgv;
+
       const consoleLogs: string[] = [];
       jest.spyOn(console, "log").mockImplementation((message: string) => {
         consoleLogs.push(message);
       });
       jest.spyOn(console, "error").mockImplementation(() => {});
 
-      // Act
+      // Exercise
       try {
         await main();
       } catch {
         // Do nothing.
       }
 
-      // Assert
+      // Verify
       expectedLogs.forEach((expectedLog) => {
-        expect(consoleLogs).toContain(expectedLog);
+        // Update expected log to use the isolated test environment path.
+        const updatedExpectedLog = expectedLog.startsWith(
+          "Using manifest path:"
+        )
+          ? expectedLog.replace(manifestDirPlaceholder, tempDir)
+          : expectedLog;
+
+        expect(consoleLogs).toContain(updatedExpectedLog);
       });
 
+      // Teardown
       process.argv = initialArgv;
       jest.restoreAllMocks();
+      rmSync(tempDir, { recursive: true, force: true });
     }
   );
 });
