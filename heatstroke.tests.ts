@@ -18,6 +18,8 @@ describe("Custom reporter logging", () => {
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
 
+    jest.spyOn(process, "exitCode", "set").mockImplementation(() => {});
+
     fc.assert(
       fc.property(
         fc.record({
@@ -158,6 +160,7 @@ describe("Custom reporter logging", () => {
 
     // Teardown
     rmSync(tempDir, { recursive: true, force: true });
+    jest.restoreAllMocks();
   });
 
   it("handles cases with a specified path on failure for invariant testing type", async () => {
@@ -168,6 +171,8 @@ describe("Custom reporter logging", () => {
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
+
+    jest.spyOn(process, "exitCode", "set").mockImplementation(() => {});
 
     fc.assert(
       fc.property(
@@ -314,6 +319,7 @@ describe("Custom reporter logging", () => {
 
     // Teardown
     rmSync(tempDir, { recursive: true, force: true });
+    jest.restoreAllMocks();
   });
 
   it("does not log anything on success for invariant testing type", async () => {
@@ -442,6 +448,8 @@ describe("Custom reporter logging", () => {
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
 
+    jest.spyOn(process, "exitCode", "set").mockImplementation(() => {});
+
     fc.assert(
       fc.property(
         fc.record({
@@ -537,6 +545,7 @@ describe("Custom reporter logging", () => {
 
     // Teardown
     rmSync(tempDir, { recursive: true, force: true });
+    jest.restoreAllMocks();
   });
 
   it("handles cases with a specified path on failure for property testing type", async () => {
@@ -547,6 +556,8 @@ describe("Custom reporter logging", () => {
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
+
+    jest.spyOn(process, "exitCode", "set").mockImplementation(() => {});
 
     fc.assert(
       fc.property(
@@ -647,6 +658,7 @@ describe("Custom reporter logging", () => {
 
     // Teardown
     rmSync(tempDir, { recursive: true, force: true });
+    jest.restoreAllMocks();
   });
 
   it("does not log anything on success for property testing type", async () => {
