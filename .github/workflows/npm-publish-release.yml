@@ -5,7 +5,8 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   publish:
@@ -62,40 +63,23 @@ jobs:
       - name: Update example project to use published version
         run: |
           echo "Updating example project to use version: $VERSION"
-
-          # Configure git.
-          git config user.email "action@github.com"
-          git config user.name "GitHub Action"
-
-          # Create and checkout post-release branch.
-          git checkout -b "$BRANCH_NAME"
-
           # Update example to use the published version.
           cd example
           npm install @stacks/rendezvous@$VERSION
           cd ..
-
-          # Add the updated package.json and package-lock.json.
-          git add example/package.json
-          git add example/package-lock.json
-
-          # Commit the changes.
-          git commit -m "Update example project to use @stacks/rendezvous@$VERSION"
-
-          # Push the branch.
-          git push origin "$BRANCH_NAME"
 
       - name: Create pull request
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ env.BRANCH_NAME }}
+          base: master
           title: "Update example project to use @stacks/rendezvous@${{ env.VERSION }}"
+          commit-message: "Update example project to use @stacks/rendezvous@${{ env.VERSION }}"
+          add-paths: |
+            example/package.json
+            example/package-lock.json
           body: |
             This post-release PR updates the `example` Clarinet project to use the latest Rendezvous version.
 
-            **Changes:**
-            - Updates `@stacks/rendezvous` dependency to `${{ env.VERSION }}`
-
             Auto-generated after release ${{ env.VERSION }}.
-          base: master
