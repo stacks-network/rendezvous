@@ -1,34 +1,39 @@
 name: npm-publish
 on:
-  release:
-    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version of dummy package to test"
+        required: true
+        default: "1.0.0"
 
 permissions:
   id-token: write
   contents: read
+  pull-requests: write
 
 jobs:
-  publish:
-    environment: "Publish to NPM"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          registry-url: "https://registry.npmjs.org"
-      - name: Update npm
-        run: npm install -g npm@latest
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
-      - run: npm publish
+  # Skipping actual publish for testing
+  # publish:
+  #   environment: "Publish to NPM"
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "22"
+  #         registry-url: "https://registry.npmjs.org"
+  #     - name: Update npm
+  #       run: npm install -g npm@latest
+  #     - run: npm ci
+  #     - run: npm test
+  #     - run: npm run build
+  #     - run: npm publish
 
   update-example-post-release:
-    needs: publish
     runs-on: ubuntu-latest
     env:
-      VERSION: ${{ github.ref_name }}
+      VERSION: ${{ github.event.inputs.version }}
       BRANCH_NAME: post-release/update-example
     steps:
       - uses: actions/checkout@v4
@@ -42,17 +47,15 @@ jobs:
 
       - name: Verify version availability on npm with retries
         run: |
-          echo "Checking if @stacks/rendezvous@$VERSION is available on npm..."
-
-          # Retry up to 5 times with 10 second intervals.
+          echo "Checking if @bowtiedradone/dummy-test-pkg@$VERSION is available on npm..."
           for i in {1..5}; do
-            if npm view @stacks/rendezvous@$VERSION version >/dev/null 2>&1; then
-              echo "Package @stacks/rendezvous@$VERSION is available on npm"
+            if npm view @bowtiedradone/dummy-test-pkg@$VERSION version >/dev/null 2>&1; then
+              echo "Package @bowtiedradone/dummy-test-pkg@$VERSION is available on npm"
               break
             else
               echo "Attempt $i: Package not yet available, waiting 10 seconds..."
               if [ $i -eq 5 ]; then
-                echo "Package @stacks/rendezvous@$VERSION not found after 5 attempts"
+                echo "Package @bowtiedradone/dummy-test-pkg@$VERSION not found after 5 attempts"
                 exit 1
               fi
               sleep 10
@@ -72,17 +75,11 @@ jobs:
 
           # Update example to use the published version.
           cd example
-          npm install @stacks/rendezvous@$VERSION
+          npm install @bowtiedradone/dummy-test-pkg@$VERSION
           cd ..
 
-          # Add the updated package.json and package-lock.json.
-          git add example/package.json
-          git add example/package-lock.json
-
-          # Commit the changes.
-          git commit -m "Update example project to use @stacks/rendezvous@$VERSION"
-
-          # Push the branch.
+          git add example/package.json example/package-lock.json
+          git commit -m "Update example project to use @bowtiedradone/dummy-test-pkg@$VERSION"
           git push origin "$BRANCH_NAME"
 
       - name: Create pull request
@@ -90,12 +87,12 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ env.BRANCH_NAME }}
-          title: "Update example project to use @stacks/rendezvous@${{ env.VERSION }}"
+          title: "Update example project to use @bowtiedradone/dummy-test-pkg@${{ env.VERSION }}"
           body: |
-            This post-release PR updates the `example` Clarinet project to use the latest Rendezvous version.
+            This post-release PR updates the `example` project to use the latest dummy test package version.
 
             **Changes:**
-            - Updates `@stacks/rendezvous` dependency to `${{ env.VERSION }}`
+            - Updates `@bowtiedradone/dummy-test-pkg` dependency to `${{ env.VERSION }}`
 
-            Auto-generated after release ${{ env.VERSION }}.
+            Auto-generated after test release ${{ env.VERSION }}.
           base: master
