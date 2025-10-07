@@ -5,7 +5,8 @@ on:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
+  pull-requests: write
 
 jobs:
   publish:
@@ -23,3 +24,62 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm publish
+
+  update-example-post-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.ref_name }}
+      BRANCH_NAME: post-release/update-example
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Wait for npm propagation
+        run: sleep 30
+
+      - name: Verify version availability on npm with retries
+        run: |
+          echo "Checking if @stacks/rendezvous@$VERSION is available on npm..."
+
+          # Retry up to 5 times with 10 second intervals.
+          for i in {1..5}; do
+            if npm view @stacks/rendezvous@$VERSION version >/dev/null 2>&1; then
+              echo "Package @stacks/rendezvous@$VERSION is available on npm"
+              break
+            else
+              echo "Attempt $i: Package not yet available, waiting 10 seconds..."
+              if [ $i -eq 5 ]; then
+                echo "Package @stacks/rendezvous@$VERSION not found after 5 attempts"
+                exit 1
+              fi
+              sleep 10
+            fi
+          done
+
+      - name: Update example project to use published version
+        run: |
+          echo "Updating example project to use version: $VERSION"
+          # Update example to use the published version.
+          cd example
+          npm install @stacks/rendezvous@$VERSION
+          cd ..
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ env.BRANCH_NAME }}
+          base: master
+          title: "Update example project to use @stacks/rendezvous@${{ env.VERSION }}"
+          commit-message: "Update example project to use @stacks/rendezvous@${{ env.VERSION }}"
+          add-paths: |
+            example/package.json
+            example/package-lock.json
+          body: |
+            This post-release PR updates the `example` Clarinet project to use the latest Rendezvous version.
+
+            Auto-generated after release ${{ env.VERSION }}.
