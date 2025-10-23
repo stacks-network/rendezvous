@@ -2,6 +2,7 @@
 import { join, resolve } from "path";
 import { EventEmitter } from "events";
 import toml from "toml";
+import minimist from "minimist";
 import { checkProperties } from "./property";
 import { checkInvariants } from "./invariant";
 import {
@@ -96,31 +97,46 @@ const helpMessage = `
     --help - Show the help message.
   `;
 
-const parseBooleanOption = (argName: string): boolean =>
-  process.argv.slice(4).includes(`--${argName}`);
-
-const parseOption = (argName: string) => {
-  return process.argv
-    .find(
-      (arg, idx) => idx >= 4 && arg.toLowerCase().startsWith(`--${argName}`)
-    )
-    ?.split("=")[1];
-};
-
 export async function main() {
   const radio = new EventEmitter();
   radio.on("logMessage", (log) => logger(log));
   radio.on("logFailure", (log) => logger(red(log), "error"));
 
-  const args = process.argv;
-  if (args.includes("--help")) {
+  const argv = minimist(process.argv.slice(2), {
+    string: ["seed", "path", "runs", "dial"],
+    boolean: ["help", "bail"],
+    alias: {
+      h: "help",
+    },
+  });
+
+  const runConfig = {
+    /** The relative path to the Clarinet project. */
+    manifestDir: argv._[0],
+    /** The target contract name. */
+    sutContractName: argv._[1],
+    /** The type of testing to be executed. Valid values: test, invariant. */
+    type: argv._[2]?.toLowerCase(),
+    /** The seed to use for the replay functionality. */
+    seed: argv.seed ? parseInt(argv.seed, 10) : undefined,
+    /** The path to use for the replay functionality. */
+    path: argv.path || undefined,
+    /** The number of runs to use. */
+    runs: argv.runs ? parseInt(argv.runs, 10) : undefined,
+    /** Whether to bail on the first failure. */
+    bail: argv.bail || false,
+    /** The path to the dialer file. */
+    dial: argv.dial || undefined,
+    /** Whether to show the help message. */
+    help: argv.help || false,
+  };
+
+  if (runConfig.help) {
     radio.emit("logMessage", helpMessage);
     return;
   }
 
-  /** The relative path to the Clarinet project. */
-  const manifestDir = args[2];
-  if (!manifestDir || manifestDir.startsWith("--")) {
+  if (!runConfig.manifestDir) {
     radio.emit(
       "logMessage",
       red(
@@ -131,9 +147,7 @@ export async function main() {
     return;
   }
 
-  /** The target contract name. */
-  const sutContractName = args[3];
-  if (!sutContractName || sutContractName.startsWith("--")) {
+  if (!runConfig.sutContractName) {
     radio.emit(
       "logMessage",
       red(
@@ -144,8 +158,7 @@ export async function main() {
     return;
   }
 
-  const type = args[4]?.toLowerCase();
-  if (!type || type.startsWith("--") || !["test", "invariant"].includes(type)) {
+  if (!runConfig.type || !["test", "invariant"].includes(runConfig.type)) {
     radio.emit(
       "logMessage",
       red(
@@ -161,40 +174,30 @@ export async function main() {
    * `Clarinet-<contract-name>.toml`. If the latter exists, it is used.
    */
   const manifestPath = join(
-    manifestDir,
-    getManifestFileName(manifestDir, sutContractName)
+    runConfig.manifestDir,
+    getManifestFileName(runConfig.manifestDir, runConfig.sutContractName)
   );
   radio.emit("logMessage", `Using manifest path: ${manifestPath}`);
-  radio.emit("logMessage", `Target contract: ${sutContractName}`);
+  radio.emit("logMessage", `Target contract: ${runConfig.sutContractName}`);
 
-  const seed = parseInt(parseOption("seed")!, 10) || undefined;
-  if (seed !== undefined) {
-    radio.emit("logMessage", `Using seed: ${seed}`);
+  if (runConfig.seed !== undefined) {
+    radio.emit("logMessage", `Using seed: ${runConfig.seed}`);
   }
 
-  const path = parseOption("path") || undefined;
-  if (path !== undefined) {
-    radio.emit("logMessage", `Using path: ${path}`);
+  if (runConfig.path !== undefined) {
+    radio.emit("logMessage", `Using path: ${runConfig.path}`);
   }
 
-  const runs = parseInt(parseOption("runs")!, 10) || undefined;
-  if (runs !== undefined) {
-    radio.emit("logMessage", `Using runs: ${runs}`);
+  if (runConfig.runs !== undefined) {
+    radio.emit("logMessage", `Using runs: ${runConfig.runs}`);
   }
 
-  const bail = parseBooleanOption("bail");
-  if (bail) {
+  if (runConfig.bail) {
     radio.emit("logMessage", `Bailing on first failure.`);
   }
 
-  /**
-   * The path to the dialer file. The dialer file allows the user to register
-   * custom pre and post-execution JavaScript functions to be executed before
-   * and after the public function calls during invariant testing.
-   */
-  const dialPath = parseOption("dial") || undefined;
-  if (dialPath !== undefined) {
-    radio.emit("logMessage", `Using dial path: ${dialPath}`);
+  if (runConfig.dial !== undefined) {
+    radio.emit("logMessage", `Using dial path: ${runConfig.dial}`);
   }
 
   /**
@@ -202,7 +205,9 @@ export async function main() {
    * registered by the user using the `--dial` flag.
    */
   const dialerRegistry =
-    dialPath !== undefined ? new DialerRegistry(dialPath) : undefined;
+    runConfig.dial !== undefined
+      ? new DialerRegistry(runConfig.dial)
+      : undefined;
 
   if (dialerRegistry !== undefined) {
     dialerRegistry.registerDialers();
@@ -211,10 +216,10 @@ export async function main() {
   const remoteDataSettings = tryParseRemoteDataSettings(manifestPath, radio);
 
   const simnet = await issueFirstClassCitizenship(
-    manifestDir,
+    runConfig.manifestDir,
     manifestPath,
     remoteDataSettings,
-    sutContractName
+    runConfig.sutContractName
   );
 
   /**
@@ -224,7 +229,8 @@ export async function main() {
     getSimnetDeployerContractsInterfaces(simnet).keys()
   ).filter(
     (deployedContract) =>
-      getContractNameFromContractId(deployedContract) === sutContractName
+      getContractNameFromContractId(deployedContract) ===
+      runConfig.sutContractName
   );
 
   const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
@@ -238,17 +244,17 @@ export async function main() {
   // Select the testing routine based on `type`.
   // If "invariant", call `checkInvariants` to verify contract invariants.
   // If "test", call `checkProperties` for property-based testing.
-  switch (type) {
+  switch (runConfig.type) {
     case "invariant": {
       await checkInvariants(
         simnet,
-        sutContractName,
+        runConfig.sutContractName,
         rendezvousList,
         rendezvousAllFunctions,
-        seed,
-        path,
-        runs,
-        bail,
+        runConfig.seed,
+        runConfig.path,
+        runConfig.runs,
+        runConfig.bail,
         dialerRegistry,
         radio
       );
@@ -258,13 +264,13 @@ export async function main() {
     case "test": {
       checkProperties(
         simnet,
-        sutContractName,
+        runConfig.sutContractName,
         rendezvousList,
         rendezvousAllFunctions,
-        seed,
-        path,
-        runs,
-        bail,
+        runConfig.seed,
+        runConfig.path,
+        runConfig.runs,
+        runConfig.bail,
         radio
       );
       break;
