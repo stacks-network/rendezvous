@@ -28,7 +28,6 @@ import {
  * @param rendezvousAllFunctions A map of all target contract IDs to their
  * function interfaces.
  * @param seed The seed for reproducible property-based tests.
- * @param path The path for reproducible property-based tests.
  * @param runs The number of test runs.
  * @param bail Stop execution after the first failure and prevent further
  * shrinking.
@@ -41,7 +40,6 @@ export const checkProperties = (
   rendezvousList: string[],
   rendezvousAllFunctions: Map<string, ContractInterfaceFunction[]>,
   seed: number | undefined,
-  path: string | undefined,
   runs: number | undefined,
   bail: boolean,
   radio: EventEmitter
@@ -390,7 +388,6 @@ export const checkProperties = (
     {
       endOnFailure: bail,
       numRuns: runs,
-      path: path,
       reporter: radioReporter,
       seed: seed,
       verbose: true,

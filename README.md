@@ -53,7 +53,6 @@ npx rv <path-to-clarinet-project> <contract-name> <type>
 **Options:**
 
 - `--seed` – The seed to use for the replay functionality.
-- `--path` – The path to use for the replay functionality.
 - `--runs` – The number of test iterations to use for exercising the contracts.
   (default: `100`)
 - `--bail` – Stop after the first failure.

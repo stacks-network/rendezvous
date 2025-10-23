@@ -81,7 +81,7 @@ export const tryParseRemoteDataSettings = (
 const helpMessage = `
   rv v${version}
   
-  Usage: rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--path=<path>] [--runs=<runs>] [--dial=<path-to-dialers-file>] [--help]
+  Usage: rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--runs=<runs>] [--dial=<path-to-dialers-file>] [--help]
 
   Positional arguments:
     path-to-clarinet-project - The path to the Clarinet project.
@@ -90,7 +90,6 @@ const helpMessage = `
 
   Options:
     --seed - The seed to use for the replay functionality.
-    --path - The path to use for the replay functionality.
     --runs - The runs to use for iterating over the tests. Default: 100.
     --bail - Stop after the first failure.
     --dial – The path to a JavaScript file containing custom pre- and post-execution functions (dialers).
@@ -107,7 +106,6 @@ export async function main() {
     args: process.argv.slice(2),
     options: {
       seed: { type: "string" },
-      path: { type: "string" },
       runs: { type: "string" },
       dial: { type: "string" },
       bail: { type: "boolean" },
@@ -125,8 +123,6 @@ export async function main() {
     type: type?.toLowerCase(),
     /** The seed to use for the replay functionality. */
     seed: options.seed ? parseInt(options.seed, 10) : undefined,
-    /** The path to use for the replay functionality. */
-    path: options.path || undefined,
     /** The number of runs to use. */
     runs: options.runs ? parseInt(options.runs, 10) : undefined,
     /** Whether to bail on the first failure. */
@@ -188,10 +184,6 @@ export async function main() {
 
   if (runConfig.seed !== undefined) {
     radio.emit("logMessage", `Using seed: ${runConfig.seed}`);
-  }
-
-  if (runConfig.path !== undefined) {
-    radio.emit("logMessage", `Using path: ${runConfig.path}`);
   }
 
   if (runConfig.runs !== undefined) {
@@ -258,7 +250,6 @@ export async function main() {
         rendezvousList,
         rendezvousAllFunctions,
         runConfig.seed,
-        runConfig.path,
         runConfig.runs,
         runConfig.bail,
         dialerRegistry,
@@ -274,7 +265,6 @@ export async function main() {
         rendezvousList,
         rendezvousAllFunctions,
         runConfig.seed,
-        runConfig.path,
         runConfig.runs,
         runConfig.bail,
         radio
