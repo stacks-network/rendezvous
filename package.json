@@ -34,12 +34,14 @@
     "@stacks/transactions": "^7.2.0",
     "ansicolor": "^2.0.3",
     "fast-check": "^3.20.0",
+    "minimist": "^1.2.8",
     "toml": "^3.0.0",
     "yaml": "^2.6.1"
   },
   "devDependencies": {
     "@hirosystems/clarinet-sdk-wasm": "^3.7.0",
     "@types/jest": "^29.5.12",
+    "@types/minimist": "^1.2.5",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.5",
     "typescript": "^5.5.4"
