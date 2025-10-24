@@ -72,7 +72,7 @@ describe("Command-line arguments handling", () => {
   const helpMessage = `
   rv v${version}
   
-  Usage: rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--path=<path>] [--runs=<runs>] [--dial=<path-to-dialers-file>] [--help]
+  Usage: rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--runs=<runs>] [--dial=<path-to-dialers-file>] [--help]
 
   Positional arguments:
     path-to-clarinet-project - The path to the Clarinet project.
@@ -81,7 +81,6 @@ describe("Command-line arguments handling", () => {
 
   Options:
     --seed - The seed to use for the replay functionality.
-    --path - The path to use for the replay functionality.
     --runs - The runs to use for iterating over the tests. Default: 100.
     --bail - Stop after the first failure.
     --dial – The path to a JavaScript file containing custom pre- and post-execution functions (dialers).
@@ -207,23 +206,6 @@ describe("Command-line arguments handling", () => {
       ],
     ],
     [
-      ["manifest path", "contract name", "seed", "path"],
-      [
-        "node",
-        "app.js",
-        manifestDirPlaceholder,
-        "counter",
-        "--seed=123",
-        "--path=84:0",
-      ],
-      [
-        red(
-          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
-        ),
-        helpMessage,
-      ],
-    ],
-    [
       ["manifest path", "contract name", "runs"],
       ["node", "app.js", manifestDirPlaceholder, "counter", "--runs=10"],
       [
@@ -234,24 +216,13 @@ describe("Command-line arguments handling", () => {
       ],
     ],
     [
-      ["manifest path", "contract name", "path"],
-      ["node", "app.js", manifestDirPlaceholder, "counter", "--path=84:0"],
-      [
-        red(
-          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
-        ),
-        helpMessage,
-      ],
-    ],
-    [
-      ["manifest path", "contract name", "seed", "path", "runs"],
+      ["manifest path", "contract name", "seed", "runs"],
       [
         "node",
         "app.js",
         manifestDirPlaceholder,
         "counter",
         "--seed=123",
-        "--path=84:0",
         "--runs=10",
       ],
       [
@@ -342,7 +313,7 @@ describe("Command-line arguments handling", () => {
       ],
     ],
     [
-      ["manifest path", "contract name", "type=invariant", "seed", "path"],
+      ["manifest path", "contract name", "type=invariant", "seed"],
       [
         "node",
         "app.js",
@@ -350,13 +321,11 @@ describe("Command-line arguments handling", () => {
         "counter",
         "invariant",
         "--seed=123",
-        "--path=84:0",
       ],
       [
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `Using path: 84:0`,
         `\nStarting invariant testing type for the counter contract...\n`,
       ],
     ],
@@ -366,7 +335,6 @@ describe("Command-line arguments handling", () => {
         "contract name",
         "type=invARiaNT (case-insensitive)",
         "seed",
-        "path",
       ],
       [
         "node",
@@ -375,18 +343,16 @@ describe("Command-line arguments handling", () => {
         "counter",
         "invARiaNT",
         "--seed=123",
-        "--path=84:0",
       ],
       [
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `Using path: 84:0`,
         `\nStarting invariant testing type for the counter contract...\n`,
       ],
     ],
     [
-      ["manifest path", "contract name", "type=test", "seed", "path"],
+      ["manifest path", "contract name", "type=test", "seed"],
       [
         "node",
         "app.js",
@@ -394,18 +360,16 @@ describe("Command-line arguments handling", () => {
         "counter",
         "test",
         "--seed=123",
-        "--path=84:0",
       ],
       [
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `Using path: 84:0`,
         `\nStarting property testing type for the counter contract...\n`,
       ],
     ],
     [
-      ["manifest path", "contract name = reverse", "type=test", "seed", "path"],
+      ["manifest path", "contract name = reverse", "type=test", "seed"],
       [
         "node",
         "app.js",
@@ -413,32 +377,21 @@ describe("Command-line arguments handling", () => {
         "reverse",
         "test",
         "--seed=123",
-        "--path=84:0",
       ],
       [
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: reverse`,
         `Using seed: 123`,
-        `Using path: 84:0`,
         `\nStarting property testing type for the reverse contract...\n`,
       ],
     ],
     [
-      ["manifest path", "contract name = slice", "type=test", "seed", "path"],
-      [
-        "node",
-        "app.js",
-        manifestDirPlaceholder,
-        "slice",
-        "test",
-        "--seed=123",
-        "--path=84:0",
-      ],
+      ["manifest path", "contract name = slice", "type=test", "seed"],
+      ["node", "app.js", manifestDirPlaceholder, "slice", "test", "--seed=123"],
       [
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: slice`,
         `Using seed: 123`,
-        `Using path: 84:0`,
         `\nStarting property testing type for the slice contract...\n`,
       ],
     ],
@@ -448,7 +401,6 @@ describe("Command-line arguments handling", () => {
         "contract name",
         "type=teSt (case-insensitive)",
         "seed",
-        "path",
       ],
       [
         "node",
@@ -457,26 +409,16 @@ describe("Command-line arguments handling", () => {
         "counter",
         "teSt",
         "--seed=123",
-        "--path=84:0",
       ],
       [
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `Using path: 84:0`,
         `\nStarting property testing type for the counter contract...\n`,
       ],
     ],
     [
-      [
-        "manifest path",
-        "contract name",
-        "type=test",
-        "seed",
-        "path",
-        "runs",
-        "bail",
-      ],
+      ["manifest path", "contract name", "type=test", "seed", "runs", "bail"],
       [
         "node",
         "app.js",
@@ -484,7 +426,6 @@ describe("Command-line arguments handling", () => {
         "counter",
         "test",
         "--seed=123",
-        "--path=84:0",
         "--runs=10",
         "--bail",
       ],
@@ -492,7 +433,6 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `Using path: 84:0`,
         `Using runs: 10`,
         `Bailing on first failure.`,
         `\nStarting property testing type for the counter contract...\n`,
@@ -504,7 +444,6 @@ describe("Command-line arguments handling", () => {
         "contract name",
         "type=invariant",
         "seed",
-        "path",
         "runs",
         "bail",
       ],
@@ -515,7 +454,6 @@ describe("Command-line arguments handling", () => {
         "counter",
         "invariant",
         "--seed=123",
-        "--path=84:0",
         "--runs=10",
         "--bail",
       ],
@@ -523,7 +461,6 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `Using path: 84:0`,
         `Using runs: 10`,
         `Bailing on first failure.`,
         `\nStarting invariant testing type for the counter contract...\n`,

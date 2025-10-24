@@ -30,7 +30,6 @@ import { Statistics } from "./heatstroke.types";
  * @param rendezvousAllFunctions The map of all function interfaces for each
  * target contract.
  * @param seed The seed for reproducible invariant testing.
- * @param path The path for reproducible invariant testing.
  * @param runs The number of test runs.
  * @param bail Stop execution after the first failure and prevent further
  * shrinking.
@@ -44,7 +43,6 @@ export const checkInvariants = async (
   rendezvousList: string[],
   rendezvousAllFunctions: Map<string, ContractInterfaceFunction[]>,
   seed: number | undefined,
-  path: string | undefined,
   runs: number | undefined,
   bail: boolean,
   dialerRegistry: DialerRegistry | undefined,
@@ -521,7 +519,6 @@ export const checkInvariants = async (
     {
       endOnFailure: bail,
       numRuns: runs,
-      path: path,
       reporter: radioReporter,
       seed: seed,
       verbose: true,
