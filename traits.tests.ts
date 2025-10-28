@@ -10,9 +10,12 @@ import {
   enrichInterfaceWithTraitData,
   extractProjectTraitImplementations,
   getContractIdsImplementingTrait,
+  getNonTestableTraitFunctions,
   isTraitReferenceFunction,
 } from "./traits";
 import { createIsolatedTestEnvironment } from "./test.utils";
+import { EnrichedContractInterfaceFunction } from "./shared.types";
+import { ImplementedTraitType } from "./traits.types";
 
 const isolatedTestEnvPrefix = "rendezvous-test-traits-";
 
@@ -2302,6 +2305,49 @@ describe("Trait reference processing", () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
+  it("correctly retrieves empty array when no corresponding trait implementations are found", async () => {
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      isolatedTestEnvPrefix
+    );
+    const simnet = await initSimnet(join(tempDir, "Clarinet.toml"));
+
+    const projectTraitImplementations =
+      extractProjectTraitImplementations(simnet);
+
+    const traitImplementationData = {
+      name: "in-contract-alias",
+      import: {
+        Imported: {
+          name: "defined-name", // non-existent in the project.
+          contract_identifier: {
+            name: "contract-name", // non-existent in the project.
+            issuer: [
+              22,
+              [
+                9, 159, 184, 137, 38, 216, 47, 48, 178, 244, 14, 175, 62, 228,
+                35, 203, 114, 91, 219, 59,
+              ],
+            ],
+          },
+        },
+      },
+    };
+
+    // Exercise
+    const actual = getContractIdsImplementingTrait(
+      traitImplementationData,
+      projectTraitImplementations
+    );
+
+    // Verify
+    expect(actual).toEqual([]);
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
+  });
+
   it("correctly retrieves the contracts implementing a defined trait from the Clarinet project", async () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
@@ -2672,6 +2718,148 @@ describe("Trait reference detection", () => {
 
     // Assert
     expect(actual).toBe(false);
+  });
+});
+
+describe("Non-testable trait function filtering", () => {
+  it("returns correct function names when no corresponding trait implementations", () => {
+    // Arrange
+    const contractId =
+      "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.test-contract";
+
+    // Mock function interfaces enriched with trait data.
+    const enrichedFunctionsInterfaces = new Map([
+      [
+        contractId,
+        [
+          {
+            name: "function-with-direct-trait",
+            access: "public",
+            args: [
+              {
+                name: "token",
+                type: {
+                  trait_reference: {
+                    name: "in-contract-alias",
+                    import: {
+                      Imported: {
+                        name: "defined-name",
+                        contract_identifier: {
+                          name: "contract-name",
+                          issuer: [
+                            22,
+                            [
+                              9, 159, 184, 137, 38, 216, 47, 48, 178, 244, 14,
+                              175, 62, 228, 35, 203, 114, 91, 219, 59,
+                            ],
+                          ],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+            outputs: {
+              type: {
+                response: {
+                  ok: "bool",
+                  error: "uint128",
+                },
+              },
+            },
+          },
+          {
+            name: "function-with-list-nested-trait",
+            access: "public",
+            args: [
+              {
+                name: "token-list",
+                type: {
+                  list: {
+                    type: {
+                      trait_reference: {
+                        name: "in-contract-alias",
+                        import: {
+                          Imported: {
+                            name: "defined-name",
+                            contract_identifier: {
+                              name: "contract-name",
+                              issuer: [
+                                22,
+                                [
+                                  9, 159, 184, 137, 38, 216, 47, 48, 178, 244,
+                                  14, 175, 62, 228, 35, 203, 114, 91, 219, 59,
+                                ],
+                              ],
+                            },
+                          },
+                        },
+                      },
+                    },
+                    length: 5,
+                  },
+                },
+              },
+            ],
+            outputs: {
+              type: {
+                response: {
+                  ok: "bool",
+                  error: "none",
+                },
+              },
+            },
+          },
+          {
+            name: "function-without-traits",
+            access: "public",
+            args: [
+              { name: "amount", type: "uint128" },
+              { name: "recipient", type: "principal" },
+            ],
+            outputs: {
+              type: {
+                response: {
+                  ok: "bool",
+                  error: "uint128",
+                },
+              },
+            },
+          },
+        ] as EnrichedContractInterfaceFunction[],
+      ],
+    ]);
+
+    // Mock trait reference map. These are the function names mapped to the
+    // trait reference nesting path in the parameter.
+    const traitReferenceMap = new Map([
+      ["function-with-direct-trait", { token: "trait_reference" }],
+      ["function-with-list-nested-trait", { tokens: "trait_reference" }],
+    ]);
+
+    // The project does not contain explicit trait implementations.
+    const projectTraitImplementations: Record<string, ImplementedTraitType[]> =
+      {};
+
+    // The non-testable function is the one whose parameters accept trait
+    // implementations since the project has no explicit trait implementation
+    // contracts.
+    const expected = [
+      "function-with-direct-trait",
+      "function-with-list-nested-trait",
+    ];
+
+    // Act
+    const actual = getNonTestableTraitFunctions(
+      enrichedFunctionsInterfaces,
+      traitReferenceMap,
+      projectTraitImplementations,
+      contractId
+    );
+
+    // Assert
+    expect(actual).toEqual(expected);
   });
 });
 
