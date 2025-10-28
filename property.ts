@@ -17,6 +17,7 @@ import {
   enrichInterfaceWithTraitData,
   extractProjectTraitImplementations,
   isTraitReferenceFunction,
+  getNonTestableTraitFunctions,
 } from "./traits";
 
 /**
@@ -68,39 +69,81 @@ export const checkProperties = (
     statistics.test!.failed.set(functionInterface.name, 0);
   }
 
-  const traitReferenceFunctions = testContractsTestFunctions
-    .get(testContractId)!
-    .filter((fn) => isTraitReferenceFunction(fn));
+  const allTestFunctions = testContractsTestFunctions.get(testContractId)!;
+  const traitReferenceFunctions = allTestFunctions.filter((fn) =>
+    isTraitReferenceFunction(fn)
+  );
 
   const projectTraitImplementations =
     extractProjectTraitImplementations(simnet);
 
-  if (
-    Object.entries(projectTraitImplementations).length === 0 &&
-    traitReferenceFunctions.length > 0
-  ) {
-    radio.emit(
-      "logMessage",
-      red(
-        `\nFound test functions referencing traits, but no trait implementations were found in the project.
-\nNote: You can add contracts implementing traits either as project contracts or as Clarinet requirements. For more details, visit: https://www.hiro.so/clarinet/.
-\n`
-      )
-    );
-    return;
-  }
+  const traitReferenceMap = buildTraitReferenceMap(allTestFunctions);
 
   const enrichedTestFunctionsInterfaces =
     traitReferenceFunctions.length > 0
       ? enrichInterfaceWithTraitData(
           simnet.getContractAST(targetContractName),
-          buildTraitReferenceMap(
-            testContractsTestFunctions.get(testContractId)!
-          ),
-          testContractsTestFunctions.get(testContractId)!,
+          traitReferenceMap,
+          allTestFunctions,
           testContractId
         )
       : testContractsTestFunctions;
+
+  // Extract functions with missing trait implementations. These functions will
+  // be skipped during property-based testing. Otherwise, the property-based
+  // testing routine can fail during argument generation.
+  const functionsWithMissingTraits = getNonTestableTraitFunctions(
+    enrichedTestFunctionsInterfaces,
+    traitReferenceMap,
+    projectTraitImplementations,
+    testContractId
+  );
+
+  if (functionsWithMissingTraits.length > 0) {
+    const functionList = functionsWithMissingTraits
+      .map((fn) => `  - ${fn}`)
+      .join("\n");
+
+    radio.emit(
+      "logMessage",
+      yellow(
+        `\nWarning: The following test functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
+      )
+    );
+    radio.emit(
+      "logMessage",
+      yellow(
+        `Note: You can add contracts implementing traits either as project contracts or as Clarinet requirements.\n`
+      )
+    );
+
+    // Filter out functions with missing implementations from the enriched map.
+    enrichedTestFunctionsInterfaces.set(
+      testContractId,
+      enrichedTestFunctionsInterfaces
+        .get(testContractId)!
+        .filter((f) => !functionsWithMissingTraits.includes(f.name))
+    );
+  }
+
+  // Extract the remaining executable test functions.
+  const executableTestFunctions =
+    enrichedTestFunctionsInterfaces.get(testContractId)!;
+
+  // Early return if no executable test functions remain after filtering.
+  if (executableTestFunctions.length === 0) {
+    radio.emit(
+      "logMessage",
+      red(
+        `\nNo executable test functions remaining for the "${targetContractName}" contract after filtering.\n`
+      )
+    );
+    return;
+  }
+
+  const executableTestContractsTestFunctions = new Map([
+    [testContractId, executableTestFunctions],
+  ]);
 
   radio.emit(
     "logMessage",
@@ -123,18 +166,21 @@ export const checkProperties = (
   // test function is selected, Rendezvous will first call its discard
   // function, to allow or prevent the property test from running.
   const testContractsPairedFunctions = new Map(
-    Array.from(testContractsTestFunctions, ([contractId, functions]) => [
-      contractId,
-      new Map(
-        functions.map((f) => {
-          const discardFunction = testContractsDiscardFunctions
-            .get(contractId)
-            ?.find((pf) => pf.name === `can-${f.name}`);
+    Array.from(
+      executableTestContractsTestFunctions,
+      ([contractId, functions]) => [
+        contractId,
+        new Map(
+          functions.map((f) => {
+            const discardFunction = testContractsDiscardFunctions
+              .get(contractId)
+              ?.find((pf) => pf.name === `can-${f.name}`);
 
-          return [f.name, discardFunction?.name];
-        })
-      ),
-    ])
+            return [f.name, discardFunction?.name];
+          })
+        ),
+      ]
+    )
   );
 
   const hasDiscardFunctionErrors = Array.from(
@@ -167,7 +213,7 @@ export const checkProperties = (
   const simnetAddresses = Array.from(simnetAccounts.values());
 
   const testFunctions = getFunctionsListForContract(
-    enrichedTestFunctionsInterfaces,
+    executableTestContractsTestFunctions,
     testContractId
   );
 
