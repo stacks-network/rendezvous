@@ -70,8 +70,8 @@ export const checkProperties = (
   }
 
   const allTestFunctions = testContractsTestFunctions.get(testContractId)!;
-  const traitReferenceFunctions = allTestFunctions.filter((fn) =>
-    isTraitReferenceFunction(fn)
+  const traitReferenceFunctions = allTestFunctions.filter(
+    isTraitReferenceFunction
   );
 
   const projectTraitImplementations =
@@ -113,7 +113,7 @@ export const checkProperties = (
     radio.emit(
       "logMessage",
       yellow(
-        `Note: You can add contracts implementing traits either as project contracts or as Clarinet requirements.\n`
+        `Note: You can add contracts implementing traits either as project contracts or as requirements.\n`
       )
     );
 

@@ -93,11 +93,11 @@ export const checkInvariants = async (
   const invariantFunctions =
     rendezvousInvariantFunctions.get(rendezvousContractId)!;
 
-  const traitReferenceSutFunctions = sutFunctions.filter((functionInterface) =>
-    isTraitReferenceFunction(functionInterface)
+  const traitReferenceSutFunctions = sutFunctions.filter(
+    isTraitReferenceFunction
   );
   const traitReferenceInvariantFunctions = invariantFunctions.filter(
-    (functionInterface) => isTraitReferenceFunction(functionInterface)
+    isTraitReferenceFunction
   );
 
   const projectTraitImplementations =
