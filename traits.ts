@@ -10,7 +10,11 @@ import {
   ParameterType,
 } from "./shared.types";
 import { Simnet } from "@hirosystems/clarinet-sdk";
-import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
+import {
+  DefinedTraitType,
+  ImplementedTraitType,
+  ImportedTraitType,
+} from "./traits.types";
 
 /**
  * Enriches a contract interface with trait reference data. Before enrichment,
@@ -444,7 +448,7 @@ export const buildTraitReferenceMap = (
  * @returns An array of contract IDs that implement the trait.
  */
 export const getContractIdsImplementingTrait = (
-  trait: ImportedTraitType,
+  trait: ImportedTraitType | DefinedTraitType,
   projectTraitImplementations: Record<string, ImplementedTraitType[]>
 ): string[] => {
   const contracts = Object.keys(projectTraitImplementations);
@@ -453,11 +457,22 @@ export const getContractIdsImplementingTrait = (
     const traitImplemented = projectTraitImplementations[contractId]?.some(
       (implementedTrait) => {
         const isTraitNamesMatch =
-          implementedTrait.name === trait.import.Imported?.name;
+          implementedTrait.name ===
+            (trait as ImportedTraitType).import.Imported?.name ||
+          implementedTrait.name ===
+            (trait as DefinedTraitType).import.Defined?.name;
 
         const isTraitIssuersMatch =
           JSON.stringify(implementedTrait.contract_identifier.issuer) ===
-          JSON.stringify(trait.import.Imported?.contract_identifier.issuer);
+            JSON.stringify(
+              (trait as ImportedTraitType).import.Imported?.contract_identifier
+                .issuer
+            ) ||
+          JSON.stringify(implementedTrait.contract_identifier.issuer) ===
+            JSON.stringify(
+              (trait as DefinedTraitType).import.Defined?.contract_identifier
+                .issuer
+            );
 
         return isTraitNamesMatch && isTraitIssuersMatch;
       }
