@@ -59,15 +59,16 @@ export const checkInvariants = async (
       failed: new Map<string, number>(),
     },
   };
+  // The Rendezvous identifier is the first one in the list. Only one contract
+  // can be fuzzed at a time.
+  const rendezvousContractId = rendezvousList[0];
+
   // A map where the keys are the Rendezvous identifiers and the values are
   // arrays of their SUT (System Under Test) functions. This map will be used
   // to access the SUT functions for each Rendezvous contract afterwards.
   const rendezvousSutFunctions = filterSutFunctions(rendezvousAllFunctions);
 
-  // The Rendezvous identifier is the first one in the list. Only one contract
-  // can be fuzzed at a time.
-  const rendezvousContractId = rendezvousList[0];
-
+  // Initialize the statistics for the SUT functions.
   for (const functionInterface of rendezvousSutFunctions.get(
     rendezvousContractId
   )!) {
@@ -82,6 +83,7 @@ export const checkInvariants = async (
     rendezvousAllFunctions
   );
 
+  // Initialize the statistics for the invariant functions.
   for (const functionInterface of rendezvousInvariantFunctions.get(
     rendezvousContractId
   )!) {
@@ -90,18 +92,14 @@ export const checkInvariants = async (
   }
 
   const sutFunctions = rendezvousSutFunctions.get(rendezvousContractId)!;
-  const invariantFunctions =
-    rendezvousInvariantFunctions.get(rendezvousContractId)!;
-
   const traitReferenceSutFunctions = sutFunctions.filter(
     isTraitReferenceFunction
   );
+  const invariantFunctions =
+    rendezvousInvariantFunctions.get(rendezvousContractId)!;
   const traitReferenceInvariantFunctions = invariantFunctions.filter(
     isTraitReferenceFunction
   );
-
-  const projectTraitImplementations =
-    extractProjectTraitImplementations(simnet);
 
   const sutTraitReferenceMap = buildTraitReferenceMap(sutFunctions);
   const invariantTraitReferenceMap = buildTraitReferenceMap(invariantFunctions);
@@ -125,6 +123,10 @@ export const checkInvariants = async (
           rendezvousContractId
         )
       : rendezvousInvariantFunctions;
+
+  // Map all the project/requirement contracts to the traits they implement.
+  const projectTraitImplementations =
+    extractProjectTraitImplementations(simnet);
 
   // Extract SUT functions with missing trait implementations. These functions
   // will be skipped during invariant testing. Otherwise, the invariant testing
@@ -182,7 +184,8 @@ export const checkInvariants = async (
     );
   }
 
-  // Extract the remaining executable SUT functions.
+  // Filter out functions with missing trait implementations from the enriched
+  // map.
   const executableSutFunctions = new Map([
     [
       rendezvousContractId,
@@ -192,7 +195,8 @@ export const checkInvariants = async (
     ],
   ]);
 
-  // Extract the remaining executable invariant functions.
+  // Filter out functions with missing trait implementations from the enriched
+  // map.
   const executableInvariantFunctions = new Map([
     [
       rendezvousContractId,
@@ -201,26 +205,6 @@ export const checkInvariants = async (
         .filter((f) => !invariantFunctionsWithMissingTraits.includes(f.name)),
     ],
   ]);
-
-  if (executableSutFunctions.get(rendezvousContractId)!.length === 0) {
-    radio.emit(
-      "logMessage",
-      red(
-        `\nNo executable functions remaining for the "${targetContractName}" contract after filtering.\n`
-      )
-    );
-    return;
-  }
-
-  if (executableInvariantFunctions.get(rendezvousContractId)!.length === 0) {
-    radio.emit(
-      "logMessage",
-      red(
-        `\nNo executable invariant functions remaining for the "${targetContractName}" contract after filtering.\n`
-      )
-    );
-    return;
-  }
 
   // Set up local context to track SUT function call counts.
   const localContext = initializeLocalContext(executableSutFunctions);

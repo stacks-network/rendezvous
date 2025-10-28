@@ -70,17 +70,14 @@ export const checkProperties = (
   }
 
   const allTestFunctions = testContractsTestFunctions.get(testContractId)!;
-  const traitReferenceFunctions = allTestFunctions.filter(
-    isTraitReferenceFunction
-  );
 
-  const projectTraitImplementations =
-    extractProjectTraitImplementations(simnet);
+  const traitReferenceFunctionsCount = allTestFunctions.filter(
+    isTraitReferenceFunction
+  ).length;
 
   const traitReferenceMap = buildTraitReferenceMap(allTestFunctions);
-
   const enrichedTestFunctionsInterfaces =
-    traitReferenceFunctions.length > 0
+    traitReferenceFunctionsCount > 0
       ? enrichInterfaceWithTraitData(
           simnet.getContractAST(targetContractName),
           traitReferenceMap,
@@ -89,18 +86,27 @@ export const checkProperties = (
         )
       : testContractsTestFunctions;
 
-  // Extract functions with missing trait implementations. These functions will
-  // be skipped during property-based testing. Otherwise, the property-based
-  // testing routine can fail during argument generation.
-  const functionsWithMissingTraits = getNonTestableTraitFunctions(
-    enrichedTestFunctionsInterfaces,
-    traitReferenceMap,
-    projectTraitImplementations,
-    testContractId
-  );
+  const projectTraitImplementations =
+    extractProjectTraitImplementations(simnet);
 
-  if (functionsWithMissingTraits.length > 0) {
-    const functionList = functionsWithMissingTraits
+  // If the tests contain trait reference functions, extract the functions with
+  // missing trait implementations. These functions need to be skipped during
+  // property-based testing. Otherwise, the property-based testing routine will
+  // eventually fail during argument generation.
+  const functionsMissingTraitImplementations =
+    traitReferenceFunctionsCount > 0
+      ? getNonTestableTraitFunctions(
+          enrichedTestFunctionsInterfaces,
+          traitReferenceMap,
+          projectTraitImplementations,
+          testContractId
+        )
+      : [];
+
+  // If the tests contain trait reference functions without eligible trait
+  // implementations, log a warning and filter out the functions.
+  if (functionsMissingTraitImplementations.length > 0) {
+    const functionList = functionsMissingTraitImplementations
       .map((fn) => `  - ${fn}`)
       .join("\n");
 
@@ -116,33 +122,22 @@ export const checkProperties = (
         `Note: You can add contracts implementing traits either as project contracts or as requirements.\n`
       )
     );
+  }
 
-    // Filter out functions with missing implementations from the enriched map.
-    enrichedTestFunctionsInterfaces.set(
+  // Filter out test functions with missing trait implementations from the
+  // enriched map.
+  const executableTestContractsTestFunctions = new Map([
+    [
       testContractId,
       enrichedTestFunctionsInterfaces
         .get(testContractId)!
-        .filter((f) => !functionsWithMissingTraits.includes(f.name))
-    );
-  }
-
-  // Extract the remaining executable test functions.
-  const executableTestFunctions =
-    enrichedTestFunctionsInterfaces.get(testContractId)!;
-
-  // Early return if no executable test functions remain after filtering.
-  if (executableTestFunctions.length === 0) {
-    radio.emit(
-      "logMessage",
-      red(
-        `\nNo executable test functions remaining for the "${targetContractName}" contract after filtering.\n`
-      )
-    );
-    return;
-  }
-
-  const executableTestContractsTestFunctions = new Map([
-    [testContractId, executableTestFunctions],
+        .filter(
+          (functionInterface) =>
+            !functionsMissingTraitImplementations.includes(
+              functionInterface.name
+            )
+        ),
+    ],
   ]);
 
   radio.emit(
