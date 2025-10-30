@@ -9,13 +9,14 @@ import { LocalContext } from "./invariant.types";
 import { Cl, cvToJSON, cvToString } from "@stacks/transactions";
 import { reporter } from "./heatstroke";
 import fc from "fast-check";
-import { dim, green, red, underline } from "ansicolor";
+import { dim, green, red, underline, yellow } from "ansicolor";
 import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
   extractProjectTraitImplementations,
   isTraitReferenceFunction,
+  getNonTestableTraitFunctions,
 } from "./traits";
 import { EnrichedContractInterfaceFunction } from "./shared.types";
 import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
@@ -58,15 +59,16 @@ export const checkInvariants = async (
       failed: new Map<string, number>(),
     },
   };
+  // The Rendezvous identifier is the first one in the list. Only one contract
+  // can be fuzzed at a time.
+  const rendezvousContractId = rendezvousList[0];
+
   // A map where the keys are the Rendezvous identifiers and the values are
   // arrays of their SUT (System Under Test) functions. This map will be used
   // to access the SUT functions for each Rendezvous contract afterwards.
   const rendezvousSutFunctions = filterSutFunctions(rendezvousAllFunctions);
 
-  // The Rendezvous identifier is the first one in the list. Only one contract
-  // can be fuzzed at a time.
-  const rendezvousContractId = rendezvousList[0];
-
+  // Initialize the statistics for the SUT functions.
   for (const functionInterface of rendezvousSutFunctions.get(
     rendezvousContractId
   )!) {
@@ -81,6 +83,7 @@ export const checkInvariants = async (
     rendezvousAllFunctions
   );
 
+  // Initialize the statistics for the invariant functions.
   for (const functionInterface of rendezvousInvariantFunctions.get(
     rendezvousContractId
   )!) {
@@ -88,49 +91,25 @@ export const checkInvariants = async (
     statistics.invariant!.failed.set(functionInterface.name, 0);
   }
 
-  const traitReferenceSutFunctions = rendezvousSutFunctions
-    .get(rendezvousContractId)!
-    .filter((fn) => isTraitReferenceFunction(fn));
+  const sutFunctions = rendezvousSutFunctions.get(rendezvousContractId)!;
+  const traitReferenceSutFunctions = sutFunctions.filter(
+    isTraitReferenceFunction
+  );
+  const invariantFunctions =
+    rendezvousInvariantFunctions.get(rendezvousContractId)!;
+  const traitReferenceInvariantFunctions = invariantFunctions.filter(
+    isTraitReferenceFunction
+  );
 
-  const traitReferenceInvariantFunctions = rendezvousInvariantFunctions
-    .get(rendezvousContractId)!
-    .filter((fn) => isTraitReferenceFunction(fn));
-
-  const projectTraitImplementations =
-    extractProjectTraitImplementations(simnet);
-
-  if (
-    Object.entries(projectTraitImplementations).length === 0 &&
-    (traitReferenceSutFunctions.length > 0 ||
-      traitReferenceInvariantFunctions.length > 0)
-  ) {
-    const foundTraitReferenceMessage =
-      traitReferenceSutFunctions.length > 0 &&
-      traitReferenceInvariantFunctions.length > 0
-        ? "public functions and invariants"
-        : traitReferenceSutFunctions.length > 0
-        ? "public functions"
-        : "invariants";
-
-    radio.emit(
-      "logMessage",
-      red(
-        `\nFound ${foundTraitReferenceMessage} referencing traits, but no trait implementations were found in the project.
-\nNote: You can add contracts implementing traits either as project contracts or as Clarinet requirements. For more details, visit: https://www.hiro.so/clarinet/.
-\n`
-      )
-    );
-    return;
-  }
+  const sutTraitReferenceMap = buildTraitReferenceMap(sutFunctions);
+  const invariantTraitReferenceMap = buildTraitReferenceMap(invariantFunctions);
 
   const enrichedSutFunctionsInterfaces =
     traitReferenceSutFunctions.length > 0
       ? enrichInterfaceWithTraitData(
           simnet.getContractAST(targetContractName),
-          buildTraitReferenceMap(
-            rendezvousSutFunctions.get(rendezvousContractId)!
-          ),
-          rendezvousSutFunctions.get(rendezvousContractId)!,
+          sutTraitReferenceMap,
+          sutFunctions,
           rendezvousContractId
         )
       : rendezvousSutFunctions;
@@ -139,19 +118,99 @@ export const checkInvariants = async (
     traitReferenceInvariantFunctions.length > 0
       ? enrichInterfaceWithTraitData(
           simnet.getContractAST(targetContractName),
-          buildTraitReferenceMap(
-            rendezvousInvariantFunctions.get(rendezvousContractId)!
-          ),
-          rendezvousInvariantFunctions.get(rendezvousContractId)!,
+          invariantTraitReferenceMap,
+          invariantFunctions,
           rendezvousContractId
         )
       : rendezvousInvariantFunctions;
 
+  // Map all the project/requirement contracts to the traits they implement.
+  const projectTraitImplementations =
+    extractProjectTraitImplementations(simnet);
+
+  // Extract SUT functions with missing trait implementations. These functions
+  // will be skipped during invariant testing. Otherwise, the invariant testing
+  // routine can fail during argument generation.
+  const sutFunctionsWithMissingTraits = getNonTestableTraitFunctions(
+    enrichedSutFunctionsInterfaces,
+    sutTraitReferenceMap,
+    projectTraitImplementations,
+    rendezvousContractId
+  );
+
+  // Extract invariant functions with missing trait implementations. These
+  // functions will be skipped during invariant testing. Otherwise, the
+  // invariant testing routine can fail during argument generation.
+  const invariantFunctionsWithMissingTraits = getNonTestableTraitFunctions(
+    enrichedInvariantFunctionsInterfaces,
+    invariantTraitReferenceMap,
+    projectTraitImplementations,
+    rendezvousContractId
+  );
+
+  if (
+    sutFunctionsWithMissingTraits.length > 0 ||
+    invariantFunctionsWithMissingTraits.length > 0
+  ) {
+    if (sutFunctionsWithMissingTraits.length > 0) {
+      const functionList = sutFunctionsWithMissingTraits
+        .map((fn) => `  - ${fn}`)
+        .join("\n");
+
+      radio.emit(
+        "logMessage",
+        yellow(
+          `\nWarning: The following SUT functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
+        )
+      );
+    }
+    if (invariantFunctionsWithMissingTraits.length > 0) {
+      const functionList = invariantFunctionsWithMissingTraits
+        .map((fn) => `  - ${fn}`)
+        .join("\n");
+
+      radio.emit(
+        "logMessage",
+        yellow(
+          `\nWarning: The following invariant functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
+        )
+      );
+    }
+    radio.emit(
+      "logMessage",
+      yellow(
+        `Note: You can add contracts implementing traits either as project contracts or as Clarinet requirements.\n`
+      )
+    );
+  }
+
+  // Filter out functions with missing trait implementations from the enriched
+  // map.
+  const executableSutFunctions = new Map([
+    [
+      rendezvousContractId,
+      enrichedSutFunctionsInterfaces
+        .get(rendezvousContractId)!
+        .filter((f) => !sutFunctionsWithMissingTraits.includes(f.name)),
+    ],
+  ]);
+
+  // Filter out functions with missing trait implementations from the enriched
+  // map.
+  const executableInvariantFunctions = new Map([
+    [
+      rendezvousContractId,
+      enrichedInvariantFunctionsInterfaces
+        .get(rendezvousContractId)!
+        .filter((f) => !invariantFunctionsWithMissingTraits.includes(f.name)),
+    ],
+  ]);
+
   // Set up local context to track SUT function call counts.
-  const localContext = initializeLocalContext(enrichedSutFunctionsInterfaces);
+  const localContext = initializeLocalContext(executableSutFunctions);
 
   // Set up context in simnet by initializing state for SUT.
-  initializeClarityContext(simnet, enrichedSutFunctionsInterfaces);
+  initializeClarityContext(simnet, executableSutFunctions);
 
   radio.emit(
     "logMessage",
@@ -167,12 +226,12 @@ export const checkInvariants = async (
   const simnetAddresses = Array.from(simnetAccounts.values());
 
   const functions = getFunctionsListForContract(
-    enrichedSutFunctionsInterfaces,
+    executableSutFunctions,
     rendezvousContractId
   );
 
   const invariants = getFunctionsListForContract(
-    enrichedInvariantFunctionsInterfaces,
+    executableInvariantFunctions,
     rendezvousContractId
   );
 

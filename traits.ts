@@ -10,7 +10,11 @@ import {
   ParameterType,
 } from "./shared.types";
 import { Simnet } from "@hirosystems/clarinet-sdk";
-import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
+import {
+  DefinedTraitType,
+  ImplementedTraitType,
+  ImportedTraitType,
+} from "./traits.types";
 
 /**
  * Enriches a contract interface with trait reference data. Before enrichment,
@@ -444,7 +448,7 @@ export const buildTraitReferenceMap = (
  * @returns An array of contract IDs that implement the trait.
  */
 export const getContractIdsImplementingTrait = (
-  trait: ImportedTraitType,
+  trait: ImportedTraitType | DefinedTraitType,
   projectTraitImplementations: Record<string, ImplementedTraitType[]>
 ): string[] => {
   const contracts = Object.keys(projectTraitImplementations);
@@ -453,11 +457,22 @@ export const getContractIdsImplementingTrait = (
     const traitImplemented = projectTraitImplementations[contractId]?.some(
       (implementedTrait) => {
         const isTraitNamesMatch =
-          implementedTrait.name === trait.import.Imported?.name;
+          implementedTrait.name ===
+            (trait as ImportedTraitType).import.Imported?.name ||
+          implementedTrait.name ===
+            (trait as DefinedTraitType).import.Defined?.name;
 
         const isTraitIssuersMatch =
           JSON.stringify(implementedTrait.contract_identifier.issuer) ===
-          JSON.stringify(trait.import.Imported?.contract_identifier.issuer);
+            JSON.stringify(
+              (trait as ImportedTraitType).import.Imported?.contract_identifier
+                .issuer
+            ) ||
+          JSON.stringify(implementedTrait.contract_identifier.issuer) ===
+            JSON.stringify(
+              (trait as DefinedTraitType).import.Defined?.contract_identifier
+                .issuer
+            );
 
         return isTraitNamesMatch && isTraitIssuersMatch;
       }
@@ -536,4 +551,66 @@ export const extractProjectTraitImplementations = (simnet: Simnet) => {
   }, {});
 
   return projectTraitImplementations;
+};
+
+/**
+ * Filters functions that reference traits without eligible implementations in
+ * the project. Recursively checks nested parameters for trait reference types.
+ * @param enrichedFunctionsInterfaces The map of contract IDs to enriched
+ * function interfaces with trait reference data.
+ * @param traitReferenceMap The map of function names to their trait reference
+ * parameter data.
+ * @param projectTraitImplementations The record of contract IDs to their
+ * implemented traits.
+ * @param contractId The contract ID to filter functions for.
+ * @returns An array of function names with trait references without eligible
+ * trait implementations.
+ */
+export const getNonTestableTraitFunctions = (
+  enrichedFunctionsInterfaces: Map<string, EnrichedContractInterfaceFunction[]>,
+  traitReferenceMap: Map<string, any>,
+  projectTraitImplementations: Record<string, ImplementedTraitType[]>,
+  contractId: string
+): string[] => {
+  const hasTraitReferenceWithoutImplementation = (type: any): boolean => {
+    if (!type) return false;
+
+    if (typeof type === "object" && "trait_reference" in type) {
+      const contractIdsImplementingTrait = getContractIdsImplementingTrait(
+        type.trait_reference as ImportedTraitType | DefinedTraitType,
+        projectTraitImplementations
+      );
+      return contractIdsImplementingTrait.length === 0;
+    }
+
+    if (typeof type === "object") {
+      return (
+        ("list" in type &&
+          hasTraitReferenceWithoutImplementation(type.list.type)) ||
+        ("tuple" in type &&
+          type.tuple.some((item: any) =>
+            hasTraitReferenceWithoutImplementation(item.type)
+          )) ||
+        ("optional" in type &&
+          hasTraitReferenceWithoutImplementation(type.optional)) ||
+        ("response" in type &&
+          (hasTraitReferenceWithoutImplementation(type.response.ok) ||
+            hasTraitReferenceWithoutImplementation(type.response.error)))
+      );
+    }
+
+    return false;
+  };
+
+  return Array.from(traitReferenceMap.keys()).filter((functionName) => {
+    const enrichedFunctionInterface = enrichedFunctionsInterfaces
+      .get(contractId)
+      ?.find((f) => f.name === functionName);
+
+    return (
+      enrichedFunctionInterface?.args.some((param) =>
+        hasTraitReferenceWithoutImplementation(param.type)
+      ) ?? false
+    );
+  });
 };
