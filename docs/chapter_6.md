@@ -229,10 +229,10 @@ async function postTransferSip010PrintEvent(context) {
   const memoGeneratedArgumentCV = clarityValueArguments[memoParameterIndex];
 
   // If the memo argument is `none`, there's nothing to validate.
-  if (memoGeneratedArgumentCV.type === 9) return;
+  if (memoGeneratedArgumentCV.type === "none") return;
 
   // Ensure the memo argument is an option (`some`).
-  if (memoGeneratedArgumentCV.type !== 10) {
+  if (memoGeneratedArgumentCV.type !== "some") {
     throw new Error("The memo argument must be an option type!");
   }
 
