@@ -2,8 +2,8 @@ import { readFileSync } from "fs";
 import { basename, join, resolve } from "path";
 import toml from "toml";
 import yaml from "yaml";
-import { initSimnet, Simnet } from "@hirosystems/clarinet-sdk";
-import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
+import { initSimnet, Simnet } from "@stacks/clarinet-sdk";
+import { EpochString } from "@stacks/clarinet-sdk-wasm";
 import {
   BufferCV,
   Cl,

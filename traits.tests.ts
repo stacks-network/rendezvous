@@ -1,8 +1,8 @@
 import {
   ContractInterfaceFunction,
   IContractAST,
-} from "@hirosystems/clarinet-sdk-wasm";
-import { initSimnet } from "@hirosystems/clarinet-sdk";
+} from "@stacks/clarinet-sdk-wasm";
+import { initSimnet } from "@stacks/clarinet-sdk";
 import { rmSync } from "fs";
 import { join, resolve } from "path";
 import {

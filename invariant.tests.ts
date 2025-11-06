@@ -1,4 +1,4 @@
-import { initSimnet } from "@hirosystems/clarinet-sdk";
+import { initSimnet } from "@stacks/clarinet-sdk";
 import { initializeClarityContext, initializeLocalContext } from "./invariant";
 import {
   getContractNameFromContractId,

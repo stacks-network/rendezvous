@@ -1,4 +1,4 @@
-import { Simnet } from "@hirosystems/clarinet-sdk";
+import { Simnet } from "@stacks/clarinet-sdk";
 import { EventEmitter } from "events";
 import fc from "fast-check";
 import { cvToJSON, cvToString } from "@stacks/transactions";
@@ -11,7 +11,7 @@ import {
   getFunctionsListForContract,
 } from "./shared";
 import { dim, green, red, underline, yellow } from "ansicolor";
-import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
+import { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,

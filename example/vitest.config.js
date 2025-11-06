@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 import {
   vitestSetupFilePath,
   getClarinetVitestsArgv,
-} from "@hirosystems/clarinet-sdk/vitest";
+} from "@stacks/clarinet-sdk/vitest";
 
 export default defineConfig({
   test: {

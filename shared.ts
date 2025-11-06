@@ -10,11 +10,11 @@ import {
   ResponseStatus,
   TupleData,
 } from "./shared.types";
-import { Simnet } from "@hirosystems/clarinet-sdk";
+import { Simnet } from "@stacks/clarinet-sdk";
 import {
   ContractInterfaceFunction,
   IContractInterface,
-} from "@hirosystems/clarinet-sdk-wasm";
+} from "@stacks/clarinet-sdk-wasm";
 import {
   Cl,
   ClarityValue,
@@ -170,7 +170,7 @@ const complexTypesToArbitrary: ComplexTypesToArbitrary = {
   // in hex. The `argToCV` function expects this format for `buff` ClarityValue
   // conversion. The UInt8Array will have half the length of the corresponding
   // hex string. Stacks.js reference:
-  // https://github.com/hirosystems/stacks.js/blob/fd0bf26b5f29fc3c1bf79581d0ad9b89f0d7f15a/packages/common/src/utils.ts#L522
+  // https://github.com/stx-labs/stacks.js/blob/fd0bf26b5f29fc3c1bf79581d0ad9b89f0d7f15a/packages/common/src/utils.ts#L522
   buffer: (length: number) => hexaString({ maxLength: 2 * length }),
   "string-ascii": (length: number) =>
     fc.string({

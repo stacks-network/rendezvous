@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
+import { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 import { green } from "ansicolor";
 import {
   InvariantCounterExample,

@@ -1,4 +1,4 @@
-import { ParsedTransactionResult } from "@hirosystems/clarinet-sdk";
+import { ParsedTransactionResult } from "@stacks/clarinet-sdk";
 import { ClarityValue } from "@stacks/transactions";
 import { EnrichedContractInterfaceFunction } from "./shared.types";
 

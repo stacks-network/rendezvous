@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@hirosystems/clarinet-sdk": "^3.7.0",
+    "@stacks/clarinet-sdk": "^3.9.1",
     "@stacks/rendezvous": "^0.11.0",
     "@stacks/transactions": "^7.2.0",
     "chokidar-cli": "^3.0.0",

@@ -1,8 +1,8 @@
 import { EventEmitter } from "events";
 import { rmSync } from "fs";
 import { join, resolve } from "path";
-import { initSimnet } from "@hirosystems/clarinet-sdk";
-import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
+import { initSimnet } from "@stacks/clarinet-sdk";
+import { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 import fc from "fast-check";
 import { reporter } from "./heatstroke";
 import { getContractNameFromContractId } from "./shared";
