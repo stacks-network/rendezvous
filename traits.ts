@@ -4,12 +4,12 @@ import {
   IContractAST,
   List,
   TraitReference,
-} from "@hirosystems/clarinet-sdk-wasm";
+} from "@stacks/clarinet-sdk-wasm";
 import {
   EnrichedContractInterfaceFunction,
   ParameterType,
 } from "./shared.types";
-import { Simnet } from "@hirosystems/clarinet-sdk";
+import { Simnet } from "@stacks/clarinet-sdk";
 import {
   DefinedTraitType,
   ImplementedTraitType,

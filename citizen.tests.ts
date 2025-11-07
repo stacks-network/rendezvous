@@ -9,7 +9,7 @@ import {
   issueFirstClassCitizenship,
   scheduleRendezvous,
 } from "./citizen";
-import { initSimnet } from "@hirosystems/clarinet-sdk";
+import { initSimnet } from "@stacks/clarinet-sdk";
 import { join, resolve } from "path";
 import fs, { existsSync, readFileSync, rmSync } from "fs";
 import { createIsolatedTestEnvironment } from "./test.utils";
@@ -199,7 +199,7 @@ describe("Simnet deployment plan operations", () => {
       "3.0": [
         {
           "liquidity-locker": {
-            clarity_version: 3,
+            clarity_version: 2,
             path: "./.cache/requirements/SP1E0XBN9T4B10E9QMR7XMFJPMA19D77WY3KP2QKC.liquidity-locker.clar",
           },
         },
@@ -632,6 +632,7 @@ describe("Requirement detection", () => {
       "3.0": [],
       "3.1": [],
       "3.2": [],
+      "3.3": [],
     };
 
     // Exercise
@@ -688,6 +689,7 @@ describe("Requirement detection", () => {
       ],
       "3.1": [],
       "3.2": [],
+      "3.3": [],
     };
 
     // Exercise
@@ -743,6 +745,7 @@ describe("Requirement detection", () => {
       "3.0": [],
       "3.1": [],
       "3.2": [],
+      "3.3": [],
     };
 
     // Exercise

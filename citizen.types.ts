@@ -1,4 +1,4 @@
-import { EpochString } from "@hirosystems/clarinet-sdk-wasm";
+import { EpochString } from "@stacks/clarinet-sdk-wasm";
 
 type Wallet = {
   name: string;

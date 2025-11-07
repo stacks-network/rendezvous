@@ -22,7 +22,7 @@ The idea behind Rendezvous originates from several inspiring sources:
 
 We are deeply grateful to the Stacks Open Internet Foundation for supporting our work and providing crucial assistance, and to the open-source community for their continuous support and contributions.
 
-[^1]: Heterogeneous Clarinet Test-Suites: <https://github.com/hirosystems/clarinet/issues/398>
+[^1]: Heterogeneous Clarinet Test-Suites: <https://github.com/stx-labs/clarinet/issues/398>
 [^2]: Hughes, J. (2004). "Testing the Hard Stuff and Staying Sane". In Proceedings of the ACM SIGPLAN Workshop on Haskell (Haskell '04).
 [^3]: poxl: <https://github.com/jcnelson/poxl>
 [^4]: fast-check: <https://github.com/dubzzz/fast-check>

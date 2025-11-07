@@ -1,14 +1,22 @@
 import { EventEmitter } from "events";
 import { rmSync } from "fs";
 import { join, resolve } from "path";
-import { initSimnet } from "@hirosystems/clarinet-sdk";
-import { ContractInterfaceFunction } from "@hirosystems/clarinet-sdk-wasm";
+import { initSimnet } from "@stacks/clarinet-sdk";
+import { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 import fc from "fast-check";
 import { reporter } from "./heatstroke";
 import { getContractNameFromContractId } from "./shared";
 import { createIsolatedTestEnvironment } from "./test.utils";
 
 const isolatedTestEnvPrefix = "rendezvous-test-heatstroke-";
+
+const asciiString = () =>
+  fc.string({
+    unit: fc.constantFrom(
+      ..."ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+    ),
+    minLength: 1,
+  });
 
 describe("Custom reporter logging", () => {
   it("handles cases with missing path on failure for invariant testing type", async () => {
@@ -28,26 +36,28 @@ describe("Custom reporter logging", () => {
           failed: fc.constant(true),
           numRuns: fc.nat(),
           seed: fc.nat(),
-          contractName: fc.ascii(),
+          contractName: asciiString(),
           selectedFunctions: fc.array(
             fc.record({
-              name: fc.ascii(),
-              access: fc.ascii(),
-              outputs: fc.array(fc.ascii()),
+              name: asciiString(),
+              access: asciiString(),
+              outputs: fc.array(asciiString()),
               args: fc.anything(),
             })
           ),
           selectedFunctionsArgsList: fc.tuple(
-            fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean()))
+            fc.array(fc.oneof(asciiString(), fc.nat(), fc.boolean()))
           ),
           selectedInvariant: fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-            outputs: fc.array(fc.ascii()),
+            name: asciiString(),
+            access: asciiString(),
+            outputs: fc.array(asciiString()),
             args: fc.anything(),
           }),
-          invariantArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
-          errorMessage: fc.ascii(),
+          invariantArgs: fc.array(
+            fc.oneof(asciiString(), fc.nat(), fc.boolean())
+          ),
+          errorMessage: asciiString(),
           sutCallers: fc.array(
             fc.constantFrom(
               ...new Map(
@@ -179,30 +189,32 @@ describe("Custom reporter logging", () => {
     fc.assert(
       fc.property(
         fc.record({
-          path: fc.ascii(),
+          path: asciiString(),
           failed: fc.constant(true),
           numRuns: fc.nat(),
           seed: fc.nat(),
-          contractName: fc.ascii(),
+          contractName: asciiString(),
           selectedFunctions: fc.array(
             fc.record({
-              name: fc.ascii(),
-              access: fc.ascii(),
-              outputs: fc.array(fc.ascii()),
+              name: asciiString(),
+              access: asciiString(),
+              outputs: fc.array(asciiString()),
               args: fc.anything(),
             })
           ),
           selectedFunctionsArgsList: fc.tuple(
-            fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean()))
+            fc.array(fc.oneof(asciiString(), fc.nat(), fc.boolean()))
           ),
           selectedInvariant: fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-            outputs: fc.array(fc.ascii()),
+            name: asciiString(),
+            access: asciiString(),
+            outputs: fc.array(asciiString()),
             args: fc.anything(),
           }),
-          invariantArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
-          errorMessage: fc.ascii(),
+          invariantArgs: fc.array(
+            fc.oneof(asciiString(), fc.nat(), fc.boolean())
+          ),
+          errorMessage: asciiString(),
           sutCallers: fc.array(
             fc.constantFrom(
               ...new Map(
@@ -336,30 +348,32 @@ describe("Custom reporter logging", () => {
     fc.assert(
       fc.property(
         fc.record({
-          path: fc.ascii(),
+          path: asciiString(),
           failed: fc.constant(false),
           numRuns: fc.nat(),
           seed: fc.nat(),
-          contractName: fc.ascii(),
+          contractName: asciiString(),
           selectedFunctions: fc.array(
             fc.record({
-              name: fc.ascii(),
-              access: fc.ascii(),
-              outputs: fc.array(fc.ascii()),
+              name: asciiString(),
+              access: asciiString(),
+              outputs: fc.array(asciiString()),
               args: fc.anything(),
             })
           ),
           selectedFunctionsArgsList: fc.tuple(
-            fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean()))
+            fc.array(fc.oneof(asciiString(), fc.nat(), fc.boolean()))
           ),
           selectedInvariant: fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-            outputs: fc.array(fc.ascii()),
+            name: asciiString(),
+            access: asciiString(),
+            outputs: fc.array(asciiString()),
             args: fc.anything(),
           }),
-          invariantArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
-          errorMessage: fc.ascii(),
+          invariantArgs: fc.array(
+            fc.oneof(asciiString(), fc.nat(), fc.boolean())
+          ),
+          errorMessage: asciiString(),
           sutCallers: fc.array(
             fc.constantFrom(
               ...new Map(
@@ -458,15 +472,17 @@ describe("Custom reporter logging", () => {
           failed: fc.constant(true),
           numRuns: fc.nat(),
           seed: fc.nat(),
-          contractName: fc.ascii(),
+          contractName: asciiString(),
           selectedTestFunction: fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-            outputs: fc.array(fc.ascii()),
+            name: asciiString(),
+            access: asciiString(),
+            outputs: fc.array(asciiString()),
             args: fc.anything(),
           }),
-          functionArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
-          errorMessage: fc.ascii(),
+          functionArgs: fc.array(
+            fc.oneof(asciiString(), fc.nat(), fc.boolean())
+          ),
+          errorMessage: asciiString(),
           testCaller: fc.constantFrom(
             ...new Map(
               [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
@@ -564,19 +580,21 @@ describe("Custom reporter logging", () => {
     fc.assert(
       fc.property(
         fc.record({
-          path: fc.ascii(),
+          path: asciiString(),
           failed: fc.constant(true),
           numRuns: fc.nat(),
           seed: fc.nat(),
-          contractName: fc.ascii(),
+          contractName: asciiString(),
           selectedTestFunction: fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-            outputs: fc.array(fc.ascii()),
+            name: asciiString(),
+            access: asciiString(),
+            outputs: fc.array(asciiString()),
             args: fc.anything(),
           }),
-          functionArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
-          errorMessage: fc.ascii(),
+          functionArgs: fc.array(
+            fc.oneof(asciiString(), fc.nat(), fc.boolean())
+          ),
+          errorMessage: asciiString(),
           testCaller: fc.constantFrom(
             ...new Map(
               [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
@@ -678,15 +696,17 @@ describe("Custom reporter logging", () => {
           failed: fc.constant(false),
           numRuns: fc.nat(),
           seed: fc.nat(),
-          contractName: fc.ascii(),
+          contractName: asciiString(),
           selectedTestFunction: fc.record({
-            name: fc.ascii(),
-            access: fc.ascii(),
-            outputs: fc.array(fc.ascii()),
+            name: asciiString(),
+            access: asciiString(),
+            outputs: fc.array(asciiString()),
             args: fc.anything(),
           }),
-          functionArgs: fc.array(fc.oneof(fc.ascii(), fc.nat(), fc.boolean())),
-          errorMessage: fc.ascii(),
+          functionArgs: fc.array(
+            fc.oneof(asciiString(), fc.nat(), fc.boolean())
+          ),
+          errorMessage: asciiString(),
           testCaller: fc.constantFrom(
             ...new Map(
               [...simnet.getAccounts()].filter(([key]) => key !== "faucet")

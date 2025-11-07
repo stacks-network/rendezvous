@@ -1,4 +1,4 @@
-import { initSimnet } from "@hirosystems/clarinet-sdk";
+import { initSimnet } from "@stacks/clarinet-sdk";
 import {
   isParamsMatch,
   isReturnTypeBoolean,
@@ -13,7 +13,7 @@ import {
   ContractInterfaceFunctionAccess,
   ContractInterfaceFunctionArg,
   ContractInterfaceFunctionOutput,
-} from "@hirosystems/clarinet-sdk-wasm";
+} from "@stacks/clarinet-sdk-wasm";
 import { cvToJSON } from "@stacks/transactions";
 
 const isolatedTestEnvPrefix = "rendezvous-test-property-";

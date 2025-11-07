@@ -2,7 +2,7 @@ import {
   ContractInterfaceFunctionAccess,
   ContractInterfaceFunctionArg,
   ContractInterfaceFunctionOutput,
-} from "@hirosystems/clarinet-sdk-wasm";
+} from "@stacks/clarinet-sdk-wasm";
 import {
   boolCV,
   bufferCV,
