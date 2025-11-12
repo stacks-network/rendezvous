@@ -1,7 +1,6 @@
 # Quickstart Tutorial
 
-This tutorial walks you through testing a DeFi lending contract with Rendezvous, a property-based testing framework for Clarity smart contracts.
-You’ll see how Rendezvous uncovers subtle vulnerabilities that traditional unit tests miss, and learn how to design property-based tests that expose real bugs in simple smart contracts.
+This tutorial walks you through testing a DeFi lending contract with Rendezvous. You’ll see how Rendezvous uncovers subtle vulnerabilities that traditional unit tests miss, and learn how to design property-based tests that expose real bugs in simple smart contracts.
 
 ## What You'll Learn
 
@@ -233,16 +232,17 @@ npm install
 npm test
 ```
 
-**All tests pass!** ✅
+**All tests pass!** ✅ (or so it seems...)
 
-The main functions and state of the contract are now covered by tests. The line coverage is also looking great! Looks great, but not so fast. Let’s see if the contract holds up under **Rendezvous property-based testing**.
+The main functions and state of the contract are now covered by tests. Line coverage is probably high as well. Looks great, right? But here's the thing: traditional tests only verify the examples you thought of. Let's see if the contract holds up under **Rendezvous property-based testing**.
 
 ## Step 5: Add Rendezvous Property-Based Tests
 
 Rendezvous lets you test **universal properties**, not just individual examples. Let's see how to write your first property-based test and why it matters.
-Create the Rendezvous test file:
 
 ### Create the Test File
+
+Create the Rendezvous test file:
 
 ```bash
 touch contracts/stx-defi.tests.clar
@@ -250,7 +250,7 @@ touch contracts/stx-defi.tests.clar
 
 ### Add an Ice-Breaker Test
 
-Before writing any meaningful properties, it's a good idea to check that Rendezvous can run. Add a simple "always-true" test to verify your setup:
+Before writing any meaningful properties, it's a good idea to check that Rendezvous can run. Add a simple "always-true" test to verify your setup.
 Open `contracts/stx-defi.tests.clar` and add an always-true test:
 
 ```clarity
@@ -360,23 +360,17 @@ This design allows you to test your contract in **realistic, varied scenarios** 
 
 ### Why the First Test Fails
 
-The `borrow` call will often fail because:
-
-- No deposits exist yet.
-- The generated `amount` is `u0`.
-- The generated amount exceeds the allowed borrow limit.
-
-To fix this, we need to **simulate deposits** and add **discard logic**.
-
-### Handle Preconditions
-
-Most probably the test failed because the borrow call failed. This means the test was not in a suitable state for execution. For this, Rendezvous allows discarding test cases when the situation, generated arguments, caller, height, etc. are not suitable for checking the desired behavior. In our case, borrow will fail because one of the following reasons:
+The test likely failed because the `borrow` call failed—the contract wasn't in a suitable state. Rendezvous allows you to discard test cases when preconditions aren't met (wrong state, invalid arguments, caller, height, etc.). In our case, `borrow` will fail for one of these reasons:
 
 - no deposits were made
 - the generated amount argument is non-positive (u0)
 - the generated amount argument is more than the allowed borrow value
 
+To fix this, we need to **simulate deposits** and add **discard logic**.
+
 Let's address them one by one.
+
+### Handle Preconditions
 
 **First, we need deposits.** We can create a helper function that Rendezvous will pick up during property-based testing runs. This helper will allow deposits to be created so other tests can check properties that require deposits:
 
@@ -413,9 +407,9 @@ Let's address them one by one.
           u2
         ))
     )
-    ;; Discard the test if preconditions aren't met
+    ;; Discard the test if preconditions aren't met.
     (ok false)
-    ;; Run the test
+    ;; Run the test.
     (let ((initial-loan (default-to u0 (get amount (map-get? loans tx-sender)))))
       (unwrap! (borrow amount) (err "Borrow call failed"))
       (let ((updated-loan (default-to u0 (get amount (map-get? loans tx-sender)))))
@@ -525,13 +519,13 @@ You can also stop at the first failure:
 npx rv . stx-defi test --bail
 ```
 
-The bug is in this line of the `borrow` function:
+## Step 6: Identify and Fix the Borrow Bug
+
+After taking a closer look at the lending contract, the bug is in this line of the `borrow` function:
 
 ```clarity
 (new-loan (+ amount))
 ```
-
-## Step 6: Fix the Borrow Bug
 
 Change the line to correctly accumulate loans:
 
@@ -630,12 +624,17 @@ This is the power of property-based testing and fuzzing!
 
 You've successfully:
 
-1. ✓ Created a simple DeFi lending contract
-2. ✓ Wrote traditional unit tests that passed but missed a critical bug
-3. ✓ Wrote your first Rendezvous property-based test
-4. ✓ Discovered how Rendezvous catches bugs through random stateful testing
-5. ✓ Fixed the bug and verified the fix
-6. ✓ Understood the difference between example-based and property-based testing
+✅ Created a simple DeFi lending contract
+
+✅ Wrote traditional unit tests that passed but missed a critical bug
+
+✅ Wrote your first Rendezvous property-based test
+
+✅ Discovered how Rendezvous catches bugs through random stateful testing
+
+✅ Fixed the bug and verified the fix
+
+✅ Understood the difference between example-based and property-based testing
 
 ## The Key Insight
 
@@ -665,16 +664,20 @@ This bug in a production DeFi protocol would allow users to:
 
 This would drain the protocol's funds — a critical vulnerability caught by Rendezvous in seconds.
 
+## Example Implementation
+
+You can see a complete step-by-step implementation of this tutorial with commit-by-commit progress in the [rendezvous-tutorial repository](https://github.com/BowTiedRadone/rendezvous-tutorial) ([view commits](https://github.com/BowTiedRadone/rendezvous-tutorial/commits/master/)).
+
 ## Next Steps
 
 Now that you understand the power of Rendezvous, explore:
 
-- **Invariant testing**: Test properties that should ALWAYS hold true (see [Chapter 4](chapter_4.md))
-- **Advanced patterns**: Learn about discarding, dialers, and more (see [Chapter 6](chapter_6.md))
-- **More examples**: Study other smart contracts in the examples (see [Chapter 7](chapter_7.md))
+- **More examples**: Study other smart contracts in the examples (see [Chapter 8](chapter_8.md))
 - **Your own contracts**: Apply Rendezvous to your projects and find bugs before they reach production
 
 ---
+
+## Get Involved
 
 **Found this tutorial useful?** Star the [Rendezvous repository on GitHub](https://github.com/stacks-network/rendezvous) to show your support!
 
@@ -682,4 +685,4 @@ Have questions, found a bug, or want to contribute? We'd love to hear from you:
 
 - **Open an issue** on [GitHub](https://github.com/stacks-network/rendezvous/issues)
 - **Reach out** with questions or feedback
-- **Share your findings** — contribute examples of bugs you've caught to show others how powerful property-based testing can be
+- **Share your findings** — contribute examples of bugs you've caught to show others how powerful advanced testing techniques can be
