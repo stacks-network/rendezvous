@@ -18,10 +18,11 @@
 
 - [Installation](chapter_5.md)
 - [Usage](chapter_6.md)
+- [Quickstart Tutorial](chapter_7.md)
 
 # Examples
 
-- [Examples](chapter_7.md)
+- [Examples](chapter_8.md)
 
 ---
 
