@@ -1,10 +1,10 @@
 # Quickstart Tutorial
 
-This tutorial walks you through testing a DeFi lending contract with Rendezvous. You’ll see how Rendezvous uncovers subtle vulnerabilities that traditional unit tests miss, and learn how to design property-based tests that expose real bugs in simple smart contracts.
+This tutorial walks you through testing a DeFi lending contract with Rendezvous. You’ll see how Rendezvous uncovers subtle vulnerabilities that traditional unit tests might miss, and learn how to design property-based tests that help expose real bugs.
 
 ## What You'll Learn
 
-We'll test a simplified DeFi lending contract that allows users to deposit STX and borrow against those deposits. This contract hides a subtle bug that passes all traditional tests, but fails under Rendezvous property-based testing.
+You will test a simplified DeFi lending contract that allows users to deposit STX and borrow against those deposits. This contract hides a subtle bug that passes all example-based tests, but fails when running Rendezvous property-based testing.
 
 You’ll learn to:
 
@@ -18,7 +18,7 @@ You’ll learn to:
 
 Before you begin, make sure you have:
 
-- Node.js (version 20, 22, or 23)
+- Node.js (version >= 20)
 - Clarinet installed ([installation guide](https://github.com/stx-labs/clarinet))
 
 ## Step 1: Create a New Clarinet Project
@@ -41,9 +41,9 @@ rendezvous-tutorial/
 └── tests/
 ```
 
-## Step 2: Install Rendezvous
+## Step 2: Add Rendezvous
 
-Install Rendezvous in your project:
+Add Rendezvous to your project:
 
 ```bash
 npm install @stacks/rendezvous
@@ -67,7 +67,7 @@ Open `contracts/stx-defi.clar` and add this Clarity code:
 
 ```clarity
 ;; stx-defi.clar
-;; A simplified DeFi lending protocol
+;; A simplified DeFi lending protocol.
 
 (define-map deposits
   { owner: principal }
@@ -130,11 +130,11 @@ Open `contracts/stx-defi.clar` and add this Clarity code:
 - Users can `borrow` up to 50% of their deposit value
 - The contract tracks deposits and loans for each user
 
-## Step 4: Write Traditional Unit Tests
+## Step 4: Write Some Unit Tests
 
-Let's first write traditional unit tests.
+Let's first write some example-based unit tests.
 
-Open `tests/stx-defi.test.ts` and add these unit tests:
+Open `tests/stx-defi.test.ts` and add these example-based unit tests:
 
 ```typescript
 describe("stx-defi unit tests", () => {
@@ -232,13 +232,13 @@ npm install
 npm test
 ```
 
-**All tests pass!** ✅ (or so it seems...)
+**Looking good!** ✅ (or so it seems...)
 
-The main functions and state of the contract are now covered by tests. Line coverage is probably high as well. Looks great, right? But here's the thing: traditional tests only verify the examples you thought of. Let's see if the contract holds up under **Rendezvous property-based testing**.
+The main functions and state of the contract are now covered by tests. Line coverage is probably high as well. Looks great, right? But here's the thing: example-based tests only verify the examples you thought of. Let's see if the contract holds up under **Rendezvous property-based testing**.
 
 ## Step 5: Add Rendezvous Property-Based Tests
 
-Rendezvous lets you test **universal properties**, not just individual examples. Let's see how to write your first property-based test and why it matters.
+Rendezvous lets you test a broader range of inputs, not just specific examples. Let's see how to write your first property-based test and why it matters.
 
 ### Create the Test File
 
@@ -310,7 +310,7 @@ If you see similar output, your setup works. You're ready to write a **real prop
 
 ### Define a Borrowing Property
 
-We want to test that **borrowing always updates the loan amount correctly**:
+You want to test that **borrowing always updates the loan amount correctly**:
 
 ```clarity
 ;; stx-defi.tests.clar
@@ -326,7 +326,7 @@ We want to test that **borrowing always updates the loan amount correctly**:
       ;; local variable.
       (initial-loan (default-to u0 (get amount (map-get? loans tx-sender))))
     )
-    ;; Since the initial-loan is recorded before the borrow call, we can now
+    ;; Since the initial-loan is recorded before the borrow call, you can now
     ;; call the borrow function to allow checking the effects after the call.
     (try! (borrow amount))
     ;; Verify the property: updated loan = initial loan + borrowed amount
@@ -356,7 +356,7 @@ Rendezvous:
 7. Accumulates state across test calls instead of resetting each time.
 8. Discards test cases where preconditions fail, returning (ok false).
 
-This design allows you to test your contract in **realistic, varied scenarios** that a unit test could never reach.
+This design allows you to test your contract in **realistic, varied scenarios** that a simple/example-based unit test could never reach.
 
 ### Why the First Test Fails
 
@@ -366,13 +366,13 @@ The test likely failed because the `borrow` call failed—the contract wasn't in
 - the generated amount argument is non-positive (u0)
 - the generated amount argument is more than the allowed borrow value
 
-To fix this, we need to **simulate deposits** and add **discard logic**.
+To fix this, you need to **simulate deposits** and add **discard logic**.
 
 Let's address them one by one.
 
 ### Handle Preconditions
 
-**First, we need deposits.** We can create a helper function that Rendezvous will pick up during property-based testing runs. This helper will allow deposits to be created so other tests can check properties that require deposits:
+**First, you need deposits.** You can create a helper function that Rendezvous will pick up during property-based testing runs. This helper will allow deposits to be created so other tests can check properties that require deposits:
 
 ```clarity
 ;; This is a helper function that will eventually be picked up during
@@ -388,7 +388,7 @@ Let's address them one by one.
 )
 ```
 
-**Next, add discard logic to the borrow test.** A test is discarded when it returns `(ok false)`. We'll wrap the core test logic in a conditional that checks for invalid preconditions (the three cases listed above) and returns `(ok false)` to discard those cases:
+**Next, add discard logic to the borrow test.** A test is discarded when it returns `(ok false)`. Wrap the core test logic in a conditional that checks for invalid preconditions (the three cases listed above) and returns `(ok false)` to discard those cases:
 
 ```clarity
 ;; Property: Borrowing should always update the loan amount correctly.
@@ -535,7 +535,7 @@ Change the line to correctly accumulate loans:
 
 ### Re-run Rendezvous with the Same Seed
 
-Re-run with the same seed, to find out if we completely fixed the bug for that random sequence of events:
+Re-run with the same seed, to find out if you completely fixed the bug for that random sequence of events:
 
 ```clarity
 npx rv . stx-defi test --seed=1880056597
@@ -593,7 +593,7 @@ Rendezvous discovered that when a user borrows multiple times, only the most rec
 
 The bug means the contract doesn't track cumulative borrows correctly. When a user borrows multiple times, only the most recent borrow amount is recorded, not the total. The existing loan amount (`current-loan`) is completely ignored!
 
-**Why did unit tests miss this?**
+**Why did example-based unit tests miss this?**
 
 The unit tests passed because they only tested single borrow scenarios. Look back at the unit test:
 
@@ -618,7 +618,7 @@ When there's only one borrow, `(+ amount)` and `(+ current-loan amount)` produce
 2. Calling `borrow` multiple times with different amounts
 3. Verifying the property holds for ALL sequences
 
-This is the power of property-based testing and fuzzing!
+This is the power of using Rendezvous!
 
 ## What You Learned
 
@@ -634,13 +634,13 @@ You've successfully:
 
 ✅ Fixed the bug and verified the fix
 
-✅ Understood the difference between example-based and property-based testing
+✅ Understood the difference between stateless example-based and stateful property-based testing
 
 ## The Key Insight
 
-**Unit tests check specific examples. Property-based tests check universal properties.**
+**Example-based tests check specific examples. Property-based tests check a much broader range of inputs.**
 
-Traditional unit tests ask:
+Example-based tests ask:
 
 - "Does this work for input A?"
 - "Does this work for input B?"
