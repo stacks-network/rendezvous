@@ -1,598 +1,688 @@
-# Examples
+# Quickstart Tutorial
 
-The Rendezvous repo has a Clarinet project, `example`, that shows how to test Clarity smart contracts natively. Each contract, like `xyz.clar`, has a matching test contract, `xyz.tests.clar`.
+This tutorial walks you through testing a DeFi lending contract with Rendezvous. You’ll see how Rendezvous uncovers subtle vulnerabilities that traditional unit tests might miss, and learn how to design property-based tests that help expose real bugs.
 
-## What's Inside
+## What You'll Learn
 
-[The `counter` Contract](#the-counter-contract)
-  - [Invariants](#invariants)
-    - [Invariant logic](#invariant-logic)
-    - [Checking the invariants](#checking-the-invariants)
-  - [Property-Based Tests](#property-based-tests)
-    - [Test logic](#test-logic)
-    - [Checking the properties](#checking-the-properties)
+You will test a simplified DeFi lending contract that allows users to deposit STX and borrow against those deposits. This contract hides a subtle bug that passes all example-based tests, but fails when running Rendezvous property-based testing.
 
-[The `cargo` Contract](#the-cargo-contract)
-  - [Invariants](#invariants-1)
-    - [Invariant logic](#invariant-logic-1)
-    - [Checking the invariants](#checking-the-invariants-1)
-  - [Property-Based Tests](#property-based-tests-1)
-    - [Test logic](#test-logic-1)
-    - [Checking the properties](#checking-the-properties-1)
+You’ll learn to:
 
-[The `reverse` Contract](#the-reverse-contract)
-  - [Property-Based Tests](#property-based-tests-2)
-    - [Test logic](#test-logic-2)
-    - [Checking the properties (shrinking)](#checking-the-properties-2)
+- Write property-based tests directly in Clarity
+- Catch real vulnerabilities using randomized, stateful test runs
+- Replay and fix failing test sequences deterministically
 
-[The `slice` Contract](#the-slice-contract)
-  - [Property-Based Tests](#property-based-tests-3)
-    - [Test logic](#test-logic-3)
-    - [Checking the properties (discarding)](#checking-the-properties-3)
+> Note: This example is adapted from the [stx-defi](https://github.com/hirosystems/clarity-examples/blob/ccd9ecf0bf136d7f28ef116706ed2936f6d8781a/examples/stx-defi/contracts/stx-defi.clar) contract in the [hirosystems/clarity-examples](https://github.com/hirosystems/clarity-examples) repository.
 
----
+## Prerequisites
 
-## The `counter` Contract
+Before you begin, make sure you have:
 
-The `counter` contract is a simple Clarity example found in the `example` Clarinet project. It has no known vulnerabilities. However, to see how Rendezvous works, we can **introduce a bug** into the `increment` function. This bug resets the counter to `0` when the counter value exceeds `1000`. The faulty `increment` function is already included (but commented out) in the `counter` contract:
+- Node.js (version >= 20)
+- Clarinet installed ([installation guide](https://github.com/stx-labs/clarinet))
 
-```clarity
-(define-public (increment)
-  (let
-    (
-      (current-counter (var-get counter))
-    )
-    (if
-      (> current-counter u1000) ;; Introduce a bug for large values.
-      (ok (var-set counter u0)) ;; Reset counter to zero if it exceeds 1000.
-      (ok (var-set counter (+ current-counter u1)))
-    )
-  )
-)
-```
+## Step 1: Create a New Clarinet Project
 
-To test the buggy version of the contract, replace the valid `increment` function with the faulty version. Then, you can write Clarity invariants and property-based tests to detect the issue.
-
-### Invariants
-
-One invariant that can detect the introduced bug is:
-
-```clarity
-(define-read-only (invariant-counter-gt-zero)
-  (let
-    (
-      (increment-num-calls
-        (default-to u0
-          (get called (map-get? context "increment"))
-        )
-      )
-      (decrement-num-calls
-        (default-to u0
-          (get called (map-get? context "decrement"))
-        )
-      )
-    )
-    (if
-      (<= increment-num-calls decrement-num-calls)
-      true
-      (> (var-get counter) u0)
-    )
-  )
-)
-```
-
-This invariant uses the **context** utility from Rendezvous, described in the previous chapter. It establishes a fundamental rule for the counter contract:
-
-> If, at the time of the check, the `increment` function has been called successfully more times than `decrement`, the counter value should be greater than 0.
-
-#### Invariant logic
-
-`increment-num-calls ≤ decrement-num-calls`:
-
-- The invariant automatically holds.
-- This case means decrements occurred at least as many times as increments, so the invariant does not enforce any condition.
-
-`increment-num-calls > decrement-num-calls`:
-
-- The invariant asserts that `counter > u0`.
-- This ensures that, despite more increment calls, the counter remains positive.
-
-#### Checking the invariants
-
-To check the `counter` contract's invariants, run:
+Open your terminal and create a new Clarinet project:
 
 ```bash
-rv ./example counter invariant
+clarinet new rendezvous-tutorial
+cd rendezvous-tutorial
 ```
 
-Using this command, Rendezvous will **randomly execute public function calls** in the `counter` contract while **periodically checking the invariant**. If the invariant fails, it indicates that the contract's internal state has deviated from expected behavior, exposing the bug in the faulty `increment` function.
+This creates a new directory with the basic Clarinet structure:
 
-### Property-Based Tests
+```
+rendezvous-tutorial/
+├── Clarinet.toml
+├── contracts/
+├── settings/
+│   └── Devnet.toml
+└── tests/
+```
 
-Another way to detect the introduced bug is by writing this property-based test:
+## Step 2: Add Rendezvous
+
+Add Rendezvous to your project:
+
+```bash
+npm install @stacks/rendezvous
+```
+
+Verify the installation:
+
+```bash
+npx rv --help
+```
+
+## Step 3: Add the Lending Contract
+
+Add a new contract to the Clarinet project:
+
+```bash
+clarinet contract new stx-defi
+```
+
+Open `contracts/stx-defi.clar` and add this Clarity code:
 
 ```clarity
-(define-public (test-increment)
+;; stx-defi.clar
+;; A simplified DeFi lending protocol.
+
+(define-map deposits
+  { owner: principal }
+  { amount: uint }
+)
+
+(define-map loans
+  principal
+  { amount: uint }
+)
+
+(define-constant err-overborrow (err u300))
+
+(define-public (deposit (amount uint))
   (let
     (
-      (counter-before (get-counter))
+      (current-balance
+        (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
+      )
     )
-    (unwrap-panic (increment))
-    (asserts! (is-eq (get-counter) (+ counter-before u1)) (err u404))
+    (try! (stx-transfer? amount tx-sender (as-contract tx-sender)))
+    (map-set deposits
+      { owner: tx-sender }
+      { amount: (+ current-balance amount) }
+    )
     (ok true)
   )
 )
-```
 
-This test is a **property-based test**, where a _property_ (a truth, or characteristic) of the `increment` function is tested across different inputs.
-
-> The counter should always increase by 1 after a successful call to `increment`.
-
-If the test fails, it means the counter did not increment as expected, revealing unintended behavior such as the counter resetting to `0`.
-
-#### Test logic
-
-1. Record the counter value before calling `increment`.
-2. Call `increment` and ensure it does not fail.
-3. Check that the new counter value equals the previous value +1.
-   - If this condition does not hold, the test fails with error `u404`.
-   - This catches unexpected changes, such as the counter resetting.
-
-#### Checking the properties
-
-To run Rendezvous property-based tests against the counter contract, use:
-
-```bash
-rv ./example counter test
-```
-
-Using this command, Rendezvous will **randomly select and execute** property-based tests from the `counter`'s test contract. This process will detect the bug in the faulty increment function. However, if the test contract contains only `test-increment`, **the number of runs must be increased**. By default, Rendezvous executes **100 runs**, which is not sufficient to expose the issue.
-
-To make sure you always catch the bug, set the `--runs` option to something higher than `1001`, e.g. **1002**:
-
-```bash
-rv ./example counter test --runs=1002
-```
-
-This ensures that enough test cases are executed to trigger the `counter` reset condition.
-
----
-
-## The `cargo` Contract
-
-The `cargo` contract is a decentralized shipment tracker found in the `example` Clarinet project. Initially, it contained a bug where the `last-shipment-id` variable was not updated when creating a new shipment. This bug has been fixed, but you can re-introduce it to see how Rendezvous detects it:
-
-```clarity
-(define-public (create-new-shipment (starting-location (string-ascii 25))
-                                    (receiver principal))
+(define-public (borrow (amount uint))
   (let
     (
-      (new-shipment-id (+ (var-get last-shipment-id) u1))
-    )
-    ;; #[filter(starting-location, receiver)]
-    (map-set shipments new-shipment-id {
-      location: starting-location,
-      status: "In Transit",
-      shipper: tx-sender,
-      receiver: receiver
-    })
-
-    ;; The following line fixes the bug in the original implementation.
-    ;; Comment out this line to re-introduce the bug.
-    ;; (var-set last-shipment-id new-shipment-id)
-    (ok "Shipment created successfully")
-  )
-)
-```
-
-To test the buggy version of the contract, **comment out the line that updates `last-shipment-id`**. Then, use invariants and property-based tests to detect the issue.
-
-### Invariants
-
-One invariant that can detect the introduced bug is:
-
-```clarity
-(define-read-only (invariant-last-shipment-id-gt-0-after-create-shipment)
-  (let
-    (
-      (create-shipment-num-calls
-        (default-to u0 (get called (map-get? context "create-new-shipment")))
+      (user-deposit
+        (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
       )
+      (allowed-borrow (/ user-deposit u2))
+      (current-loan
+        (default-to u0 (get amount (map-get? loans tx-sender)))
+      )
+      (new-loan (+ amount))
     )
-    (if
-      (is-eq create-shipment-num-calls u0)
-      true
-      (> (var-get last-shipment-id) u0)
+    (asserts! (<= new-loan allowed-borrow) err-overborrow)
+    (let
+      ((recipient tx-sender))
+      (try! (as-contract (stx-transfer? amount tx-sender recipient)))
     )
+    (map-set loans tx-sender { amount: new-loan })
+    (ok true)
   )
+)
+
+(define-read-only (get-loan-amount)
+  (ok (default-to u0 (get amount (map-get? loans tx-sender))))
 )
 ```
 
-This invariant uses the **context** utility from Rendezvous, described in the previous chapter. It enforces a fundamental rule of the `cargo` contract:
+**What this contract does:**
 
-> If at least one shipment has been created, the `last-shipment-id` must be greater than 0.
+- Users can `deposit` STX into the protocol
+- Users can `borrow` up to 50% of their deposit value
+- The contract tracks deposits and loans for each user
 
-#### Invariant logic
+## Step 4: Write Some Unit Tests
 
-`create-shipment-num-calls = 0`:
+Let's first write some example-based unit tests.
 
-- The invariant holds automatically (no shipments created, so no condition to check).
+Open `tests/stx-defi.test.ts` and add these example-based unit tests:
 
-`create-shipment-num-calls > 0`:
+```typescript
+describe("stx-defi unit tests", () => {
+  it("can deposit", () => {
+    const amountToDeposit = 1000;
 
-- The invariant asserts that `last-shipment-id > 0`.
-- If this check fails, it means `last-shipment-id` was **not updated** after creating a shipment, exposing the bug.
+    const { result } = simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
 
-#### Checking the invariants
+    expect(result).toBeOk(Cl.bool(true));
+  });
 
-To run Rendezvous invariant testing against the `cargo` contract, use:
+  it("can borrow half of deposit", () => {
+    const amountToDeposit = 1000;
+    const amountToBorrow = 500;
 
-```bash
-rv ./example cargo invariant
+    const { result: depositResult } = simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+    expect(depositResult).toBeOk(Cl.bool(true));
+
+    const { result } = simnet.callPublicFn(
+      "stx-defi",
+      "borrow",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    expect(result).toBeOk(Cl.bool(true));
+  });
+
+  it("loan amount is correct", () => {
+    const amountToDeposit = 1000;
+    const amountToBorrow = 500;
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "borrow",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    const { result } = simnet.callReadOnlyFn(
+      "stx-defi",
+      "get-loan-amount",
+      [],
+      address1
+    );
+
+    expect(result).toBeOk(Cl.uint(amountToBorrow));
+  });
+
+  it("cannot borrow more than half of deposit", () => {
+    const amountToDeposit = 1000;
+    const amountToBorrow = 501;
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    const { result } = simnet.callPublicFn(
+      "stx-defi",
+      "borrow",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    // err-overborrow
+    expect(result).toBeErr(Cl.uint(300));
+  });
+});
 ```
 
-Using this command, Rendezvous will **randomly execute public function calls** in the `cargo` contract while **periodically checking the invariant**. If the invariant fails, it signals that `last-shipment-id` was not updated as expected, revealing the bug.
+Install dependencies and run the tests:
 
-### Property-Based Tests
+```bash
+npm install
+npm test
+```
 
-A property-based test that can detect the introduced bug is:
+**Looking good!** ✅ (or so it seems...)
+
+The main functions and state of the contract are now covered by tests. Line coverage is probably high as well. Looks great, right? But here's the thing: example-based tests only verify the examples you thought of. Let's see if the contract holds up under **Rendezvous property-based testing**.
+
+## Step 5: Add Rendezvous Property-Based Tests
+
+Rendezvous lets you test a broader range of inputs, not just specific examples. Let's see how to write your first property-based test and why it matters.
+
+### Create the Test File
+
+Create the Rendezvous test file:
+
+```bash
+touch contracts/stx-defi.tests.clar
+```
+
+### Add an Ice-Breaker Test
+
+Before writing any meaningful properties, it's a good idea to check that Rendezvous can run. Add a simple "always-true" test to verify your setup.
+Open `contracts/stx-defi.tests.clar` and add an always-true test:
 
 ```clarity
-(define-public (test-get-last-shipment-id
-    (starting-location (string-ascii 25))
-    (receiver principal)
-  )
-  (let
-    ((shipment-id-before (get-last-shipment-id)))
-    (unwrap!
-      (create-new-shipment starting-location receiver)
-      ERR_CONTRACT_CALL_FAILED
+(define-public (test-always-true)
+  (ok true)
+)
+```
+
+Check if Rendezvous can execute the test:
+
+```bash
+npx rv . stx-defi test
+```
+
+Expected output:
+
+```
+$ npx rv . stx-defi test
+Using manifest path: Clarinet.toml
+Target contract: stx-defi
+
+Starting property testing type for the stx-defi contract...
+
+₿        1 Ӿ        3   deployer [PASS] stx-defi test-always-true  (ok true)
+₿        1 Ӿ        4   wallet_5 [PASS] stx-defi test-always-true  (ok true)
+₿       11 Ӿ       15   wallet_1 [PASS] stx-defi test-always-true  (ok true)
+₿      690 Ӿ      695   wallet_1 [PASS] stx-defi test-always-true  (ok true)
+...
+₿    12348 Ӿ    12447   wallet_3 [PASS] stx-defi test-always-true  (ok true)
+₿    12348 Ӿ    12448   wallet_3 [PASS] stx-defi test-always-true  (ok true)
+₿    12357 Ӿ    12458   wallet_5 [PASS] stx-defi test-always-true  (ok true)
+
+OK, properties passed after 100 runs.
+
+
+EXECUTION STATISTICS
+
+│ PROPERTY TEST CALLS
+│
+├─ + PASSED
+│    └─ test-always-true: x100
+│
+├─ ! DISCARDED
+│    └─ test-always-true: x0
+│
+└─ - FAILED
+     └─ test-always-true: x0
+
+LEGEND:
+
+  PASSED    properties verified for given inputs
+  DISCARDED skipped due to invalid preconditions
+  FAILED    property violations or unexpected behavior
+```
+
+If you see similar output, your setup works. You're ready to write a **real property-based test**.
+
+### Define a Borrowing Property
+
+You want to test that **borrowing always updates the loan amount correctly**:
+
+```clarity
+;; stx-defi.tests.clar
+
+;; Property: Borrowing should always update the loan amount correctly.
+;; The new loan amount should equal the old loan amount plus the borrowed
+;; amount.
+(define-public (test-borrow (amount uint))
+  (let (
+      ;; Record the loan amount before performing any action that would end up
+      ;; changing the internal state of the smart contract. Query the loans map
+      ;; for the selected tx-sender and store the result in the initial-loan
+      ;; local variable.
+      (initial-loan (default-to u0 (get amount (map-get? loans tx-sender))))
     )
-    ;; Verify the last shipment ID is incremented by 1.
+    ;; Since the initial-loan is recorded before the borrow call, you can now
+    ;; call the borrow function to allow checking the effects after the call.
+    (try! (borrow amount))
+    ;; Verify the property: updated loan = initial loan + borrowed amount
     (asserts!
-      (is-eq (get-last-shipment-id) (+ u1 shipment-id-before))
-      ERR_ASSERTION_FAILED
+      (is-eq (default-to u0 (get amount (map-get? loans tx-sender)))
+        (+ initial-loan amount)
+      )
+      (err u999) ;; any error code to identify the test failure.
     )
     (ok true)
   )
 )
 ```
 
-This test follows a **property-based testing approach**, verifying a key property of `create-new-shipment`:
+> At this stage, **the test will likely fail**. This is an important learning moment: Rendezvous runs your tests in a **stateful, randomized environment** that simulates real contract interactions.
 
-> Creating a new shipment should always increment `last-shipment-id` by 1.
+### How Rendezvous Executes Property Tests
 
-### Test logic
+Rendezvous:
 
-1. Record the current shipment ID before calling `create-new-shipment`.
-2. Call `create-new-shipment`, ensuring it does not fail.
-3. Verify that `last-shipment-id` has **increased by 1**.
-   - If this check fails, it means `last-shipment-id` was **not updated**, exposing the bug.
+1. Injects all property-based tests directly into the deployed contract.
+2. Detects all public `test-*` functions automatically.
+3. Generates a random sequence to call each test.
+4. Produces random argument values for each function parameter.
+5. Randomly selects senders from settings/Devnet.toml.
+6. Randomly advances Bitcoin and Stacks block heights during testing.
+7. Accumulates state across test calls instead of resetting each time.
+8. Discards test cases where preconditions fail, returning (ok false).
 
-#### Checking the properties
+This design allows you to test your contract in **realistic, varied scenarios** that a simple/example-based unit test could never reach.
 
-To run Rendezvous property-based tests against the `cargo` contract, use:
+### Why the First Test Fails
 
-```bash
-rv ./example cargo test
-```
+The test likely failed because the `borrow` call failed—the contract wasn't in a suitable state. Rendezvous allows you to discard test cases when preconditions aren't met (wrong state, invalid arguments, caller, height, etc.). In our case, `borrow` will fail for one of these reasons:
 
-Using this command, Rendezvous will **randomly select and execute** property-based tests from the `cargo`'s test contract. If `test-get-last-shipment-id` is the only test in the contract, Rendezvous will immediately detect the bug.
+- no deposits were made
+- the generated amount argument is non-positive (u0)
+- the generated amount argument is more than the allowed borrow value
 
----
+To fix this, you need to **simulate deposits** and add **discard logic**.
 
-## The `reverse` Contract
+Let's address them one by one.
 
-The `reverse` contract included in the `example` Clarinet project contains Clarity utilities for reversing lists of various types. Since it lacks public functions, **invariant testing doesn’t apply**. However, it serves as an ideal "Hello World" example for **property testing using native Clarity**—_reversing a list twice should always return the original list_.
+### Handle Preconditions
 
-Introducing a bug and detecting it with Rendezvous property-based tests is insightful, not just for finding the issue but for demonstrating the power of **shrinking**. Below is an example of how to introduce a bug into one of the `reverse-uint` private utilities:
-
-```clarity
-(define-read-only (reverse-uint (seq (list 127 uint)))
- (reverse-list1 seq)
-)
-
-(define-private (reverse-list1 (seq (list 127 uint)))
-  (fold reverse-redx-unsigned-list seq (list))
-)
-
-(define-private (reverse-redx-unsigned-list (item uint) (seq (list 127 uint)))
-  (unwrap-panic
-    (as-max-len?
-      (concat (list item) seq)
-      u4 ;; Introduces a bug by limiting max length incorrectly.
-    )
-  )
-)
-```
-
-This bug **reduces the maximum supported list length** in a private function, leading to an **unwrap failure runtime error** when the list exceeds the new, incorrect limit.
-
-### Property-Based Tests
-
-A property-based test that can detect the introduced bug is:
+**First, you need deposits.** You can create a helper function that Rendezvous will pick up during property-based testing runs. This helper will allow deposits to be created so other tests can check properties that require deposits:
 
 ```clarity
-(define-public (test-reverse-uint (seq (list 127 uint)))
-  (begin
-    (asserts!
-      (is-eq seq (reverse-uint (reverse-uint seq)))
-      ERR_ASSERTION_FAILED
+;; This is a helper function that will eventually be picked up during
+;; property-based-testing runs. It allows creating deposits in the smart
+;; contract so other tests can check properties requiring a deposit.
+(define-public (test-deposit-helper (amount uint))
+  (let (
+      ;; Call the deposit function and ignore the result.
+      (deposit-result (deposit amount))
     )
     (ok true)
   )
 )
 ```
 
-This test follows a **property-based testing approach**, verifying the "Hello World" of property testing:
+**Next, add discard logic to the borrow test.** A test is discarded when it returns `(ok false)`. Wrap the core test logic in a conditional that checks for invalid preconditions (the three cases listed above) and returns `(ok false)` to discard those cases:
 
-> Reversing a list twice should always return the original list.
+```clarity
+;; Property: Borrowing should always update the loan amount correctly.
+;; The new loan amount should equal the old loan amount plus the borrowed
+;; amount.
+(define-public (test-borrow (amount uint))
+  (if (or
+      ;; If amount is 0, the STX transfer performed in the borrow operation
+      ;; would fail, resulting in a false negative.
+      (is-eq amount u0)
+      ;; If the amount to borrow would exceed the allowed limit defined in the
+      ;; borrow function, the borrow operation would fail, resulting in a false
+      ;; negative.
+      (> (+ (default-to u0 (get amount (map-get? loans tx-sender))) amount)
+        (/ (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
+          u2
+        ))
+    )
+    ;; Discard the test if preconditions aren't met.
+    (ok false)
+    ;; Run the test.
+    (let ((initial-loan (default-to u0 (get amount (map-get? loans tx-sender)))))
+      (unwrap! (borrow amount) (err "Borrow call failed"))
+      (let ((updated-loan (default-to u0 (get amount (map-get? loans tx-sender)))))
+        ;; Verify the property: new loan = old loan + borrowed amount
+        (asserts! (is-eq updated-loan (+ initial-loan amount))
+          (err "Loan amount not updated correctly")
+        )
+        (ok true)
+      )
+    )
+  )
+)
+```
 
-This test example accepts a parameter, which is randomly generated for each run.
+The test discards invalid cases: when `amount` is `u0`, or when the new total loan would exceed half the deposit (which also covers cases with no deposits).
 
-#### Test logic
+> Now the test only runs when valid preconditions are met.
 
-1. Verify that reversing a passed list twice is always equal to the passed list.
+### Run Rendezvous and Catch the Bug
 
-#### Checking the properties
-
-To run Rendezvous property-based tests against the `reverse` contract, use:
+Start a new property-based testing run:
 
 ```bash
-rv ./example reverse test
+npx rv . stx-defi test
 ```
 
-**Shrinking at its finest**
-
-When a property-based test fails, **Rendezvous automatically shrinks the failing test case** to find **the smallest possible counterexample**. This process helps pinpoint the root cause of the bug by **removing unnecessary complexity**. Sample Rendezvous output showcasing the **shrinking** process:
+Rendezvous will probably catch the bug in the very first run, showing output like this:
 
 ```
-₿     3494 Ӿ     3526   wallet_3 [FAIL] reverse test-reverse-uint [332420496,1825325546,120054597,1173935866,164214015] (runtime)
-₿     3494 Ӿ     3527   wallet_3 [PASS] reverse test-reverse-uint [120054597,1173935866,164214015]
-₿     3494 Ӿ     3529   wallet_3 [FAIL] reverse test-reverse-uint [0,1825325546,120054597,1173935866,164214015] (runtime)
-₿     3494 Ӿ     3530   wallet_3 [PASS] reverse test-reverse-uint [120054597,1173935866,164214015]
-₿     3494 Ӿ     3532   wallet_3 [PASS] reverse test-reverse-uint [0]
-₿     3494 Ӿ     3533   wallet_3 [PASS] reverse test-reverse-uint [0,1173935866,164214015]
-₿     3494 Ӿ     3534   wallet_3 [PASS] reverse test-reverse-uint [0,120054597,1173935866,164214015]
-₿     3494 Ӿ     3535   wallet_3 [FAIL] reverse test-reverse-uint [0,0,120054597,1173935866,164214015] (runtime)
-...
-₿     3494 Ӿ     3537   wallet_3 [PASS] reverse test-reverse-uint [0,120054597,1173935866,164214015]
-₿     3494 Ӿ     3538   wallet_3 [PASS] reverse test-reverse-uint [0]
-₿     3494 Ӿ     3539   wallet_3 [PASS] reverse test-reverse-uint [0,1173935866,164214015]
-₿     3494 Ӿ     3541   wallet_3 [PASS] reverse test-reverse-uint [0,0]
-₿     3494 Ӿ     3542   wallet_3 [PASS] reverse test-reverse-uint [0,0,1173935866,164214015]
-₿     3494 Ӿ     3543   wallet_3 [FAIL] reverse test-reverse-uint [0,0,0,1173935866,164214015] (runtime)
-₿     3494 Ӿ     3545   wallet_3 [PASS] reverse test-reverse-uint [0,0,1173935866,164214015]
-₿     3494 Ӿ     3546   wallet_3 [PASS] reverse test-reverse-uint [0]
-₿     3494 Ӿ     3547   wallet_3 [PASS] reverse test-reverse-uint [0,1173935866,164214015]
-₿     3494 Ӿ     3549   wallet_3 [PASS] reverse test-reverse-uint [0,0]
-₿     3494 Ӿ     3550   wallet_3 [PASS] reverse test-reverse-uint [0,0,1173935866,164214015]
-₿     3494 Ӿ     3551   wallet_3 [PASS] reverse test-reverse-uint [0,0,0]
-₿     3494 Ӿ     3552   wallet_3 [PASS] reverse test-reverse-uint [0,0,0,164214015]
-₿     3494 Ӿ     3553   wallet_3 [FAIL] reverse test-reverse-uint [0,0,0,0,164214015] (runtime)
-₿     3494 Ӿ     3554   wallet_3 [PASS] reverse test-reverse-uint [0,0,164214015]
-...
-₿     3494 Ӿ     3562   wallet_3 [PASS] reverse test-reverse-uint [0,0,0,164214015]
-₿     3494 Ӿ     3563   wallet_3 [PASS] reverse test-reverse-uint [0,0,0,0]
-₿     3494 Ӿ     3564   wallet_3 [FAIL] reverse test-reverse-uint [0,0,0,0,0] (runtime)
-₿     3494 Ӿ     3565   wallet_3 [PASS] reverse test-reverse-uint [0,0,0]
-...
-₿     3494 Ӿ     3574   wallet_3 [PASS] reverse test-reverse-uint [0,0,0,0]
+$ npx rv . stx-defi test
+Using manifest path: Clarinet.toml
+Target contract: stx-defi
 
-Error: Property failed after 23 tests.
-Seed : 869018352
+Starting property testing type for the stx-defi contract...
+
+₿        1 Ӿ        3   wallet_7 [PASS] stx-defi test-deposit-helper 2 (ok true)
+₿     1001 Ӿ     1004   wallet_7 [WARN] stx-defi test-borrow 2015589496 (ok false)
+₿     1001 Ӿ     1005   wallet_8 [PASS] stx-defi test-deposit-helper 2147483636 (ok true)
+₿     1898 Ӿ     1903   wallet_6 [WARN] stx-defi test-borrow 1984339073 (ok false)
+₿     1898 Ӿ     1904   deployer [PASS] stx-defi test-deposit-helper 195930186 (ok true)
+₿     1898 Ӿ     1905   wallet_2 [PASS] stx-defi test-deposit-helper 13 (ok true)
+...
+₿     3464 Ӿ     3485   deployer [PASS] stx-defi test-borrow 28 (ok true)
+₿     3468 Ӿ     3490   wallet_1 [WARN] stx-defi test-borrow 25 (ok false)
+₿     3468 Ӿ     3491   wallet_8 [FAIL] stx-defi test-borrow 11 (err "Loan amount not updated correctly")
+₿     3468 Ӿ     3492   wallet_1 [PASS] stx-defi test-deposit-helper 1653600941 (ok true)
+₿     4058 Ӿ     4083   wallet_8 [PASS] stx-defi test-deposit-helper 1653600941 (ok true)
+₿     4058 Ӿ     4084   wallet_8 [WARN] stx-defi test-borrow 1653600941 (ok false)
+₿     4058 Ӿ     4085   wallet_8 [WARN] stx-defi test-borrow 0 (ok false)
+₿     4058 Ӿ     4086   wallet_8 [FAIL] stx-defi test-borrow 6 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4087   wallet_8 [FAIL] stx-defi test-borrow 3 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4088   wallet_8 [FAIL] stx-defi test-borrow 2 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4089   wallet_8 [FAIL] stx-defi test-borrow 1 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4090   wallet_8 [WARN] stx-defi test-borrow 0 (ok false)
+₿     4058 Ӿ     4091   wallet_8 [FAIL] stx-defi test-borrow 1 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4092   wallet_8 [WARN] stx-defi test-borrow 0 (ok false)
+₿     4058 Ӿ     4093   wallet_8 [FAIL] stx-defi test-borrow 1 (err "Loan amount not updated correctly")
+
+Error: Property failed after 22 tests.
+Seed : 1880056597
 
 Counterexample:
-- Test Contract : reverse
-- Test Function : test-reverse-uint (public)
-- Arguments     : [[0,0,0,0,0]]
-- Caller        : wallet_3
-- Outputs       : {"type":{"response":{"ok":"bool","error":"int128"}}}
+- Test Contract : stx-defi
+- Test Function : test-borrow (public)
+- Arguments     : [1]
+- Caller        : wallet_8
+- Outputs       : {"type":{"response":{"ok":"bool","error":{"string-ascii":{"length":33}}}}}
 
 What happened? Rendezvous went on a rampage and found a weak spot:
 
-The test function "test-reverse-uint" returned:
+The test function "test-borrow" returned:
 
-    Call contract function error: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse::test-reverse-uint((list u0 u0 u0 u0 u0)) -> Error calling contract function: Runtime error while interpreting ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse: Runtime(UnwrapFailure, Some([FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:test-reverse-uint" }, FunctionIdentifier { identifier: "_native_:special_asserts" }, FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:reverse-uint" }, FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:reverse-list1" }, FunctionIdentifier { identifier: "_native_:special_fold" }, FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:reverse-redx-unsigned-list" }, FunctionIdentifier { identifier: "_native_:native_unwrap" }]))
+(err "Loan amount not updated correctly")
+
+EXECUTION STATISTICS
+
+│ PROPERTY TEST CALLS
+│
+├─ + PASSED
+│    ├─ test-borrow: x2
+│    └─ test-deposit-helper: x13
+│
+├─ ! DISCARDED
+│    ├─ test-borrow: x12
+│    └─ test-deposit-helper: x0
+│
+└─ - FAILED
+     ├─ test-borrow: x7
+     └─ test-deposit-helper: x0
+
+LEGEND:
+
+  PASSED    properties verified for given inputs
+  DISCARDED skipped due to invalid preconditions
+  FAILED    property violations or unexpected behavior
+
+! FAILED tests indicate that your function properties don't hold for all inputs. Review the counterexamples above for debugging.
 ```
 
-To observe shrinking in action, pay attention to the `FAIL` logs. The minimal counterexample found is:
+The output shows a failure: `(err "Loan amount not updated correctly")`. The contract isn't tracking loan amounts correctly.
+
+> **Note:** The output includes a seed (`1880056597`) you can use to reproduce this exact sequence.
+
+You can also stop at the first failure:
+
+```bash
+npx rv . stx-defi test --bail
+```
+
+## Step 6: Identify and Fix the Borrow Bug
+
+After taking a closer look at the lending contract, the bug is in this line of the `borrow` function:
+
+```clarity
+(new-loan (+ amount))
+```
+
+Change the line to correctly accumulate loans:
+
+```clarity
+(new-loan (+ current-loan amount))
+```
+
+### Re-run Rendezvous with the Same Seed
+
+Re-run with the same seed, to find out if you completely fixed the bug for that random sequence of events:
+
+```clarity
+npx rv . stx-defi test --seed=1880056597
+```
+
+Output:
 
 ```
-[0,0,0,0,0]
+$ npx rv . stx-defi test --seed=1880056597
+Using manifest path: Clarinet.toml
+Target contract: stx-defi
+Using seed: 1880056597
+
+Starting property testing type for the stx-defi contract...
+
+₿        1 Ӿ        3   wallet_7 [PASS] stx-defi test-deposit-helper 2 (ok true)
+₿     1001 Ӿ     1004   wallet_7 [WARN] stx-defi test-borrow 2015589496 (ok false)
+₿     1001 Ӿ     1005   wallet_8 [PASS] stx-defi test-deposit-helper 2147483636 (ok true)
+₿     1898 Ӿ     1903   wallet_6 [WARN] stx-defi test-borrow 1984339073 (ok false)
+₿     1898 Ӿ     1904   deployer [PASS] stx-defi test-deposit-helper 195930186 (ok true)
+₿     1898 Ӿ     1905   wallet_2 [PASS] stx-defi test-deposit-helper 13 (ok true)
+...
+₿    17291 Ӿ    17388   wallet_4 [PASS] stx-defi test-borrow 708340522 (ok true)
+₿    17291 Ӿ    17389   wallet_4 [PASS] stx-defi test-deposit-helper 589199221 (ok true)
+₿    17565 Ӿ    17664   wallet_2 [PASS] stx-defi test-deposit-helper 2147483627 (ok true)
+₿    18559 Ӿ    18659   wallet_8 [PASS] stx-defi test-borrow 1622181282 (ok true)
+₿    18559 Ӿ    18660   wallet_3 [PASS] stx-defi test-deposit-helper 2147483630 (ok true)
+
+OK, properties passed after 100 runs.
 ```
 
-This is exactly what we were looking for! The bug we introduced is not related to the **values** in the list but to the **list length**.
+> The bug is fixed! The contract now correctly tracks cumulative loans.
 
-By starting with larger, more complex failing test cases and shrinking down to a list of five zeros, Rendezvous reveals that the **issue is with the number of elements, not their values**. This insight is crucial—it tells us that our bug causes failures when the list length exceeds a certain threshold, not when specific numbers are present.
+### Run Multiple Random Sequences
 
-This is the power of **shrinking** in property-based testing: it strips away distractions and zeroes in on the core problem.
+Test additional random sequences (each run generates a new random sequence):
+
+```bash
+npx rv . stx-defi test
+```
+
+Run more tests to increase confidence (default is 100 runs):
+
+```bash
+npx rv . stx-defi test --runs=1000
+```
+
+**Rendezvous caught the bug and you successfully fixed it!** 🎯
+
+## Step 7: Understand the Bug
+
+**What was the bug?**
+
+Rendezvous discovered that when a user borrows multiple times, only the most recent borrow amount is recorded.
+
+The bug means the contract doesn't track cumulative borrows correctly. When a user borrows multiple times, only the most recent borrow amount is recorded, not the total. The existing loan amount (`current-loan`) is completely ignored!
+
+**Why did example-based unit tests miss this?**
+
+The unit tests passed because they only tested single borrow scenarios. Look back at the unit test:
+
+```typescript
+it("loan amount is correct after single borrow", () => {
+  // Only ONE borrow call - bug not triggered!
+  simnet.callPublicFn(
+    "stx-defi",
+    "borrow",
+    [Cl.uint(amountToBorrow)],
+    address1
+  );
+  // ...
+});
+```
+
+When there's only one borrow, `(+ amount)` and `(+ current-loan amount)` produce the same result because the initial loan is `u0`.
+
+**Rendezvous caught the bug by:**
+
+1. Randomly generating test sequences
+2. Calling `borrow` multiple times with different amounts
+3. Verifying the property holds for ALL sequences
+
+This is the power of using Rendezvous!
+
+## What You Learned
+
+You've successfully:
+
+✅ Created a simple DeFi lending contract
+
+✅ Wrote traditional unit tests that passed but missed a critical bug
+
+✅ Wrote your first Rendezvous property-based test
+
+✅ Discovered how Rendezvous catches bugs through random stateful testing
+
+✅ Fixed the bug and verified the fix
+
+✅ Understood the difference between stateless example-based and stateful property-based testing
+
+## The Key Insight
+
+**Example-based tests check specific examples. Property-based tests check a much broader range of inputs.**
+
+Example-based tests ask:
+
+- "Does this work for input A?"
+- "Does this work for input B?"
+
+Property-based tests ask:
+
+- "Does this ALWAYS work?"
+- "Can I find ANY input that breaks this?"
+
+Rendezvous explores your contract's state space automatically, finding edge cases you might never think to test manually.
+
+## Real-World Impact
+
+This bug in a production DeFi protocol would allow users to:
+
+1. Deposit 1000 STX
+2. Borrow 500 STX (maximum allowed)
+3. Borrow another 500 STX (should fail, but succeeds due to bug)
+4. Total borrowed: 1000 STX with only 500 STX recorded
+5. User only needs to repay 500 STX despite borrowing 1000 STX
+
+This would drain the protocol's funds — a critical vulnerability caught by Rendezvous in seconds.
+
+## Example Implementation
+
+You can see a complete step-by-step implementation of this tutorial with commit-by-commit progress in the [rendezvous-tutorial repository](https://github.com/BowTiedRadone/rendezvous-tutorial) ([view commits](https://github.com/BowTiedRadone/rendezvous-tutorial/commits/master/)).
+
+## Next Steps
+
+Now that you understand the power of Rendezvous, explore:
+
+- **More examples**: Study other smart contracts in the examples (see [Chapter 8](chapter_8.md))
+- **Your own contracts**: Apply Rendezvous to your projects and find bugs before they reach production
 
 ---
 
-## The `slice` Contract
+## Get Involved
 
-The `slice` contract included in the `example` Clarinet project contains Clarity utilities for slicing lists of various types. Same as `reverse`, it lacks public functions, so **invariant testing doesn’t apply**. Using Rendezvous and property-based tests to test this contract will highlight the **discarding** mechanism of the Clarity property-based tests.
+**Found this tutorial useful?** Star the [Rendezvous repository on GitHub](https://github.com/stacks-network/rendezvous) to show your support!
 
-Let's introduce a bug in the `slice` contract:
+Have questions, found a bug, or want to contribute? We'd love to hear from you:
 
-```clarity
-(define-read-only (slice-uint (seq (list 127 uint)) (skip int) (n int))
-  (begin
-    (assert- (and (<= 0 skip) (<= skip 127)) "Out of bounds: skip")
-    (assert- (and (<= 0 n) (<= n 127)) "Out of bounds: n")
-    (slice-list1 seq skip n)
-  )
-)
-
-(define-private (slice-list1
-                 (seq (list 127 uint))
-                 (skip int)
-                 (n int))
-  (begin
-    (assert- (and (<= 0 skip) (<= skip 127)) "Out of bounds: skip")
-    (assert- (and (<= 0 n) (<= n 127)) "Out of bounds: n")
-    (let
-      (
-        (end
-          (-
-            (min-num-integer-integer (+ skip n) (to-int (len seq)))
-            1
-          )
-        )
-      )
-      (if
-        (>= end 1) ;; Introduce a bug that forces `skip` to always be 1 in this comparison.
-        (let
-          ((i (range-1-integer-integer skip end)))
-          (map for-step-integer-list1 i (repeat127-list1 seq))
-        )
-        (list)
-      )
-    )
-  )
-)
-```
-
-The issue lies in the conditional check `(>= end 1)`, where the `skip` value is hardcoded to `1` instead of using the user-provided input. This leads to unexpected behavior:
-
-- Lists that should include elements from earlier positions **incorrectly skip the first item**.
-- Certain inputs may trigger an **unwrap failure runtime error** when slicing beyond valid bounds.
-
-### Property-Based Tests
-
-The following property-based test evaluates the correctness of `slice-uint`:
-
-```clarity
-(define-public (test-slice-list-uint (seq (list 127 uint)) (skip int) (n int))
-  (if
-    ;; Discard the test if the input is invalid by returning `(ok false)`.
-    (or
-      (not (and (<= 0 n) (<= n 127)))
-      (not (and (<= 0 skip) (<= skip 127)))
-    )
-    (ok false)
-    (let
-      ((result (slice-uint seq skip n)))
-      (if
-        ;; Case 1: If skip > length of seq, result should be an empty list.
-        (> (to-uint skip) (len seq))
-        (asserts! (is-eq result (list )) ERR_ASSERTION_FAILED_1)
-        (if
-          ;; Case 2: If n > length of seq - skip, result length should be
-          ;; length of seq - skip.
-          (> (to-uint n) (- (len seq) (to-uint skip)))
-          (asserts!
-            (is-eq (len result) (- (len seq) (to-uint skip)))
-            ERR_ASSERTION_FAILED_2
-          )
-          ;; Case 3: If n <= length of seq - skip, result length should be n.
-          (asserts! (is-eq (len result) (to-uint n)) ERR_ASSERTION_FAILED_3)
-        )
-      )
-      (ok true)
-    )
-  )
-)
-```
-
-#### Test logic
-
-Test Case Discarding:
-
-- If `skip` or `n` are out of valid bounds (`0 ≤ skip, n ≤ 127`), the test is discarded (returns `(ok false)`).
-- This ensures only meaningful cases are tested.
-
-Valid Cases and Expected Behavior:
-
-- **Case 1**: When `skip` exceeds the length of the list, the result should be an empty list.
-- **Case 2**: When `n` is larger than the remaining elements after `skip`, the result should contain all the remaining elements.
-- **Case 3**: When `n` is within valid bounds, the result should contain exactly `n` elements.
-
-#### Checking the properties
-
-To run Rendezvous property-based tests against the `reverse` contract, use:
-
-```bash
-rv ./example slice test
-```
-
-**Discarding at its finest**
-
-A key aspect introduced in this test is the **discarding** mechanism. Let's revisit the rules for discarding property-based tests in Rendezvous:
-
-> _A Rendezvous property-based test is considered discarded when one of the following is true:_
->
-> 1. The test returns `(ok false)`.
-> 2. The test's discard function returns `false` (detailed explanation in [Chapter 6](chapter_6.md)).
-
-**Discarding property-based tests using discard functions**
-
-An example of a property-based test with an attached discard function can also be found in `slice.tests.clar`:
-
-```clarity
-;; Some tests, like 'test-slice-list-int', are valid only for specific inputs.
-;; Rendezvous generates a wide range of inputs, which may include values that
-;; are unsuitable for those tests.
-;; To skip the test when inputs are invalid, the first way is to define a
-;; 'discard' function:
-;; - Must be read-only.
-;; - Name should match the property test function's, prefixed with "can-".
-;; - Parameters should mirror those of the property test.
-;; - Returns true only if inputs are valid, allowing the test to run.
-(define-read-only (can-test-slice-list-int
-    (seq (list 127 int))
-    (skip int)
-    (n int)
-  )
-  (and
-    (and (<= 0 n) (<= n 127))
-    (and (<= 0 skip) (<= skip 127))
-  )
-)
-
-(define-public (test-slice-list-int (seq (list 127 int)) (skip int) (n int))
-  (let
-    ((result (slice seq skip n)))
-    (if
-      ;; Case 1: If skip > length of seq, result should be an empty list.
-      (> (to-uint skip) (len seq))
-      (asserts! (is-eq result (list )) ERR_ASSERTION_FAILED_1)
-      (if
-        ;; Case 2: If n > length of seq - skip, result length should be
-        ;; length of seq - skip.
-        (> (to-uint n) (- (len seq) (to-uint skip)))
-        (asserts!
-          (is-eq (len result) (- (len seq) (to-uint skip)))
-          ERR_ASSERTION_FAILED_2
-        )
-        ;; Case 3: If n <= length of seq - skip, result length should be n.
-        (asserts! (is-eq (len result) (to-uint n)) ERR_ASSERTION_FAILED_3)
-      )
-    )
-    (ok true)
-  )
-)
-```
-
-The **discarding** mechanism helps filter out invalid test cases, making property-based tests more efficient and ensuring the test results are correctly displayed. Sample output:
-
-```
-₿        5 Ӿ      115   wallet_1 [WARN] slice test-slice-list-bool [true,false,false] -17 -1286688432
-₿        5 Ӿ      116   wallet_4 [WARN] slice test-slice-list-bool [false,false] 985789078 1631962668
-₿        5 Ӿ      117   wallet_1 [WARN] slice test-slice-string b^:hD\"Y. 1744256708 676842982
-₿        5 Ӿ      118   wallet_1 [FAIL] slice test-slice-list-uint [1818238100,1267097220,587282248,376122205,358580924,724240912,1327852627,89884546] 17 22 (runtime)
-₿        5 Ӿ      119   wallet_8 [WARN] slice test-slice-buff cfe44 -13 15
-₿        5 Ӿ      120   wallet_1 [WARN] slice test-slice-buff cfe44 -13 15
-₿        5 Ӿ      121   wallet_1 [WARN] slice test-slice-ascii 33!rt -13 15
-₿        5 Ӿ      122   wallet_1 [PASS] slice test-slice-list-uint [] 17 22
-₿      105 Ӿ      223   wallet_1 [FAIL] slice test-slice-list-uint [358580924,724240912,1327852627,89884546] 17 22 (runtime)
-₿      105 Ӿ      224   wallet_1 [FAIL] slice test-slice-list-uint [1327852627,89884546] 17 22 (runtime)
-₿      105 Ӿ      225   wallet_1 [PASS] slice test-slice-list-uint [89884546] 17 22
-₿      205 Ӿ      326   wallet_1 [FAIL] slice test-slice-list-uint [0,89884546] 17 22 (runtime)
-₿      205 Ӿ      327   wallet_1 [PASS] slice test-slice-list-uint [89884546] 17 22
-₿      305 Ӿ      428   wallet_1 [PASS] slice test-slice-list-uint [0] 17 22
-₿      405 Ӿ      529   wallet_1 [FAIL] slice test-slice-list-uint [0,0] 17 22 (runtime)
-```
-
-Tests marked as `WARN` are discarded, meaning they didn’t meet the criteria to be executed. This gives the user a clear view of how often the test actually ran and helps identify patterns in discarded cases.
+- **Open an issue** on [GitHub](https://github.com/stacks-network/rendezvous/issues)
+- **Reach out** with questions or feedback
+- **Share your findings** — contribute examples of bugs you've caught to show others how powerful advanced testing techniques can be
