@@ -1,7 +1,6 @@
 [book]
 authors = ["Radu Bahmata", "Nikos Baxevanis"]
 language = "en"
-multilingual = false
 src = "."
 title = "Rendezvous: The Clarity Fuzzer"
 
