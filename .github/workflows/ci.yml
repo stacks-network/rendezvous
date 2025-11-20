@@ -73,9 +73,8 @@ jobs:
           rv . self-listing-helper-v3a invariant
           rv . rendezvous-token invariant --dial=./sip010.cjs
 
-  publish-docs:
+  generate-docs:
     needs: [tests, examples]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -90,13 +89,14 @@ jobs:
         run: |
           mdbook build docs
 
-      - name: Configure Git
+      - name: Deploy to GitHub Pages
+        # Only deploy docs if the push is to the master branch.
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
+          # Configure Git to commit to gh-pages branch.
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
 
-      - name: Deploy to GitHub Pages
-        run: |
           # The gh-pages branch has no meaningful history since it's completely
           # regenerated from scratch on each commit to master. History would be
           # noise, not signal. The source of truth is the master branch and the
