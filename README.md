@@ -8,7 +8,7 @@ Rendezvous `rv` is a Clarity fuzzer designed to cut through your smart contract'
 
 ### Prerequisites
 
-- **Node.js**: Supported versions include 20, 22, and 23. Other versions may work, but they are untested.
+- **Node.js**: Supported versions include 20, 22, and 24. Other versions may work, but they are untested.
 
 ### Inspiration
 
