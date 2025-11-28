@@ -9,8 +9,7 @@ import { join, resolve } from "path";
 import { rmSync } from "fs";
 import { issueFirstClassCitizenship } from "./citizen";
 import { Cl } from "@stacks/transactions";
-import { getManifestFileName, tryParseRemoteDataSettings } from "./app";
-import { EventEmitter } from "events";
+import { getManifestFileName } from "./app";
 import { createIsolatedTestEnvironment } from "./test.utils";
 
 const isolatedTestEnvPrefix = "rendezvous-test-invariant-";
@@ -59,10 +58,6 @@ describe("Simnet contracts operations", () => {
     const simnet = await issueFirstClassCitizenship(
       tempDir,
       join(tempDir, getManifestFileName(tempDir, "counter")),
-      tryParseRemoteDataSettings(
-        join(tempDir, "Clarinet.toml"),
-        new EventEmitter()
-      ),
       "counter"
     );
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { join, resolve } from "path";
 import { EventEmitter } from "events";
-import toml from "toml";
 import { checkProperties } from "./property";
 import { checkInvariants } from "./invariant";
 import {
@@ -11,22 +10,13 @@ import {
 } from "./shared";
 import { issueFirstClassCitizenship } from "./citizen";
 import { version } from "./package.json";
-import { red, yellow } from "ansicolor";
-import { existsSync, readFileSync } from "fs";
+import { red } from "ansicolor";
+import { existsSync } from "fs";
 import { parseArgs } from "util";
 import { DialerRegistry } from "./dialer";
-import { RemoteDataSettings } from "./app.types";
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
-};
-
-/**
- * The object used to initialize an empty simnet session with, when no remote
- * data is enabled in the `Clarinet.toml` file.
- */
-export const noRemoteData = {
-  enabled: false,
 };
 
 /**
@@ -50,32 +40,6 @@ export const getManifestFileName = (
   }
 
   return "Clarinet.toml";
-};
-
-export const tryParseRemoteDataSettings = (
-  manifestPath: string,
-  radio: EventEmitter
-): RemoteDataSettings => {
-  const clarinetToml = toml.parse(readFileSync(resolve(manifestPath), "utf-8"));
-  const remoteDataUserSettings = clarinetToml.repl?.remote_data ?? undefined;
-
-  if (remoteDataUserSettings && remoteDataUserSettings?.enabled === true) {
-    radio.emit(
-      "logMessage",
-      yellow(
-        "\nUsing remote data. Setting up the environment can take up to a minute..."
-      )
-    );
-  }
-
-  // If no remote data settings are provided, we still need to return an object
-  // with the `enabled` property set to `false`. That is what simnet expects
-  // at least in order to initialize an empty simnet session.
-  if (!remoteDataUserSettings) {
-    return noRemoteData;
-  }
-
-  return remoteDataUserSettings;
 };
 
 const helpMessage = `
@@ -211,12 +175,9 @@ export async function main() {
     dialerRegistry.registerDialers();
   }
 
-  const remoteDataSettings = tryParseRemoteDataSettings(manifestPath, radio);
-
   const simnet = await issueFirstClassCitizenship(
     runConfig.manifestDir,
     manifestPath,
-    remoteDataSettings,
     runConfig.sutContractName
   );
 

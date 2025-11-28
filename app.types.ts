@@ -1,5 +1,1 @@
-export type RemoteDataSettings = {
-  enabled: boolean;
-  api_url?: string;
-  initial_height?: number;
-};
+// This file is a placeholder for the Rendezvous CLI-related types.
