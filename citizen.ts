@@ -1,276 +1,116 @@
-import { readFileSync } from "fs";
-import { basename, join, resolve } from "path";
-import toml from "toml";
+import { mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "fs";
+import { join, relative } from "path";
+import * as toml from "@iarna/toml";
 import yaml from "yaml";
 import { initSimnet, Simnet } from "@stacks/clarinet-sdk";
-import { EpochString } from "@stacks/clarinet-sdk-wasm";
-import {
-  BufferCV,
-  Cl,
-  ClarityType,
-  cvToJSON,
-  cvToValue,
-  hexToCV,
-  OptionalCV,
-} from "@stacks/transactions";
 import {
   Batch,
-  ContractDeploymentProperties,
-  ContractsByEpoch,
   EmulatedContractPublish,
   DeploymentPlan,
   Transaction,
 } from "./citizen.types";
-import { RemoteDataSettings } from "./app.types";
+import { EpochString } from "@stacks/clarinet-sdk-wasm";
 
 /**
- * Prepares the simnet instance and assures the target contract's corresponding
- * test contract is treated as a first-class citizen, relying on their
- * concatenation. This function handles:
- * - Contract sorting by epoch based on the deployment plan.
- * - Combining the target contract with its tests and deploying all contracts
- *   to the simnet.
- *
- * @param manifestDir The relative path to the manifest directory.
- * @param manifestPath The absolute path to the manifest file.
- * @param remoteDataSettings The remote data settings.
- * @param sutContractName The target contract name.
- * @returns The initialized simnet instance with all contracts deployed, with
- * the test contract treated as a first-class citizen of the target contract.
+ * Prepares the simnet with the target contract's test contract as a
+ * first-class citizen.
  */
 export const issueFirstClassCitizenship = async (
   manifestDir: string,
   manifestPath: string,
-  remoteDataSettings: RemoteDataSettings,
   sutContractName: string
 ): Promise<Simnet> => {
-  // Initialize the simnet, to generate the deployment plan and instance. The
-  // empty session will be set up, and contracts will be deployed in the
-  // correct order based on the deployment plan a few lines below.
-  const simnet = await initSimnet(manifestPath);
+  await initSimnet(manifestPath);
 
   const deploymentPlan = yaml.parse(
     readFileSync(join(manifestDir, "deployments", "default.simnet-plan.yaml"), {
       encoding: "utf-8",
     })
-  );
+  ) as DeploymentPlan;
 
-  const sortedContractsByEpoch =
-    groupContractsByEpochFromDeploymentPlan(deploymentPlan);
-
-  const simnetAddresses = [...simnet.getAccounts().values()];
-
-  const stxBalancesMap = new Map(
-    simnetAddresses.map((address) => {
-      const balanceHex = simnet.runSnippet(`(stx-get-balance '${address})`);
-      return [address, cvToValue(hexToCV(balanceHex))];
-    })
-  );
-
-  // If the sbtc-token contract is included in the deployment plan, we need to
-  // restore the sBTC balances. Otherwise, use an empty map.
-  const sbtcBalancesMap = getSbtcBalancesFromSimnet(
-    simnet,
-    deploymentPlan,
-    remoteDataSettings
-  );
-
-  await simnet.initEmptySession(remoteDataSettings);
-
-  simnetAddresses.forEach((address) => {
-    simnet.mintSTX(address, stxBalancesMap.get(address)!);
-  });
-
-  // Combine the target contract with its tests into a single contract. The
-  // resulting contract will replace the target contract in the simnet.
-
-  /** The contract names mapped to the concatenated source code. */
-  const rendezvousSources = new Map(
-    [sutContractName]
-      // For each target contract name, execute the processing steps to get the
-      // concatenated contract source code and the contract ID.
-      .map((contractName) =>
-        buildRendezvousData(deploymentPlan, contractName, manifestDir)
-      )
-      // Use the contract ID as a key, mapping to the concatenated contract
-      // source code.
-      .map((rendezvousContractData) => [
-        rendezvousContractData.rendezvousContractId,
-        rendezvousContractData.rendezvousSourceCode,
-      ])
-  );
-
-  const clarinetToml = toml.parse(
+  const parsedManifest = toml.parse(
     readFileSync(manifestPath, { encoding: "utf-8" })
   ) as any;
-  const cacheDir = clarinetToml.project?.cache_dir || "./.cache";
+  const cacheDir = parsedManifest.project?.["cache_dir"] ?? "./.cache";
 
-  // Deploy the contracts to the empty simnet session in the correct order.
-  await deployContracts(
-    simnet,
-    sortedContractsByEpoch,
-    manifestDir,
+  const rendezvousData = buildRendezvousData(
     cacheDir,
-    (name, sender, props) =>
-      getContractSource(
-        [sutContractName],
-        rendezvousSources,
-        name,
-        sender,
-        props,
-        manifestDir
-      )
+    deploymentPlan,
+    sutContractName,
+    manifestDir
   );
 
-  // Filter out addresses with zero balance. They do not need to be restored.
-  const sbtcBalancesToRestore: Map<string, number> = new Map(
-    [...sbtcBalancesMap.entries()].filter(([_, balance]) => balance !== 0)
+  const sessionId = `${Date.now()}`;
+  const temporaryContractsDir = join(manifestDir, ".rv-contracts", sessionId);
+  mkdirSync(temporaryContractsDir, { recursive: true });
+
+  const [, contractName] = rendezvousData.rendezvousContractId.split(".");
+  const rendezvousPath = join(
+    temporaryContractsDir,
+    `${contractName}-rendezvous.clar`
+  );
+  writeFileSync(rendezvousPath, rendezvousData.rendezvousSourceCode);
+
+  const temporaryManifestPath = createTemporaryManifest(
+    parsedManifest,
+    manifestDir,
+    sutContractName,
+    rendezvousPath,
+    sessionId
   );
 
-  // After all the contracts and requirements are deployed, if the test wallets
-  // had sBTC balances previously, restore them. If no test wallet previously
-  // owned sBTC, skip this step.
-  if ([...sbtcBalancesToRestore.keys()].length > 0) {
-    restoreSbtcBalances(simnet, sbtcBalancesToRestore);
+  try {
+    const simnet = await initSimnet(temporaryManifestPath);
+    return simnet;
+  } finally {
+    unlinkSync(temporaryManifestPath);
+    rmSync(temporaryContractsDir, { recursive: true, force: true });
   }
-
-  return simnet;
 };
 
-/**
- * Groups contracts by epoch from the deployment plan.
- * @param deploymentPlan The parsed deployment plan.
- * @returns A record of contracts grouped by epoch. The record key is the epoch
- * string, and the value is an array of contracts. Each contract is represented
- * as a record with the contract name as the key and a record containing the
- * contract path and clarity version as the value.
- */
-export const groupContractsByEpochFromDeploymentPlan = (
-  deploymentPlan: DeploymentPlan
-): ContractsByEpoch => {
-  return deploymentPlan.plan.batches.reduce(
-    (acc: ContractsByEpoch, batch: Batch) => {
-      const epoch = batch.epoch;
-      const contracts = batch.transactions
-        .filter((tx) => tx["emulated-contract-publish"])
-        .map((tx) => {
-          const contract = tx["emulated-contract-publish"]!;
-          return {
-            [contract["contract-name"]]: {
-              path: contract.path,
-              clarity_version: contract["clarity-version"],
-            },
-          };
-        });
-
-      if (contracts.length > 0) {
-        acc[epoch] = (acc[epoch] || []).concat(contracts);
-      }
-
-      return acc;
-    },
-    {} as ContractsByEpoch
-  );
-};
-
-/**
- * Deploys the contracts to the simnet in the correct order.
- * @param simnet The simnet instance.
- * @param contractsByEpoch The record of contracts by epoch.
- * @param getContractSourceFn The function to retrieve the contract source.
- */
-export const deployContracts = async (
-  simnet: Simnet,
-  contractsByEpoch: ContractsByEpoch,
+const createTemporaryManifest = (
+  parsedManifest: any,
   manifestDir: string,
-  cacheDir: string,
-  getContractSourceFn: (
-    name: string,
-    sender: string,
-    props: ContractDeploymentProperties
-  ) => string
-): Promise<void> => {
-  for (const [epoch, contracts] of Object.entries(contractsByEpoch)) {
-    // Move to the next epoch and deploy the contracts in the correct order.
-    simnet.setEpoch(epoch as EpochString);
-    for (const contract of contracts.flatMap(Object.entries)) {
-      const [name, props]: [string, ContractDeploymentProperties] = contract;
-
-      // Resolve paths to absolute for proper comparison.
-      const absoluteContractPath = resolve(manifestDir, props.path);
-      const absoluteRequirementsPath = resolve(
-        manifestDir,
-        cacheDir,
-        "requirements"
-      );
-
-      // Check if contract is in requirements directory.
-      const isRequirement = absoluteContractPath.startsWith(
-        absoluteRequirementsPath
-      );
-
-      const sender = isRequirement
-        ? basename(props.path).split(".")[0]
-        : simnet.deployer;
-
-      const source = getContractSourceFn(name, sender, props);
-
-      simnet.deployContract(
-        name,
-        source,
-        { clarityVersion: props.clarity_version },
-        sender
-      );
-    }
-  }
-};
-
-/**
- * Conditionally retrieves the contract source based on whether the contract is
- * a SUT contract or not.
- * @param targetContractNames The list of target contract names.
- * @param rendezvousSourcesMap The target contract IDs mapped to the resulting
- * concatenated source code.
- * @param contractName The contract name.
- * @param contractSender The emulated sender of the contract according to the
- * deployment plan.
- * @param contractProps The contract deployment properties.
- * @param manifestDir The relative path to the manifest directory.
- * @returns The contract source code.
- */
-export const getContractSource = (
-  targetContractNames: string[],
-  rendezvousSourcesMap: Map<string, string>,
-  contractName: string,
-  contractSender: string,
-  contractProps: ContractDeploymentProperties,
-  manifestDir: string
+  sutContractName: string,
+  rendezvousPath: string,
+  sessionId: string
 ): string => {
-  const contractId = `${contractSender}.${contractName}`;
+  const temporaryToml = JSON.parse(JSON.stringify(parsedManifest));
 
-  // Checking if a contract is a SUT one just by using the name is not enough.
-  // There can be multiple contracts with the same name, but different senders
-  // in the deployment plan. The contract ID is the unique identifier used to
-  // store the concatenated Rendezvous source codes in the
-  // `rendezvousSourcesMap`.
-  if (
-    targetContractNames.includes(contractName) &&
-    rendezvousSourcesMap.has(contractId)
-  ) {
-    const contractSource = rendezvousSourcesMap.get(contractId);
-    if (!contractSource) {
-      throw new Error(`Contract source not found for ${contractName}`);
-    }
-    return contractSource;
-  } else {
-    return readFileSync(join(manifestDir, contractProps.path), {
-      encoding: "utf-8",
-    });
+  if (!temporaryToml.contracts) {
+    temporaryToml.contracts = {};
   }
+  if (!temporaryToml.contracts[sutContractName]) {
+    temporaryToml.contracts[sutContractName] = {};
+  }
+
+  const relativeRendezvousPath = relative(manifestDir, rendezvousPath);
+  temporaryToml.contracts[sutContractName] = {
+    // If epoch not present, set it to "latest".
+    epoch: (temporaryToml.contracts[sutContractName].epoch ??
+      "latest") as EpochString,
+    path: relativeRendezvousPath,
+  };
+
+  // Convert epoch values to strings for TOML compatibility
+  for (const contractName in temporaryToml.contracts) {
+    const contract = temporaryToml.contracts[contractName];
+    if (contract?.epoch && typeof contract.epoch === "number") {
+      contract.epoch = String(contract.epoch);
+    }
+  }
+
+  const temporaryManifestPath = join(
+    manifestDir,
+    `.Clarinet.toml.${sessionId}`
+  );
+  writeFileSync(temporaryManifestPath, toml.stringify(temporaryToml));
+  return temporaryManifestPath;
 };
 
 /**
  * Builds the Rendezvous data.
+ * @param cacheDir The cache directory path.
  * @param deploymentPlan The parsed deployment plan.
  * @param contractName The contract name.
  * @param manifestDir The relative path to the manifest directory.
@@ -278,6 +118,7 @@ export const getContractSource = (
  * contains the Rendezvous source code and the unique Rendezvous contract ID.
  */
 export const buildRendezvousData = (
+  cacheDir: string,
   deploymentPlan: DeploymentPlan,
   contractName: string,
   manifestDir: string
@@ -290,6 +131,7 @@ export const buildRendezvousData = (
     );
 
     const testContractSource = getTestContractSource(
+      cacheDir,
       deploymentPlan,
       contractName,
       manifestDir
@@ -343,13 +185,44 @@ const getDeploymentPlanContractSource = (
 };
 
 /**
+ * Retrieves the test contract source code for a project contract.
+ */
+const getProjectContractTest = (
+  contractPath: string,
+  manifestDir: string,
+  clarityExtension: string
+): string | null => {
+  const lastExtensionIndex = contractPath.lastIndexOf(clarityExtension);
+  const testContractPath =
+    lastExtensionIndex !== -1
+      ? contractPath.slice(0, lastExtensionIndex) +
+        `.tests${clarityExtension}` +
+        contractPath.slice(lastExtensionIndex + clarityExtension.length)
+      : `${contractPath}.tests${clarityExtension}`;
+
+  try {
+    const fullPath = join(manifestDir, testContractPath);
+    const content = readFileSync(fullPath, {
+      encoding: "utf-8",
+    }).toString();
+    return content;
+  } catch (error: any) {
+    return null;
+  }
+};
+
+/**
  * Retrieves the test contract source code.
+ * Project contracts have priority. Requirement contracts are only checked
+ * if project contract test is not found.
+ * @param cacheDir The cache directory path.
  * @param deploymentPlan The parsed deployment plan.
  * @param sutContractName The target contract name.
  * @param manifestDir The relative path to the manifest directory.
  * @returns The test contract source code.
  */
 export const getTestContractSource = (
+  cacheDir: string,
   deploymentPlan: DeploymentPlan,
   sutContractName: string,
   manifestDir: string
@@ -366,41 +239,72 @@ export const getTestContractSource = (
     );
   }
 
-  // If the sutContractPath is located under .cache/requirements/ path, search
-  // for the test contract in the classic `contracts` directory.
-  if (sutContractPath.includes(".cache")) {
-    const relativePath = sutContractPath.split(".cache/requirements/")[1];
-    const relativePathTestContract = relativePath.replace(
-      clarityExtension,
-      `.tests${clarityExtension}`
-    );
-
-    return readFileSync(
-      join(manifestDir, "contracts", relativePathTestContract),
-      {
-        encoding: "utf-8",
-      }
-    ).toString();
-  }
-
-  // If the contract is not under the `.cache/requirements/` path, we assume it
-  // is located in a regular path specified in the manifest file. Just search
-  // for the test contract near the SUT one, following the naming
-  // convention: `<contract-name>.tests.clar`.
-  const testContractPath = sutContractPath.replace(
-    clarityExtension,
-    `.tests${clarityExtension}`
+  // Prioritize project contracts. Try project contract test first.
+  const projectTestContract = getProjectContractTest(
+    sutContractPath,
+    manifestDir,
+    clarityExtension
   );
-
-  try {
-    return readFileSync(join(manifestDir, testContractPath), {
-      encoding: "utf-8",
-    }).toString();
-  } catch (error: any) {
-    throw new Error(
-      `Error retrieving the corresponding test contract for the "${sutContractName}" contract. ${error.message}`
-    );
+  if (projectTestContract !== null) {
+    return projectTestContract;
   }
+
+  // Fallback to requirement contract test if project contract test not found.
+  const normalizedCacheDir = cacheDir || "./.cache";
+  const requirementTestContract = getRequirementTestContract(
+    normalizedCacheDir,
+    sutContractPath,
+    manifestDir
+  );
+  if (requirementTestContract !== null) {
+    return requirementTestContract;
+  }
+
+  // No corresponding test contract was found for the SUT contract.
+  throw new Error(
+    `Error retrieving the corresponding test contract for the "${sutContractName}" contract.`
+  );
+};
+
+/**
+ * Retrieves the test contract source code for a requirement contract. It
+ * searches for the test contract in the `contracts` directory of the Clarinet
+ * project.
+ * @param cacheDir The cache directory path.
+ * @param sutContractPath The path to the SUT contract.
+ * @param manifestDir The relative path to the manifest directory.
+ * @returns The test contract source code or `null` if the test contract is not
+ * found.
+ */
+const getRequirementTestContract = (
+  cacheDir: string,
+  sutContractPath: string,
+  manifestDir: string
+): string | null => {
+  const normalizedCacheDir = cacheDir.replace(/[\/\\]$/, "");
+  const requirementsRelativePath = `${normalizedCacheDir}/requirements/`;
+
+  if (!sutContractPath.includes(requirementsRelativePath)) {
+    return null;
+  }
+
+  const relativePath = sutContractPath.split(requirementsRelativePath)[1];
+
+  const clarityExtension = ".clar";
+  const lastExtensionIndex = relativePath.lastIndexOf(clarityExtension);
+  const relativePathTestContract =
+    lastExtensionIndex !== -1
+      ? relativePath.slice(0, lastExtensionIndex) +
+        `.tests${clarityExtension}` +
+        relativePath.slice(lastExtensionIndex + clarityExtension.length)
+      : `${relativePath}.tests${clarityExtension}`;
+
+  return readFileSync(
+    join(manifestDir, "contracts", relativePathTestContract),
+    {
+      encoding: "utf-8",
+    }
+  ).toString();
 };
 
 /**
@@ -507,196 +411,3 @@ export function scheduleRendezvous(
 
   return `${targetContractSource}\n\n${context}\n\n${tests}`;
 }
-
-/**
- * Checks if a contract can be found in the deployment plan.
- * @param deploymentPlan The parsed deployment plan.
- * @param contractAddress The address of the contract.
- * @param contractName The name of the contract.
- * @returns True if the contract can be found in the deployment plan, false
- * otherwise.
- */
-const isContractInDeploymentPlan = (
-  deploymentPlan: DeploymentPlan,
-  contractAddress: string,
-  contractName: string
-): boolean => {
-  return deploymentPlan.plan.batches.some((batch: Batch) =>
-    batch.transactions.some(
-      (transaction: Transaction) =>
-        transaction["emulated-contract-publish"]?.["contract-name"] ===
-          contractName &&
-        transaction["emulated-contract-publish"]?.["emulated-sender"] ===
-          contractAddress
-    )
-  );
-};
-
-/**
- * Maps the simnet accounts to their sBTC balances. The function tries to call
- * the `get-balance` function of the `sbtc-token` contract for each address. If
- * the call fails, it returns a balance of 0 for that address. The call fails
- * if the user is not working with sBTC.
- * @param simnet The simnet instance.
- * @param deploymentPlan The parsed deployment plan.
- * @param remoteDataSettings The remote data settings.
- * @returns A map of addresses to their sBTC balances.
- */
-export const getSbtcBalancesFromSimnet = (
-  simnet: Simnet,
-  deploymentPlan: DeploymentPlan,
-  remoteDataSettings: RemoteDataSettings
-): Map<string, number> => {
-  // If the user is not using remote data and the deployment plan does not
-  // contain the `sbtc-token` contract, return a map with 0 balances for all
-  // addresses. When remote data is enabled, the sbtc-token contract will not
-  // necessarily be present in the deployment plan.
-  if (
-    !remoteDataSettings.enabled &&
-    !isContractInDeploymentPlan(
-      deploymentPlan,
-      "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4",
-      "sbtc-token"
-    )
-  ) {
-    return new Map(
-      [...simnet.getAccounts().values()].map((address) => [address, 0])
-    );
-  }
-
-  return new Map(
-    [...simnet.getAccounts().values()].map((address) => {
-      try {
-        const { result: getBalanceResult } = simnet.callReadOnlyFn(
-          "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-token",
-          "get-balance",
-          [Cl.principal(address)],
-          address
-        );
-
-        // If the previous read-only call works, the user is working with
-        // sBTC. This means we can proceed with restoring sBTC balances.
-        const sbtcBalanceJSON = cvToJSON(getBalanceResult);
-
-        // The `get-balance` function returns a response containing the uint
-        // balance of the address. In the JSON representation, the balance is
-        // represented as a string. We need to parse it to an integer.
-        const sbtcBalance = parseInt(sbtcBalanceJSON.value.value, 10);
-
-        return [address, sbtcBalance];
-      } catch (e) {
-        return [address, 0];
-      }
-    })
-  );
-};
-
-/**
- * Utility function that restores the test wallets' initial sBTC balances in
- * the re-initialized first-class citizenship simnet.
- *
- * @param simnet The simnet instance.
- * @param sbtcBalancesMap A map containing the test wallets' balances to be
- * restored.
- */
-const restoreSbtcBalances = (
-  simnet: Simnet,
-  sbtcBalancesMap: Map<string, number>
-) => {
-  // For each address present in the balances map, restore the balance.
-  [...sbtcBalancesMap.entries()]
-    // Re-assure the map does not contain nil balances.
-    .filter(([_, balance]) => balance !== 0)
-    .forEach(([address, balance]) => {
-      // To deposit sBTC, one needs a txId and a sweep txId. A deposit transaction
-      // must have a unique txId and sweep txId.
-      const txId = getUniqueHex();
-      const sweepTxId = getUniqueHex();
-      mintSbtc(simnet, balance, address, txId, sweepTxId);
-    });
-};
-
-/**
- * Utility function to deposit an amount of sBTC to a Stacks address.
- *
- * @param simnet The simnet instance.
- * @param amountSats The amount to mint in sats.
- * @param recipient The Stacks address to mint sBTC to.
- * @param txId A unique hex to use for the deposit.
- * @param sweepTxId A unique hex to use for the deposit.
- */
-const mintSbtc = (
-  simnet: Simnet,
-  amountSats: number,
-  recipient: string,
-  txId: string,
-  sweepTxId: string
-) => {
-  // Calling `get-burn-block-info?` only works for past burn heights. We mine
-  // one empty Bitcoin block if the initial height is 0 and use the previous
-  // burn height to retrieve the burn header hash.
-  if (simnet.burnBlockHeight === 0) {
-    simnet.mineEmptyBurnBlock();
-  }
-
-  const previousBurnHeight = simnet.burnBlockHeight - 1;
-
-  const burnHash = hexToCV(
-    simnet.runSnippet(
-      `(get-burn-block-info? header-hash u${previousBurnHeight})`
-    )
-  ) as OptionalCV<BufferCV>;
-
-  if (burnHash === null || burnHash.type === ClarityType.OptionalNone) {
-    throw new Error("Something went wrong trying to retrieve the burn header.");
-  }
-
-  const completeDepositTx = cvToJSON(
-    simnet.callPublicFn(
-      "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4.sbtc-deposit",
-      "complete-deposit-wrapper",
-      [
-        // (txid (buff 32))
-        Cl.bufferFromHex(txId),
-        // (vout-index uint)
-        Cl.uint(1),
-        // (amount uint)
-        Cl.uint(amountSats),
-        // (recipient principal)
-        Cl.principal(recipient),
-        // (burn-hash (buff 32))
-        burnHash.value,
-        // (burn-height uint)
-        Cl.uint(previousBurnHeight),
-        // (sweep-txid (buff 32))
-        Cl.bufferFromHex(sweepTxId),
-      ],
-      "SM3VDXK3WZZSA84XXFKAFAF15NNZX32CTSG82JFQ4"
-    ).result
-  );
-
-  // If the deposit transaction fails, an unexpected outcome can happen. Throw
-  // an error if the transaction is not successful.
-  if (!completeDepositTx.success) {
-    throw new Error("Something went wrong trying to restore sBTC balances.");
-  }
-};
-
-/**
- * Utility function that generates a random, unique hex to be used as txId in
- * `mintSbtc`.
- *
- * @returns A random hex string.
- */
-const getUniqueHex = (): string => {
-  let hex: string;
-
-  // Generate a 32-byte (64 character) random hex string.
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  hex = Array.from(bytes)
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-
-  return hex;
-};
