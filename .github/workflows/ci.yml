@@ -15,14 +15,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        node: [23, 22, 20]
+        node: [24, 22, 20]
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: ${{ matrix.node }}
 
@@ -39,14 +39,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node: [23, 22, 20]
+        node: [24, 22, 20]
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Use Node.js ${{ matrix.node }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: ${{ matrix.node }}
 
@@ -73,16 +73,15 @@ jobs:
           rv . self-listing-helper-v3a invariant
           rv . rendezvous-token invariant --dial=./sip010.cjs
 
-  publish-docs:
+  generate-docs:
     needs: [tests, examples]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Setup mdBook
-        uses: peaceiris/actions-mdbook@v2
+        uses: peaceiris/actions-mdbook@ee69d230fe19748b7abf22df32acaa93833fad08 # v2.0.0
         with:
           mdbook-version: "0.5.0"
 
@@ -90,13 +89,14 @@ jobs:
         run: |
           mdbook build docs
 
-      - name: Configure Git
+      - name: Deploy to GitHub Pages
+        # Only deploy docs if the push is to the master branch.
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
+          # Configure Git to commit to gh-pages branch.
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
 
-      - name: Deploy to GitHub Pages
-        run: |
           # The gh-pages branch has no meaningful history since it's completely
           # regenerated from scratch on each commit to master. History would be
           # noise, not signal. The source of truth is the master branch and the
