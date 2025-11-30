@@ -1,4 +1,12 @@
-import { mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from "fs";
+import {
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  unlinkSync,
+  writeFileSync,
+  existsSync,
+  readdirSync,
+} from "fs";
 import { join, relative } from "path";
 import * as toml from "@iarna/toml";
 import yaml from "yaml";
@@ -15,6 +23,11 @@ import EventEmitter from "events";
 /**
  * Prepares the simnet with the target contract's test contract as a
  * first-class citizen.
+ *
+ * Note: Temporary files are cleaned up in a finally block, which ensures
+ * cleanup even when errors occur. For process signals (SIGINT/SIGTERM),
+ * Node.js will execute finally blocks before exiting in most cases.
+ *
  * @param manifestDir The relative path to the manifest directory.
  * @param manifestPath The path to the manifest file.
  * @param sutContractName The target contract name.
@@ -75,6 +88,19 @@ export const issueFirstClassCitizenship = async (
   } finally {
     unlinkSync(temporaryManifestPath);
     rmSync(temporaryContractsDir, { recursive: true, force: true });
+
+    // Remove parent .rv-contracts directory if it exists and is empty.
+    const rvContractsParentDir = join(manifestDir, ".rv-contracts");
+    try {
+      if (existsSync(rvContractsParentDir)) {
+        const contents = readdirSync(rvContractsParentDir);
+        if (contents.length === 0) {
+          rmSync(rvContractsParentDir, { recursive: true, force: true });
+        }
+      }
+    } catch {
+      // Ignore errors when cleaning up parent directory.
+    }
   }
 };
 
@@ -361,7 +387,7 @@ const createTemporaryManifest = (
     path: relativeRendezvousPath,
   };
 
-  // Convert epoch values to strings for TOML compatibility
+  // Convert epoch values to strings for TOML compatibility.
   for (const contractName in temporaryToml.contracts) {
     const contract = temporaryToml.contracts[contractName];
     if (contract?.epoch && typeof contract.epoch === "number") {
