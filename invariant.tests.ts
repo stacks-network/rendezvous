@@ -11,6 +11,7 @@ import { issueFirstClassCitizenship } from "./citizen";
 import { Cl } from "@stacks/transactions";
 import { getManifestFileName } from "./app";
 import { createIsolatedTestEnvironment } from "./test.utils";
+import EventEmitter from "events";
 
 const isolatedTestEnvPrefix = "rendezvous-test-invariant-";
 
@@ -58,7 +59,8 @@ describe("Simnet contracts operations", () => {
     const simnet = await issueFirstClassCitizenship(
       tempDir,
       join(tempDir, getManifestFileName(tempDir, "counter")),
-      "counter"
+      "counter",
+      new EventEmitter()
     );
 
     const rendezvousList = Array.from(

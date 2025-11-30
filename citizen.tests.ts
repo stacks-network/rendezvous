@@ -14,6 +14,7 @@ import yaml from "yaml";
 import { getManifestFileName } from "./app";
 import { DeploymentPlan } from "./citizen.types";
 import { cvToValue, hexToCV } from "@stacks/transactions";
+import EventEmitter from "events";
 
 const isolatedTestEnvPrefix = "rendezvous-test-citizen-";
 
@@ -180,12 +181,14 @@ describe("Simnet deployment plan operations", () => {
       resolve(__dirname, "example"),
       isolatedTestEnvPrefix
     );
+    const radio = new EventEmitter();
 
     // Exercise
     const firstClassSimnet = await issueFirstClassCitizenship(
       tempDir,
       join(tempDir, getManifestFileName(tempDir, "cargo")),
-      "cargo"
+      "cargo",
+      radio
     );
     const actual = firstClassSimnet.getContractSource("cargo");
 
@@ -210,12 +213,14 @@ describe("Simnet deployment plan operations", () => {
       resolve(__dirname, "example"),
       isolatedTestEnvPrefix
     );
+    const radio = new EventEmitter();
 
     // Exercise
     const firstClassSimnet = await issueFirstClassCitizenship(
       tempDir,
       join(tempDir, getManifestFileName(tempDir, "cargo")),
-      "cargo"
+      "cargo",
+      radio
     );
 
     // Verify
@@ -237,7 +242,331 @@ describe("Simnet deployment plan operations", () => {
   });
 });
 
-describe("Project contract priority over requirements", () => {
+describe("Test contract path resolution", () => {
+  it("retrieves tests source code for a project contract", () => {
+    // Setup
+    const mockDeploymentPlan: DeploymentPlan = {
+      genesis: { wallets: [], contracts: [] },
+      plan: {
+        batches: [
+          {
+            epoch: "2.1",
+            transactions: [
+              {
+                "emulated-contract-publish": {
+                  "contract-name": "project-contract",
+                  "emulated-sender": "",
+                  "clarity-version": 2,
+                  path: "contracts/project-contract.clar",
+                },
+              },
+            ],
+            id: 0,
+          },
+        ],
+      },
+      id: 0,
+      name: "",
+      network: "",
+    };
+    const cacheDir = "./.cache";
+    const expectedTestContractContent =
+      "(define-public (test-increment) (ok true))";
+    const expectedProjectTestPath = join(
+      ".",
+      "contracts",
+      "project-contract.tests.clar"
+    );
+
+    // Mock readFileSync to return test contract content for project contracts
+    // if the path is the expected project test path, otherwise throw an error.
+    const readFileSyncSpy = jest
+      .spyOn(fs, "readFileSync")
+      .mockImplementation((path) => {
+        if (path === expectedProjectTestPath) {
+          return expectedTestContractContent;
+        }
+        throw new Error(`ENOENT: no such file or directory, open '${path}'`);
+      });
+
+    // Exercise
+    const actual = getTestContractSource(
+      cacheDir,
+      mockDeploymentPlan,
+      "project-contract",
+      "."
+    );
+
+    // Verify
+    expect(actual).toBe(expectedTestContractContent);
+    expect(readFileSyncSpy).toHaveBeenCalledWith(expectedProjectTestPath, {
+      encoding: "utf-8",
+    });
+
+    // Teardown
+    jest.restoreAllMocks();
+  });
+
+  it("searches in contracts dir for requirement contract tests", () => {
+    // Setup
+    const senderAddress = "sender";
+    const mockDeploymentPlan: DeploymentPlan = {
+      genesis: { wallets: [], contracts: [] },
+      plan: {
+        batches: [
+          {
+            epoch: "2.1",
+            transactions: [
+              {
+                "emulated-contract-publish": {
+                  "contract-name": "requirement",
+                  "emulated-sender": senderAddress,
+                  "clarity-version": 2,
+                  path: `./.cache/requirements/${senderAddress}.requirement.clar`,
+                },
+              },
+            ],
+            id: 0,
+          },
+        ],
+      },
+      id: 0,
+      name: "",
+      network: "",
+    };
+    const cacheDir = "./.cache";
+    const expectedTestContractContent =
+      "(define-public (test-requirement) (ok true))";
+
+    // The path where the tests corresponding to the requirement contract would
+    // be searched (the contracts directory of the Clarinet project). Full
+    // contract ID is used in the filename.
+    const requirementTestPath = join(
+      ".",
+      "contracts",
+      `${senderAddress}.requirement.tests.clar`
+    );
+
+    // Mock readFileSync to return
+    const readFileSyncSpy = jest
+      .spyOn(fs, "readFileSync")
+      .mockImplementation((path) => {
+        if (path === requirementTestPath) {
+          return expectedTestContractContent;
+        }
+        throw new Error(`ENOENT: no such file or directory, open '${path}'`);
+      });
+
+    // Act
+    const actual = getTestContractSource(
+      cacheDir,
+      mockDeploymentPlan,
+      "requirement",
+      "."
+    );
+
+    // Assert
+    expect(actual).toBe(expectedTestContractContent);
+    // Verify it searched in the contracts directory (for requirement tests)
+    expect(readFileSyncSpy).toHaveBeenCalledWith(
+      requirementTestPath,
+      expect.objectContaining({ encoding: "utf-8" })
+    );
+
+    // Teardown
+    jest.restoreAllMocks();
+  });
+
+  it("throws error when test contract does not exist", () => {
+    // Arrange
+    const mockDeploymentPlan: DeploymentPlan = {
+      genesis: { wallets: [], contracts: [] },
+      plan: {
+        batches: [
+          {
+            epoch: "2.1",
+            transactions: [
+              {
+                "emulated-contract-publish": {
+                  "contract-name": "nonexistent",
+                  "emulated-sender":
+                    "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
+                  "clarity-version": 2,
+                  path: "contracts/nonexistent.clar",
+                },
+              },
+            ],
+            id: 0,
+          },
+        ],
+      },
+      id: 0,
+      name: "",
+      network: "",
+    };
+
+    // Act & Assert
+    expect(() =>
+      getTestContractSource(".cache", mockDeploymentPlan, "nonexistent", ".")
+    ).toThrow(
+      'Error retrieving the corresponding test contract for the "nonexistent" contract'
+    );
+  });
+});
+
+describe("Deployment plan contract source retrieval", () => {
+  it("retrieves contract source code from deployment plan path", () => {
+    // Setup
+    const senderAddress = "sender";
+    const mockDeploymentPlan: DeploymentPlan = {
+      genesis: { wallets: [], contracts: [] },
+      plan: {
+        batches: [
+          {
+            epoch: "2.1",
+            transactions: [
+              {
+                "emulated-contract-publish": {
+                  "contract-name": "counter",
+                  "emulated-sender": senderAddress,
+                  "clarity-version": 2,
+                  path: "contracts/counter.clar",
+                },
+              },
+            ],
+            id: 0,
+          },
+        ],
+      },
+      id: 0,
+      name: "",
+      network: "",
+    };
+    const manifestDir = ".";
+    const expectedContractSource = "(define-data-var counter uint u0)";
+    const contractTestSource = "(define-public (test-increment) (ok true))";
+    const contractPath = join(manifestDir, "contracts", "counter.clar");
+    const testPath = join(manifestDir, "contracts", "counter.tests.clar");
+
+    // Mock readFileSync to return contract and test source.
+    const readFileSyncSpy = jest
+      .spyOn(fs, "readFileSync")
+      .mockImplementation((path) => {
+        // If the path is the expected contract path, return the expected
+        // contract source.
+        if (path === contractPath) {
+          return expectedContractSource;
+        }
+        // If the path is the expected test path, return the expected test
+        // source.
+        if (path === testPath) {
+          return contractTestSource;
+        }
+        // If the path is not the expected contract or test path, throw an
+        // error.
+        throw new Error(`ENOENT: no such file or directory, open '${path}'`);
+      });
+
+    // Exercise
+    const actual = buildRendezvousData(
+      ".cache",
+      mockDeploymentPlan,
+      "counter",
+      manifestDir
+    );
+
+    // Verify
+    expect(readFileSyncSpy).toHaveBeenCalledWith(contractPath, {
+      encoding: "utf-8",
+    });
+    // The rendezvous source code should contain the expected test source code
+    // along with the original contract and context.
+    expect(actual.rendezvousSourceCode).toContain(expectedContractSource);
+
+    // Teardown
+    jest.restoreAllMocks();
+  });
+});
+
+describe("Deployment plan contract selection edge cases", () => {
+  it("throws error when contract is not found in deployment plan", () => {
+    // Arrange
+    const mockDeploymentPlan: DeploymentPlan = {
+      genesis: { wallets: [], contracts: [] },
+      plan: { batches: [] },
+      id: 0,
+      name: "",
+      network: "",
+    };
+
+    // Mock readFileSync to avoid actual file operations.
+    jest.spyOn(fs, "readFileSync").mockImplementation(() => "");
+
+    // Exercise & Verify
+    expect(() =>
+      buildRendezvousData(".cache", mockDeploymentPlan, "nonexistent", ".")
+    ).toThrow('"nonexistent" contract not found in Clarinet.toml');
+
+    // Teardown
+    jest.restoreAllMocks();
+  });
+
+  it("throws error when multiple requirement contracts exist with no deployer match", () => {
+    // Arrange
+    const deployerAddress = "deployer";
+    const sender1Address = "sender1";
+    const sender2Address = "sender2";
+    const contractName = "shared-contract";
+    const mockDeploymentPlan: DeploymentPlan = {
+      genesis: {
+        wallets: [
+          {
+            name: "deployer",
+            address: deployerAddress,
+            balance: "",
+          },
+        ],
+        contracts: [],
+      },
+      plan: {
+        batches: [
+          {
+            epoch: "2.1",
+            transactions: [
+              {
+                "emulated-contract-publish": {
+                  "contract-name": contractName,
+                  "emulated-sender": sender1Address,
+                  "clarity-version": 2,
+                  path: `.cache/requirements/${sender1Address}.shared-contract.clar`,
+                },
+              },
+              {
+                "emulated-contract-publish": {
+                  "contract-name": contractName,
+                  "emulated-sender": sender2Address,
+                  "clarity-version": 2,
+                  path: `.cache/requirements/${sender2Address}.shared-contract.clar`,
+                },
+              },
+            ],
+            id: 0,
+          },
+        ],
+      },
+      id: 0,
+      name: "",
+      network: "",
+    };
+
+    // Act & Assert
+    expect(() =>
+      buildRendezvousData(".cache", mockDeploymentPlan, "shared-contract", ".")
+    ).toThrow(
+      `Multiple contracts named "${contractName}" found in the deployment plan, no one deployed by the deployer`
+    );
+  });
+
   it("should prioritize project contract over requirement when names match", () => {
     // Setup
     jest.spyOn(fs, "readFileSync").mockImplementation(() => "");

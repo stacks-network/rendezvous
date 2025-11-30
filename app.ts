@@ -178,7 +178,8 @@ export async function main() {
   const simnet = await issueFirstClassCitizenship(
     runConfig.manifestDir,
     manifestPath,
-    runConfig.sutContractName
+    runConfig.sutContractName,
+    radio
   );
 
   /**
