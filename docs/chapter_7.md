@@ -248,6 +248,8 @@ Create the Rendezvous test file:
 touch contracts/stx-defi.tests.clar
 ```
 
+> NB: For Windows users, this command wouldn't go through unless you select Linux or Bash as your terminal.
+
 ### Add an Ice-Breaker Test
 
 Before writing any meaningful properties, it's a good idea to check that Rendezvous can run. Add a simple "always-true" test to verify your setup.
