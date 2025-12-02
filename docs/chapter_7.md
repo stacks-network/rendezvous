@@ -242,13 +242,7 @@ Rendezvous lets you test a broader range of inputs, not just specific examples. 
 
 ### Create the Test File
 
-Create the Rendezvous test file:
-
-```bash
-touch contracts/stx-defi.tests.clar
-```
-
-> NB: For Windows users, this command wouldn't go through unless you select Linux or Bash as your terminal.
+Go to the `contracts` folder, and create a Rendezvous test file named  `stx-defi.clar`.
 
 ### Add an Ice-Breaker Test
 
