@@ -242,7 +242,7 @@ Rendezvous lets you test a broader range of inputs, not just specific examples. 
 
 ### Create the Test File
 
-Go to the `contracts` folder, and create a Rendezvous test file named  `stx-defi.clar`.
+Go to the `contracts` folder, and create the Rendezvous test file named  `stx-defi.tests.clar`.
 
 ### Add an Ice-Breaker Test
 
