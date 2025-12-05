@@ -1,0 +1,801 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Quickstart Tutorial - Rendezvous: The Clarity Fuzzer</title>
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-9dfbd86b.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom-2e27f41b.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-f08b190f.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-859568a5.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rendezvous: The Clarity Fuzzer</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/stacks-network/rendezvous/" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/stacks-network/rendezvous/blob/master/docs/./chapter_7.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                            <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="quickstart-tutorial"><a class="header" href="#quickstart-tutorial">Quickstart Tutorial</a></h1>
+<p>This tutorial walks you through testing a DeFi lending contract with Rendezvous. You’ll see how Rendezvous uncovers subtle vulnerabilities that traditional unit tests might miss, and learn how to design property-based tests that help expose real bugs.</p>
+<h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What You’ll Learn</a></h2>
+<p>You will test a simplified DeFi lending contract that allows users to deposit STX and borrow against those deposits. This contract hides a subtle bug that passes all example-based tests, but fails when running Rendezvous property-based testing.</p>
+<p>You’ll learn to:</p>
+<ul>
+<li>Write property-based tests directly in Clarity</li>
+<li>Catch real vulnerabilities using randomized, stateful test runs</li>
+<li>Replay and fix failing test sequences deterministically</li>
+</ul>
+<blockquote>
+<p>Note: This example is adapted from the <a href="https://github.com/hirosystems/clarity-examples/blob/ccd9ecf0bf136d7f28ef116706ed2936f6d8781a/examples/stx-defi/contracts/stx-defi.clar">stx-defi</a> contract in the <a href="https://github.com/hirosystems/clarity-examples">hirosystems/clarity-examples</a> repository.</p>
+</blockquote>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Before you begin, make sure you have:</p>
+<ul>
+<li>Node.js (version &gt;= 20)</li>
+<li>Clarinet installed (<a href="https://github.com/stx-labs/clarinet">installation guide</a>)</li>
+</ul>
+<h2 id="step-1-create-a-new-clarinet-project"><a class="header" href="#step-1-create-a-new-clarinet-project">Step 1: Create a New Clarinet Project</a></h2>
+<p>Open your terminal and create a new Clarinet project:</p>
+<pre><code class="language-bash">clarinet new rendezvous-tutorial
+cd rendezvous-tutorial
+</code></pre>
+<p>This creates a new directory with the basic Clarinet structure:</p>
+<pre><code>rendezvous-tutorial/
+├── Clarinet.toml
+├── contracts/
+├── settings/
+│   └── Devnet.toml
+└── tests/
+</code></pre>
+<h2 id="step-2-add-rendezvous"><a class="header" href="#step-2-add-rendezvous">Step 2: Add Rendezvous</a></h2>
+<p>Add Rendezvous to your project:</p>
+<pre><code class="language-bash">npm install @stacks/rendezvous
+</code></pre>
+<p>Verify the installation:</p>
+<pre><code class="language-bash">npx rv --help
+</code></pre>
+<h2 id="step-3-add-the-lending-contract"><a class="header" href="#step-3-add-the-lending-contract">Step 3: Add the Lending Contract</a></h2>
+<p>Add a new contract to the Clarinet project:</p>
+<pre><code class="language-bash">clarinet contract new stx-defi
+</code></pre>
+<p>Open <code>contracts/stx-defi.clar</code> and add this Clarity code:</p>
+<pre><code class="language-clarity">;; stx-defi.clar
+;; A simplified DeFi lending protocol.
+
+(define-map deposits
+  { owner: principal }
+  { amount: uint }
+)
+
+(define-map loans
+  principal
+  { amount: uint }
+)
+
+(define-constant err-overborrow (err u300))
+
+(define-public (deposit (amount uint))
+  (let
+    (
+      (current-balance
+        (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
+      )
+    )
+    (try! (stx-transfer? amount tx-sender (as-contract tx-sender)))
+    (map-set deposits
+      { owner: tx-sender }
+      { amount: (+ current-balance amount) }
+    )
+    (ok true)
+  )
+)
+
+(define-public (borrow (amount uint))
+  (let
+    (
+      (user-deposit
+        (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
+      )
+      (allowed-borrow (/ user-deposit u2))
+      (current-loan
+        (default-to u0 (get amount (map-get? loans tx-sender)))
+      )
+      (new-loan (+ amount))
+    )
+    (asserts! (&lt;= new-loan allowed-borrow) err-overborrow)
+    (let
+      ((recipient tx-sender))
+      (try! (as-contract (stx-transfer? amount tx-sender recipient)))
+    )
+    (map-set loans tx-sender { amount: new-loan })
+    (ok true)
+  )
+)
+
+(define-read-only (get-loan-amount)
+  (ok (default-to u0 (get amount (map-get? loans tx-sender))))
+)
+</code></pre>
+<p><strong>What this contract does:</strong></p>
+<ul>
+<li>Users can <code>deposit</code> STX into the protocol</li>
+<li>Users can <code>borrow</code> up to 50% of their deposit value</li>
+<li>The contract tracks deposits and loans for each user</li>
+</ul>
+<h2 id="step-4-write-some-unit-tests"><a class="header" href="#step-4-write-some-unit-tests">Step 4: Write Some Unit Tests</a></h2>
+<p>Let’s first write some example-based unit tests.</p>
+<p>Open <code>tests/stx-defi.test.ts</code> and add these example-based unit tests:</p>
+<pre><code class="language-typescript">describe("stx-defi unit tests", () =&gt; {
+  it("can deposit", () =&gt; {
+    const amountToDeposit = 1000;
+
+    const { result } = simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    expect(result).toBeOk(Cl.bool(true));
+  });
+
+  it("can borrow half of deposit", () =&gt; {
+    const amountToDeposit = 1000;
+    const amountToBorrow = 500;
+
+    const { result: depositResult } = simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+    expect(depositResult).toBeOk(Cl.bool(true));
+
+    const { result } = simnet.callPublicFn(
+      "stx-defi",
+      "borrow",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    expect(result).toBeOk(Cl.bool(true));
+  });
+
+  it("loan amount is correct", () =&gt; {
+    const amountToDeposit = 1000;
+    const amountToBorrow = 500;
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "borrow",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    const { result } = simnet.callReadOnlyFn(
+      "stx-defi",
+      "get-loan-amount",
+      [],
+      address1
+    );
+
+    expect(result).toBeOk(Cl.uint(amountToBorrow));
+  });
+
+  it("cannot borrow more than half of deposit", () =&gt; {
+    const amountToDeposit = 1000;
+    const amountToBorrow = 501;
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    const { result } = simnet.callPublicFn(
+      "stx-defi",
+      "borrow",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    // err-overborrow
+    expect(result).toBeErr(Cl.uint(300));
+  });
+});
+</code></pre>
+<p>Install dependencies and run the tests:</p>
+<pre><code class="language-bash">npm install
+npm test
+</code></pre>
+<p><strong>Looking good!</strong> ✅ (or so it seems…)</p>
+<p>The main functions and state of the contract are now covered by tests. Line coverage is probably high as well. Looks great, right? But here’s the thing: example-based tests only verify the examples you thought of. Let’s see if the contract holds up under <strong>Rendezvous property-based testing</strong>.</p>
+<h2 id="step-5-add-rendezvous-property-based-tests"><a class="header" href="#step-5-add-rendezvous-property-based-tests">Step 5: Add Rendezvous Property-Based Tests</a></h2>
+<p>Rendezvous lets you test a broader range of inputs, not just specific examples. Let’s see how to write your first property-based test and why it matters.</p>
+<h3 id="create-the-test-file"><a class="header" href="#create-the-test-file">Create the Test File</a></h3>
+<p>Go to the <code>contracts</code> folder, and create the Rendezvous test file named  <code>stx-defi.tests.clar</code>.</p>
+<h3 id="add-an-ice-breaker-test"><a class="header" href="#add-an-ice-breaker-test">Add an Ice-Breaker Test</a></h3>
+<p>Before writing any meaningful properties, it’s a good idea to check that Rendezvous can run. Add a simple “always-true” test to verify your setup.
+Open <code>contracts/stx-defi.tests.clar</code> and add an always-true test:</p>
+<pre><code class="language-clarity">(define-public (test-always-true)
+  (ok true)
+)
+</code></pre>
+<p>Check if Rendezvous can execute the test:</p>
+<pre><code class="language-bash">npx rv . stx-defi test
+</code></pre>
+<p>Expected output:</p>
+<pre><code>$ npx rv . stx-defi test
+Using manifest path: Clarinet.toml
+Target contract: stx-defi
+
+Starting property testing type for the stx-defi contract...
+
+₿        1 Ӿ        3   deployer [PASS] stx-defi test-always-true  (ok true)
+₿        1 Ӿ        4   wallet_5 [PASS] stx-defi test-always-true  (ok true)
+₿       11 Ӿ       15   wallet_1 [PASS] stx-defi test-always-true  (ok true)
+₿      690 Ӿ      695   wallet_1 [PASS] stx-defi test-always-true  (ok true)
+...
+₿    12348 Ӿ    12447   wallet_3 [PASS] stx-defi test-always-true  (ok true)
+₿    12348 Ӿ    12448   wallet_3 [PASS] stx-defi test-always-true  (ok true)
+₿    12357 Ӿ    12458   wallet_5 [PASS] stx-defi test-always-true  (ok true)
+
+OK, properties passed after 100 runs.
+
+
+EXECUTION STATISTICS
+
+│ PROPERTY TEST CALLS
+│
+├─ + PASSED
+│    └─ test-always-true: x100
+│
+├─ ! DISCARDED
+│    └─ test-always-true: x0
+│
+└─ - FAILED
+     └─ test-always-true: x0
+
+LEGEND:
+
+  PASSED    properties verified for given inputs
+  DISCARDED skipped due to invalid preconditions
+  FAILED    property violations or unexpected behavior
+</code></pre>
+<p>If you see similar output, your setup works. You’re ready to write a <strong>real property-based test</strong>.</p>
+<h3 id="define-a-borrowing-property"><a class="header" href="#define-a-borrowing-property">Define a Borrowing Property</a></h3>
+<p>You want to test that <strong>borrowing always updates the loan amount correctly</strong>:</p>
+<pre><code class="language-clarity">;; stx-defi.tests.clar
+
+;; Property: Borrowing should always update the loan amount correctly.
+;; The new loan amount should equal the old loan amount plus the borrowed
+;; amount.
+(define-public (test-borrow (amount uint))
+  (let (
+      ;; Record the loan amount before performing any action that would end up
+      ;; changing the internal state of the smart contract. Query the loans map
+      ;; for the selected tx-sender and store the result in the initial-loan
+      ;; local variable.
+      (initial-loan (default-to u0 (get amount (map-get? loans tx-sender))))
+    )
+    ;; Since the initial-loan is recorded before the borrow call, you can now
+    ;; call the borrow function to allow checking the effects after the call.
+    (try! (borrow amount))
+    ;; Verify the property: updated loan = initial loan + borrowed amount
+    (asserts!
+      (is-eq (default-to u0 (get amount (map-get? loans tx-sender)))
+        (+ initial-loan amount)
+      )
+      (err u999) ;; any error code to identify the test failure.
+    )
+    (ok true)
+  )
+)
+</code></pre>
+<blockquote>
+<p>At this stage, <strong>the test will likely fail</strong>. This is an important learning moment: Rendezvous runs your tests in a <strong>stateful, randomized environment</strong> that simulates real contract interactions.</p>
+</blockquote>
+<h3 id="how-rendezvous-executes-property-tests"><a class="header" href="#how-rendezvous-executes-property-tests">How Rendezvous Executes Property Tests</a></h3>
+<p>Rendezvous:</p>
+<ol>
+<li>Injects all property-based tests directly into the deployed contract.</li>
+<li>Detects all public <code>test-*</code> functions automatically.</li>
+<li>Generates a random sequence to call each test.</li>
+<li>Produces random argument values for each function parameter.</li>
+<li>Randomly selects senders from settings/Devnet.toml.</li>
+<li>Randomly advances Bitcoin and Stacks block heights during testing.</li>
+<li>Accumulates state across test calls instead of resetting each time.</li>
+<li>Discards test cases where preconditions fail, returning (ok false).</li>
+</ol>
+<p>This design allows you to test your contract in <strong>realistic, varied scenarios</strong> that a simple/example-based unit test could never reach.</p>
+<h3 id="why-the-first-test-fails"><a class="header" href="#why-the-first-test-fails">Why the First Test Fails</a></h3>
+<p>The test likely failed because the <code>borrow</code> call failed—the contract wasn’t in a suitable state. Rendezvous allows you to discard test cases when preconditions aren’t met (wrong state, invalid arguments, caller, height, etc.). In our case, <code>borrow</code> will fail for one of these reasons:</p>
+<ul>
+<li>no deposits were made</li>
+<li>the generated amount argument is non-positive (u0)</li>
+<li>the generated amount argument is more than the allowed borrow value</li>
+</ul>
+<p>To fix this, you need to <strong>simulate deposits</strong> and add <strong>discard logic</strong>.</p>
+<p>Let’s address them one by one.</p>
+<h3 id="handle-preconditions"><a class="header" href="#handle-preconditions">Handle Preconditions</a></h3>
+<p><strong>First, you need deposits.</strong> You can create a helper function that Rendezvous will pick up during property-based testing runs. This helper will allow deposits to be created so other tests can check properties that require deposits:</p>
+<pre><code class="language-clarity">;; This is a helper function that will eventually be picked up during
+;; property-based-testing runs. It allows creating deposits in the smart
+;; contract so other tests can check properties requiring a deposit.
+(define-public (test-deposit-helper (amount uint))
+  (let (
+      ;; Call the deposit function and ignore the result.
+      (deposit-result (deposit amount))
+    )
+    (ok true)
+  )
+)
+</code></pre>
+<p><strong>Next, add discard logic to the borrow test.</strong> A test is discarded when it returns <code>(ok false)</code>. Wrap the core test logic in a conditional that checks for invalid preconditions (the three cases listed above) and returns <code>(ok false)</code> to discard those cases:</p>
+<pre><code class="language-clarity">;; Property: Borrowing should always update the loan amount correctly.
+;; The new loan amount should equal the old loan amount plus the borrowed
+;; amount.
+(define-public (test-borrow (amount uint))
+  (if (or
+      ;; If amount is 0, the STX transfer performed in the borrow operation
+      ;; would fail, resulting in a false negative.
+      (is-eq amount u0)
+      ;; If the amount to borrow would exceed the allowed limit defined in the
+      ;; borrow function, the borrow operation would fail, resulting in a false
+      ;; negative.
+      (&gt; (+ (default-to u0 (get amount (map-get? loans tx-sender))) amount)
+        (/ (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
+          u2
+        ))
+    )
+    ;; Discard the test if preconditions aren't met.
+    (ok false)
+    ;; Run the test.
+    (let ((initial-loan (default-to u0 (get amount (map-get? loans tx-sender)))))
+      (unwrap! (borrow amount) (err "Borrow call failed"))
+      (let ((updated-loan (default-to u0 (get amount (map-get? loans tx-sender)))))
+        ;; Verify the property: new loan = old loan + borrowed amount
+        (asserts! (is-eq updated-loan (+ initial-loan amount))
+          (err "Loan amount not updated correctly")
+        )
+        (ok true)
+      )
+    )
+  )
+)
+</code></pre>
+<p>The test discards invalid cases: when <code>amount</code> is <code>u0</code>, or when the new total loan would exceed half the deposit (which also covers cases with no deposits).</p>
+<blockquote>
+<p>Now the test only runs when valid preconditions are met.</p>
+</blockquote>
+<h3 id="run-rendezvous-and-catch-the-bug"><a class="header" href="#run-rendezvous-and-catch-the-bug">Run Rendezvous and Catch the Bug</a></h3>
+<p>Start a new property-based testing run:</p>
+<pre><code class="language-bash">npx rv . stx-defi test
+</code></pre>
+<p>Rendezvous will probably catch the bug in the very first run, showing output like this:</p>
+<pre><code>$ npx rv . stx-defi test
+Using manifest path: Clarinet.toml
+Target contract: stx-defi
+
+Starting property testing type for the stx-defi contract...
+
+₿        1 Ӿ        3   wallet_7 [PASS] stx-defi test-deposit-helper 2 (ok true)
+₿     1001 Ӿ     1004   wallet_7 [WARN] stx-defi test-borrow 2015589496 (ok false)
+₿     1001 Ӿ     1005   wallet_8 [PASS] stx-defi test-deposit-helper 2147483636 (ok true)
+₿     1898 Ӿ     1903   wallet_6 [WARN] stx-defi test-borrow 1984339073 (ok false)
+₿     1898 Ӿ     1904   deployer [PASS] stx-defi test-deposit-helper 195930186 (ok true)
+₿     1898 Ӿ     1905   wallet_2 [PASS] stx-defi test-deposit-helper 13 (ok true)
+...
+₿     3464 Ӿ     3485   deployer [PASS] stx-defi test-borrow 28 (ok true)
+₿     3468 Ӿ     3490   wallet_1 [WARN] stx-defi test-borrow 25 (ok false)
+₿     3468 Ӿ     3491   wallet_8 [FAIL] stx-defi test-borrow 11 (err "Loan amount not updated correctly")
+₿     3468 Ӿ     3492   wallet_1 [PASS] stx-defi test-deposit-helper 1653600941 (ok true)
+₿     4058 Ӿ     4083   wallet_8 [PASS] stx-defi test-deposit-helper 1653600941 (ok true)
+₿     4058 Ӿ     4084   wallet_8 [WARN] stx-defi test-borrow 1653600941 (ok false)
+₿     4058 Ӿ     4085   wallet_8 [WARN] stx-defi test-borrow 0 (ok false)
+₿     4058 Ӿ     4086   wallet_8 [FAIL] stx-defi test-borrow 6 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4087   wallet_8 [FAIL] stx-defi test-borrow 3 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4088   wallet_8 [FAIL] stx-defi test-borrow 2 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4089   wallet_8 [FAIL] stx-defi test-borrow 1 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4090   wallet_8 [WARN] stx-defi test-borrow 0 (ok false)
+₿     4058 Ӿ     4091   wallet_8 [FAIL] stx-defi test-borrow 1 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4092   wallet_8 [WARN] stx-defi test-borrow 0 (ok false)
+₿     4058 Ӿ     4093   wallet_8 [FAIL] stx-defi test-borrow 1 (err "Loan amount not updated correctly")
+
+Error: Property failed after 22 tests.
+Seed : 1880056597
+
+Counterexample:
+- Test Contract : stx-defi
+- Test Function : test-borrow (public)
+- Arguments     : [1]
+- Caller        : wallet_8
+- Outputs       : {"type":{"response":{"ok":"bool","error":{"string-ascii":{"length":33}}}}}
+
+What happened? Rendezvous went on a rampage and found a weak spot:
+
+The test function "test-borrow" returned:
+
+(err "Loan amount not updated correctly")
+
+EXECUTION STATISTICS
+
+│ PROPERTY TEST CALLS
+│
+├─ + PASSED
+│    ├─ test-borrow: x2
+│    └─ test-deposit-helper: x13
+│
+├─ ! DISCARDED
+│    ├─ test-borrow: x12
+│    └─ test-deposit-helper: x0
+│
+└─ - FAILED
+     ├─ test-borrow: x7
+     └─ test-deposit-helper: x0
+
+LEGEND:
+
+  PASSED    properties verified for given inputs
+  DISCARDED skipped due to invalid preconditions
+  FAILED    property violations or unexpected behavior
+
+! FAILED tests indicate that your function properties don't hold for all inputs. Review the counterexamples above for debugging.
+</code></pre>
+<p>The output shows a failure: <code>(err "Loan amount not updated correctly")</code>. The contract isn’t tracking loan amounts correctly.</p>
+<blockquote>
+<p><strong>Note:</strong> The output includes a seed (<code>1880056597</code>) you can use to reproduce this exact sequence.</p>
+</blockquote>
+<p>You can also stop at the first failure:</p>
+<pre><code class="language-bash">npx rv . stx-defi test --bail
+</code></pre>
+<h2 id="step-6-identify-and-fix-the-borrow-bug"><a class="header" href="#step-6-identify-and-fix-the-borrow-bug">Step 6: Identify and Fix the Borrow Bug</a></h2>
+<p>After taking a closer look at the lending contract, the bug is in this line of the <code>borrow</code> function:</p>
+<pre><code class="language-clarity">(new-loan (+ amount))
+</code></pre>
+<p>Change the line to correctly accumulate loans:</p>
+<pre><code class="language-clarity">(new-loan (+ current-loan amount))
+</code></pre>
+<h3 id="re-run-rendezvous-with-the-same-seed"><a class="header" href="#re-run-rendezvous-with-the-same-seed">Re-run Rendezvous with the Same Seed</a></h3>
+<p>Re-run with the same seed, to find out if you completely fixed the bug for that random sequence of events:</p>
+<pre><code class="language-clarity">npx rv . stx-defi test --seed=1880056597
+</code></pre>
+<p>Output:</p>
+<pre><code>$ npx rv . stx-defi test --seed=1880056597
+Using manifest path: Clarinet.toml
+Target contract: stx-defi
+Using seed: 1880056597
+
+Starting property testing type for the stx-defi contract...
+
+₿        1 Ӿ        3   wallet_7 [PASS] stx-defi test-deposit-helper 2 (ok true)
+₿     1001 Ӿ     1004   wallet_7 [WARN] stx-defi test-borrow 2015589496 (ok false)
+₿     1001 Ӿ     1005   wallet_8 [PASS] stx-defi test-deposit-helper 2147483636 (ok true)
+₿     1898 Ӿ     1903   wallet_6 [WARN] stx-defi test-borrow 1984339073 (ok false)
+₿     1898 Ӿ     1904   deployer [PASS] stx-defi test-deposit-helper 195930186 (ok true)
+₿     1898 Ӿ     1905   wallet_2 [PASS] stx-defi test-deposit-helper 13 (ok true)
+...
+₿    17291 Ӿ    17388   wallet_4 [PASS] stx-defi test-borrow 708340522 (ok true)
+₿    17291 Ӿ    17389   wallet_4 [PASS] stx-defi test-deposit-helper 589199221 (ok true)
+₿    17565 Ӿ    17664   wallet_2 [PASS] stx-defi test-deposit-helper 2147483627 (ok true)
+₿    18559 Ӿ    18659   wallet_8 [PASS] stx-defi test-borrow 1622181282 (ok true)
+₿    18559 Ӿ    18660   wallet_3 [PASS] stx-defi test-deposit-helper 2147483630 (ok true)
+
+OK, properties passed after 100 runs.
+</code></pre>
+<blockquote>
+<p>The bug is fixed! The contract now correctly tracks cumulative loans.</p>
+</blockquote>
+<h3 id="run-multiple-random-sequences"><a class="header" href="#run-multiple-random-sequences">Run Multiple Random Sequences</a></h3>
+<p>Test additional random sequences (each run generates a new random sequence):</p>
+<pre><code class="language-bash">npx rv . stx-defi test
+</code></pre>
+<p>Run more tests to increase confidence (default is 100 runs):</p>
+<pre><code class="language-bash">npx rv . stx-defi test --runs=1000
+</code></pre>
+<p><strong>Rendezvous caught the bug and you successfully fixed it!</strong> 🎯</p>
+<h2 id="step-7-understand-the-bug"><a class="header" href="#step-7-understand-the-bug">Step 7: Understand the Bug</a></h2>
+<p><strong>What was the bug?</strong></p>
+<p>Rendezvous discovered that when a user borrows multiple times, only the most recent borrow amount is recorded.</p>
+<p>The bug means the contract doesn’t track cumulative borrows correctly. When a user borrows multiple times, only the most recent borrow amount is recorded, not the total. The existing loan amount (<code>current-loan</code>) is completely ignored!</p>
+<p><strong>Why did example-based unit tests miss this?</strong></p>
+<p>The unit tests passed because they only tested single borrow scenarios. Look back at the unit test:</p>
+<pre><code class="language-typescript">it("loan amount is correct after single borrow", () =&gt; {
+  // Only ONE borrow call - bug not triggered!
+  simnet.callPublicFn(
+    "stx-defi",
+    "borrow",
+    [Cl.uint(amountToBorrow)],
+    address1
+  );
+  // ...
+});
+</code></pre>
+<p>When there’s only one borrow, <code>(+ amount)</code> and <code>(+ current-loan amount)</code> produce the same result because the initial loan is <code>u0</code>.</p>
+<p><strong>Rendezvous caught the bug by:</strong></p>
+<ol>
+<li>Randomly generating test sequences</li>
+<li>Calling <code>borrow</code> multiple times with different amounts</li>
+<li>Verifying the property holds for ALL sequences</li>
+</ol>
+<p>This is the power of using Rendezvous!</p>
+<h2 id="what-you-learned"><a class="header" href="#what-you-learned">What You Learned</a></h2>
+<p>You’ve successfully:</p>
+<p>✅ Created a simple DeFi lending contract</p>
+<p>✅ Wrote traditional unit tests that passed but missed a critical bug</p>
+<p>✅ Wrote your first Rendezvous property-based test</p>
+<p>✅ Discovered how Rendezvous catches bugs through random stateful testing</p>
+<p>✅ Fixed the bug and verified the fix</p>
+<p>✅ Understood the difference between stateless example-based and stateful property-based testing</p>
+<h2 id="the-key-insight"><a class="header" href="#the-key-insight">The Key Insight</a></h2>
+<p><strong>Example-based tests check specific examples. Property-based tests check a much broader range of inputs.</strong></p>
+<p>Example-based tests ask:</p>
+<ul>
+<li>“Does this work for input A?”</li>
+<li>“Does this work for input B?”</li>
+</ul>
+<p>Property-based tests ask:</p>
+<ul>
+<li>“Does this ALWAYS work?”</li>
+<li>“Can I find ANY input that breaks this?”</li>
+</ul>
+<p>Rendezvous explores your contract’s state space automatically, finding edge cases you might never think to test manually.</p>
+<h2 id="real-world-impact"><a class="header" href="#real-world-impact">Real-World Impact</a></h2>
+<p>This bug in a production DeFi protocol would allow users to:</p>
+<ol>
+<li>Deposit 1000 STX</li>
+<li>Borrow 500 STX (maximum allowed)</li>
+<li>Borrow another 500 STX (should fail, but succeeds due to bug)</li>
+<li>Total borrowed: 1000 STX with only 500 STX recorded</li>
+<li>User only needs to repay 500 STX despite borrowing 1000 STX</li>
+</ol>
+<p>This would drain the protocol’s funds — a critical vulnerability caught by Rendezvous in seconds.</p>
+<h2 id="example-implementation"><a class="header" href="#example-implementation">Example Implementation</a></h2>
+<p>You can see a complete step-by-step implementation of this tutorial with commit-by-commit progress in the <a href="https://github.com/BowTiedRadone/rendezvous-tutorial">rendezvous-tutorial repository</a> (<a href="https://github.com/BowTiedRadone/rendezvous-tutorial/commits/master/">view commits</a>).</p>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>Now that you understand the power of Rendezvous, explore:</p>
+<ul>
+<li><strong>More examples</strong>: Study other smart contracts in the examples (see <a href="chapter_8.html">Chapter 8</a>)</li>
+<li><strong>Your own contracts</strong>: Apply Rendezvous to your projects and find bugs before they reach production</li>
+</ul>
+<hr>
+<h2 id="get-involved"><a class="header" href="#get-involved">Get Involved</a></h2>
+<p><strong>Found this tutorial useful?</strong> Star the <a href="https://github.com/stacks-network/rendezvous">Rendezvous repository on GitHub</a> to show your support!</p>
+<p>Have questions, found a bug, or want to contribute? We’d love to hear from you:</p>
+<ul>
+<li><strong>Open an issue</strong> on <a href="https://github.com/stacks-network/rendezvous/issues">GitHub</a></li>
+<li><strong>Reach out</strong> with questions or feedback</li>
+<li><strong>Share your findings</strong> — contribute examples of bugs you’ve caught to show others how powerful advanced testing techniques can be</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="chapter_6.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
+
+                            <a rel="next prefetch" href="chapter_8.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="chapter_6.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
+
+                    <a rel="next prefetch" href="chapter_8.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
+
+        <!-- Custom JS scripts -->
+
+
+
+    </div>
+    </body>
+</html>
