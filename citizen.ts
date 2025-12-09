@@ -1,13 +1,6 @@
-import {
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  unlinkSync,
-  writeFileSync,
-  existsSync,
-  readdirSync,
-} from "fs";
-import { join, relative } from "path";
+import { readFileSync, writeFileSync, mkdtempSync, cpSync } from "fs";
+import { join, relative, basename } from "path";
+import { tmpdir } from "os";
 import * as toml from "@iarna/toml";
 import yaml from "yaml";
 import { initSimnet, Simnet } from "@stacks/clarinet-sdk";
@@ -19,14 +12,16 @@ import {
 } from "./citizen.types";
 import { EpochString } from "@stacks/clarinet-sdk-wasm";
 import EventEmitter from "events";
+import { underline } from "ansicolor";
 
 /**
- * Prepares the simnet with the target contract's test contract as a
- * first-class citizen.
+ * Prepares the simnet with the Rendezvous tests as first-class citizens of the
+ * target contract.
  *
- * Note: Temporary files are cleaned up in a finally block, which ensures
- * cleanup even when errors occur. For process signals (SIGINT/SIGTERM),
- * Node.js will execute finally blocks before exiting in most cases.
+ * This function works in an isolated temporary copy of the Clarinet project
+ * in /tmp/ to avoid lingering temporary files in the user's project directory.
+ * In case of system crashes, power outages, etc., the temp directory is
+ * automatically cleaned up by the OS on reboot.
  *
  * @param manifestDir The relative path to the manifest directory.
  * @param manifestPath The path to the manifest file.
@@ -62,46 +57,64 @@ export const issueFirstClassCitizenship = async (
     manifestDir
   );
 
-  const sessionId = `${Date.now()}`;
-  const temporaryContractsDir = join(manifestDir, ".rv-contracts", sessionId);
-  mkdirSync(temporaryContractsDir, { recursive: true });
+  // Create isolated temp directory for the Rendezvous testing run.
+  const tempProjectDir = mkdtempSync(join(tmpdir(), "rendezvous-"));
+  cpSync(manifestDir, tempProjectDir, { recursive: true });
 
   const [, contractName] = rendezvousData.rendezvousContractId.split(".");
+  const rendezvousContractsDir = join(tempProjectDir, "contracts");
   const rendezvousPath = join(
-    temporaryContractsDir,
+    rendezvousContractsDir,
     `${contractName}-rendezvous.clar`
   );
   writeFileSync(rendezvousPath, rendezvousData.rendezvousSourceCode);
 
-  radio.emit("logMessage", `Type-checking your unified Rendezvous contract...`);
-  const temporaryManifestPath = createTemporaryManifest(
-    parsedManifest,
-    manifestDir,
-    sutContractName,
-    rendezvousPath,
-    sessionId
+  radio.emit(
+    "logMessage",
+    `\nA temporary Clarinet project was created to run Rendezvous: ${underline(
+      tempProjectDir
+    )}`
   );
+  radio.emit("logMessage", `\nType-checking your Rendezvous project...`);
 
-  try {
-    const simnet = await initSimnetSilently(temporaryManifestPath);
-    return simnet;
-  } finally {
-    unlinkSync(temporaryManifestPath);
-    rmSync(temporaryContractsDir, { recursive: true, force: true });
+  // Update the manifest in the temp directory to point to the Rendezvous
+  // concatenation.
+  const manifestFileName = basename(manifestPath);
+  const tempManifestPath = join(tempProjectDir, manifestFileName);
+  const tempParsedManifest = toml.parse(
+    readFileSync(tempManifestPath, { encoding: "utf-8" })
+  ) as any;
 
-    // Remove parent .rv-contracts directory if it exists and is empty.
-    const rvContractsParentDir = join(manifestDir, ".rv-contracts");
-    try {
-      if (existsSync(rvContractsParentDir)) {
-        const contents = readdirSync(rvContractsParentDir);
-        if (contents.length === 0) {
-          rmSync(rvContractsParentDir, { recursive: true, force: true });
-        }
-      }
-    } catch {
-      // Ignore errors when cleaning up parent directory.
+  if (!tempParsedManifest.contracts) {
+    tempParsedManifest.contracts = {};
+  }
+  if (!tempParsedManifest.contracts[sutContractName]) {
+    tempParsedManifest.contracts[sutContractName] = {};
+  }
+
+  const relativeRendezvousPath = relative(tempProjectDir, rendezvousPath);
+  tempParsedManifest.contracts[sutContractName] = {
+    epoch: (tempParsedManifest.contracts[sutContractName].epoch ??
+      "latest") as EpochString,
+    path: relativeRendezvousPath,
+  };
+
+  // Convert epoch values to strings for TOML compatibility.
+  for (const contractName in tempParsedManifest.contracts) {
+    const contract = tempParsedManifest.contracts[contractName];
+    if (contract?.epoch && typeof contract.epoch === "number") {
+      contract.epoch = String(contract.epoch);
     }
   }
+
+  writeFileSync(tempManifestPath, toml.stringify(tempParsedManifest));
+
+  // Windows cannot initialize simnet with absolute paths. Use relative path.
+  // See: https://github.com/stx-labs/clarinet/issues/1634
+  const relativeManifestPath = relative(process.cwd(), tempManifestPath);
+  const simnet = await initSimnetSilently(relativeManifestPath);
+
+  return simnet;
 };
 
 /**
@@ -351,56 +364,6 @@ const getRequirementContractTestSrc = (
       encoding: "utf-8",
     }
   ).toString();
-};
-
-/**
- * Creates a temporary manifest with the Rendezvous contract as a first-class
- * citizen.
- * @param parsedManifest The parsed contents of the manifest file.
- * @param manifestDir The relative path to the manifest directory.
- * @param sutContractName The target contract name.
- * @param rendezvousPath The path to the Rendezvous contract.
- * @param sessionId The session ID.
- * @returns The path to the temporary manifest.
- */
-const createTemporaryManifest = (
-  parsedManifest: any,
-  manifestDir: string,
-  sutContractName: string,
-  rendezvousPath: string,
-  sessionId: string
-): string => {
-  const temporaryToml = JSON.parse(JSON.stringify(parsedManifest));
-
-  if (!temporaryToml.contracts) {
-    temporaryToml.contracts = {};
-  }
-  if (!temporaryToml.contracts[sutContractName]) {
-    temporaryToml.contracts[sutContractName] = {};
-  }
-
-  const relativeRendezvousPath = relative(manifestDir, rendezvousPath);
-  temporaryToml.contracts[sutContractName] = {
-    // If epoch not present, set it to "latest".
-    epoch: (temporaryToml.contracts[sutContractName].epoch ??
-      "latest") as EpochString,
-    path: relativeRendezvousPath,
-  };
-
-  // Convert epoch values to strings for TOML compatibility.
-  for (const contractName in temporaryToml.contracts) {
-    const contract = temporaryToml.contracts[contractName];
-    if (contract?.epoch && typeof contract.epoch === "number") {
-      contract.epoch = String(contract.epoch);
-    }
-  }
-
-  const temporaryManifestPath = join(
-    manifestDir,
-    `.Clarinet.toml.${sessionId}`
-  );
-  writeFileSync(temporaryManifestPath, toml.stringify(temporaryToml));
-  return temporaryManifestPath;
 };
 
 /**
