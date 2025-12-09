@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, mkdtempSync, cpSync } from "fs";
+import { readFileSync, writeFileSync, mkdtempSync, cpSync, rmSync } from "fs";
 import { join, relative, basename } from "path";
 import { tmpdir } from "os";
 import * as toml from "@iarna/toml";
@@ -35,9 +35,14 @@ export const issueFirstClassCitizenship = async (
   sutContractName: string,
   radio: EventEmitter
 ): Promise<Simnet> => {
-  radio.emit("logMessage", `Type-checking your Clarinet project...`);
-
-  await initSimnetSilently(manifestPath);
+  // First simnet initialization: This will generate the deployment plan and
+  // will type check the project without any Rendezvous tests.
+  try {
+    radio.emit("logMessage", `Type-checking your Clarinet project...`);
+    await initSimnetSilently(manifestPath);
+  } catch (error: any) {
+    throw new Error(`Error initializing simnet: ${error.message ?? error}`);
+  }
 
   const deploymentPlan = yaml.parse(
     readFileSync(join(manifestDir, "deployments", "default.simnet-plan.yaml"), {
@@ -58,7 +63,7 @@ export const issueFirstClassCitizenship = async (
   );
 
   // Create isolated temp directory for the Rendezvous testing run.
-  const tempProjectDir = mkdtempSync(join(tmpdir(), "rendezvous-"));
+  const tempProjectDir = mkdtempSync(join(tmpdir(), "rendezvous-run-"));
   cpSync(manifestDir, tempProjectDir, { recursive: true });
 
   const [, contractName] = rendezvousData.rendezvousContractId.split(".");
@@ -69,12 +74,6 @@ export const issueFirstClassCitizenship = async (
   );
   writeFileSync(rendezvousPath, rendezvousData.rendezvousSourceCode);
 
-  radio.emit(
-    "logMessage",
-    `\nA temporary Clarinet project was created to run Rendezvous: ${underline(
-      tempProjectDir
-    )}`
-  );
   radio.emit("logMessage", `\nType-checking your Rendezvous project...`);
 
   // Update the manifest in the temp directory to point to the Rendezvous
@@ -109,12 +108,26 @@ export const issueFirstClassCitizenship = async (
 
   writeFileSync(tempManifestPath, toml.stringify(tempParsedManifest));
 
-  // Windows cannot initialize simnet with absolute paths. Use relative path.
+  // Final simnet initialization: This will initialize the simnet with the
+  // target contract containing Rendezvous tests as first-class citizens.
+  //
+  // Windows cannot initialize simnet with absolute paths. Use relative path
+  // from the temp project directory.
   // See: https://github.com/stx-labs/clarinet/issues/1634
-  const relativeManifestPath = relative(process.cwd(), tempManifestPath);
-  const simnet = await initSimnetSilently(relativeManifestPath);
-
-  return simnet;
+  const originalCwd = process.cwd();
+  try {
+    // Change the current working directory to the temp project directory.
+    // This is necessary because the simnet initialization requires the
+    // manifest file to be in the current working directory.
+    process.chdir(tempProjectDir);
+    const simnet = await initSimnetSilently(manifestFileName);
+    return simnet;
+  } finally {
+    // Restore the original current working directory.
+    process.chdir(originalCwd);
+    // Cleanup the temp project directory.
+    rmSync(tempProjectDir, { recursive: true, force: true });
+  }
 };
 
 /**
