@@ -53,7 +53,7 @@ export const issueFirstClassCitizenship = async (
   const parsedManifest = toml.parse(
     readFileSync(manifestPath, { encoding: "utf-8" })
   ) as any;
-  const cacheDir = parsedManifest.project?.["cache_dir"] ?? "./.cache";
+  const cacheDir = parsedManifest.project?.cache_dir ?? "./.cache";
 
   const rendezvousData = buildRendezvousData(
     cacheDir,
