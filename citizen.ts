@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, mkdtempSync, cpSync, rmSync } from "fs";
 import { join, relative, basename } from "path";
 import { tmpdir } from "os";
-import * as toml from "@iarna/toml";
+import { parse as parseToml, stringify as stringifyToml } from "@iarna/toml";
 import yaml from "yaml";
 import { initSimnet, Simnet } from "@stacks/clarinet-sdk";
 import {
@@ -12,7 +12,6 @@ import {
 } from "./citizen.types";
 import { EpochString } from "@stacks/clarinet-sdk-wasm";
 import EventEmitter from "events";
-import { underline } from "ansicolor";
 
 /**
  * Prepares the simnet with the Rendezvous tests as first-class citizens of the
@@ -50,7 +49,7 @@ export const issueFirstClassCitizenship = async (
     })
   ) as DeploymentPlan;
 
-  const parsedManifest = toml.parse(
+  const parsedManifest = parseToml(
     readFileSync(manifestPath, { encoding: "utf-8" })
   ) as any;
   const cacheDir = parsedManifest.project?.cache_dir ?? "./.cache";
@@ -80,7 +79,7 @@ export const issueFirstClassCitizenship = async (
   // concatenation.
   const manifestFileName = basename(manifestPath);
   const tempManifestPath = join(tempProjectDir, manifestFileName);
-  const tempParsedManifest = toml.parse(
+  const tempParsedManifest = parseToml(
     readFileSync(tempManifestPath, { encoding: "utf-8" })
   ) as any;
 
@@ -106,7 +105,7 @@ export const issueFirstClassCitizenship = async (
     }
   }
 
-  writeFileSync(tempManifestPath, toml.stringify(tempParsedManifest));
+  writeFileSync(tempManifestPath, stringifyToml(tempParsedManifest));
 
   // Final simnet initialization: This will initialize the simnet with the
   // target contract containing Rendezvous tests as first-class citizens.

@@ -9,7 +9,7 @@ import { initSimnet } from "@stacks/clarinet-sdk";
 import { join, resolve } from "path";
 import fs, { existsSync, readFileSync, rmSync } from "fs";
 import { createIsolatedTestEnvironment } from "./test.utils";
-import * as toml from "@iarna/toml";
+import { parse as parseToml } from "@iarna/toml";
 import yaml from "yaml";
 import { getManifestFileName } from "./app";
 import { DeploymentPlan } from "./citizen.types";
@@ -91,7 +91,7 @@ describe("Simnet deployment plan operations", () => {
       readFileSync(deploymentPlanPath, { encoding: "utf-8" }).toString()
     );
 
-    const parsedManifest = toml.parse(
+    const parsedManifest = parseToml(
       readFileSync(join(tempDir, manifestFileName), { encoding: "utf-8" })
     ) as any;
     const cacheDir = parsedManifest.project?.["cache_dir"] ?? "./.cache";
@@ -135,7 +135,7 @@ describe("Simnet deployment plan operations", () => {
       readFileSync(deploymentPlanPath, { encoding: "utf-8" }).toString()
     );
 
-    const parsedManifest = toml.parse(
+    const parsedManifest = parseToml(
       readFileSync(join(tempDir, manifestFileName), { encoding: "utf-8" })
     ) as any;
     const cacheDir = parsedManifest.project?.["cache_dir"] ?? "./.cache";
