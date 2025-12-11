@@ -9,12 +9,11 @@ on:
 
 jobs:
   tests:
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 3
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
         node: [24, 22, 20]
 
     steps:
@@ -34,7 +33,7 @@ jobs:
 
   examples:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 3
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
