@@ -12,6 +12,7 @@ import {
 } from "./citizen.types";
 import { EpochString } from "@stacks/clarinet-sdk-wasm";
 import EventEmitter from "events";
+import { yellow } from "ansicolor";
 
 /**
  * Prepares the simnet with the Rendezvous tests as first-class citizens of the
@@ -125,7 +126,16 @@ export const issueFirstClassCitizenship = async (
     // Restore the original current working directory.
     process.chdir(originalCwd);
     // Cleanup the temp project directory.
-    rmSync(tempProjectDir, { recursive: true, force: true });
+    try {
+      rmSync(tempProjectDir, { recursive: true, force: true });
+    } catch (error: any) {
+      radio.emit(
+        "logMessage",
+        yellow(
+          `Error cleaning up temporary project directory ${tempProjectDir}: ${error.message}. Remove it manually to avoid unnecessary disk space usage.`
+        )
+      );
+    }
   }
 };
 
