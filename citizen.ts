@@ -3,7 +3,7 @@ import { join, relative, basename } from "path";
 import { tmpdir } from "os";
 import { parse as parseToml, stringify as stringifyToml } from "@iarna/toml";
 import yaml from "yaml";
-import { initSimnet, Simnet } from "@stacks/clarinet-sdk";
+import { generateDeployement, initSimnet, Simnet } from "@stacks/clarinet-sdk";
 import {
   Batch,
   EmulatedContractPublish,
@@ -38,8 +38,8 @@ export const issueFirstClassCitizenship = async (
   // First simnet initialization: This will generate the deployment plan and
   // will type check the project without any Rendezvous tests.
   try {
-    radio.emit("logMessage", `Type-checking your Clarinet project...`);
-    await initSimnetSilently(manifestPath);
+    radio.emit("logMessage", `\nType-checking your Clarinet project...`);
+    await generateDeployement(manifestPath);
   } catch (error: any) {
     throw new Error(`Error initializing simnet: ${error.message ?? error}`);
   }
@@ -120,8 +120,18 @@ export const issueFirstClassCitizenship = async (
     // This is necessary because the simnet initialization requires the
     // manifest file to be in the current working directory.
     process.chdir(tempProjectDir);
-    const simnet = await initSimnetSilently(manifestFileName);
-    return simnet;
+
+    // Initialize the simnet while suppressing stdout to avoid polluting output.
+    // Errors are still printed to stderr to help troubleshoot issues.
+    const originalWrite = process.stdout.write;
+    process.stdout.write = () => true;
+    try {
+      const simnet = await initSimnet(manifestFileName);
+      return simnet;
+    } finally {
+      // Restore stdout.
+      process.stdout.write = originalWrite;
+    }
   } finally {
     // Restore the original current working directory.
     process.chdir(originalCwd);
@@ -136,24 +146,6 @@ export const issueFirstClassCitizenship = async (
         )
       );
     }
-  }
-};
-
-/**
- * Initializes the simnet silently by suppressing stdout. Errors are still
- * printed to stderr to help troubleshoot issues.
- * @param manifestPath The path to the manifest file.
- * @returns The initialized simnet.
- */
-const initSimnetSilently = async (manifestPath: string): Promise<Simnet> => {
-  const originalWrite = process.stdout.write;
-  // Suppress stdout to avoid polluting output.
-  process.stdout.write = () => true;
-  try {
-    return await initSimnet(manifestPath);
-  } finally {
-    // Restore stdout.
-    process.stdout.write = originalWrite;
   }
 };
 
