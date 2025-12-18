@@ -7,7 +7,7 @@ module.exports = {
   },
   modulePathIgnorePatterns: ["<rootDir>/dist/"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
-  testTimeout: 1800000, // 30 minutes
+  testTimeout: 600000, // 10 minutes
   maxWorkers: 1,
   collectCoverage: false,
   collectCoverageFrom: [
