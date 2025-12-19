@@ -1,70 +1,11 @@
 import { red } from "ansicolor";
-import {
-  getManifestFileName,
-  main,
-  noRemoteData,
-  tryParseRemoteDataSettings,
-} from "./app";
-import { RemoteDataSettings } from "./app.types";
+import { getManifestFileName, main } from "./app";
 import { version } from "./package.json";
 import { resolve } from "path";
 import fs, { rmSync } from "fs";
-import EventEmitter from "events";
 import { createIsolatedTestEnvironment } from "./test.utils";
 
 const isolatedTestEnvPrefix = "rendezvous-test-app-";
-const clarinetTomlRemoteData = {
-  fullSettings: {
-    toml: `
-[repl.remote_data]
-api_url = 'https://api.hiro.so'
-enabled = true
-initial_height = 150000
-`,
-    expected: {
-      enabled: true,
-      api_url: "https://api.hiro.so",
-      initial_height: 150000,
-    },
-  },
-  noInitialHeightSettings: {
-    toml: `
-[repl.remote_data]
-api_url = 'https://api.hiro.so'
-enabled = true
-`,
-    expected: {
-      enabled: true,
-      api_url: "https://api.hiro.so",
-    },
-  },
-  noRemoteDataSettings: {
-    toml: ``,
-    expected: noRemoteData,
-  },
-  enabledFalseSettings: {
-    toml: `
-[repl.remote_data]
-api_url = 'https://api.hiro.so'
-enabled = false
-initial_height = 595012
-`,
-    expected: {
-      enabled: false,
-      api_url: "https://api.hiro.so",
-      initial_height: 595012,
-    },
-  },
-  onlyEnabledSettings: {
-    toml: `
-[repl.remote_data]
-enabled = true
-`,
-    expected: {
-      enabled: true,
-    },
-  },
-};
 
 describe("Command-line arguments handling", () => {
   const initialArgv = process.argv;
@@ -548,60 +489,4 @@ describe("Custom manifest detection", () => {
     // Teardown
     jest.restoreAllMocks();
   });
-});
-
-describe("Remote data settings parsing", () => {
-  it.each([
-    [
-      "correctly returns no remote data settings when the remote data settings are not provided",
-      clarinetTomlRemoteData.noRemoteDataSettings.toml,
-      clarinetTomlRemoteData.noRemoteDataSettings.expected,
-    ],
-    [
-      "correctly parses the remote data settings when they are provided",
-      clarinetTomlRemoteData.fullSettings.toml,
-      clarinetTomlRemoteData.fullSettings.expected,
-    ],
-    [
-      "correctly returns remote data settings as-is when enabled is false",
-      clarinetTomlRemoteData.enabledFalseSettings.toml,
-      clarinetTomlRemoteData.enabledFalseSettings.expected,
-    ],
-    [
-      "correctly returns remote data settings as-is when initial_height is not provided",
-      clarinetTomlRemoteData.noInitialHeightSettings.toml,
-      clarinetTomlRemoteData.noInitialHeightSettings.expected,
-    ],
-    [
-      "correctly returns remote data settings as-is when only enabled is provided",
-      clarinetTomlRemoteData.onlyEnabledSettings.toml,
-      clarinetTomlRemoteData.onlyEnabledSettings.expected,
-    ],
-  ])(
-    "%s",
-    (
-      _testCase: string,
-      tomlContent: string,
-      processedRemoteDataSettings: RemoteDataSettings
-    ) => {
-      // Setup
-      const anyPath = `${Date.now()}.toml`;
-
-      jest
-        .spyOn(fs, "readFileSync")
-        .mockImplementation((path: fs.PathOrFileDescriptor) => {
-          expect(path).toBe(resolve(anyPath));
-          return tomlContent;
-        });
-
-      // Exercise
-      const actual = tryParseRemoteDataSettings(anyPath, new EventEmitter());
-
-      // Verify
-      expect(actual).toEqual(processedRemoteDataSettings);
-
-      // Teardown
-      jest.restoreAllMocks();
-    }
-  );
 });

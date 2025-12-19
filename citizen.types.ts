@@ -15,7 +15,7 @@ export type EmulatedContractPublish = {
   "contract-name": string;
   "emulated-sender": string;
   path: string;
-  "clarity-version": 1 | 2 | 3;
+  "clarity-version": 1 | 2 | 3 | 4;
 };
 
 export type Transaction = {
@@ -38,14 +38,4 @@ export type DeploymentPlan = {
   network: string;
   genesis: Genesis;
   plan: Plan;
-};
-
-export type ContractsByEpoch = Record<
-  EpochString,
-  Record<string, ContractDeploymentProperties>[]
->;
-
-export type ContractDeploymentProperties = {
-  path: string;
-  clarity_version: 1 | 2 | 3;
 };

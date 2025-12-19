@@ -30,15 +30,15 @@
     "url": "https://github.com/stacks-network/rendezvous.git"
   },
   "dependencies": {
-    "@stacks/clarinet-sdk": "^3.9.1",
+    "@iarna/toml": "^2.2.5",
+    "@stacks/clarinet-sdk": "^3.12.0",
     "@stacks/transactions": "^7.2.0",
     "ansicolor": "^2.0.3",
     "fast-check": "^4.3.0",
-    "toml": "^3.0.0",
     "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "@stacks/clarinet-sdk-wasm": "^3.9.1",
+    "@stacks/clarinet-sdk-wasm": "^3.12.0",
     "@types/jest": "^30.0.0",
     "jest": "^30.2.0",
     "ts-jest": "^29.4.5",
