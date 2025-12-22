@@ -1,4 +1,11 @@
-import { readFileSync, writeFileSync, mkdtempSync, cpSync, rmSync } from "fs";
+import {
+  readFileSync,
+  writeFileSync,
+  mkdtempSync,
+  cpSync,
+  rmSync,
+  existsSync,
+} from "fs";
 import { join, relative, basename } from "path";
 import { tmpdir } from "os";
 import { parse as parseToml, stringify as stringifyToml } from "@iarna/toml";
@@ -44,8 +51,17 @@ export const issueFirstClassCitizenship = async (
     throw new Error(`Error initializing simnet: ${error.message ?? error}`);
   }
 
+  const deploymentPlanRelativePath = relative(
+    manifestDir,
+    join(manifestDir, "deployments", "default.simnet-plan.yaml")
+  );
+  const deploymentPlanAbsolutePath = join(
+    manifestDir,
+    deploymentPlanRelativePath
+  );
+
   const deploymentPlan = yaml.parse(
-    readFileSync(join(manifestDir, "deployments", "default.simnet-plan.yaml"), {
+    readFileSync(deploymentPlanAbsolutePath, {
       encoding: "utf-8",
     })
   ) as DeploymentPlan;
@@ -125,6 +141,13 @@ export const issueFirstClassCitizenship = async (
     // Errors are still printed to stderr to help troubleshoot issues.
     const originalWrite = process.stdout.write;
     process.stdout.write = () => true;
+
+    // Cleanup the deployment plan file if it exists. This will force clarinet
+    // to generate the deployment plan from scratch, accounting for the new
+    // Rendezvous contract.
+    if (existsSync(deploymentPlanRelativePath)) {
+      rmSync(deploymentPlanRelativePath, { force: true });
+    }
     try {
       const simnet = await initSimnet(manifestFileName);
       return simnet;
