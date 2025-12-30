@@ -1,0 +1,2241 @@
+<!DOCTYPE HTML>
+<html lang="en" class="light sidebar-visible" dir="ltr">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Rendezvous: The Clarity Fuzzer</title>
+        <meta name="robots" content="noindex">
+
+
+        <!-- Custom HTML head -->
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff">
+
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-9dfbd86b.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+
+        <!-- Custom theme stylesheets -->
+        <link rel="stylesheet" href="custom-2e27f41b.css">
+
+
+        <!-- Provide site root and default themes to javascript -->
+        <script>
+            const path_to_root = "";
+            const default_light_theme = "light";
+            const default_dark_theme = "navy";
+            window.path_to_searchindex_js = "searchindex-f08b190f.js";
+        </script>
+        <!-- Start loading toc.js asap -->
+        <script src="toc-859568a5.js"></script>
+    </head>
+    <body>
+    <div id="mdbook-help-container">
+        <div id="mdbook-help-popup">
+            <h2 class="mdbook-help-title">Keyboard shortcuts</h2>
+            <div>
+                <p>Press <kbd>←</kbd> or <kbd>→</kbd> to navigate between chapters</p>
+                <p>Press <kbd>S</kbd> or <kbd>/</kbd> to search in the book</p>
+                <p>Press <kbd>?</kbd> to show this help</p>
+                <p>Press <kbd>Esc</kbd> to hide this help</p>
+            </div>
+        </div>
+    </div>
+    <div id="mdbook-body-container">
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                let theme = localStorage.getItem('mdbook-theme');
+                let sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            const default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? default_dark_theme : default_light_theme;
+            let theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            const html = document.documentElement;
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add("js");
+        </script>
+
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            let sidebar = null;
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            } else {
+                sidebar = 'hidden';
+                sidebar_toggle.checked = false;
+            }
+            if (sidebar === 'visible') {
+                sidebar_toggle.checked = true;
+            } else {
+                html.classList.remove('sidebar-visible');
+            }
+        </script>
+
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
+            <!-- populated by js -->
+            <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
+            <noscript>
+                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+            </noscript>
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
+                <div class="sidebar-resize-indicator"></div>
+            </div>
+        </nav>
+
+        <div id="mdbook-page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
+                    <div class="left-buttons">
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
+                        </label>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
+                        </button>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
+                        </ul>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
+                        </button>
+                    </div>
+
+                    <h1 class="menu-title">Rendezvous: The Clarity Fuzzer</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
+                        </a>
+                        <a href="https://github.com/stacks-network/rendezvous/" title="Git repository" aria-label="Git repository">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
+                        </a>
+
+                    </div>
+                </div>
+
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
+                        <div class="search-wrapper">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
+                            <div class="spinner-wrapper">
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
+                            </div>
+                        </div>
+                    </form>
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="mdbook-content" class="content">
+                    <main>
+                        <h1 id="foreword"><a class="header" href="#foreword">Foreword</a></h1>
+<p>Rendezvous originated from an idea conceived in 2022<sup class="footnote-reference" id="fr-1-1"><a href="#footnote-1">1</a></sup>, built upon over a decade of experience in developing and contributing to unit testing and property-based testing tools. This initiative was further driven by the numerous exploits and hacks that have afflicted the crypto industry over the years.</p>
+<p>The need for robust testing frameworks in smart contract development cannot be overstated. As blockchain technology continues to evolve, the security implications of smart contracts become increasingly complex. Rendezvous (<code>rv</code>) was created to address these challenges by providing a specialized fuzzing tool for Clarity smart contracts.</p>
+<h2 id="acknowledgements"><a class="header" href="#acknowledgements">Acknowledgements</a></h2>
+<p>The idea behind Rendezvous originates from several inspiring sources:</p>
+<ul>
+<li>
+<p><strong>John Hughes</strong>: For his pioneering work in property-based testing and the creation of QuickCheck, which laid the foundation for modern property testing. His paper, “Testing the Hard Stuff and Staying Sane”<sup class="footnote-reference" id="fr-2-1"><a href="#footnote-2">2</a></sup>, has been a significant inspiration for our approach in <code>rv</code>.</p>
+</li>
+<li>
+<p><strong>Jude Nelson</strong>: For the valuable insights and methods presented in poxl<sup class="footnote-reference" id="fr-3-1"><a href="#footnote-3">3</a></sup>, demonstrating a way to write tests in Clarity.</p>
+</li>
+<li>
+<p><strong>Nicolas Dubien</strong>: For creating fast-check<sup class="footnote-reference" id="fr-4-1"><a href="#footnote-4">4</a></sup>, the underlying property-based testing framework we currently use in Rendezvous.</p>
+</li>
+<li>
+<p><strong>Jacob Stanley</strong>: For his lasting inspiration and contributions to property-based testing and the Hedgehog library<sup class="footnote-reference" id="fr-5-1"><a href="#footnote-5">5</a></sup>. Jacob’s legacy and influence remain a guiding force in our work.</p>
+</li>
+<li>
+<p><strong>Trail of Bits</strong>: For creating Echidna<sup class="footnote-reference" id="fr-6-1"><a href="#footnote-6">6</a></sup>, which initially utilized Hedgehog, furthering the development of smart contract fuzzers.</p>
+</li>
+<li>
+<p><strong>Łukasz Nowicki</strong>: For the initial discussions and ideas on this topic in 2022.</p>
+</li>
+</ul>
+<p>We are deeply grateful to the Stacks Open Internet Foundation for supporting our work and providing crucial assistance, and to the open-source community for their continuous support and contributions.</p>
+<hr>
+<ol class="footnote-definition">
+<li id="footnote-1">
+<p>Heterogeneous Clarinet Test-Suites: <a href="https://github.com/stx-labs/clarinet/issues/398">https://github.com/stx-labs/clarinet/issues/398</a> <a href="#fr-1-1">↩</a></p>
+</li>
+<li id="footnote-2">
+<p>Hughes, J. (2004). “Testing the Hard Stuff and Staying Sane”. In Proceedings of the ACM SIGPLAN Workshop on Haskell (Haskell ’04). <a href="#fr-2-1">↩</a></p>
+</li>
+<li id="footnote-3">
+<p>poxl: <a href="https://github.com/jcnelson/poxl">https://github.com/jcnelson/poxl</a> <a href="#fr-3-1">↩</a></p>
+</li>
+<li id="footnote-4">
+<p>fast-check: <a href="https://github.com/dubzzz/fast-check">https://github.com/dubzzz/fast-check</a> <a href="#fr-4-1">↩</a></p>
+</li>
+<li id="footnote-5">
+<p>hedgehog: <a href="https://github.com/hedgehogqa">https://github.com/hedgehogqa</a> <a href="#fr-5-1">↩</a></p>
+</li>
+<li id="footnote-6">
+<p>echidna: <a href="https://github.com/crytic/echidna">https://github.com/crytic/echidna</a> <a href="#fr-6-1">↩</a></p>
+</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="introduction"><a class="header" href="#introduction">Introduction</a></h1>
+<p>Rendezvous (<code>rv</code>) is a fuzzer designed specifically for Clarity smart contracts. As the name suggests, it serves as a meeting point between your contracts and potential vulnerabilities, allowing you to discover and address issues before they can be exploited in production.</p>
+<p>The tool focuses on two primary testing methodologies:</p>
+<ol>
+<li><strong>Property-based testing</strong>: Verifying that specific properties of your contract hold true across a wide range of possible inputs.</li>
+<li><strong>Invariant testing</strong>: Ensuring that certain conditions about your contract’s state remain true regardless of the sequence of operations performed.</li>
+</ol>
+<h2 id="why-you-need-rendezvous"><a class="header" href="#why-you-need-rendezvous">Why You Need Rendezvous</a></h2>
+<p>Smart contracts are immutable once deployed, making post-deployment fixes expensive or impossible. Traditional testing methods often fall short in discovering edge cases that might lead to security vulnerabilities or unexpected behavior. Rendezvous addresses these challenges by:</p>
+<ul>
+<li><strong>Exploring the unexpected</strong>: Through fuzzing, Rendezvous generates and tests a diverse range of inputs that developers might not consider during manual testing.</li>
+<li><strong>Finding edge cases</strong>: By repeatedly testing your contract with varying inputs, it can discover boundary conditions and rare scenarios that could cause issues.</li>
+<li><strong>Validating invariants</strong>: It ensures that your contract’s core properties remain consistent regardless of the operations performed.</li>
+<li><strong>Helping reduce impedance mismatch</strong>: By testing in Clarity when possible while using TypeScript when needed (e.g., for events). Rendezvous dialers (<a href="#usage">Chapter 6</a>) bridge the gap.</li>
+</ul>
+<h2 id="project-philosophy"><a class="header" href="#project-philosophy">Project Philosophy</a></h2>
+<p>Rendezvous is built on the principles of simplicity, robustness, and developer-friendliness. We value:</p>
+<ul>
+<li><strong>Clarity first</strong>: Testing should happen in the same language as implementation whenever possible.</li>
+<li><strong>Simple, focused tests</strong>: Each test should verify one thing and do it well.</li>
+<li><strong>Community-driven development</strong>: Contributions from the community are essential to the project’s success.</li>
+</ul>
+<p>As noted in our contributing guidelines, we believe in handcrafted code with a purpose. Each file in the project is maintained with care, focusing on readability and maintainability. Our coding style emphasizes simplicity, clear American English, and concise logic.</p>
+<h2 id="project-structure"><a class="header" href="#project-structure">Project Structure</a></h2>
+<p>Rendezvous integrates seamlessly with Clarinet projects, looking for test files alongside your contract implementations:</p>
+<pre><code>root
+├── Clarinet.toml
+├── contracts
+│   ├── contract.clar
+│   ├── contract.tests.clar
+└── settings
+    └── Devnet.toml
+</code></pre>
+<p>This structure allows for a natural workflow where tests live close to the code they’re testing, making it easier to maintain both in tandem.</p>
+<p>In the following chapters, we’ll explore why testing directly in Clarity is beneficial, the testing methodologies employed by Rendezvous, how to install and use the tool, and examples of effective testing patterns.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="why-test-clarity-code-directly"><a class="header" href="#why-test-clarity-code-directly">Why Test Clarity Code Directly</a></h1>
+<h2 id="programming-in-vs-into-a-language"><a class="header" href="#programming-in-vs-into-a-language">Programming In vs. Into a Language</a></h2>
+<p>Steve McConnell’s <em>Code Complete</em> discusses the concept of “programming in vs. into a language.” This distinction is particularly relevant for Clarity smart contract development:</p>
+<ul>
+<li>
+<p><strong>Programming into a language</strong>: Thinking in one language (like TypeScript) and then translating those thoughts into another language (like Clarity). This approach often leads to code that doesn’t fully leverage the target language’s strengths.</p>
+</li>
+<li>
+<p><strong>Programming in a language</strong>: Thinking directly in the target language, utilizing its unique features and idioms to express solutions naturally. This results in more idiomatic, efficient, and maintainable code.</p>
+</li>
+</ul>
+<p>For Clarity to be treated as a first-class citizen throughout the development lifecycle, we need tools that allow us to think and test directly in Clarity.</p>
+<h2 id="eliminating-the-marshaling-overhead"><a class="header" href="#eliminating-the-marshaling-overhead">Eliminating the Marshaling Overhead</a></h2>
+<p>When testing Clarity contracts using TypeScript or other languages, developers must constantly marshal (convert) between different data representations:</p>
+<ol>
+<li><strong>Data conversion complexity</strong>: Transforming TypeScript data structures to their Clarity equivalents introduces complexity and potential errors.</li>
+<li><strong>Type mismatches</strong>: Subtle differences in how types work between languages can lead to unexpected behavior.</li>
+<li><strong>Mental context switching</strong>: Developers must constantly switch between different language paradigms.</li>
+</ol>
+<p>By testing directly in Clarity, these issues are eliminated. The same language is used throughout the development process, ensuring consistency and reducing cognitive overhead.</p>
+<h2 id="benefits-of-native-clarity-testing"><a class="header" href="#benefits-of-native-clarity-testing">Benefits of Native Clarity Testing</a></h2>
+<p>Testing Clarity contracts directly in Clarity offers several significant advantages:</p>
+<h3 id="1-true-language-fidelity"><a class="header" href="#1-true-language-fidelity">1. <strong>True language fidelity</strong></a></h3>
+<p>Tests written in Clarity operate under the exact same constraints, rules, and behavior as the production code. There’s no risk of tests passing in one environment but failing in another due to language differences.</p>
+<h3 id="2-enhanced-developer-understanding"><a class="header" href="#2-enhanced-developer-understanding">2. <strong>Enhanced developer understanding</strong></a></h3>
+<p>By writing tests in Clarity, developers deepen their understanding of the language. This leads to better contract design and implementation, as developers become more familiar with Clarity’s strengths and limitations.</p>
+<h3 id="3-direct-access-to-contract-internals"><a class="header" href="#3-direct-access-to-contract-internals">3. <strong>Direct access to contract internals</strong></a></h3>
+<p>Clarity tests can directly access functions and state within contracts, enabling more thorough testing of the invariants without requiring public exposure solely for testing purposes.</p>
+<h3 id="4-reduced-testing-infrastructure"><a class="header" href="#4-reduced-testing-infrastructure">4. <strong>Reduced testing infrastructure</strong></a></h3>
+<p>Testing directly in Clarity reduces the need for complex testing harnesses that bridge between different languages and environments.</p>
+<h2 id="complementary-testing-approaches"><a class="header" href="#complementary-testing-approaches">Complementary Testing Approaches</a></h2>
+<p>While testing directly in Clarity offers many benefits, the Clarinet SDK’s TypeScript-based testing capabilities represent a powerful and essential part of a comprehensive testing strategy. Both approaches have their strengths and are complementary rather than competitive.</p>
+<h3 id="when-typescript-testing-excels"><a class="header" href="#when-typescript-testing-excels">When TypeScript Testing Excels</a></h3>
+<p>The Clarinet SDK provides robust TypeScript-based testing capabilities that are particularly valuable for:</p>
+<ul>
+<li><strong>Testing from the outside</strong>: Simulating how users or external applications would interact with your contracts, including reading events emitted by contracts (which is why Rendezvous offers the dialers feature as a bridge)</li>
+<li><strong>Complex orchestration scenarios</strong>: Setting up sophisticated test environments with multiple actors and interactions</li>
+</ul>
+<h3 id="finding-the-right-balance"><a class="header" href="#finding-the-right-balance">Finding the Right Balance</a></h3>
+<p>Rather than choosing one approach exclusively, consider using both in a complementary fashion:</p>
+<ul>
+<li>Use <strong>Clarity testing with Rendezvous</strong> for property-based tests, invariant verification, and internal function validation</li>
+<li>Use <strong>TypeScript testing with Clarinet SDK</strong> for external interaction validation, event verification, and complex scenario testing</li>
+</ul>
+<p>This combined approach leverages the strengths of both tools to create a more comprehensive testing strategy.</p>
+<p>By embracing Clarity as a first-class testing language, Rendezvous enables developers to write more natural, effective, and comprehensive tests for their smart contracts.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="testing-methodologies"><a class="header" href="#testing-methodologies">Testing Methodologies</a></h1>
+<p>Rendezvous offers two complementary testing methodologies: property-based testing and invariant testing. This chapter explains both approaches and when to use each.</p>
+<h2 id="property-based-testing-vs-invariant-testing"><a class="header" href="#property-based-testing-vs-invariant-testing">Property-Based Testing vs. Invariant Testing</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Property-Based Testing</th><th>Invariant Testing</th></tr>
+</thead>
+<tbody>
+<tr><td>Tests individual functions</td><td>Tests system-wide properties</td></tr>
+<tr><td>Generates random inputs for specific functions</td><td>Generates random sequences of function calls</td></tr>
+<tr><td>Verifies function behavior is correct for all inputs</td><td>Verifies state remains valid after any operation sequence</td></tr>
+<tr><td>Helps find edge cases in specific functions</td><td>Helps find unexpected interactions between functions</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="understanding-property-based-testing"><a class="header" href="#understanding-property-based-testing">Understanding Property-Based Testing</a></h2>
+<blockquote>
+<p>Property-based testing verifies that specific properties of your code hold true across a wide range of inputs. Instead of manually crafting test cases, you define a property, and Rendezvous automatically generates test inputs.</p>
+</blockquote>
+<h3 id="key-concepts"><a class="header" href="#key-concepts">Key Concepts</a></h3>
+<ul>
+<li><strong>Properties</strong>: Universal truths about your functions (e.g., “reversing a list twice returns the original list”)</li>
+<li><strong>Generators</strong>: Automatic creation of random test inputs based on function signatures<sup class="footnote-reference" id="fr-1-1-1"><a href="#footnote-1-1">1</a></sup></li>
+<li><strong>Shrinking</strong>: Finding the simplest failing input for easier debugging</li>
+<li><strong>Discarding</strong>: Skipping invalid inputs to focus on meaningful test scenarios</li>
+</ul>
+<p><strong>Best For</strong>: Functions that don’t modify state (read-only), operations with mathematical properties, functions with well-defined behaviors across varied inputs</p>
+<h3 id="example-property-based-test"><a class="header" href="#example-property-based-test">Example Property-Based Test</a></h3>
+<p>Here’s a simple example of a property-based test that verifies the “reversing a list twice returns the original list” property:</p>
+<pre><code class="language-clarity">(define-public (test-reverse-uint (seq (list 127 uint)))
+  (begin
+    (asserts!
+      (is-eq seq (reverse-uint (reverse-uint seq)))
+      ERR_ASSERTION_FAILED
+    )
+    (ok true)
+  )
+)
+</code></pre>
+<p>This test demonstrates the key conventions for property-based tests in Rendezvous:</p>
+<ul>
+<li>Function name starts with <code>test-</code></li>
+<li>Function is declared as <code>public</code></li>
+<li>Test passes when it returns <code>(ok true)</code></li>
+<li>Test would be discarded if it returned <code>(ok false)</code></li>
+<li>Test fails if it returns an error or throws an exception</li>
+</ul>
+<p>In this example, <code>seq</code> is automatically generated by Rendezvous with different random values for each test run. The property being tested is that applying <code>reverse-uint</code> twice to any list should return the original list.</p>
+<h2 id="understanding-invariant-testing"><a class="header" href="#understanding-invariant-testing">Understanding Invariant Testing</a></h2>
+<blockquote>
+<p>Invariant testing ensures that certain conditions about your contract’s state remain true regardless of which operations are performed in which order.</p>
+</blockquote>
+<h3 id="key-concepts-1"><a class="header" href="#key-concepts-1">Key Concepts</a></h3>
+<ul>
+<li><strong>Invariants</strong>: Conditions that must always hold true about your contract’s state</li>
+<li><strong>State transitions</strong>: Changes triggered by function calls</li>
+<li><strong>Function sequences</strong>: Random series of operations to test state consistency</li>
+<li><strong>Context tracking</strong>: Recording function call history to enable sophisticated checks</li>
+</ul>
+<p><strong>Best For</strong>: State management, complex transitions, maintaining relationships between variables, ensuring safety properties</p>
+<h3 id="example-invariant-test"><a class="header" href="#example-invariant-test">Example Invariant Test</a></h3>
+<p>Here’s an example of an invariant test that ensures a counter remains positive when increments exceed decrements:</p>
+<pre><code class="language-clarity">(define-read-only (invariant-counter-gt-zero)
+  (let
+    (
+      (increment-num-calls
+        (default-to u0 (get called (map-get? context "increment")))
+      )
+      (decrement-num-calls
+        (default-to u0 (get called (map-get? context "decrement")))
+      )
+    )
+    (if
+      (&lt;= increment-num-calls decrement-num-calls)
+      true
+      (&gt; (var-get counter) u0)
+    )
+  )
+)
+</code></pre>
+<p>This test demonstrates the key conventions for invariant tests in Rendezvous:</p>
+<ul>
+<li>Function name starts with <code>invariant-</code></li>
+<li>Function is declared as <code>read-only</code> (not public)</li>
+<li>Function returns a boolean value (true if the invariant holds, false if violated)</li>
+<li>The test can use the special <code>context</code> map to access execution history</li>
+</ul>
+<p>In this example, the invariant verifies that if increment has been called more times than decrement, the counter should be greater than zero. Rendezvous will randomly call functions in your contract and check this invariant between calls to ensure the contract’s state remains valid regardless of the sequence of operations.</p>
+<h2 id="testing-from-inside-vs-outside"><a class="header" href="#testing-from-inside-vs-outside">Testing from Inside vs. Outside</a></h2>
+<h3 id="testing-from-inside"><a class="header" href="#testing-from-inside">Testing from Inside</a></h3>
+<p>Writing tests in Clarity alongside your contract code provides:</p>
+<ul>
+<li>Direct access to internal state and private functions</li>
+<li>Natural expression of contract properties in the same language</li>
+</ul>
+<h3 id="testing-from-outside"><a class="header" href="#testing-from-outside">Testing from Outside</a></h3>
+<p>Using external tools (like TypeScript libraries) enables:</p>
+<ul>
+<li>Testing integration between multiple contracts</li>
+<li>Examining transaction-level concerns like events</li>
+<li>Using pre- and post-execution functions (see Dialers, Chapter 6)</li>
+</ul>
+<h2 id="practical-testing-strategy"><a class="header" href="#practical-testing-strategy">Practical Testing Strategy</a></h2>
+<p>For most contracts, a combined approach yields the best results:</p>
+<ol>
+<li>
+<p>Use <strong>property-based tests</strong> for:</p>
+<ul>
+<li>Pure functions (read-only operations)</li>
+<li>Functions with mathematical properties</li>
+<li>Validating behavior across many input variations</li>
+</ul>
+</li>
+<li>
+<p>Use <strong>invariant tests</strong> for:</p>
+<ul>
+<li>Verifying state consistency</li>
+<li>Testing relationships between state variables</li>
+<li>Ensuring contracts can’t enter invalid states</li>
+</ul>
+</li>
+<li>
+<p>Consider <strong>external testing</strong> when you need to:</p>
+<ul>
+<li>Verify event emissions</li>
+<li>Test interactions across multiple contracts</li>
+<li>Use pre/post-execution hooks via dialers</li>
+</ul>
+</li>
+</ol>
+<p>By choosing the right testing approach for each aspect of your contract, you can build a comprehensive test suite that ensures correctness under all conditions.</p>
+<hr>
+<ol class="footnote-definition">
+<li id="footnote-1-1">
+<p>Rendezvous currently uses a probabilistic approach to automatically generate inputs based on function signatures. In future versions, there may be support for fine-grained control over the scope of these inputs (which would also relate to the shrinking process). Additionally, if symbolic execution capabilities become available for the Clarity VM, Rendezvous could potentially support formal verification techniques that would exhaustively check all possible execution paths rather than using random sampling. <a href="#fr-1-1-1">↩</a></p>
+</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<p>This chapter covers how to install Rendezvous and set up your environment for effective Clarity contract testing.</p>
+<h2 id="whats-inside"><a class="header" href="#whats-inside">What’s Inside</a></h2>
+<p><a href="#prerequisites">Prerequisites</a></p>
+<p><a href="#standard-installation">Standard Installation</a></p>
+<p><a href="#global-installation">Global Installation</a></p>
+<p><a href="#developmentcontribution-installation">Development/Contribution Installation</a></p>
+<p><a href="#verifying-your-installation">Verifying Your Installation</a></p>
+<p><a href="#project-setup">Project Setup</a></p>
+<p><a href="#troubleshooting-installation-issues">Troubleshooting Installation Issues</a></p>
+<ul>
+<li><a href="#common-issues-and-solutions">Common Issues and Solutions</a></li>
+</ul>
+<p><a href="#uninstalling-rendezvous">Uninstalling Rendezvous</a></p>
+<ul>
+<li><a href="#removing-a-local-installation">Removing a Local Installation</a></li>
+<li><a href="#removing-a-global-installation">Removing a Global Installation</a></li>
+<li><a href="#removing-a-development-installation">Removing a Development Installation</a></li>
+</ul>
+<p><a href="#next-steps">Next Steps</a></p>
+<hr>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Before installing Rendezvous, ensure you have the following prerequisites:</p>
+<ul>
+<li><strong>Node.js</strong>: Rendezvous supports Node.js versions 20, 22, and 24. Other versions may work but are untested.</li>
+<li><strong>Clarinet</strong>: You need a Clarinet project to use Rendezvous. If you don’t have Clarinet installed, follow the <a href="https://github.com/stx-labs/clarinet">official Clarinet installation guide</a>.</li>
+</ul>
+<h2 id="standard-installation"><a class="header" href="#standard-installation">Standard Installation</a></h2>
+<p>To install Rendezvous as a dependency in your project, use npm:</p>
+<pre><code class="language-bash">npm install @stacks/rendezvous
+</code></pre>
+<p>This will add Rendezvous to your project’s <code>node_modules</code> and update your <code>package.json</code>.</p>
+<h2 id="global-installation"><a class="header" href="#global-installation">Global Installation</a></h2>
+<p>If you prefer to install Rendezvous globally so it’s available across all your projects, use:</p>
+<pre><code class="language-bash">npm install -g @stacks/rendezvous
+</code></pre>
+<p>With a global installation, you can run the <code>rv</code> command from any directory without prefixing it with <code>npx</code>.</p>
+<h2 id="developmentcontribution-installation"><a class="header" href="#developmentcontribution-installation">Development/Contribution Installation</a></h2>
+<p>If you want to contribute to Rendezvous or run it from source:</p>
+<ol>
+<li>
+<p>Clone the repository:</p>
+<pre><code class="language-bash">git clone https://github.com/stacks-network/rendezvous.git
+</code></pre>
+</li>
+<li>
+<p>Navigate to the project directory:</p>
+<pre><code class="language-bash">cd rendezvous
+</code></pre>
+</li>
+<li>
+<p>Install dependencies:</p>
+<pre><code class="language-bash">npm install
+</code></pre>
+</li>
+<li>
+<p>Build the project:</p>
+<pre><code class="language-bash">npm run build
+</code></pre>
+</li>
+<li>
+<p>Link the package globally (optional):</p>
+<pre><code class="language-bash">npm link
+</code></pre>
+</li>
+</ol>
+<h2 id="verifying-your-installation"><a class="header" href="#verifying-your-installation">Verifying Your Installation</a></h2>
+<p>After installing Rendezvous, verify that it’s working correctly:</p>
+<pre><code class="language-bash">npx rv --help
+</code></pre>
+<p>Or if installed globally:</p>
+<pre><code class="language-bash">rv --help
+</code></pre>
+<p>You should see the current version of Rendezvous displayed.</p>
+<h2 id="project-setup"><a class="header" href="#project-setup">Project Setup</a></h2>
+<p>For Rendezvous to work properly, your Clarinet project should have the following structure:</p>
+<pre><code>my-project/
+├── Clarinet.toml
+├── contracts/
+│   ├── my-contract.clar       # Your contract implementation.
+│   ├── my-contract.tests.clar # Tests for your contract.
+└── settings/
+    └── Devnet.toml
+</code></pre>
+<blockquote>
+<p>Key points to note:</p>
+<ol>
+<li>The test file (<code>my-contract.tests.clar</code>) must be in the same directory as the contract it tests.</li>
+<li>The test file name must match the pattern <code>{contract-name}.tests.clar</code>.</li>
+<li>A valid <code>Clarinet.toml</code> file must exist at the project root.</li>
+</ol>
+</blockquote>
+<h2 id="troubleshooting-installation-issues"><a class="header" href="#troubleshooting-installation-issues">Troubleshooting Installation Issues</a></h2>
+<h3 id="common-issues-and-solutions"><a class="header" href="#common-issues-and-solutions">Common Issues and Solutions</a></h3>
+<p><strong>Node.js Version Conflicts</strong></p>
+<p>If you encounter errors related to Node.js versions, ensure you’re using a supported version (20, 22, or 24).</p>
+<pre><code class="language-bash">node --version
+</code></pre>
+<p><strong>Package Not Found</strong></p>
+<p>If the <code>rv</code> command isn’t found after installation:</p>
+<ol>
+<li>For local installation, use <code>npx rv</code> instead of just <code>rv</code>.</li>
+<li>For global installation, ensure your npm global binaries directory is in your PATH.</li>
+</ol>
+<p><strong>Clarinet Project Not Recognized</strong></p>
+<p>If Rendezvous cannot find your Clarinet project:</p>
+<ol>
+<li>Ensure you’re running the command from the correct directory.</li>
+<li>Verify that your <code>Clarinet.toml</code> file exists and is properly formatted.</li>
+<li>Check that your contract and test files are correctly named and located.</li>
+</ol>
+<p><strong>Permission Issues</strong></p>
+<p>If you encounter permission errors when installing globally, consider using a solution like <a href="https://github.com/nvm-sh/nvm">nvm</a> to manage Node.js installations without requiring elevated permissions.</p>
+<h2 id="uninstalling-rendezvous"><a class="header" href="#uninstalling-rendezvous">Uninstalling Rendezvous</a></h2>
+<p>If you need to uninstall Rendezvous, the process depends on how you initially installed it.</p>
+<h3 id="removing-a-local-installation"><a class="header" href="#removing-a-local-installation">Removing a Local Installation</a></h3>
+<p>To remove Rendezvous from a specific project:</p>
+<pre><code class="language-bash">npm uninstall @stacks/rendezvous
+</code></pre>
+<p>This will remove the package from your project’s <code>node_modules</code> directory and update your <code>package.json</code>.</p>
+<h3 id="removing-a-global-installation"><a class="header" href="#removing-a-global-installation">Removing a Global Installation</a></h3>
+<p>To remove a globally installed version of Rendezvous:</p>
+<pre><code class="language-bash">npm uninstall -g @stacks/rendezvous
+</code></pre>
+<h3 id="removing-a-development-installation"><a class="header" href="#removing-a-development-installation">Removing a Development Installation</a></h3>
+<p>If you installed from source:</p>
+<ol>
+<li>
+<p>If you linked the package globally, unlink it first:</p>
+<pre><code class="language-bash">npm unlink -g @stacks/rendezvous
+</code></pre>
+</li>
+<li>
+<p>You can then remove the cloned repository directory:</p>
+<pre><code class="language-bash">rm -rf path/to/rendezvous
+</code></pre>
+</li>
+</ol>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<p>Now that you have Rendezvous installed, you’re ready to start testing your Clarity contracts. In the next chapter, we’ll cover how to use Rendezvous effectively with detailed usage examples.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="usage"><a class="header" href="#usage">Usage</a></h1>
+<p>This chapter explains how to use Rendezvous in different situations. By the end, you’ll know when and how to use its features effectively.</p>
+<h2 id="whats-inside-1"><a class="header" href="#whats-inside-1">What’s Inside</a></h2>
+<p><a href="#running-rendezvous">Running Rendezvous</a></p>
+<ul>
+<li><a href="#positional-arguments">Positional Arguments</a></li>
+<li><a href="#options">Options</a></li>
+<li><a href="#summary">Summary</a></li>
+</ul>
+<p><a href="#understanding-rendezvous">Understanding Rendezvous</a></p>
+<ul>
+<li><a href="#example">Example</a></li>
+</ul>
+<p><a href="#the-rendezvous-context">The Rendezvous Context</a></p>
+<ul>
+<li><a href="#how-the-context-works">How the Context Works</a></li>
+<li><a href="#using-the-context-to-write-invariants">Using the context to write invariants</a></li>
+</ul>
+<p><a href="#discarding-property-based-tests">Discarding Property-Based Tests</a></p>
+<ul>
+<li><a href="#discard-function">Discard Function</a></li>
+<li><a href="#in-place-discarding">In-Place Discarding</a></li>
+<li><a href="#discarding-summary">Discarding summary</a></li>
+</ul>
+<p><a href="#custom-manifest-files">Custom Manifest Files</a></p>
+<ul>
+<li><a href="#why-use-a-custom-manifest">Why use a custom manifest?</a></li>
+<li><a href="#a-test-double-for-sbtc-registry">A test double for <code>sbtc-registry</code></a></li>
+<li><a href="#a-custom-manifest-file">A Custom Manifest File</a></li>
+<li><a href="#how-it-works">How It Works</a></li>
+</ul>
+<p><a href="#trait-reference-parameters">Trait Reference Parameters</a></p>
+<ul>
+<li><a href="#how-trait-reference-selection-works">How Trait Reference Selection Works</a></li>
+<li><a href="#example-1">Example</a></li>
+<li><a href="#adding-more-implementations">Adding More Implementations</a></li>
+</ul>
+<hr>
+<h2 id="running-rendezvous"><a class="header" href="#running-rendezvous">Running Rendezvous</a></h2>
+<p>To run Rendezvous, use the following command:</p>
+<pre><code class="language-bash">rv &lt;path-to-clarinet-project&gt; &lt;contract-name&gt; &lt;type&gt; [--seed] [--runs] [--bail] [--dial]
+</code></pre>
+<p>Let’s break down each part of the command.</p>
+<h3 id="positional-arguments"><a class="header" href="#positional-arguments">Positional Arguments</a></h3>
+<p>Consider this example Clarinet project structure:</p>
+<pre><code>root
+├── Clarinet.toml
+├── contracts
+│   ├── contract.clar
+│   ├── contract.tests.clar
+└── settings
+    └── Devnet.toml
+</code></pre>
+<p><strong>1. Path to the Clarinet Project</strong></p>
+<p>The <code>&lt;path-to-clarinet-project&gt;</code> is the relative or absolute path to the root directory of the Clarinet project. This is where the <code>Clarinet.toml</code> file exists. <strong>It is not the path to the <code>Clarinet.toml</code> file itself</strong>.</p>
+<p>For example, if you’re in the parent directory of <code>root</code>, the correct relative path would be:</p>
+<pre><code class="language-bash">rv ./root &lt;contract-name&gt; &lt;type&gt;
+</code></pre>
+<p><strong>2. Contract Name</strong></p>
+<p>The <code>&lt;contract-name&gt;</code> is the name of the contract to be tested, as defined in <code>Clarinet.toml</code>.</p>
+<p>For example, if <code>Clarinet.toml</code> contains:</p>
+<pre><code class="language-toml">[contracts.contract]
+path = "contracts/contract.clar"
+</code></pre>
+<p>To test the contract named <code>contract</code>, you would run:</p>
+<pre><code class="language-bash">rv ./root contract &lt;type&gt;
+</code></pre>
+<p><strong>3. Testing Type</strong></p>
+<p>The <code>&lt;type&gt;</code> argument specifies the testing technique to use. The available options are:</p>
+<ul>
+<li><code>test</code> – Runs property-based tests.</li>
+<li><code>invariant</code> – Runs invariant tests.</li>
+</ul>
+<p>For a deeper understanding of these techniques and when to use each, see <a href="#testing-methodologies">Testing Methodologies</a>.</p>
+<p><strong>Running property-based tests</strong></p>
+<p>To run property-based tests for the <code>contract</code> contract, ensure that your test functions are defined in:</p>
+<pre><code>./root/contracts/contract.tests.clar
+</code></pre>
+<p>Then, execute:</p>
+<pre><code class="language-bash">rv ./root contract test
+</code></pre>
+<p>This tells Rendezvous to:</p>
+<ul>
+<li>Load the <strong>Clarinet project</strong> located in <code>./root</code>.</li>
+<li>Target the <strong>contract</strong> named <code>contract</code> as defined in <code>Clarinet.toml</code> by executing <strong>property-based tests</strong> defined in <code>contract.tests.clar</code>.</li>
+</ul>
+<p><strong>Running invariant tests</strong></p>
+<p>To run invariant tests for the <code>contract</code> contract, ensure that your invariant functions are defined in:</p>
+<pre><code>./root/contracts/contract.tests.clar
+</code></pre>
+<p>To run invariant tests, use:</p>
+<pre><code class="language-bash">rv ./root contract invariant
+</code></pre>
+<p>With this command, Rendezvous will:</p>
+<ul>
+<li>Randomly <strong>execute public function calls</strong> in the <code>contract</code> contract.</li>
+<li><strong>Randomly check the defined invariants</strong> to ensure the contract’s internal state remains valid.</li>
+</ul>
+<p>If an invariant check fails, it means the contract’s state has <strong>deviated from expected behavior</strong>, revealing potential bugs.</p>
+<h3 id="options"><a class="header" href="#options">Options</a></h3>
+<p>Rendezvous also provides additional options to customize test execution:</p>
+<p><strong>1. Customizing the Number of Runs</strong></p>
+<p>By default, Rendezvous runs <strong>100</strong> test iterations. You can modify this using the <code>--runs</code> option:</p>
+<pre><code class="language-bash">rv root contract test --runs=500
+</code></pre>
+<p>This increases the number of test cases to <strong>500</strong>.</p>
+<p><strong>2. Replaying a Specific Sequence of Events</strong></p>
+<p>To reproduce a previous test sequence, you can use the <code>--seed</code> option. This ensures that the same random values are used across test runs:</p>
+<pre><code class="language-bash">rv root contract test --seed=12345
+</code></pre>
+<p><strong>How to Find the Replay Seed</strong></p>
+<p>When Rendezvous detects an issue, it includes the seed needed to reproduce the test in the failure report. Here’s an example of a failure report with the seed:</p>
+<pre><code>Error: Property failed after 2 tests.
+Seed : 426141810
+
+Counterexample:
+...
+
+What happened? Rendezvous went on a rampage and found a weak spot:
+...
+</code></pre>
+<p>In this case, the seed is <code>426141810</code>. You can use it to rerun the exact same test scenario:</p>
+<pre><code class="language-bash">rv root contract test --seed=426141810
+</code></pre>
+<p><strong>3. Stop After First Failure</strong></p>
+<p>By default, Rendezvous will start the shrinking process after finding a failure. To stop immediately when the first failure is detected, use the <code>--bail</code> option:</p>
+<pre><code class="language-bash">rv root contract test --bail
+</code></pre>
+<p>This is useful when you want to examine the first failure without waiting for the complete test run and shrinking process to finish.</p>
+<p><strong>4. Using Dialers</strong></p>
+<p>Dialers allow you to define <strong>pre- and post-execution functions</strong> using JavaScript <strong>during invariant testing</strong>. To use a custom dialer file, run:</p>
+<pre><code class="language-bash">rv root contract invariant --dial=./custom-dialer.js
+</code></pre>
+<p>A good example of a dialer can be found in the Rendezvous repository, within the example Clarinet project, inside the <a href="https://github.com/stacks-network/rendezvous/blob/272b9247cdfcd5d12da89254e622e712d6e29e5e/example/sip010.js">sip010.js file</a>.</p>
+<p>In that file, you’ll find a <strong>post-dialer</strong> designed as a <strong>sanity check</strong> for SIP-010 token contracts. It ensures that the <code>transfer</code> function correctly emits the required <strong>print event</strong> containing the <code>memo</code>, as specified in <a href="https://github.com/stacksgov/sips/blob/6ea251726353bd1ad1852aabe3d6cf1ebfe02830/sips/sip-010/sip-010-fungible-token-standard.md?plain=1#L69">SIP-010</a>.</p>
+<p><strong>How Dialers Work</strong></p>
+<p>During <strong>invariant testing</strong>, Rendezvous picks up dialers when executing public function calls:</p>
+<ul>
+<li><strong>Pre-dialers</strong> run <strong>before</strong> each public function call.</li>
+<li><strong>Post-dialers</strong> run <strong>after</strong> each public function call.</li>
+</ul>
+<p>Both have access to an object containing:</p>
+<ul>
+<li><code>selectedFunction</code> – The function being executed.</li>
+<li><code>functionCall</code> – The result of the function call (<code>undefined</code> for <strong>pre-dialers</strong>).</li>
+<li><code>clarityValueArguments</code> – The generated Clarity values used as arguments.</li>
+</ul>
+<p><strong>Example: Post-Dialer for SIP-010</strong></p>
+<p>Below is a <strong>post-dialer</strong> that verifies SIP-010 compliance by ensuring that the <code>transfer</code> function emits a print event containing the <code>memo</code>.</p>
+<pre><code class="language-js">async function postTransferSip010PrintEvent(context) {
+  const { selectedFunction, functionCall, clarityValueArguments } = context;
+
+  // Ensure this check runs only for the "transfer" function.
+  if (selectedFunction.name !== "transfer") return;
+
+  const functionCallEvents = functionCall.events;
+  const memoParameterIndex = 3; // The memo parameter is the fourth argument.
+
+  const memoGeneratedArgumentCV = clarityValueArguments[memoParameterIndex];
+
+  // If the memo argument is `none`, there's nothing to validate.
+  if (memoGeneratedArgumentCV.type === "none") return;
+
+  // Ensure the memo argument is an option (`some`).
+  if (memoGeneratedArgumentCV.type !== "some") {
+    throw new Error("The memo argument must be an option type!");
+  }
+
+  // Convert the `some` value to hex for comparison.
+  const hexMemoArgumentValue = cvToHex(memoGeneratedArgumentCV.value);
+
+  // Find the print event in the function call events.
+  const sip010PrintEvent = functionCallEvents.find(
+    (ev) =&gt; ev.event === "print_event"
+  );
+
+  if (!sip010PrintEvent) {
+    throw new Error(
+      "No print event found. The transfer function must emit the SIP-010 print event containing the memo!"
+    );
+  }
+
+  const sip010PrintEventValue = sip010PrintEvent.data.raw_value;
+
+  // Validate that the emitted print event matches the memo argument.
+  if (sip010PrintEventValue !== hexMemoArgumentValue) {
+    throw new Error(
+      `Print event memo value does not match the memo argument: ${hexMemoArgumentValue} !== ${sip010PrintEventValue}`
+    );
+  }
+}
+</code></pre>
+<p>This dialer ensures that any SIP-010 token contract properly emits the <strong>memo print event</strong> during transfers, helping to catch deviations from the standard.</p>
+<h3 id="summary"><a class="header" href="#summary">Summary</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Argument/Option</th><th>Description</th><th>Example</th></tr>
+</thead>
+<tbody>
+<tr><td><code>&lt;path-to-clarinet-project&gt;</code></td><td>Path to the Clarinet project (where <code>Clarinet.toml</code> is located).</td><td><code>rv root contract test</code></td></tr>
+<tr><td><code>&lt;contract-name&gt;</code></td><td>Name of the contract to test (as in <code>Clarinet.toml</code>).</td><td><code>rv root contract test</code></td></tr>
+<tr><td><code>&lt;type&gt;</code></td><td>Type of test (<code>test</code> for property-based tests, <code>invariant</code> for invariant tests).</td><td><code>rv root contract test</code></td></tr>
+<tr><td><code>--runs=&lt;num&gt;</code></td><td>Sets the number of test iterations (default: 100).</td><td><code>rv root contract test --runs=500</code></td></tr>
+<tr><td><code>--seed=&lt;num&gt;</code></td><td>Uses a specific seed for reproducibility.</td><td><code>rv root contract test --seed=12345</code></td></tr>
+<tr><td><code>--dial=&lt;file&gt;</code></td><td>Loads JavaScript dialers from a file for pre/post-processing.</td><td><code>rv root contract test --dial=./custom-dialer.js</code></td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="understanding-rendezvous"><a class="header" href="#understanding-rendezvous">Understanding Rendezvous</a></h2>
+<p>Rendezvous makes <strong>property-based tests</strong> and <strong>invariant tests</strong> first-class. Tests are written in the same language as the system under test. This helps developers master the contract language. It also pushes boundaries—programmers shape their thoughts first, then express them using the language’s tools.</p>
+<p>When Rendezvous initializes a <strong>Simnet session</strong> using a given Clarinet project, it <strong>does not modify any contract</strong> listed in Clarinet.toml—except for the <strong>target contract</strong>. During testing, Rendezvous updates the target contract by merging:</p>
+<ol>
+<li><strong>The original contract source code</strong></li>
+<li><strong>The test contract</strong> (which includes property-based tests and invariants)</li>
+<li><strong>The Rendezvous context</strong>, which helps track function calls and execution details</li>
+</ol>
+<h3 id="example"><a class="header" href="#example">Example</a></h3>
+<p>Let’s say we have a contract named <code>checker</code> with the following source:</p>
+<pre><code class="language-clarity">;; checker.clar
+
+(define-public (check-it (flag bool))
+  (if flag (ok 1) (err u100))
+)
+</code></pre>
+<p>And its test contract, <code>checker.tests</code>:</p>
+<pre><code class="language-clarity">;; checker.tests.clar
+
+(define-public (test-1)
+  (ok true)
+)
+
+(define-read-only (invariant-1)
+  true
+)
+</code></pre>
+<p>When Rendezvous runs the tests, it <strong>automatically generates a modified contract</strong> that includes the original contract, the tests, and an additional <strong>context</strong> for tracking execution. The final contract source deployed in the Simnet session will look like this:</p>
+<pre><code>(define-public (check-it (flag bool))
+  (if flag (ok 1) (err u100))
+)
+
+(define-map context (string-ascii 100) {
+    called: uint
+    ;; other data
+  }
+)
+
+(define-public (update-context (function-name (string-ascii 100)) (called uint))
+  (ok (map-set context function-name {called: called}))
+)
+
+(define-public (test-1)
+  (ok true)
+)
+
+(define-read-only (invariant-1)
+  true
+)
+</code></pre>
+<p>While the original contract source and test functions are familiar, the <strong>context</strong> is new. Let’s take a closer look at it.</p>
+<h2 id="the-rendezvous-context"><a class="header" href="#the-rendezvous-context">The Rendezvous Context</a></h2>
+<p>Rendezvous introduces a <strong>context</strong> to track function calls and execution details during testing. This allows for better tracking of execution details and invariant validation.</p>
+<h3 id="how-the-context-works"><a class="header" href="#how-the-context-works">How the Context Works</a></h3>
+<p>When a function is successfully executed during a test, Rendezvous records its execution details in a <strong>Clarity map</strong>. This map helps track how often specific functions are called successfully and can be extended for additional tracking in the future.</p>
+<p>Here’s how the context is structured:</p>
+<pre><code class="language-clarity">(define-map context (string-ascii 100) {
+    called: uint
+    ;; Additional fields can be added here
+})
+
+(define-public (update-context (function-name (string-ascii 100)) (called uint))
+  (ok (map-set context function-name {called: called}))
+)
+</code></pre>
+<p><strong>Breaking it down</strong></p>
+<ul>
+<li><strong><code>context</code> map</strong> → Keeps track of execution data, storing how many times each function has been called successfully.</li>
+<li><strong><code>update-context</code> function</strong> → Updates the <code>context</code> map whenever a function executes, ensuring accurate tracking.</li>
+</ul>
+<h3 id="using-the-context-to-write-invariants"><a class="header" href="#using-the-context-to-write-invariants">Using the context to write invariants</a></h3>
+<p>By tracking function calls, the context helps invariants ensure <strong>stronger correctness guarantees</strong>. For example, an invariant can verify that a counter <strong>stays above zero by checking the number of successful <code>increment</code> and <code>decrement</code> calls</strong>.</p>
+<p><strong>Example invariant using the <code>context</code></strong></p>
+<pre><code class="language-clarity">(define-read-only (invariant-counter-gt-zero)
+  (let
+    (
+      (increment-num-calls
+        (default-to u0 (get called (map-get? context "increment")))
+      )
+      (decrement-num-calls
+        (default-to u0 (get called (map-get? context "decrement")))
+      )
+    )
+    (if
+      (&lt;= increment-num-calls decrement-num-calls)
+      true
+      (&gt; (var-get counter) u0)
+    )
+  )
+)
+</code></pre>
+<p>By embedding execution tracking into the contract, Rendezvous enables <strong>more effective smart contract testing</strong>, making it easier to catch bugs and check the contract correctness.</p>
+<h2 id="discarding-property-based-tests"><a class="header" href="#discarding-property-based-tests">Discarding Property-Based Tests</a></h2>
+<p>Rendezvous generates a wide range of inputs, but not all inputs are valid for every test. To <strong>skip tests with invalid inputs</strong>, there are two approaches:</p>
+<h3 id="discard-function"><a class="header" href="#discard-function">Discard Function</a></h3>
+<p>A <strong>separate function</strong> determines whether a test should run.</p>
+<blockquote>
+<p>Rules for a Discard Function:</p>
+<ul>
+<li>Must be <strong>read-only</strong>.</li>
+<li>Name must match the property test function, prefixed with <code>"can-"</code>.</li>
+<li>Parameters must <strong>mirror</strong> the property test’s parameters.</li>
+<li>Must return <code>true</code> <strong>only if inputs are valid</strong>, allowing the test to run.</li>
+</ul>
+</blockquote>
+<p><strong>Discard function example</strong></p>
+<pre><code class="language-clarity">(define-read-only (can-test-add (n uint))
+  (&gt; n u1)  ;; Only allow tests where n &gt; 1
+)
+
+(define-public (test-add (n uint))
+  (let
+    ((counter-before (get-counter)))
+    (try! (add n))
+    (asserts! (is-eq (get-counter) (+ counter-before n)) (err u403))
+    (ok true)
+  )
+)
+</code></pre>
+<p>Here, <code>can-test-add</code> ensures that the test <strong>never executes</strong> for <code>n &lt;= 1</code>.</p>
+<h3 id="in-place-discarding"><a class="header" href="#in-place-discarding">In-Place Discarding</a></h3>
+<p>Instead of using a separate function, <strong>the test itself decides whether to run</strong>. If the inputs are invalid, the test returns <code>(ok false)</code>, discarding itself.</p>
+<p><strong>In-place discarding example</strong></p>
+<pre><code class="language-clarity">(define-public (test-add (n uint))
+  (let
+    ((counter-before (get-counter)))
+    (ok
+      (if
+        (&lt;= n u1)  ;; If n &lt;= 1, discard the test.
+        false
+        (begin
+          (try! (add n))
+          (asserts! (is-eq (get-counter) (+ counter-before n)) (err u403))
+          true
+        )
+      )
+    )
+  )
+)
+</code></pre>
+<p>In this case, if <code>n &lt;= 1</code>, the test <strong>discards itself</strong> by returning <code>(ok false)</code>, skipping execution.</p>
+<h3 id="discarding-summary"><a class="header" href="#discarding-summary">Discarding summary</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th><strong>Discard Mechanism</strong></th><th><strong>When to Use</strong></th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Discard Function</strong></td><td>When skipping execution <strong>before</strong> running the test is necessary.</td></tr>
+<tr><td><strong>In-Place Discarding</strong></td><td>When discarding logic is simple and part of the test itself.</td></tr>
+</tbody>
+</table>
+</div>
+<p>In general, <strong>in-place discarding is preferred</strong> because it keeps test logic together and is easier to maintain. Use a <strong>discard function</strong> only when it’s important to prevent execution entirely.</p>
+<h2 id="custom-manifest-files"><a class="header" href="#custom-manifest-files">Custom Manifest Files</a></h2>
+<p>Some smart contracts need a special <code>Clarinet.toml</code> file to allow Rendezvous to create state transitions in the contract. Rendezvous supports this feature by <strong>automatically searching for <code>Clarinet-&lt;target-contract-name&gt;.toml</code> first</strong>. This allows you to use test doubles while keeping tests easy to manage.</p>
+<h3 id="why-use-a-custom-manifest"><a class="header" href="#why-use-a-custom-manifest">Why use a custom manifest?</a></h3>
+<p>A great example is the <strong>sBTC contract suite</strong>.</p>
+<p>For testing the <a href="https://github.com/stacks-network/sbtc/blob/b624e4a8f08eb589a435719b200873e8aa5b3305/contracts/contracts/sbtc-token.clar#L30-L35"><code>sbtc-token</code></a> contract, the <code>sbtc-registry</code> authorization function <a href="https://github.com/stacks-network/sbtc/blob/b624e4a8f08eb589a435719b200873e8aa5b3305/contracts/contracts/sbtc-registry.clar#L361-L369"><code>is-protocol-caller</code></a> is <strong>too restrictive</strong>. Normally, it only allows calls from protocol contracts, making it <strong>impossible to directly test certain state transitions</strong> in <code>sbtc-token</code>.</p>
+<p>To work around this, you need two things:</p>
+<h3 id="a-test-double-for-sbtc-registry"><a class="header" href="#a-test-double-for-sbtc-registry">A test double for <code>sbtc-registry</code></a></h3>
+<p>You can create an <code>sbtc-registry</code> test double called <code>sbtc-registry-double.clar</code>:</p>
+<pre><code class="language-clarity">;; contracts/sbtc-registry-double.clar
+
+...
+
+(define-constant deployer tx-sender)
+
+;; Allows the deployer to act as a protocol contract for testing
+(define-read-only (is-protocol-caller (contract-flag (buff 1)) (contract principal))
+  (begin
+    (asserts! (is-eq tx-sender deployer) (err u1234567))  ;; Enforces deployer check
+    (ok true)
+  )
+)
+
+...
+</code></pre>
+<p>This <strong>loosens</strong> the restriction just enough for testing by allowing the <code>deployer</code> to act as a protocol caller, while still enforcing an access check.</p>
+<h3 id="a-custom-manifest-file"><a class="header" href="#a-custom-manifest-file">A Custom Manifest File</a></h3>
+<p>Next, create <code>Clarinet-sbtc-token.toml</code> to tell Rendezvous to use the test double <strong>only when targeting <code>sbtc-token</code></strong>:</p>
+<pre><code class="language-toml"># Clarinet-sbtc-token.toml
+
+...
+
+[contracts.sbtc-registry]
+path = 'contracts/sbtc-registry-double.clar'
+clarity_version = 3
+epoch = 3.0
+
+...
+</code></pre>
+<h3 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h3>
+<ul>
+<li>When testing <code>sbtc-token</code>, Rendezvous <strong>first checks</strong> if <code>Clarinet-sbtc-token.toml</code> exists.</li>
+<li>If found, it <strong>uses this file</strong> to initialize Simnet.</li>
+<li>If not, it <strong>falls back</strong> to the standard <code>Clarinet.toml</code>.</li>
+</ul>
+<p>This ensures that the test double is only used when testing <code>sbtc-token</code>, keeping tests realistic while allowing necessary state transitions.</p>
+<h2 id="trait-reference-parameters"><a class="header" href="#trait-reference-parameters">Trait Reference Parameters</a></h2>
+<p>Rendezvous automatically generates arguments for function calls. It handles most Clarity types without any setup from you. However, <strong>trait references</strong> require special handling since Rendezvous cannot generate them automatically.</p>
+<h3 id="how-trait-reference-selection-works"><a class="header" href="#how-trait-reference-selection-works">How Trait Reference Selection Works</a></h3>
+<p>When your functions accept trait reference parameters, you must include at least one trait implementation in your Clarinet project. This can be either a project contract or a requirement.</p>
+<p>Here’s how Rendezvous handles trait references:</p>
+<ol>
+<li><strong>Project Scanning</strong> – Before testing begins, Rendezvous scans your project for functions that use trait references.</li>
+<li><strong>Implementation Discovery</strong> – It searches the contract AST for matching trait implementations and adds them to a selection pool.</li>
+<li><strong>Random Selection</strong> – During test execution, Rendezvous randomly picks an implementation from the pool and uses it as a function argument.</li>
+</ol>
+<p>This process allows Rendezvous to create meaningful state transitions and validate your invariants or property-based tests.</p>
+<h3 id="example-1"><a class="header" href="#example-1">Example</a></h3>
+<p>The <code>example</code> Clarinet project demonstrates this feature. The <a href="https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.clar">send-tokens</a> contract contains <a href="https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.clar#L3-L7">one public function</a> and <a href="https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.tests.clar#L24-L47">one property-based test</a> that both accept trait references.</p>
+<p>To enable testing, the project includes <a href="https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/rendezvous-token.clar">rendezvous-token</a>, which implements the required trait.</p>
+<h3 id="adding-more-implementations"><a class="header" href="#adding-more-implementations">Adding More Implementations</a></h3>
+<p>You can include multiple eligible trait implementations in your project. Adding more implementations allows Rendezvous to introduce greater randomness during testing and increases behavioral diversity. If a function that accepts a trait implementation parameter is called X times, those calls are distributed across the available implementations. As the number of implementations grows, Rendezvous has more options to choose from on each call, producing a wider range of behaviors — and uncovering edge cases that may be missed when relying on a single implementation.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="quickstart-tutorial"><a class="header" href="#quickstart-tutorial">Quickstart Tutorial</a></h1>
+<p>This tutorial walks you through testing a DeFi lending contract with Rendezvous. You’ll see how Rendezvous uncovers subtle vulnerabilities that traditional unit tests might miss, and learn how to design property-based tests that help expose real bugs.</p>
+<h2 id="what-youll-learn"><a class="header" href="#what-youll-learn">What You’ll Learn</a></h2>
+<p>You will test a simplified DeFi lending contract that allows users to deposit STX and borrow against those deposits. This contract hides a subtle bug that passes all example-based tests, but fails when running Rendezvous property-based testing.</p>
+<p>You’ll learn to:</p>
+<ul>
+<li>Write property-based tests directly in Clarity</li>
+<li>Catch real vulnerabilities using randomized, stateful test runs</li>
+<li>Replay and fix failing test sequences deterministically</li>
+</ul>
+<blockquote>
+<p>Note: This example is adapted from the <a href="https://github.com/hirosystems/clarity-examples/blob/ccd9ecf0bf136d7f28ef116706ed2936f6d8781a/examples/stx-defi/contracts/stx-defi.clar">stx-defi</a> contract in the <a href="https://github.com/hirosystems/clarity-examples">hirosystems/clarity-examples</a> repository.</p>
+</blockquote>
+<h2 id="prerequisites-1"><a class="header" href="#prerequisites-1">Prerequisites</a></h2>
+<p>Before you begin, make sure you have:</p>
+<ul>
+<li>Node.js (version &gt;= 20)</li>
+<li>Clarinet installed (<a href="https://github.com/stx-labs/clarinet">installation guide</a>)</li>
+</ul>
+<h2 id="step-1-create-a-new-clarinet-project"><a class="header" href="#step-1-create-a-new-clarinet-project">Step 1: Create a New Clarinet Project</a></h2>
+<p>Open your terminal and create a new Clarinet project:</p>
+<pre><code class="language-bash">clarinet new rendezvous-tutorial
+cd rendezvous-tutorial
+</code></pre>
+<p>This creates a new directory with the basic Clarinet structure:</p>
+<pre><code>rendezvous-tutorial/
+├── Clarinet.toml
+├── contracts/
+├── settings/
+│   └── Devnet.toml
+└── tests/
+</code></pre>
+<h2 id="step-2-add-rendezvous"><a class="header" href="#step-2-add-rendezvous">Step 2: Add Rendezvous</a></h2>
+<p>Add Rendezvous to your project:</p>
+<pre><code class="language-bash">npm install @stacks/rendezvous
+</code></pre>
+<p>Verify the installation:</p>
+<pre><code class="language-bash">npx rv --help
+</code></pre>
+<h2 id="step-3-add-the-lending-contract"><a class="header" href="#step-3-add-the-lending-contract">Step 3: Add the Lending Contract</a></h2>
+<p>Add a new contract to the Clarinet project:</p>
+<pre><code class="language-bash">clarinet contract new stx-defi
+</code></pre>
+<p>Open <code>contracts/stx-defi.clar</code> and add this Clarity code:</p>
+<pre><code class="language-clarity">;; stx-defi.clar
+;; A simplified DeFi lending protocol.
+
+(define-map deposits
+  { owner: principal }
+  { amount: uint }
+)
+
+(define-map loans
+  principal
+  { amount: uint }
+)
+
+(define-constant err-overborrow (err u300))
+
+(define-public (deposit (amount uint))
+  (let
+    (
+      (current-balance
+        (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
+      )
+    )
+    (try! (stx-transfer? amount tx-sender (as-contract tx-sender)))
+    (map-set deposits
+      { owner: tx-sender }
+      { amount: (+ current-balance amount) }
+    )
+    (ok true)
+  )
+)
+
+(define-public (borrow (amount uint))
+  (let
+    (
+      (user-deposit
+        (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
+      )
+      (allowed-borrow (/ user-deposit u2))
+      (current-loan
+        (default-to u0 (get amount (map-get? loans tx-sender)))
+      )
+      (new-loan (+ amount))
+    )
+    (asserts! (&lt;= new-loan allowed-borrow) err-overborrow)
+    (let
+      ((recipient tx-sender))
+      (try! (as-contract (stx-transfer? amount tx-sender recipient)))
+    )
+    (map-set loans tx-sender { amount: new-loan })
+    (ok true)
+  )
+)
+
+(define-read-only (get-loan-amount)
+  (ok (default-to u0 (get amount (map-get? loans tx-sender))))
+)
+</code></pre>
+<p><strong>What this contract does:</strong></p>
+<ul>
+<li>Users can <code>deposit</code> STX into the protocol</li>
+<li>Users can <code>borrow</code> up to 50% of their deposit value</li>
+<li>The contract tracks deposits and loans for each user</li>
+</ul>
+<h2 id="step-4-write-some-unit-tests"><a class="header" href="#step-4-write-some-unit-tests">Step 4: Write Some Unit Tests</a></h2>
+<p>Let’s first write some example-based unit tests.</p>
+<p>Open <code>tests/stx-defi.test.ts</code> and add these example-based unit tests:</p>
+<pre><code class="language-typescript">describe("stx-defi unit tests", () =&gt; {
+  it("can deposit", () =&gt; {
+    const amountToDeposit = 1000;
+
+    const { result } = simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    expect(result).toBeOk(Cl.bool(true));
+  });
+
+  it("can borrow half of deposit", () =&gt; {
+    const amountToDeposit = 1000;
+    const amountToBorrow = 500;
+
+    const { result: depositResult } = simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+    expect(depositResult).toBeOk(Cl.bool(true));
+
+    const { result } = simnet.callPublicFn(
+      "stx-defi",
+      "borrow",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    expect(result).toBeOk(Cl.bool(true));
+  });
+
+  it("loan amount is correct", () =&gt; {
+    const amountToDeposit = 1000;
+    const amountToBorrow = 500;
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "borrow",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    const { result } = simnet.callReadOnlyFn(
+      "stx-defi",
+      "get-loan-amount",
+      [],
+      address1
+    );
+
+    expect(result).toBeOk(Cl.uint(amountToBorrow));
+  });
+
+  it("cannot borrow more than half of deposit", () =&gt; {
+    const amountToDeposit = 1000;
+    const amountToBorrow = 501;
+
+    simnet.callPublicFn(
+      "stx-defi",
+      "deposit",
+      [Cl.uint(amountToDeposit)],
+      address1
+    );
+
+    const { result } = simnet.callPublicFn(
+      "stx-defi",
+      "borrow",
+      [Cl.uint(amountToBorrow)],
+      address1
+    );
+
+    // err-overborrow
+    expect(result).toBeErr(Cl.uint(300));
+  });
+});
+</code></pre>
+<p>Install dependencies and run the tests:</p>
+<pre><code class="language-bash">npm install
+npm test
+</code></pre>
+<p><strong>Looking good!</strong> ✅ (or so it seems…)</p>
+<p>The main functions and state of the contract are now covered by tests. Line coverage is probably high as well. Looks great, right? But here’s the thing: example-based tests only verify the examples you thought of. Let’s see if the contract holds up under <strong>Rendezvous property-based testing</strong>.</p>
+<h2 id="step-5-add-rendezvous-property-based-tests"><a class="header" href="#step-5-add-rendezvous-property-based-tests">Step 5: Add Rendezvous Property-Based Tests</a></h2>
+<p>Rendezvous lets you test a broader range of inputs, not just specific examples. Let’s see how to write your first property-based test and why it matters.</p>
+<h3 id="create-the-test-file"><a class="header" href="#create-the-test-file">Create the Test File</a></h3>
+<p>Go to the <code>contracts</code> folder, and create the Rendezvous test file named  <code>stx-defi.tests.clar</code>.</p>
+<h3 id="add-an-ice-breaker-test"><a class="header" href="#add-an-ice-breaker-test">Add an Ice-Breaker Test</a></h3>
+<p>Before writing any meaningful properties, it’s a good idea to check that Rendezvous can run. Add a simple “always-true” test to verify your setup.
+Open <code>contracts/stx-defi.tests.clar</code> and add an always-true test:</p>
+<pre><code class="language-clarity">(define-public (test-always-true)
+  (ok true)
+)
+</code></pre>
+<p>Check if Rendezvous can execute the test:</p>
+<pre><code class="language-bash">npx rv . stx-defi test
+</code></pre>
+<p>Expected output:</p>
+<pre><code>$ npx rv . stx-defi test
+Using manifest path: Clarinet.toml
+Target contract: stx-defi
+
+Starting property testing type for the stx-defi contract...
+
+₿        1 Ӿ        3   deployer [PASS] stx-defi test-always-true  (ok true)
+₿        1 Ӿ        4   wallet_5 [PASS] stx-defi test-always-true  (ok true)
+₿       11 Ӿ       15   wallet_1 [PASS] stx-defi test-always-true  (ok true)
+₿      690 Ӿ      695   wallet_1 [PASS] stx-defi test-always-true  (ok true)
+...
+₿    12348 Ӿ    12447   wallet_3 [PASS] stx-defi test-always-true  (ok true)
+₿    12348 Ӿ    12448   wallet_3 [PASS] stx-defi test-always-true  (ok true)
+₿    12357 Ӿ    12458   wallet_5 [PASS] stx-defi test-always-true  (ok true)
+
+OK, properties passed after 100 runs.
+
+
+EXECUTION STATISTICS
+
+│ PROPERTY TEST CALLS
+│
+├─ + PASSED
+│    └─ test-always-true: x100
+│
+├─ ! DISCARDED
+│    └─ test-always-true: x0
+│
+└─ - FAILED
+     └─ test-always-true: x0
+
+LEGEND:
+
+  PASSED    properties verified for given inputs
+  DISCARDED skipped due to invalid preconditions
+  FAILED    property violations or unexpected behavior
+</code></pre>
+<p>If you see similar output, your setup works. You’re ready to write a <strong>real property-based test</strong>.</p>
+<h3 id="define-a-borrowing-property"><a class="header" href="#define-a-borrowing-property">Define a Borrowing Property</a></h3>
+<p>You want to test that <strong>borrowing always updates the loan amount correctly</strong>:</p>
+<pre><code class="language-clarity">;; stx-defi.tests.clar
+
+;; Property: Borrowing should always update the loan amount correctly.
+;; The new loan amount should equal the old loan amount plus the borrowed
+;; amount.
+(define-public (test-borrow (amount uint))
+  (let (
+      ;; Record the loan amount before performing any action that would end up
+      ;; changing the internal state of the smart contract. Query the loans map
+      ;; for the selected tx-sender and store the result in the initial-loan
+      ;; local variable.
+      (initial-loan (default-to u0 (get amount (map-get? loans tx-sender))))
+    )
+    ;; Since the initial-loan is recorded before the borrow call, you can now
+    ;; call the borrow function to allow checking the effects after the call.
+    (try! (borrow amount))
+    ;; Verify the property: updated loan = initial loan + borrowed amount
+    (asserts!
+      (is-eq (default-to u0 (get amount (map-get? loans tx-sender)))
+        (+ initial-loan amount)
+      )
+      (err u999) ;; any error code to identify the test failure.
+    )
+    (ok true)
+  )
+)
+</code></pre>
+<blockquote>
+<p>At this stage, <strong>the test will likely fail</strong>. This is an important learning moment: Rendezvous runs your tests in a <strong>stateful, randomized environment</strong> that simulates real contract interactions.</p>
+</blockquote>
+<h3 id="how-rendezvous-executes-property-tests"><a class="header" href="#how-rendezvous-executes-property-tests">How Rendezvous Executes Property Tests</a></h3>
+<p>Rendezvous:</p>
+<ol>
+<li>Injects all property-based tests directly into the deployed contract.</li>
+<li>Detects all public <code>test-*</code> functions automatically.</li>
+<li>Generates a random sequence to call each test.</li>
+<li>Produces random argument values for each function parameter.</li>
+<li>Randomly selects senders from settings/Devnet.toml.</li>
+<li>Randomly advances Bitcoin and Stacks block heights during testing.</li>
+<li>Accumulates state across test calls instead of resetting each time.</li>
+<li>Discards test cases where preconditions fail, returning (ok false).</li>
+</ol>
+<p>This design allows you to test your contract in <strong>realistic, varied scenarios</strong> that a simple/example-based unit test could never reach.</p>
+<h3 id="why-the-first-test-fails"><a class="header" href="#why-the-first-test-fails">Why the First Test Fails</a></h3>
+<p>The test likely failed because the <code>borrow</code> call failed—the contract wasn’t in a suitable state. Rendezvous allows you to discard test cases when preconditions aren’t met (wrong state, invalid arguments, caller, height, etc.). In our case, <code>borrow</code> will fail for one of these reasons:</p>
+<ul>
+<li>no deposits were made</li>
+<li>the generated amount argument is non-positive (u0)</li>
+<li>the generated amount argument is more than the allowed borrow value</li>
+</ul>
+<p>To fix this, you need to <strong>simulate deposits</strong> and add <strong>discard logic</strong>.</p>
+<p>Let’s address them one by one.</p>
+<h3 id="handle-preconditions"><a class="header" href="#handle-preconditions">Handle Preconditions</a></h3>
+<p><strong>First, you need deposits.</strong> You can create a helper function that Rendezvous will pick up during property-based testing runs. This helper will allow deposits to be created so other tests can check properties that require deposits:</p>
+<pre><code class="language-clarity">;; This is a helper function that will eventually be picked up during
+;; property-based-testing runs. It allows creating deposits in the smart
+;; contract so other tests can check properties requiring a deposit.
+(define-public (test-deposit-helper (amount uint))
+  (let (
+      ;; Call the deposit function and ignore the result.
+      (deposit-result (deposit amount))
+    )
+    (ok true)
+  )
+)
+</code></pre>
+<p><strong>Next, add discard logic to the borrow test.</strong> A test is discarded when it returns <code>(ok false)</code>. Wrap the core test logic in a conditional that checks for invalid preconditions (the three cases listed above) and returns <code>(ok false)</code> to discard those cases:</p>
+<pre><code class="language-clarity">;; Property: Borrowing should always update the loan amount correctly.
+;; The new loan amount should equal the old loan amount plus the borrowed
+;; amount.
+(define-public (test-borrow (amount uint))
+  (if (or
+      ;; If amount is 0, the STX transfer performed in the borrow operation
+      ;; would fail, resulting in a false negative.
+      (is-eq amount u0)
+      ;; If the amount to borrow would exceed the allowed limit defined in the
+      ;; borrow function, the borrow operation would fail, resulting in a false
+      ;; negative.
+      (&gt; (+ (default-to u0 (get amount (map-get? loans tx-sender))) amount)
+        (/ (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
+          u2
+        ))
+    )
+    ;; Discard the test if preconditions aren't met.
+    (ok false)
+    ;; Run the test.
+    (let ((initial-loan (default-to u0 (get amount (map-get? loans tx-sender)))))
+      (unwrap! (borrow amount) (err "Borrow call failed"))
+      (let ((updated-loan (default-to u0 (get amount (map-get? loans tx-sender)))))
+        ;; Verify the property: new loan = old loan + borrowed amount
+        (asserts! (is-eq updated-loan (+ initial-loan amount))
+          (err "Loan amount not updated correctly")
+        )
+        (ok true)
+      )
+    )
+  )
+)
+</code></pre>
+<p>The test discards invalid cases: when <code>amount</code> is <code>u0</code>, or when the new total loan would exceed half the deposit (which also covers cases with no deposits).</p>
+<blockquote>
+<p>Now the test only runs when valid preconditions are met.</p>
+</blockquote>
+<h3 id="run-rendezvous-and-catch-the-bug"><a class="header" href="#run-rendezvous-and-catch-the-bug">Run Rendezvous and Catch the Bug</a></h3>
+<p>Start a new property-based testing run:</p>
+<pre><code class="language-bash">npx rv . stx-defi test
+</code></pre>
+<p>Rendezvous will probably catch the bug in the very first run, showing output like this:</p>
+<pre><code>$ npx rv . stx-defi test
+Using manifest path: Clarinet.toml
+Target contract: stx-defi
+
+Starting property testing type for the stx-defi contract...
+
+₿        1 Ӿ        3   wallet_7 [PASS] stx-defi test-deposit-helper 2 (ok true)
+₿     1001 Ӿ     1004   wallet_7 [WARN] stx-defi test-borrow 2015589496 (ok false)
+₿     1001 Ӿ     1005   wallet_8 [PASS] stx-defi test-deposit-helper 2147483636 (ok true)
+₿     1898 Ӿ     1903   wallet_6 [WARN] stx-defi test-borrow 1984339073 (ok false)
+₿     1898 Ӿ     1904   deployer [PASS] stx-defi test-deposit-helper 195930186 (ok true)
+₿     1898 Ӿ     1905   wallet_2 [PASS] stx-defi test-deposit-helper 13 (ok true)
+...
+₿     3464 Ӿ     3485   deployer [PASS] stx-defi test-borrow 28 (ok true)
+₿     3468 Ӿ     3490   wallet_1 [WARN] stx-defi test-borrow 25 (ok false)
+₿     3468 Ӿ     3491   wallet_8 [FAIL] stx-defi test-borrow 11 (err "Loan amount not updated correctly")
+₿     3468 Ӿ     3492   wallet_1 [PASS] stx-defi test-deposit-helper 1653600941 (ok true)
+₿     4058 Ӿ     4083   wallet_8 [PASS] stx-defi test-deposit-helper 1653600941 (ok true)
+₿     4058 Ӿ     4084   wallet_8 [WARN] stx-defi test-borrow 1653600941 (ok false)
+₿     4058 Ӿ     4085   wallet_8 [WARN] stx-defi test-borrow 0 (ok false)
+₿     4058 Ӿ     4086   wallet_8 [FAIL] stx-defi test-borrow 6 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4087   wallet_8 [FAIL] stx-defi test-borrow 3 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4088   wallet_8 [FAIL] stx-defi test-borrow 2 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4089   wallet_8 [FAIL] stx-defi test-borrow 1 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4090   wallet_8 [WARN] stx-defi test-borrow 0 (ok false)
+₿     4058 Ӿ     4091   wallet_8 [FAIL] stx-defi test-borrow 1 (err "Loan amount not updated correctly")
+₿     4058 Ӿ     4092   wallet_8 [WARN] stx-defi test-borrow 0 (ok false)
+₿     4058 Ӿ     4093   wallet_8 [FAIL] stx-defi test-borrow 1 (err "Loan amount not updated correctly")
+
+Error: Property failed after 22 tests.
+Seed : 1880056597
+
+Counterexample:
+- Test Contract : stx-defi
+- Test Function : test-borrow (public)
+- Arguments     : [1]
+- Caller        : wallet_8
+- Outputs       : {"type":{"response":{"ok":"bool","error":{"string-ascii":{"length":33}}}}}
+
+What happened? Rendezvous went on a rampage and found a weak spot:
+
+The test function "test-borrow" returned:
+
+(err "Loan amount not updated correctly")
+
+EXECUTION STATISTICS
+
+│ PROPERTY TEST CALLS
+│
+├─ + PASSED
+│    ├─ test-borrow: x2
+│    └─ test-deposit-helper: x13
+│
+├─ ! DISCARDED
+│    ├─ test-borrow: x12
+│    └─ test-deposit-helper: x0
+│
+└─ - FAILED
+     ├─ test-borrow: x7
+     └─ test-deposit-helper: x0
+
+LEGEND:
+
+  PASSED    properties verified for given inputs
+  DISCARDED skipped due to invalid preconditions
+  FAILED    property violations or unexpected behavior
+
+! FAILED tests indicate that your function properties don't hold for all inputs. Review the counterexamples above for debugging.
+</code></pre>
+<p>The output shows a failure: <code>(err "Loan amount not updated correctly")</code>. The contract isn’t tracking loan amounts correctly.</p>
+<blockquote>
+<p><strong>Note:</strong> The output includes a seed (<code>1880056597</code>) you can use to reproduce this exact sequence.</p>
+</blockquote>
+<p>You can also stop at the first failure:</p>
+<pre><code class="language-bash">npx rv . stx-defi test --bail
+</code></pre>
+<h2 id="step-6-identify-and-fix-the-borrow-bug"><a class="header" href="#step-6-identify-and-fix-the-borrow-bug">Step 6: Identify and Fix the Borrow Bug</a></h2>
+<p>After taking a closer look at the lending contract, the bug is in this line of the <code>borrow</code> function:</p>
+<pre><code class="language-clarity">(new-loan (+ amount))
+</code></pre>
+<p>Change the line to correctly accumulate loans:</p>
+<pre><code class="language-clarity">(new-loan (+ current-loan amount))
+</code></pre>
+<h3 id="re-run-rendezvous-with-the-same-seed"><a class="header" href="#re-run-rendezvous-with-the-same-seed">Re-run Rendezvous with the Same Seed</a></h3>
+<p>Re-run with the same seed, to find out if you completely fixed the bug for that random sequence of events:</p>
+<pre><code class="language-clarity">npx rv . stx-defi test --seed=1880056597
+</code></pre>
+<p>Output:</p>
+<pre><code>$ npx rv . stx-defi test --seed=1880056597
+Using manifest path: Clarinet.toml
+Target contract: stx-defi
+Using seed: 1880056597
+
+Starting property testing type for the stx-defi contract...
+
+₿        1 Ӿ        3   wallet_7 [PASS] stx-defi test-deposit-helper 2 (ok true)
+₿     1001 Ӿ     1004   wallet_7 [WARN] stx-defi test-borrow 2015589496 (ok false)
+₿     1001 Ӿ     1005   wallet_8 [PASS] stx-defi test-deposit-helper 2147483636 (ok true)
+₿     1898 Ӿ     1903   wallet_6 [WARN] stx-defi test-borrow 1984339073 (ok false)
+₿     1898 Ӿ     1904   deployer [PASS] stx-defi test-deposit-helper 195930186 (ok true)
+₿     1898 Ӿ     1905   wallet_2 [PASS] stx-defi test-deposit-helper 13 (ok true)
+...
+₿    17291 Ӿ    17388   wallet_4 [PASS] stx-defi test-borrow 708340522 (ok true)
+₿    17291 Ӿ    17389   wallet_4 [PASS] stx-defi test-deposit-helper 589199221 (ok true)
+₿    17565 Ӿ    17664   wallet_2 [PASS] stx-defi test-deposit-helper 2147483627 (ok true)
+₿    18559 Ӿ    18659   wallet_8 [PASS] stx-defi test-borrow 1622181282 (ok true)
+₿    18559 Ӿ    18660   wallet_3 [PASS] stx-defi test-deposit-helper 2147483630 (ok true)
+
+OK, properties passed after 100 runs.
+</code></pre>
+<blockquote>
+<p>The bug is fixed! The contract now correctly tracks cumulative loans.</p>
+</blockquote>
+<h3 id="run-multiple-random-sequences"><a class="header" href="#run-multiple-random-sequences">Run Multiple Random Sequences</a></h3>
+<p>Test additional random sequences (each run generates a new random sequence):</p>
+<pre><code class="language-bash">npx rv . stx-defi test
+</code></pre>
+<p>Run more tests to increase confidence (default is 100 runs):</p>
+<pre><code class="language-bash">npx rv . stx-defi test --runs=1000
+</code></pre>
+<p><strong>Rendezvous caught the bug and you successfully fixed it!</strong> 🎯</p>
+<h2 id="step-7-understand-the-bug"><a class="header" href="#step-7-understand-the-bug">Step 7: Understand the Bug</a></h2>
+<p><strong>What was the bug?</strong></p>
+<p>Rendezvous discovered that when a user borrows multiple times, only the most recent borrow amount is recorded.</p>
+<p>The bug means the contract doesn’t track cumulative borrows correctly. When a user borrows multiple times, only the most recent borrow amount is recorded, not the total. The existing loan amount (<code>current-loan</code>) is completely ignored!</p>
+<p><strong>Why did example-based unit tests miss this?</strong></p>
+<p>The unit tests passed because they only tested single borrow scenarios. Look back at the unit test:</p>
+<pre><code class="language-typescript">it("loan amount is correct after single borrow", () =&gt; {
+  // Only ONE borrow call - bug not triggered!
+  simnet.callPublicFn(
+    "stx-defi",
+    "borrow",
+    [Cl.uint(amountToBorrow)],
+    address1
+  );
+  // ...
+});
+</code></pre>
+<p>When there’s only one borrow, <code>(+ amount)</code> and <code>(+ current-loan amount)</code> produce the same result because the initial loan is <code>u0</code>.</p>
+<p><strong>Rendezvous caught the bug by:</strong></p>
+<ol>
+<li>Randomly generating test sequences</li>
+<li>Calling <code>borrow</code> multiple times with different amounts</li>
+<li>Verifying the property holds for ALL sequences</li>
+</ol>
+<p>This is the power of using Rendezvous!</p>
+<h2 id="what-you-learned"><a class="header" href="#what-you-learned">What You Learned</a></h2>
+<p>You’ve successfully:</p>
+<p>✅ Created a simple DeFi lending contract</p>
+<p>✅ Wrote traditional unit tests that passed but missed a critical bug</p>
+<p>✅ Wrote your first Rendezvous property-based test</p>
+<p>✅ Discovered how Rendezvous catches bugs through random stateful testing</p>
+<p>✅ Fixed the bug and verified the fix</p>
+<p>✅ Understood the difference between stateless example-based and stateful property-based testing</p>
+<h2 id="the-key-insight"><a class="header" href="#the-key-insight">The Key Insight</a></h2>
+<p><strong>Example-based tests check specific examples. Property-based tests check a much broader range of inputs.</strong></p>
+<p>Example-based tests ask:</p>
+<ul>
+<li>“Does this work for input A?”</li>
+<li>“Does this work for input B?”</li>
+</ul>
+<p>Property-based tests ask:</p>
+<ul>
+<li>“Does this ALWAYS work?”</li>
+<li>“Can I find ANY input that breaks this?”</li>
+</ul>
+<p>Rendezvous explores your contract’s state space automatically, finding edge cases you might never think to test manually.</p>
+<h2 id="real-world-impact"><a class="header" href="#real-world-impact">Real-World Impact</a></h2>
+<p>This bug in a production DeFi protocol would allow users to:</p>
+<ol>
+<li>Deposit 1000 STX</li>
+<li>Borrow 500 STX (maximum allowed)</li>
+<li>Borrow another 500 STX (should fail, but succeeds due to bug)</li>
+<li>Total borrowed: 1000 STX with only 500 STX recorded</li>
+<li>User only needs to repay 500 STX despite borrowing 1000 STX</li>
+</ol>
+<p>This would drain the protocol’s funds — a critical vulnerability caught by Rendezvous in seconds.</p>
+<h2 id="example-implementation"><a class="header" href="#example-implementation">Example Implementation</a></h2>
+<p>You can see a complete step-by-step implementation of this tutorial with commit-by-commit progress in the <a href="https://github.com/BowTiedRadone/rendezvous-tutorial">rendezvous-tutorial repository</a> (<a href="https://github.com/BowTiedRadone/rendezvous-tutorial/commits/master/">view commits</a>).</p>
+<h2 id="next-steps-1"><a class="header" href="#next-steps-1">Next Steps</a></h2>
+<p>Now that you understand the power of Rendezvous, explore:</p>
+<ul>
+<li><strong>More examples</strong>: Study other smart contracts in the examples (see <a href="#examples">Chapter 8</a>)</li>
+<li><strong>Your own contracts</strong>: Apply Rendezvous to your projects and find bugs before they reach production</li>
+</ul>
+<hr>
+<h2 id="get-involved"><a class="header" href="#get-involved">Get Involved</a></h2>
+<p><strong>Found this tutorial useful?</strong> Star the <a href="https://github.com/stacks-network/rendezvous">Rendezvous repository on GitHub</a> to show your support!</p>
+<p>Have questions, found a bug, or want to contribute? We’d love to hear from you:</p>
+<ul>
+<li><strong>Open an issue</strong> on <a href="https://github.com/stacks-network/rendezvous/issues">GitHub</a></li>
+<li><strong>Reach out</strong> with questions or feedback</li>
+<li><strong>Share your findings</strong> — contribute examples of bugs you’ve caught to show others how powerful advanced testing techniques can be</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="examples"><a class="header" href="#examples">Examples</a></h1>
+<p>The Rendezvous repo has a Clarinet project, <code>example</code>, that shows how to test Clarity smart contracts natively. Each contract, like <code>xyz.clar</code>, has a matching test contract, <code>xyz.tests.clar</code>.</p>
+<h2 id="whats-inside-2"><a class="header" href="#whats-inside-2">What’s Inside</a></h2>
+<p><a href="#the-counter-contract">The <code>counter</code> Contract</a></p>
+<ul>
+<li><a href="#invariants">Invariants</a>
+<ul>
+<li><a href="#invariant-logic">Invariant logic</a></li>
+<li><a href="#checking-the-invariants">Checking the invariants</a></li>
+</ul>
+</li>
+<li><a href="#property-based-tests">Property-Based Tests</a>
+<ul>
+<li><a href="#test-logic">Test logic</a></li>
+<li><a href="#checking-the-properties">Checking the properties</a></li>
+</ul>
+</li>
+</ul>
+<p><a href="#the-cargo-contract">The <code>cargo</code> Contract</a></p>
+<ul>
+<li><a href="#invariants-1">Invariants</a>
+<ul>
+<li><a href="#invariant-logic-1">Invariant logic</a></li>
+<li><a href="#checking-the-invariants-1">Checking the invariants</a></li>
+</ul>
+</li>
+<li><a href="#property-based-tests-1">Property-Based Tests</a>
+<ul>
+<li><a href="#test-logic-1">Test logic</a></li>
+<li><a href="#checking-the-properties-1">Checking the properties</a></li>
+</ul>
+</li>
+</ul>
+<p><a href="#the-reverse-contract">The <code>reverse</code> Contract</a></p>
+<ul>
+<li><a href="#property-based-tests-2">Property-Based Tests</a>
+<ul>
+<li><a href="#test-logic-2">Test logic</a></li>
+<li><a href="#checking-the-properties-2">Checking the properties (shrinking)</a></li>
+</ul>
+</li>
+</ul>
+<p><a href="#the-slice-contract">The <code>slice</code> Contract</a></p>
+<ul>
+<li><a href="#property-based-tests-3">Property-Based Tests</a>
+<ul>
+<li><a href="#test-logic-3">Test logic</a></li>
+<li><a href="#checking-the-properties-3">Checking the properties (discarding)</a></li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2 id="the-counter-contract"><a class="header" href="#the-counter-contract">The <code>counter</code> Contract</a></h2>
+<p>The <code>counter</code> contract is a simple Clarity example found in the <code>example</code> Clarinet project. It has no known vulnerabilities. However, to see how Rendezvous works, we can <strong>introduce a bug</strong> into the <code>increment</code> function. This bug resets the counter to <code>0</code> when the counter value exceeds <code>1000</code>. The faulty <code>increment</code> function is already included (but commented out) in the <code>counter</code> contract:</p>
+<pre><code class="language-clarity">(define-public (increment)
+  (let
+    (
+      (current-counter (var-get counter))
+    )
+    (if
+      (&gt; current-counter u1000) ;; Introduce a bug for large values.
+      (ok (var-set counter u0)) ;; Reset counter to zero if it exceeds 1000.
+      (ok (var-set counter (+ current-counter u1)))
+    )
+  )
+)
+</code></pre>
+<p>To test the buggy version of the contract, replace the valid <code>increment</code> function with the faulty version. Then, you can write Clarity invariants and property-based tests to detect the issue.</p>
+<h3 id="invariants"><a class="header" href="#invariants">Invariants</a></h3>
+<p>One invariant that can detect the introduced bug is:</p>
+<pre><code class="language-clarity">(define-read-only (invariant-counter-gt-zero)
+  (let
+    (
+      (increment-num-calls
+        (default-to u0
+          (get called (map-get? context "increment"))
+        )
+      )
+      (decrement-num-calls
+        (default-to u0
+          (get called (map-get? context "decrement"))
+        )
+      )
+    )
+    (if
+      (&lt;= increment-num-calls decrement-num-calls)
+      true
+      (&gt; (var-get counter) u0)
+    )
+  )
+)
+</code></pre>
+<p>This invariant uses the <strong>context</strong> utility from Rendezvous, described in the previous chapter. It establishes a fundamental rule for the counter contract:</p>
+<blockquote>
+<p>If, at the time of the check, the <code>increment</code> function has been called successfully more times than <code>decrement</code>, the counter value should be greater than 0.</p>
+</blockquote>
+<h4 id="invariant-logic"><a class="header" href="#invariant-logic">Invariant logic</a></h4>
+<p><code>increment-num-calls ≤ decrement-num-calls</code>:</p>
+<ul>
+<li>The invariant automatically holds.</li>
+<li>This case means decrements occurred at least as many times as increments, so the invariant does not enforce any condition.</li>
+</ul>
+<p><code>increment-num-calls &gt; decrement-num-calls</code>:</p>
+<ul>
+<li>The invariant asserts that <code>counter &gt; u0</code>.</li>
+<li>This ensures that, despite more increment calls, the counter remains positive.</li>
+</ul>
+<h4 id="checking-the-invariants"><a class="header" href="#checking-the-invariants">Checking the invariants</a></h4>
+<p>To check the <code>counter</code> contract’s invariants, run:</p>
+<pre><code class="language-bash">rv ./example counter invariant
+</code></pre>
+<p>Using this command, Rendezvous will <strong>randomly execute public function calls</strong> in the <code>counter</code> contract while <strong>periodically checking the invariant</strong>. If the invariant fails, it indicates that the contract’s internal state has deviated from expected behavior, exposing the bug in the faulty <code>increment</code> function.</p>
+<h3 id="property-based-tests"><a class="header" href="#property-based-tests">Property-Based Tests</a></h3>
+<p>Another way to detect the introduced bug is by writing this property-based test:</p>
+<pre><code class="language-clarity">(define-public (test-increment)
+  (let
+    (
+      (counter-before (get-counter))
+    )
+    (unwrap-panic (increment))
+    (asserts! (is-eq (get-counter) (+ counter-before u1)) (err u404))
+    (ok true)
+  )
+)
+</code></pre>
+<p>This test is a <strong>property-based test</strong>, where a <em>property</em> (a truth, or characteristic) of the <code>increment</code> function is tested across different inputs.</p>
+<blockquote>
+<p>The counter should always increase by 1 after a successful call to <code>increment</code>.</p>
+</blockquote>
+<p>If the test fails, it means the counter did not increment as expected, revealing unintended behavior such as the counter resetting to <code>0</code>.</p>
+<h4 id="test-logic"><a class="header" href="#test-logic">Test logic</a></h4>
+<ol>
+<li>Record the counter value before calling <code>increment</code>.</li>
+<li>Call <code>increment</code> and ensure it does not fail.</li>
+<li>Check that the new counter value equals the previous value +1.
+<ul>
+<li>If this condition does not hold, the test fails with error <code>u404</code>.</li>
+<li>This catches unexpected changes, such as the counter resetting.</li>
+</ul>
+</li>
+</ol>
+<h4 id="checking-the-properties"><a class="header" href="#checking-the-properties">Checking the properties</a></h4>
+<p>To run Rendezvous property-based tests against the counter contract, use:</p>
+<pre><code class="language-bash">rv ./example counter test
+</code></pre>
+<p>Using this command, Rendezvous will <strong>randomly select and execute</strong> property-based tests from the <code>counter</code>’s test contract. This process will detect the bug in the faulty increment function. However, if the test contract contains only <code>test-increment</code>, <strong>the number of runs must be increased</strong>. By default, Rendezvous executes <strong>100 runs</strong>, which is not sufficient to expose the issue.</p>
+<p>To make sure you always catch the bug, set the <code>--runs</code> option to something higher than <code>1001</code>, e.g. <strong>1002</strong>:</p>
+<pre><code class="language-bash">rv ./example counter test --runs=1002
+</code></pre>
+<p>This ensures that enough test cases are executed to trigger the <code>counter</code> reset condition.</p>
+<hr>
+<h2 id="the-cargo-contract"><a class="header" href="#the-cargo-contract">The <code>cargo</code> Contract</a></h2>
+<p>The <code>cargo</code> contract is a decentralized shipment tracker found in the <code>example</code> Clarinet project. Initially, it contained a bug where the <code>last-shipment-id</code> variable was not updated when creating a new shipment. This bug has been fixed, but you can re-introduce it to see how Rendezvous detects it:</p>
+<pre><code class="language-clarity">(define-public (create-new-shipment (starting-location (string-ascii 25))
+                                    (receiver principal))
+  (let
+    (
+      (new-shipment-id (+ (var-get last-shipment-id) u1))
+    )
+    ;; #[filter(starting-location, receiver)]
+    (map-set shipments new-shipment-id {
+      location: starting-location,
+      status: "In Transit",
+      shipper: tx-sender,
+      receiver: receiver
+    })
+
+    ;; The following line fixes the bug in the original implementation.
+    ;; Comment out this line to re-introduce the bug.
+    ;; (var-set last-shipment-id new-shipment-id)
+    (ok "Shipment created successfully")
+  )
+)
+</code></pre>
+<p>To test the buggy version of the contract, <strong>comment out the line that updates <code>last-shipment-id</code></strong>. Then, use invariants and property-based tests to detect the issue.</p>
+<h3 id="invariants-1"><a class="header" href="#invariants-1">Invariants</a></h3>
+<p>One invariant that can detect the introduced bug is:</p>
+<pre><code class="language-clarity">(define-read-only (invariant-last-shipment-id-gt-0-after-create-shipment)
+  (let
+    (
+      (create-shipment-num-calls
+        (default-to u0 (get called (map-get? context "create-new-shipment")))
+      )
+    )
+    (if
+      (is-eq create-shipment-num-calls u0)
+      true
+      (&gt; (var-get last-shipment-id) u0)
+    )
+  )
+)
+</code></pre>
+<p>This invariant uses the <strong>context</strong> utility from Rendezvous, described in the previous chapter. It enforces a fundamental rule of the <code>cargo</code> contract:</p>
+<blockquote>
+<p>If at least one shipment has been created, the <code>last-shipment-id</code> must be greater than 0.</p>
+</blockquote>
+<h4 id="invariant-logic-1"><a class="header" href="#invariant-logic-1">Invariant logic</a></h4>
+<p><code>create-shipment-num-calls = 0</code>:</p>
+<ul>
+<li>The invariant holds automatically (no shipments created, so no condition to check).</li>
+</ul>
+<p><code>create-shipment-num-calls &gt; 0</code>:</p>
+<ul>
+<li>The invariant asserts that <code>last-shipment-id &gt; 0</code>.</li>
+<li>If this check fails, it means <code>last-shipment-id</code> was <strong>not updated</strong> after creating a shipment, exposing the bug.</li>
+</ul>
+<h4 id="checking-the-invariants-1"><a class="header" href="#checking-the-invariants-1">Checking the invariants</a></h4>
+<p>To run Rendezvous invariant testing against the <code>cargo</code> contract, use:</p>
+<pre><code class="language-bash">rv ./example cargo invariant
+</code></pre>
+<p>Using this command, Rendezvous will <strong>randomly execute public function calls</strong> in the <code>cargo</code> contract while <strong>periodically checking the invariant</strong>. If the invariant fails, it signals that <code>last-shipment-id</code> was not updated as expected, revealing the bug.</p>
+<h3 id="property-based-tests-1"><a class="header" href="#property-based-tests-1">Property-Based Tests</a></h3>
+<p>A property-based test that can detect the introduced bug is:</p>
+<pre><code class="language-clarity">(define-public (test-get-last-shipment-id
+    (starting-location (string-ascii 25))
+    (receiver principal)
+  )
+  (let
+    ((shipment-id-before (get-last-shipment-id)))
+    (unwrap!
+      (create-new-shipment starting-location receiver)
+      ERR_CONTRACT_CALL_FAILED
+    )
+    ;; Verify the last shipment ID is incremented by 1.
+    (asserts!
+      (is-eq (get-last-shipment-id) (+ u1 shipment-id-before))
+      ERR_ASSERTION_FAILED
+    )
+    (ok true)
+  )
+)
+</code></pre>
+<p>This test follows a <strong>property-based testing approach</strong>, verifying a key property of <code>create-new-shipment</code>:</p>
+<blockquote>
+<p>Creating a new shipment should always increment <code>last-shipment-id</code> by 1.</p>
+</blockquote>
+<h3 id="test-logic-1"><a class="header" href="#test-logic-1">Test logic</a></h3>
+<ol>
+<li>Record the current shipment ID before calling <code>create-new-shipment</code>.</li>
+<li>Call <code>create-new-shipment</code>, ensuring it does not fail.</li>
+<li>Verify that <code>last-shipment-id</code> has <strong>increased by 1</strong>.
+<ul>
+<li>If this check fails, it means <code>last-shipment-id</code> was <strong>not updated</strong>, exposing the bug.</li>
+</ul>
+</li>
+</ol>
+<h4 id="checking-the-properties-1"><a class="header" href="#checking-the-properties-1">Checking the properties</a></h4>
+<p>To run Rendezvous property-based tests against the <code>cargo</code> contract, use:</p>
+<pre><code class="language-bash">rv ./example cargo test
+</code></pre>
+<p>Using this command, Rendezvous will <strong>randomly select and execute</strong> property-based tests from the <code>cargo</code>’s test contract. If <code>test-get-last-shipment-id</code> is the only test in the contract, Rendezvous will immediately detect the bug.</p>
+<hr>
+<h2 id="the-reverse-contract"><a class="header" href="#the-reverse-contract">The <code>reverse</code> Contract</a></h2>
+<p>The <code>reverse</code> contract included in the <code>example</code> Clarinet project contains Clarity utilities for reversing lists of various types. Since it lacks public functions, <strong>invariant testing doesn’t apply</strong>. However, it serves as an ideal “Hello World” example for <strong>property testing using native Clarity</strong>—<em>reversing a list twice should always return the original list</em>.</p>
+<p>Introducing a bug and detecting it with Rendezvous property-based tests is insightful, not just for finding the issue but for demonstrating the power of <strong>shrinking</strong>. Below is an example of how to introduce a bug into one of the <code>reverse-uint</code> private utilities:</p>
+<pre><code class="language-clarity">(define-read-only (reverse-uint (seq (list 127 uint)))
+ (reverse-list1 seq)
+)
+
+(define-private (reverse-list1 (seq (list 127 uint)))
+  (fold reverse-redx-unsigned-list seq (list))
+)
+
+(define-private (reverse-redx-unsigned-list (item uint) (seq (list 127 uint)))
+  (unwrap-panic
+    (as-max-len?
+      (concat (list item) seq)
+      u4 ;; Introduces a bug by limiting max length incorrectly.
+    )
+  )
+)
+</code></pre>
+<p>This bug <strong>reduces the maximum supported list length</strong> in a private function, leading to an <strong>unwrap failure runtime error</strong> when the list exceeds the new, incorrect limit.</p>
+<h3 id="property-based-tests-2"><a class="header" href="#property-based-tests-2">Property-Based Tests</a></h3>
+<p>A property-based test that can detect the introduced bug is:</p>
+<pre><code class="language-clarity">(define-public (test-reverse-uint (seq (list 127 uint)))
+  (begin
+    (asserts!
+      (is-eq seq (reverse-uint (reverse-uint seq)))
+      ERR_ASSERTION_FAILED
+    )
+    (ok true)
+  )
+)
+</code></pre>
+<p>This test follows a <strong>property-based testing approach</strong>, verifying the “Hello World” of property testing:</p>
+<blockquote>
+<p>Reversing a list twice should always return the original list.</p>
+</blockquote>
+<p>This test example accepts a parameter, which is randomly generated for each run.</p>
+<h4 id="test-logic-2"><a class="header" href="#test-logic-2">Test logic</a></h4>
+<ol>
+<li>Verify that reversing a passed list twice is always equal to the passed list.</li>
+</ol>
+<h4 id="checking-the-properties-2"><a class="header" href="#checking-the-properties-2">Checking the properties</a></h4>
+<p>To run Rendezvous property-based tests against the <code>reverse</code> contract, use:</p>
+<pre><code class="language-bash">rv ./example reverse test
+</code></pre>
+<p><strong>Shrinking at its finest</strong></p>
+<p>When a property-based test fails, <strong>Rendezvous automatically shrinks the failing test case</strong> to find <strong>the smallest possible counterexample</strong>. This process helps pinpoint the root cause of the bug by <strong>removing unnecessary complexity</strong>. Sample Rendezvous output showcasing the <strong>shrinking</strong> process:</p>
+<pre><code>₿     3494 Ӿ     3526   wallet_3 [FAIL] reverse test-reverse-uint [332420496,1825325546,120054597,1173935866,164214015] (runtime)
+₿     3494 Ӿ     3527   wallet_3 [PASS] reverse test-reverse-uint [120054597,1173935866,164214015]
+₿     3494 Ӿ     3529   wallet_3 [FAIL] reverse test-reverse-uint [0,1825325546,120054597,1173935866,164214015] (runtime)
+₿     3494 Ӿ     3530   wallet_3 [PASS] reverse test-reverse-uint [120054597,1173935866,164214015]
+₿     3494 Ӿ     3532   wallet_3 [PASS] reverse test-reverse-uint [0]
+₿     3494 Ӿ     3533   wallet_3 [PASS] reverse test-reverse-uint [0,1173935866,164214015]
+₿     3494 Ӿ     3534   wallet_3 [PASS] reverse test-reverse-uint [0,120054597,1173935866,164214015]
+₿     3494 Ӿ     3535   wallet_3 [FAIL] reverse test-reverse-uint [0,0,120054597,1173935866,164214015] (runtime)
+...
+₿     3494 Ӿ     3537   wallet_3 [PASS] reverse test-reverse-uint [0,120054597,1173935866,164214015]
+₿     3494 Ӿ     3538   wallet_3 [PASS] reverse test-reverse-uint [0]
+₿     3494 Ӿ     3539   wallet_3 [PASS] reverse test-reverse-uint [0,1173935866,164214015]
+₿     3494 Ӿ     3541   wallet_3 [PASS] reverse test-reverse-uint [0,0]
+₿     3494 Ӿ     3542   wallet_3 [PASS] reverse test-reverse-uint [0,0,1173935866,164214015]
+₿     3494 Ӿ     3543   wallet_3 [FAIL] reverse test-reverse-uint [0,0,0,1173935866,164214015] (runtime)
+₿     3494 Ӿ     3545   wallet_3 [PASS] reverse test-reverse-uint [0,0,1173935866,164214015]
+₿     3494 Ӿ     3546   wallet_3 [PASS] reverse test-reverse-uint [0]
+₿     3494 Ӿ     3547   wallet_3 [PASS] reverse test-reverse-uint [0,1173935866,164214015]
+₿     3494 Ӿ     3549   wallet_3 [PASS] reverse test-reverse-uint [0,0]
+₿     3494 Ӿ     3550   wallet_3 [PASS] reverse test-reverse-uint [0,0,1173935866,164214015]
+₿     3494 Ӿ     3551   wallet_3 [PASS] reverse test-reverse-uint [0,0,0]
+₿     3494 Ӿ     3552   wallet_3 [PASS] reverse test-reverse-uint [0,0,0,164214015]
+₿     3494 Ӿ     3553   wallet_3 [FAIL] reverse test-reverse-uint [0,0,0,0,164214015] (runtime)
+₿     3494 Ӿ     3554   wallet_3 [PASS] reverse test-reverse-uint [0,0,164214015]
+...
+₿     3494 Ӿ     3562   wallet_3 [PASS] reverse test-reverse-uint [0,0,0,164214015]
+₿     3494 Ӿ     3563   wallet_3 [PASS] reverse test-reverse-uint [0,0,0,0]
+₿     3494 Ӿ     3564   wallet_3 [FAIL] reverse test-reverse-uint [0,0,0,0,0] (runtime)
+₿     3494 Ӿ     3565   wallet_3 [PASS] reverse test-reverse-uint [0,0,0]
+...
+₿     3494 Ӿ     3574   wallet_3 [PASS] reverse test-reverse-uint [0,0,0,0]
+
+Error: Property failed after 23 tests.
+Seed : 869018352
+
+Counterexample:
+- Test Contract : reverse
+- Test Function : test-reverse-uint (public)
+- Arguments     : [[0,0,0,0,0]]
+- Caller        : wallet_3
+- Outputs       : {"type":{"response":{"ok":"bool","error":"int128"}}}
+
+What happened? Rendezvous went on a rampage and found a weak spot:
+
+The test function "test-reverse-uint" returned:
+
+    Call contract function error: ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse::test-reverse-uint((list u0 u0 u0 u0 u0)) -&gt; Error calling contract function: Runtime error while interpreting ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse: Runtime(UnwrapFailure, Some([FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:test-reverse-uint" }, FunctionIdentifier { identifier: "_native_:special_asserts" }, FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:reverse-uint" }, FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:reverse-list1" }, FunctionIdentifier { identifier: "_native_:special_fold" }, FunctionIdentifier { identifier: "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.reverse:reverse-redx-unsigned-list" }, FunctionIdentifier { identifier: "_native_:native_unwrap" }]))
+</code></pre>
+<p>To observe shrinking in action, pay attention to the <code>FAIL</code> logs. The minimal counterexample found is:</p>
+<pre><code>[0,0,0,0,0]
+</code></pre>
+<p>This is exactly what we were looking for! The bug we introduced is not related to the <strong>values</strong> in the list but to the <strong>list length</strong>.</p>
+<p>By starting with larger, more complex failing test cases and shrinking down to a list of five zeros, Rendezvous reveals that the <strong>issue is with the number of elements, not their values</strong>. This insight is crucial—it tells us that our bug causes failures when the list length exceeds a certain threshold, not when specific numbers are present.</p>
+<p>This is the power of <strong>shrinking</strong> in property-based testing: it strips away distractions and zeroes in on the core problem.</p>
+<hr>
+<h2 id="the-slice-contract"><a class="header" href="#the-slice-contract">The <code>slice</code> Contract</a></h2>
+<p>The <code>slice</code> contract included in the <code>example</code> Clarinet project contains Clarity utilities for slicing lists of various types. Same as <code>reverse</code>, it lacks public functions, so <strong>invariant testing doesn’t apply</strong>. Using Rendezvous and property-based tests to test this contract will highlight the <strong>discarding</strong> mechanism of the Clarity property-based tests.</p>
+<p>Let’s introduce a bug in the <code>slice</code> contract:</p>
+<pre><code class="language-clarity">(define-read-only (slice-uint (seq (list 127 uint)) (skip int) (n int))
+  (begin
+    (assert- (and (&lt;= 0 skip) (&lt;= skip 127)) "Out of bounds: skip")
+    (assert- (and (&lt;= 0 n) (&lt;= n 127)) "Out of bounds: n")
+    (slice-list1 seq skip n)
+  )
+)
+
+(define-private (slice-list1
+                 (seq (list 127 uint))
+                 (skip int)
+                 (n int))
+  (begin
+    (assert- (and (&lt;= 0 skip) (&lt;= skip 127)) "Out of bounds: skip")
+    (assert- (and (&lt;= 0 n) (&lt;= n 127)) "Out of bounds: n")
+    (let
+      (
+        (end
+          (-
+            (min-num-integer-integer (+ skip n) (to-int (len seq)))
+            1
+          )
+        )
+      )
+      (if
+        (&gt;= end 1) ;; Introduce a bug that forces `skip` to always be 1 in this comparison.
+        (let
+          ((i (range-1-integer-integer skip end)))
+          (map for-step-integer-list1 i (repeat127-list1 seq))
+        )
+        (list)
+      )
+    )
+  )
+)
+</code></pre>
+<p>The issue lies in the conditional check <code>(&gt;= end 1)</code>, where the <code>skip</code> value is hardcoded to <code>1</code> instead of using the user-provided input. This leads to unexpected behavior:</p>
+<ul>
+<li>Lists that should include elements from earlier positions <strong>incorrectly skip the first item</strong>.</li>
+<li>Certain inputs may trigger an <strong>unwrap failure runtime error</strong> when slicing beyond valid bounds.</li>
+</ul>
+<h3 id="property-based-tests-3"><a class="header" href="#property-based-tests-3">Property-Based Tests</a></h3>
+<p>The following property-based test evaluates the correctness of <code>slice-uint</code>:</p>
+<pre><code class="language-clarity">(define-public (test-slice-list-uint (seq (list 127 uint)) (skip int) (n int))
+  (if
+    ;; Discard the test if the input is invalid by returning `(ok false)`.
+    (or
+      (not (and (&lt;= 0 n) (&lt;= n 127)))
+      (not (and (&lt;= 0 skip) (&lt;= skip 127)))
+    )
+    (ok false)
+    (let
+      ((result (slice-uint seq skip n)))
+      (if
+        ;; Case 1: If skip &gt; length of seq, result should be an empty list.
+        (&gt; (to-uint skip) (len seq))
+        (asserts! (is-eq result (list )) ERR_ASSERTION_FAILED_1)
+        (if
+          ;; Case 2: If n &gt; length of seq - skip, result length should be
+          ;; length of seq - skip.
+          (&gt; (to-uint n) (- (len seq) (to-uint skip)))
+          (asserts!
+            (is-eq (len result) (- (len seq) (to-uint skip)))
+            ERR_ASSERTION_FAILED_2
+          )
+          ;; Case 3: If n &lt;= length of seq - skip, result length should be n.
+          (asserts! (is-eq (len result) (to-uint n)) ERR_ASSERTION_FAILED_3)
+        )
+      )
+      (ok true)
+    )
+  )
+)
+</code></pre>
+<h4 id="test-logic-3"><a class="header" href="#test-logic-3">Test logic</a></h4>
+<p>Test Case Discarding:</p>
+<ul>
+<li>If <code>skip</code> or <code>n</code> are out of valid bounds (<code>0 ≤ skip, n ≤ 127</code>), the test is discarded (returns <code>(ok false)</code>).</li>
+<li>This ensures only meaningful cases are tested.</li>
+</ul>
+<p>Valid Cases and Expected Behavior:</p>
+<ul>
+<li><strong>Case 1</strong>: When <code>skip</code> exceeds the length of the list, the result should be an empty list.</li>
+<li><strong>Case 2</strong>: When <code>n</code> is larger than the remaining elements after <code>skip</code>, the result should contain all the remaining elements.</li>
+<li><strong>Case 3</strong>: When <code>n</code> is within valid bounds, the result should contain exactly <code>n</code> elements.</li>
+</ul>
+<h4 id="checking-the-properties-3"><a class="header" href="#checking-the-properties-3">Checking the properties</a></h4>
+<p>To run Rendezvous property-based tests against the <code>reverse</code> contract, use:</p>
+<pre><code class="language-bash">rv ./example slice test
+</code></pre>
+<p><strong>Discarding at its finest</strong></p>
+<p>A key aspect introduced in this test is the <strong>discarding</strong> mechanism. Let’s revisit the rules for discarding property-based tests in Rendezvous:</p>
+<blockquote>
+<p><em>A Rendezvous property-based test is considered discarded when one of the following is true:</em></p>
+<ol>
+<li>The test returns <code>(ok false)</code>.</li>
+<li>The test’s discard function returns <code>false</code> (detailed explanation in <a href="#usage">Chapter 6</a>).</li>
+</ol>
+</blockquote>
+<p><strong>Discarding property-based tests using discard functions</strong></p>
+<p>An example of a property-based test with an attached discard function can also be found in <code>slice.tests.clar</code>:</p>
+<pre><code class="language-clarity">;; Some tests, like 'test-slice-list-int', are valid only for specific inputs.
+;; Rendezvous generates a wide range of inputs, which may include values that
+;; are unsuitable for those tests.
+;; To skip the test when inputs are invalid, the first way is to define a
+;; 'discard' function:
+;; - Must be read-only.
+;; - Name should match the property test function's, prefixed with "can-".
+;; - Parameters should mirror those of the property test.
+;; - Returns true only if inputs are valid, allowing the test to run.
+(define-read-only (can-test-slice-list-int
+    (seq (list 127 int))
+    (skip int)
+    (n int)
+  )
+  (and
+    (and (&lt;= 0 n) (&lt;= n 127))
+    (and (&lt;= 0 skip) (&lt;= skip 127))
+  )
+)
+
+(define-public (test-slice-list-int (seq (list 127 int)) (skip int) (n int))
+  (let
+    ((result (slice seq skip n)))
+    (if
+      ;; Case 1: If skip &gt; length of seq, result should be an empty list.
+      (&gt; (to-uint skip) (len seq))
+      (asserts! (is-eq result (list )) ERR_ASSERTION_FAILED_1)
+      (if
+        ;; Case 2: If n &gt; length of seq - skip, result length should be
+        ;; length of seq - skip.
+        (&gt; (to-uint n) (- (len seq) (to-uint skip)))
+        (asserts!
+          (is-eq (len result) (- (len seq) (to-uint skip)))
+          ERR_ASSERTION_FAILED_2
+        )
+        ;; Case 3: If n &lt;= length of seq - skip, result length should be n.
+        (asserts! (is-eq (len result) (to-uint n)) ERR_ASSERTION_FAILED_3)
+      )
+    )
+    (ok true)
+  )
+)
+</code></pre>
+<p>The <strong>discarding</strong> mechanism helps filter out invalid test cases, making property-based tests more efficient and ensuring the test results are correctly displayed. Sample output:</p>
+<pre><code>₿        5 Ӿ      115   wallet_1 [WARN] slice test-slice-list-bool [true,false,false] -17 -1286688432
+₿        5 Ӿ      116   wallet_4 [WARN] slice test-slice-list-bool [false,false] 985789078 1631962668
+₿        5 Ӿ      117   wallet_1 [WARN] slice test-slice-string b^:hD\"Y. 1744256708 676842982
+₿        5 Ӿ      118   wallet_1 [FAIL] slice test-slice-list-uint [1818238100,1267097220,587282248,376122205,358580924,724240912,1327852627,89884546] 17 22 (runtime)
+₿        5 Ӿ      119   wallet_8 [WARN] slice test-slice-buff cfe44 -13 15
+₿        5 Ӿ      120   wallet_1 [WARN] slice test-slice-buff cfe44 -13 15
+₿        5 Ӿ      121   wallet_1 [WARN] slice test-slice-ascii 33!rt -13 15
+₿        5 Ӿ      122   wallet_1 [PASS] slice test-slice-list-uint [] 17 22
+₿      105 Ӿ      223   wallet_1 [FAIL] slice test-slice-list-uint [358580924,724240912,1327852627,89884546] 17 22 (runtime)
+₿      105 Ӿ      224   wallet_1 [FAIL] slice test-slice-list-uint [1327852627,89884546] 17 22 (runtime)
+₿      105 Ӿ      225   wallet_1 [PASS] slice test-slice-list-uint [89884546] 17 22
+₿      205 Ӿ      326   wallet_1 [FAIL] slice test-slice-list-uint [0,89884546] 17 22 (runtime)
+₿      205 Ӿ      327   wallet_1 [PASS] slice test-slice-list-uint [89884546] 17 22
+₿      305 Ӿ      428   wallet_1 [PASS] slice test-slice-list-uint [0] 17 22
+₿      405 Ӿ      529   wallet_1 [FAIL] slice test-slice-list-uint [0,0] 17 22 (runtime)
+</code></pre>
+<p>Tests marked as <code>WARN</code> are discarded, meaning they didn’t meet the criteria to be executed. This gives the user a clear view of how often the test actually ran and helps identify patterns in discarded cases.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="contributing"><a class="header" href="#contributing">Contributing</a></h1>
+<p>We welcome all contributions. Big or small, every change matters.</p>
+<p>To keep things simple and to maintain quality, please follow these guidelines.</p>
+<h2 id="before-you-begin"><a class="header" href="#before-you-begin">Before You Begin</a></h2>
+<ul>
+<li>Please read our <code>README.md</code> and <code>ACKNOWLEDGEMENTS</code> to understand our work.</li>
+<li>Familiarize yourself with our directory structure. Each file is hand-crafted.</li>
+<li>Make sure that you have Node.js LTS 20.18.0 or later.</li>
+</ul>
+<h2 id="how-to-contribute"><a class="header" href="#how-to-contribute">How to Contribute</a></h2>
+<ol>
+<li>
+<p><strong>Open an issue:</strong>
+If you find a bug or want to suggest an improvement, open an issue.
+Describe the problem and proposed changes in simple terms.</p>
+</li>
+<li>
+<p><strong>Create a fork and branch:</strong>
+Work in a dedicated branch. Use short, clear names:</p>
+<pre><code>git checkout -b my-fix
+</code></pre>
+</li>
+<li>
+<p><strong>Maintain code style:</strong>
+We value simple, readable code. Follow our coding style:</p>
+<ul>
+<li>Keep line length &lt;= 79 chars.</li>
+<li>Use simple American English.</li>
+<li>Keep comments brief and clear.</li>
+<li>Keep logic small and focused.</li>
+</ul>
+<p>Example code comment:</p>
+<pre><code class="language-js">// Good: Explains why, offering crucial context.
+// Bad: Focuses on how or adds unnecessary verbosity.
+</code></pre>
+</li>
+<li>
+<p><strong>Write tests:</strong>
+Test your changes. Add or update tests in <code>*.tests.ts</code> files.
+Run tests:</p>
+<pre><code>npm test
+</code></pre>
+<p>Make sure all tests pass before sending your changes.</p>
+</li>
+<li>
+<p><strong>Use clear commit messages:</strong></p>
+<ul>
+<li>Summarize changes in 79 chars or fewer.</li>
+<li>Use simple language.</li>
+<li>Example commit message:
+<pre><code>Fix off-by-one error in property-based test
+</code></pre>
+</li>
+</ul>
+<p>Commit messages should be short and clear.</p>
+</li>
+<li>
+<p><strong>Open a pull request (PR) targeting the <code>master</code> branch:</strong>
+Keep it small and focused. Explain what and why.
+Example PR description:</p>
+<pre><code>This PR fixes a minor off-by-one error in the property-based tests.
+The fuzzing process now produces the expected results.
+</code></pre>
+</li>
+<li>
+<p><strong>Be patient and open-minded:</strong>
+Reviewers may ask questions or suggest changes.
+We believe in polite and constructive discussion.</p>
+</li>
+</ol>
+<h2 id="tips-for-a-great-contribution"><a class="header" href="#tips-for-a-great-contribution">Tips for a Great Contribution</a></h2>
+<ul>
+<li>Keep your changes small and do one thing at a time.</li>
+<li>Make sure your PR is easy to review.
+Clear code and tests ease the review process.</li>
+<li>Provide context for your changes. Explain why they are needed.</li>
+<li>Don’t rush. Take time to polish your work.</li>
+</ul>
+<h2 id="thank-you"><a class="header" href="#thank-you">Thank You</a></h2>
+<p>We appreciate your interest in improving Rendezvous (<code>rv</code>).
+Your contributions help keep <code>rv</code> robust, helpful, and accessible to everyone.</p>
+<hr>
+<p><em>This CONTRIBUTING guide is crafted with inspiration from the following:</em></p>
+<ul>
+<li><a href="https://github.com/AutoFixture/AutoFixture/blob/master/CONTRIBUTING.md">AutoFixture CONTRIBUTING.md</a> by AutoFixture contributors</li>
+<li><a href="https://github.com/hedgehogqa/haskell-hedgehog/blob/master/STYLE_GUIDE.md">Hedgehog STYLE_GUIDE.md</a> by Hedgehog contributors</li>
+<li><a href="https://blog.ploeh.dk/2015/01/15/10-tips-for-better-pull-requests/">10 Tips for Better Pull Requests</a> by Mark Seemann (ploeh)</li>
+<li><a href="https://ayende.com/blog/163297/the-importance-of-comments">The Importance of Comments</a> by Oren Eini (Ayende Rahien)</li>
+</ul>
+<p><em>(These references also highlight some of our roots and past influences.)</em></p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+
+            </nav>
+
+        </div>
+
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
+
+
+
+        <script>
+            window.playground_copyable = true;
+        </script>
+
+
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
+
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
+
+        <!-- Custom JS scripts -->
+
+        <script>
+        window.addEventListener('load', function() {
+            window.setTimeout(window.print, 100);
+        });
+        </script>
+
+
+    </div>
+    </body>
+</html>
