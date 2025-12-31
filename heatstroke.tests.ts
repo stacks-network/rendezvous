@@ -7,6 +7,8 @@ import fc from "fast-check";
 import { reporter } from "./heatstroke";
 import { getContractNameFromContractId } from "./shared";
 import { createIsolatedTestEnvironment } from "./test.utils";
+import { PropertyTestError } from "./property";
+import { FalsifiedInvariantError } from "./invariant";
 
 const isolatedTestEnvPrefix = "rendezvous-test-heatstroke-";
 
@@ -58,6 +60,7 @@ describe("Custom reporter logging", () => {
             fc.oneof(asciiString(), fc.nat(), fc.boolean())
           ),
           errorMessage: asciiString(),
+          clarityError: asciiString(),
           sutCallers: fc.array(
             fc.constantFrom(
               ...new Map(
@@ -91,6 +94,7 @@ describe("Custom reporter logging", () => {
           };
           invariantArgs: (string | number | boolean)[];
           errorMessage: string;
+          clarityError: string;
           sutCallers: [string, string][];
           invariantCaller: [string, string];
         }) => {
@@ -119,7 +123,7 @@ describe("Custom reporter logging", () => {
                 invariantCaller: r.invariantCaller,
               },
             ],
-            error: new Error(r.errorMessage),
+            error: new FalsifiedInvariantError(r.errorMessage, r.clarityError),
           };
 
           // Exercise
@@ -157,7 +161,7 @@ describe("Custom reporter logging", () => {
             `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
             `The invariant "${
               r.selectedInvariant.name
-            }" returned:\n\n${runDetails.error
+            }" returned:\n\n${runDetails.error?.clarityError
               ?.toString()
               .split("\n")
               .map((line) => "    " + line)
@@ -215,6 +219,7 @@ describe("Custom reporter logging", () => {
             fc.oneof(asciiString(), fc.nat(), fc.boolean())
           ),
           errorMessage: asciiString(),
+          clarityError: asciiString(),
           sutCallers: fc.array(
             fc.constantFrom(
               ...new Map(
@@ -249,6 +254,7 @@ describe("Custom reporter logging", () => {
           };
           invariantArgs: (string | number | boolean)[];
           errorMessage: string;
+          clarityError: string;
           sutCallers: [string, string][];
           invariantCaller: [string, string];
         }) => {
@@ -278,7 +284,7 @@ describe("Custom reporter logging", () => {
                 invariantCaller: r.invariantCaller,
               },
             ],
-            error: new Error(r.errorMessage),
+            error: new FalsifiedInvariantError(r.errorMessage, r.clarityError),
           };
 
           // Exercise
@@ -317,7 +323,7 @@ describe("Custom reporter logging", () => {
             `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
             `The invariant "${
               r.selectedInvariant.name
-            }" returned:\n\n${runDetails.error
+            }" returned:\n\n${runDetails.error?.clarityError
               ?.toString()
               .split("\n")
               .map((line) => "    " + line)
@@ -483,6 +489,7 @@ describe("Custom reporter logging", () => {
             fc.oneof(asciiString(), fc.nat(), fc.boolean())
           ),
           errorMessage: asciiString(),
+          clarityError: asciiString(),
           testCaller: fc.constantFrom(
             ...new Map(
               [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
@@ -502,11 +509,12 @@ describe("Custom reporter logging", () => {
           };
           functionArgs: (string | number | boolean)[];
           errorMessage: string;
+          clarityError: string;
           testCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
-          const testContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_tests`;
+          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_rendezvous`;
 
           radio.on("logFailure", (message: string) => {
             emittedErrorLogs.push(message);
@@ -518,14 +526,14 @@ describe("Custom reporter logging", () => {
             seed: r.seed,
             counterexample: [
               {
-                testContractId: testContractId,
+                rendezvousContractId: rendezvousContractId,
                 selectedTestFunction:
                   r.selectedTestFunction as any as ContractInterfaceFunction,
                 functionArgs: r.functionArgs,
                 testCaller: r.testCaller,
               },
             ],
-            error: new Error(r.errorMessage),
+            error: new PropertyTestError(r.errorMessage, r.clarityError),
           };
 
           // Exercise
@@ -536,8 +544,8 @@ describe("Custom reporter logging", () => {
             `\nError: Property failed after ${r.numRuns} tests.`,
             `Seed : ${r.seed}`,
             `\nCounterexample:`,
-            `- Test Contract : ${getContractNameFromContractId(
-              testContractId
+            `- Contract : ${getContractNameFromContractId(
+              rendezvousContractId
             )}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
             `- Arguments     : ${JSON.stringify(r.functionArgs)}`,
@@ -548,7 +556,7 @@ describe("Custom reporter logging", () => {
             `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
             `The test function "${
               r.selectedTestFunction.name
-            }" returned:\n\n${runDetails.error
+            }" returned:\n\n${runDetails.error?.clarityError
               ?.toString()
               .split("\n")
               .map((line) => "    " + line)
@@ -595,6 +603,7 @@ describe("Custom reporter logging", () => {
             fc.oneof(asciiString(), fc.nat(), fc.boolean())
           ),
           errorMessage: asciiString(),
+          clarityError: asciiString(),
           testCaller: fc.constantFrom(
             ...new Map(
               [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
@@ -615,11 +624,12 @@ describe("Custom reporter logging", () => {
           };
           functionArgs: (string | number | boolean)[];
           errorMessage: string;
+          clarityError: string;
           testCaller: [string, string];
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
-          const testContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_tests`;
+          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_rendezvous`;
 
           radio.on("logFailure", (message: string) => {
             emittedErrorLogs.push(message);
@@ -632,14 +642,14 @@ describe("Custom reporter logging", () => {
             seed: r.seed,
             counterexample: [
               {
-                testContractId: testContractId,
+                rendezvousContractId: rendezvousContractId,
                 selectedTestFunction:
                   r.selectedTestFunction as any as ContractInterfaceFunction,
                 functionArgs: r.functionArgs,
                 testCaller: r.testCaller,
               },
             ],
-            error: new Error(r.errorMessage),
+            error: new PropertyTestError(r.errorMessage, r.clarityError),
           };
 
           // Exercise
@@ -651,8 +661,8 @@ describe("Custom reporter logging", () => {
             `Seed : ${r.seed}`,
             `Path : ${r.path}`,
             `\nCounterexample:`,
-            `- Test Contract : ${getContractNameFromContractId(
-              testContractId
+            `- Contract : ${getContractNameFromContractId(
+              rendezvousContractId
             )}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
             `- Arguments     : ${JSON.stringify(r.functionArgs)}`,
@@ -663,7 +673,7 @@ describe("Custom reporter logging", () => {
             `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
             `The test function "${
               r.selectedTestFunction.name
-            }" returned:\n\n${runDetails.error
+            }" returned:\n\n${runDetails.error?.clarityError
               ?.toString()
               .split("\n")
               .map((line) => "    " + line)
@@ -730,7 +740,7 @@ describe("Custom reporter logging", () => {
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
-          const testContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_tests`;
+          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_rendezvous`;
 
           radio.on("logFailure", (message: string) => {
             emittedErrorLogs.push(message);
@@ -742,7 +752,7 @@ describe("Custom reporter logging", () => {
             seed: r.seed,
             counterexample: [
               {
-                testContractId: testContractId,
+                rendezvousContractId: rendezvousContractId,
                 selectedTestFunction:
                   r.selectedTestFunction as any as ContractInterfaceFunction,
                 functionArgs: r.functionArgs,

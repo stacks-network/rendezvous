@@ -545,7 +545,8 @@ export const checkInvariants = async (
             // `true`. Create a custom error to distinguish this case from
             // runtime errors.
             throw new FalsifiedInvariantError(
-              `Invariant failed for ${targetContractName} contract: "${r.selectedInvariant.name}" returned ${invariantCallClarityResult}`
+              `Invariant failed for ${targetContractName} contract: "${r.selectedInvariant.name}" returned ${invariantCallClarityResult}`,
+              invariantCallClarityResult
             );
           }
         } catch (error: any) {
@@ -663,8 +664,10 @@ const filterInvariantFunctions = (
     ])
   );
 
-class FalsifiedInvariantError extends Error {
-  constructor(message: string) {
+export class FalsifiedInvariantError extends Error {
+  readonly clarityError: string;
+  constructor(message: string, clarityError: string) {
     super(message);
+    this.clarityError = clarityError;
   }
 }

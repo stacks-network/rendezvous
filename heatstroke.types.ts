@@ -6,13 +6,14 @@ export type RunDetails = {
   numRuns: number;
   seed: number;
   path?: string;
-  error: Error;
+  error?: Error;
+  errorInstance?: Error;
 };
 
 type CounterExample = TestCounterExample | InvariantCounterExample;
 
 export type TestCounterExample = {
-  testContractId: string;
+  rendezvousContractId: string;
   selectedTestFunction: ContractInterfaceFunction;
   functionArgs: any;
   testCaller: [string, string];
