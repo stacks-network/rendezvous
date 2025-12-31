@@ -19,6 +19,7 @@ import {
   isTraitReferenceFunction,
   getNonTestableTraitFunctions,
 } from "./traits";
+import { persistFailure } from "./persistence";
 
 /**
  * Runs property-based tests on the target contract and logs the progress.
@@ -220,8 +221,13 @@ export const checkProperties = (
     return;
   }
 
-  const radioReporter = (runDetails: any) => {
+  const radioReporter = async (runDetails: any) => {
     reporter(runDetails, radio, "test", statistics);
+
+    // Persist failures for regression testing.
+    if (runDetails.failed) {
+      await persistFailure(runDetails, "test", testContractId);
+    }
   };
 
   fc.assert(

@@ -21,6 +21,7 @@ import {
 import { EnrichedContractInterfaceFunction } from "./shared.types";
 import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
 import { Statistics } from "./heatstroke.types";
+import { persistFailure } from "./persistence";
 
 /**
  * Runs invariant testing on the target contract and logs the progress. Reports
@@ -255,8 +256,13 @@ export const checkInvariants = async (
     return;
   }
 
-  const radioReporter = (runDetails: any) => {
+  const radioReporter = async (runDetails: any) => {
     reporter(runDetails, radio, "invariant", statistics);
+
+    // Persist failures for regression testing.
+    if (runDetails.failed) {
+      await persistFailure(runDetails, "invariant", rendezvousContractId);
+    }
   };
 
   await fc.assert(
