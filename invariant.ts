@@ -21,6 +21,8 @@ import {
 import { EnrichedContractInterfaceFunction } from "./shared.types";
 import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
 import { Statistics } from "./heatstroke.types";
+import { persistFailure } from "./persistence";
+import { TestMode } from "./app";
 
 /**
  * Runs invariant testing on the target contract and logs the progress. Reports
@@ -34,6 +36,7 @@ import { Statistics } from "./heatstroke.types";
  * @param runs The number of test runs.
  * @param bail Stop execution after the first failure and prevent further
  * shrinking.
+ * @param mode The test mode.
  * @param dialerRegistry The custom dialer registry.
  * @param radio The custom logging event emitter.
  * @returns void
@@ -46,6 +49,7 @@ export const checkInvariants = async (
   seed: number | undefined,
   runs: number | undefined,
   bail: boolean,
+  mode: TestMode,
   dialerRegistry: DialerRegistry | undefined,
   radio: EventEmitter
 ) => {
@@ -255,8 +259,13 @@ export const checkInvariants = async (
     return;
   }
 
-  const radioReporter = (runDetails: any) => {
+  const radioReporter = async (runDetails: any) => {
     reporter(runDetails, radio, "invariant", statistics);
+
+    // Persist failures for regression testing.
+    if (runDetails.failed) {
+      await persistFailure(runDetails, "invariant", rendezvousContractId);
+    }
   };
 
   await fc.assert(
@@ -545,7 +554,8 @@ export const checkInvariants = async (
             // `true`. Create a custom error to distinguish this case from
             // runtime errors.
             throw new FalsifiedInvariantError(
-              `Invariant failed for ${targetContractName} contract: "${r.selectedInvariant.name}" returned ${invariantCallClarityResult}`
+              `Invariant failed for ${targetContractName} contract: "${r.selectedInvariant.name}" returned ${invariantCallClarityResult}`,
+              invariantCallClarityResult
             );
           }
         } catch (error: any) {
@@ -663,8 +673,10 @@ const filterInvariantFunctions = (
     ])
   );
 
-class FalsifiedInvariantError extends Error {
-  constructor(message: string) {
+export class FalsifiedInvariantError extends Error {
+  readonly clarityError: string;
+  constructor(message: string, clarityError: string) {
     super(message);
+    this.clarityError = clarityError;
   }
 }

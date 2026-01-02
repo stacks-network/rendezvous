@@ -19,6 +19,8 @@ import {
   isTraitReferenceFunction,
   getNonTestableTraitFunctions,
 } from "./traits";
+import { persistFailure } from "./persistence";
+import { TestMode } from "./app";
 
 /**
  * Runs property-based tests on the target contract and logs the progress.
@@ -32,10 +34,11 @@ import {
  * @param runs The number of test runs.
  * @param bail Stop execution after the first failure and prevent further
  * shrinking.
+ * @param mode The test mode.
  * @param radio The custom logging event emitter.
  * @returns void
  */
-export const checkProperties = (
+export const checkProperties = async (
   simnet: Simnet,
   targetContractName: string,
   rendezvousList: string[],
@@ -43,6 +46,7 @@ export const checkProperties = (
   seed: number | undefined,
   runs: number | undefined,
   bail: boolean,
+  mode: TestMode,
   radio: EventEmitter
 ) => {
   const statistics: Statistics = {
@@ -220,15 +224,20 @@ export const checkProperties = (
     return;
   }
 
-  const radioReporter = (runDetails: any) => {
+  const radioReporter = async (runDetails: any) => {
     reporter(runDetails, radio, "test", statistics);
+
+    // Persist failures for regression testing.
+    if (runDetails.failed) {
+      await persistFailure(runDetails, "test", testContractId);
+    }
   };
 
-  fc.assert(
-    fc.property(
+  await fc.assert(
+    fc.asyncProperty(
       fc
         .record({
-          testContractId: fc.constant(testContractId),
+          rendezvousContractId: fc.constant(testContractId),
           testCaller: fc.constantFrom(...eligibleAccounts.entries()),
           canMineBlocks: fc.boolean(),
         })
@@ -273,7 +282,7 @@ export const checkProperties = (
             })
             .map((burnBlocks) => ({ ...r, ...burnBlocks }))
         ),
-      (r) => {
+      async (r) => {
         const selectedTestFunctionArgs = argsToCV(
           r.selectedTestFunction,
           r.functionArgs
@@ -294,13 +303,13 @@ export const checkProperties = (
         const [testCallerWallet, testCallerAddress] = r.testCaller;
 
         const discardFunctionName = testContractsPairedFunctions
-          .get(r.testContractId)!
+          .get(r.rendezvousContractId)!
           .get(r.selectedTestFunction.name);
 
         const discarded = isTestDiscarded(
           discardFunctionName,
           selectedTestFunctionArgs,
-          r.testContractId,
+          r.rendezvousContractId,
           simnet,
           testCallerAddress
         );
@@ -325,7 +334,7 @@ export const checkProperties = (
             // If the function call results in a runtime error, the error will
             // be caught and logged as a test failure in the catch block.
             const { result: testFunctionCallResult } = simnet.callPublicFn(
-              r.testContractId,
+              r.rendezvousContractId,
               r.selectedTestFunction.name,
               selectedTestFunctionArgs,
               testCallerAddress
@@ -567,7 +576,7 @@ export const isReturnTypeBoolean = (
   discardFunctionInterface: ContractInterfaceFunction
 ) => discardFunctionInterface.outputs.type === "bool";
 
-class PropertyTestError extends Error {
+export class PropertyTestError extends Error {
   readonly clarityError: string;
   constructor(message: string, clarityError: string) {
     super(message);
