@@ -5,6 +5,7 @@ module.exports = {
   transform: {
     "^.+.tsx?$": ["ts-jest", {}],
   },
+  silent: true,
   modulePathIgnorePatterns: ["<rootDir>/dist/"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   testTimeout: 600000, // 10 minutes
