@@ -22,6 +22,7 @@ import { EnrichedContractInterfaceFunction } from "./shared.types";
 import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
 import { Statistics } from "./heatstroke.types";
 import { persistFailure } from "./persistence";
+import { TestMode } from "./app";
 
 /**
  * Runs invariant testing on the target contract and logs the progress. Reports
@@ -35,6 +36,7 @@ import { persistFailure } from "./persistence";
  * @param runs The number of test runs.
  * @param bail Stop execution after the first failure and prevent further
  * shrinking.
+ * @param mode The test mode.
  * @param dialerRegistry The custom dialer registry.
  * @param radio The custom logging event emitter.
  * @returns void
@@ -47,6 +49,7 @@ export const checkInvariants = async (
   seed: number | undefined,
   runs: number | undefined,
   bail: boolean,
+  mode: TestMode,
   dialerRegistry: DialerRegistry | undefined,
   radio: EventEmitter
 ) => {

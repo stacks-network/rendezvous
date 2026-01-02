@@ -20,6 +20,7 @@ import {
   getNonTestableTraitFunctions,
 } from "./traits";
 import { persistFailure } from "./persistence";
+import { TestMode } from "./app";
 
 /**
  * Runs property-based tests on the target contract and logs the progress.
@@ -33,6 +34,7 @@ import { persistFailure } from "./persistence";
  * @param runs The number of test runs.
  * @param bail Stop execution after the first failure and prevent further
  * shrinking.
+ * @param mode The test mode.
  * @param radio The custom logging event emitter.
  * @returns void
  */
@@ -44,6 +46,7 @@ export const checkProperties = async (
   seed: number | undefined,
   runs: number | undefined,
   bail: boolean,
+  mode: TestMode,
   radio: EventEmitter
 ) => {
   const statistics: Statistics = {

@@ -15,6 +15,18 @@ import { existsSync } from "fs";
 import { parseArgs } from "util";
 import { DialerRegistry } from "./dialer";
 
+/**
+ * Test execution modes for Rendezvous.
+ */
+export enum TestMode {
+  /** Run regressions first, then new tests */
+  ALL = "all",
+  /** Skip regressions, only run new tests */
+  NEW = "new",
+  /** Only replay regressions, no new tests */
+  REG = "reg",
+}
+
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
 };
@@ -73,6 +85,7 @@ export async function main() {
       runs: { type: "string" },
       dial: { type: "string" },
       bail: { type: "boolean" },
+      mode: { type: "string" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -91,6 +104,8 @@ export async function main() {
     runs: options.runs ? parseInt(options.runs, 10) : undefined,
     /** Whether to bail on the first failure. */
     bail: options.bail || false,
+    /** The test mode. Valid values: all, new, reg. Default: all. */
+    mode: (options.mode?.toLowerCase() as TestMode | undefined) || TestMode.ALL,
     /** The path to the dialer file. */
     dial: options.dial || undefined,
     /** Whether to show the help message. */
@@ -135,6 +150,15 @@ export async function main() {
     return;
   }
 
+  if (!Object.values(TestMode).includes(runConfig.mode as TestMode)) {
+    radio.emit(
+      "logMessage",
+      red("\nInvalid mode provided. Possible values: all (default), new, reg.")
+    );
+    radio.emit("logMessage", helpMessage);
+    return;
+  }
+
   /**
    * The relative path to the manifest file, either `Clarinet.toml` or
    * `Clarinet-<contract-name>.toml`. If the latter exists, it is used.
@@ -156,6 +180,16 @@ export async function main() {
 
   if (runConfig.bail) {
     radio.emit("logMessage", `Bailing on first failure.`);
+  }
+
+  if (runConfig.mode) {
+    const modeDesc =
+      runConfig.mode === TestMode.ALL
+        ? "regressions first, then a fresh round of tests"
+        : runConfig.mode === TestMode.NEW
+        ? "fresh round of tests only (skip regressions)"
+        : "regressions only (no fresh round of tests)";
+    radio.emit("logMessage", `Mode: ${modeDesc}`);
   }
 
   if (runConfig.dial !== undefined) {
@@ -214,6 +248,7 @@ export async function main() {
         runConfig.seed,
         runConfig.runs,
         runConfig.bail,
+        runConfig.mode,
         dialerRegistry,
         radio
       );
@@ -229,6 +264,7 @@ export async function main() {
         runConfig.seed,
         runConfig.runs,
         runConfig.bail,
+        runConfig.mode,
         radio
       );
       break;
