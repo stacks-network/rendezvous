@@ -13,19 +13,25 @@ describe("Command-line arguments handling", () => {
   const helpMessage = `
   rv v${version}
   
-  Usage: rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--runs=<runs>] [--dial=<path-to-dialers-file>] [--help]
+  Usage: rv <path> <contract> <type> [OPTIONS]
 
-  Positional arguments:
-    path-to-clarinet-project - The path to the Clarinet project.
-    contract-name - The name of the contract to be fuzzed.
-    type - The type to use for exercising the contracts. Possible values: test, invariant.
+  Arguments:
+    <path>        Path to the Clarinet project
+    <contract>    Contract name to fuzz
+    <type>        Test type: test | invariant
 
   Options:
-    --seed - The seed to use for the replay functionality.
-    --runs - The runs to use for iterating over the tests. Default: 100.
-    --bail - Stop after the first failure.
-    --dial – The path to a JavaScript file containing custom pre- and post-execution functions (dialers).
-    --help - Show the help message.
+    --seed=<n>    Seed for replay functionality
+    --runs=<n>    Number of test iterations [default: 100]
+    --mode=<m>    Test mode: all | new | reg [default: all]
+                    all - Run regressions, then new tests
+                    new - Skip regressions
+                    reg - Regressions only
+    --dial=<f>    Path to custom dialers file
+    --bail        Stop on first failure
+    -h, --help    Show this message
+
+  Learn more: https://stacks-network.github.io/rendezvous/
   `;
 
   const noManifestMessage = red(
