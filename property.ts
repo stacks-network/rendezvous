@@ -36,7 +36,7 @@ import { persistFailure } from "./persistence";
  * @param radio The custom logging event emitter.
  * @returns void
  */
-export const checkProperties = (
+export const checkProperties = async (
   simnet: Simnet,
   targetContractName: string,
   rendezvousList: string[],
@@ -230,8 +230,8 @@ export const checkProperties = (
     }
   };
 
-  fc.assert(
-    fc.property(
+  await fc.assert(
+    fc.asyncProperty(
       fc
         .record({
           rendezvousContractId: fc.constant(testContractId),
@@ -279,7 +279,7 @@ export const checkProperties = (
             })
             .map((burnBlocks) => ({ ...r, ...burnBlocks }))
         ),
-      (r) => {
+      async (r) => {
         const selectedTestFunctionArgs = argsToCV(
           r.selectedTestFunction,
           r.functionArgs
