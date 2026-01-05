@@ -19,8 +19,10 @@ import {
   isTraitReferenceFunction,
   getNonTestableTraitFunctions,
 } from "./traits";
-import { persistFailure } from "./persistence";
+import { loadFailureStore, persistFailure } from "./persistence";
 import { TestMode } from "./app";
+import { ImplementedTraitType } from "./traits.types";
+import { EnrichedContractInterfaceFunction } from "./shared.types";
 
 /**
  * Runs property-based tests on the target contract and logs the progress.
@@ -144,11 +146,6 @@ export const checkProperties = async (
     ],
   ]);
 
-  radio.emit(
-    "logMessage",
-    `\nStarting property testing type for the ${targetContractName} contract...\n`
-  );
-
   // Search for discard functions, for each test function. This map will
   // be used to pair the test functions with their corresponding discard
   // functions.
@@ -233,6 +230,88 @@ export const checkProperties = async (
     }
   };
 
+  if (mode === TestMode.REGRESSION) {
+    // Start a regression round of tests.
+    radio.emit(
+      "logMessage",
+      `Loading ${targetContractName} contract regressions...\n`
+    );
+
+    const { test: regressions } = await loadFailureStore(testContractId);
+
+    radio.emit(
+      "logMessage",
+      `Found ${regressions.length} regressions for the ${targetContractName} contract.\n`
+    );
+
+    for (const regression of regressions) {
+      radio.emit(
+        "logMessage",
+        `Running regression test for the ${targetContractName} contract with:\n`
+      );
+      radio.emit("logMessage", `Seed: ${regression.seed}\n`);
+
+      await propertyTest(
+        testContractId,
+        targetContractName,
+        eligibleAccounts,
+        testFunctions,
+        simnetAddresses,
+        projectTraitImplementations,
+        testContractsPairedFunctions,
+        simnet,
+        statistics,
+        radio,
+        runs,
+        bail,
+        regression.seed,
+        radioReporter
+      );
+    }
+  }
+
+  if (mode === TestMode.NEW) {
+    // Start a fresh round of tests.
+    radio.emit(
+      "logMessage",
+      `Starting fresh round of property testing for the ${targetContractName} contract...\n`
+    );
+
+    await propertyTest(
+      testContractId,
+      targetContractName,
+      eligibleAccounts,
+      testFunctions,
+      simnetAddresses,
+      projectTraitImplementations,
+      testContractsPairedFunctions,
+      simnet,
+      statistics,
+      radio,
+      runs,
+      bail,
+      seed,
+      radioReporter
+    );
+  }
+};
+
+const propertyTest = async (
+  testContractId: string,
+  targetContractName: string,
+  eligibleAccounts: Map<string, string>,
+  testFunctions: EnrichedContractInterfaceFunction[],
+  simnetAddresses: string[],
+  projectTraitImplementations: Record<string, ImplementedTraitType[]>,
+  testContractsPairedFunctions: Map<string, Map<string, string | undefined>>,
+  simnet: Simnet,
+  statistics: Statistics,
+  radio: EventEmitter,
+  runs: number | undefined,
+  bail: boolean,
+  seed: number | undefined,
+  radioReporter: (runDetails: any) => Promise<void>
+) => {
   await fc.assert(
     fc.asyncProperty(
       fc

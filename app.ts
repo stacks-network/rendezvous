@@ -14,6 +14,7 @@ import { red } from "ansicolor";
 import { existsSync } from "fs";
 import { parseArgs } from "util";
 import { DialerRegistry } from "./dialer";
+import { getFailureFilePath } from "./persistence";
 
 /**
  * Test execution modes for Rendezvous.
@@ -191,6 +192,14 @@ export async function main() {
         ? "NEW (run a fresh round of tests)"
         : "REG (run regression tests)";
     radio.emit("logMessage", `Mode: ${modeDesc}`);
+    if (runConfig.mode === TestMode.REGRESSION) {
+      radio.emit(
+        "logMessage",
+        `Regressions loaded from: ${resolve(
+          getFailureFilePath(runConfig.sutContractName)
+        )}`
+      );
+    }
   }
 
   if (runConfig.dial !== undefined) {

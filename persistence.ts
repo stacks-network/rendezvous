@@ -44,16 +44,19 @@ const DEFAULT_CONFIG: Required<PersistenceConfig> = {
  * Gets the file path for a contract's failure store.
  * Uses contractId as filename (e.g., "ST1...ADDR.counter.json")
  */
-const getFailureFilePath = (contractId: string, baseDir: string): string => {
+export const getFailureFilePath = (
+  contractId: string,
+  baseDir: string = DEFAULT_CONFIG.baseDir
+): string => {
   return path.join(baseDir, `${contractId}.json`);
 };
 
 /**
  * Loads the failure store for a contract, or creates an empty one.
  */
-const loadFailureStore = async (
+export const loadFailureStore = async (
   contractId: string,
-  baseDir: string
+  baseDir: string = DEFAULT_CONFIG.baseDir
 ): Promise<FailureStore> => {
   const filePath = getFailureFilePath(contractId, baseDir);
 
