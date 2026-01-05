@@ -3,4 +3,4 @@ deployments
 dist
 coverage
 **/.cache/**
-rendezvous-regressions
+.rendezvous-regressions
