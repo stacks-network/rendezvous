@@ -43,6 +43,9 @@ const DEFAULT_CONFIG: Required<PersistenceConfig> = {
 /**
  * Gets the file path for a contract's failure store.
  * Uses contractId as filename (e.g., "ST1...ADDR.counter.json")
+ * @param contractId The contract identifier being tested
+ * @param baseDir The base directory for storing regression files
+ * @returns The file path for the failure store
  */
 export const getFailureFilePath = (
   contractId: string,
@@ -53,8 +56,11 @@ export const getFailureFilePath = (
 
 /**
  * Loads the failure store for a contract, or creates an empty one.
+ * @param contractId The contract identifier being tested
+ * @param baseDir The base directory for storing regression files
+ * @returns A promise that resolves when the failure store is loaded
  */
-export const loadFailureStore = async (
+const loadFailureStore = async (
   contractId: string,
   baseDir: string = DEFAULT_CONFIG.baseDir
 ): Promise<FailureStore> => {
@@ -64,27 +70,23 @@ export const loadFailureStore = async (
     const content = await promises.readFile(filePath, "utf-8");
     return JSON.parse(content);
   } catch (error: any) {
-    if (error.code === "ENOENT") {
-      // File doesn't exist - return empty store.
-      return { invariant: [], test: [] };
-    }
-    console.warn(
-      `Warning: Could not read ${filePath}, starting fresh:`,
-      error.message
-    );
     return { invariant: [], test: [] };
   }
 };
 
 /**
  * Saves the failure store for a contract.
+ * @param contractId The contract identifier being tested
+ * @param baseDir The base directory for storing regression files
+ * @param store The failure store to save
+ * @returns A promise that resolves when the failure store is saved
  */
 const saveFailureStore = async (
   contractId: string,
   baseDir: string,
   store: FailureStore
 ): Promise<void> => {
-  // Ensure the base directory exists
+  // Ensure the base directory exists.
   await promises.mkdir(baseDir, { recursive: true });
 
   const filePath = getFailureFilePath(contractId, baseDir);
@@ -98,6 +100,7 @@ const saveFailureStore = async (
  * @param type The type of test that failed
  * @param contractId The contract identifier being tested
  * @param config Optional configuration for persistence behavior
+ * @returns A promise that resolves when the failure is persisted
  */
 export const persistFailure = async (
   runDetails: RunDetails,
@@ -141,7 +144,6 @@ export const persistFailure = async (
   await saveFailureStore(contractId, baseDir, store);
 };
 
-// TODO: Useful for loading failures in the beginning of the test run.
 /**
  * Loads persisted failures for a given contract and test type.
  *
@@ -150,7 +152,7 @@ export const persistFailure = async (
  * @param config Optional configuration
  * @returns Array of failure records, or empty array if none exist
  */
-const loadFailures = async (
+export const loadFailures = async (
   contractId: string,
   type: "invariant" | "test",
   config?: PersistenceConfig
@@ -158,6 +160,5 @@ const loadFailures = async (
   const { baseDir } = { ...DEFAULT_CONFIG, ...config };
   const store = await loadFailureStore(contractId, baseDir);
 
-  // O(1) lookup by type
   return store[type];
 };

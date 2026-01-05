@@ -19,7 +19,7 @@ import {
   isTraitReferenceFunction,
   getNonTestableTraitFunctions,
 } from "./traits";
-import { loadFailureStore, persistFailure } from "./persistence";
+import { loadFailures, persistFailure } from "./persistence";
 import { TestMode } from "./app";
 import { ImplementedTraitType } from "./traits.types";
 import { EnrichedContractInterfaceFunction } from "./shared.types";
@@ -237,7 +237,7 @@ export const checkProperties = async (
       `Loading ${targetContractName} contract regressions...\n`
     );
 
-    const { test: regressions } = await loadFailureStore(testContractId);
+    const regressions = await loadFailures(testContractId, "test");
 
     radio.emit(
       "logMessage",
