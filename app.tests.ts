@@ -23,10 +23,9 @@ describe("Command-line arguments handling", () => {
   Options:
     --seed=<n>    Seed for replay functionality
     --runs=<n>    Number of test iterations [default: 100]
-    --mode=<m>    Test mode: all | new | reg [default: all]
-                    all - Run regressions, then new tests
-                    new - Skip regressions
-                    reg - Regressions only
+    --mode=<m>    Test mode: new | reg [default: new]
+                    new - Run a fresh round of tests
+                    reg - Run regression tests
     --dial=<f>    Path to custom dialers file
     --bail        Stop on first failure
     -h, --help    Show this message

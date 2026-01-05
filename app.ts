@@ -19,12 +19,10 @@ import { DialerRegistry } from "./dialer";
  * Test execution modes for Rendezvous.
  */
 export enum TestMode {
-  /** Run regressions first, then new tests */
-  ALL = "all",
   /** Skip regressions, only run new tests */
   NEW = "new",
   /** Only replay regressions, no new tests */
-  REG = "reg",
+  REGRESSION = "reg",
 }
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
@@ -67,10 +65,9 @@ const helpMessage = `
   Options:
     --seed=<n>    Seed for replay functionality
     --runs=<n>    Number of test iterations [default: 100]
-    --mode=<m>    Test mode: all | new | reg [default: all]
-                    all - Run regressions, then new tests
-                    new - Skip regressions
-                    reg - Regressions only
+    --mode=<m>    Test mode: new | reg [default: new]
+                    new - Run a fresh round of tests
+                    reg - Run regression tests
     --dial=<f>    Path to custom dialers file
     --bail        Stop on first failure
     -h, --help    Show this message
@@ -110,8 +107,8 @@ export async function main() {
     runs: options.runs ? parseInt(options.runs, 10) : undefined,
     /** Whether to bail on the first failure. */
     bail: options.bail || false,
-    /** The test mode. Valid values: all, new, reg. Default: all. */
-    mode: (options.mode?.toLowerCase() as TestMode | undefined) || TestMode.ALL,
+    /** The test mode. Valid values: new, reg. Default: new. */
+    mode: (options.mode?.toLowerCase() as TestMode | undefined) || TestMode.NEW,
     /** The path to the dialer file. */
     dial: options.dial || undefined,
     /** Whether to show the help message. */
@@ -190,11 +187,9 @@ export async function main() {
 
   if (runConfig.mode) {
     const modeDesc =
-      runConfig.mode === TestMode.ALL
-        ? "regressions first, then a fresh round of tests"
-        : runConfig.mode === TestMode.NEW
-        ? "fresh round of tests only (skip regressions)"
-        : "regressions only (no fresh round of tests)";
+      runConfig.mode === TestMode.NEW
+        ? "NEW (run a fresh round of tests)"
+        : "REG (run regression tests)";
     radio.emit("logMessage", `Mode: ${modeDesc}`);
   }
 
