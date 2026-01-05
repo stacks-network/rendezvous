@@ -28,7 +28,7 @@ interface FailureStore {
  * Configuration for persistence behavior.
  */
 interface PersistenceConfig {
-  /** Base directory for storing regression files. Default: 'rendezvous-regressions' */
+  /** Base directory for storing regression files. Default: '.rendezvous-regressions' */
   baseDir?: string;
   /** Maximum number of failures to keep per contract. Default: 100 */
   maxFailures?: number;
@@ -36,7 +36,7 @@ interface PersistenceConfig {
 
 /** Default configuration for persistence behavior. */
 const DEFAULT_CONFIG: Required<PersistenceConfig> = {
-  baseDir: "rendezvous-regressions",
+  baseDir: ".rendezvous-regressions",
   maxFailures: 100,
 };
 

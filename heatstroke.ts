@@ -40,7 +40,7 @@ export function reporter(
   if (failed) {
     const error = runDetails.errorInstance || runDetails.error;
 
-    // Extract the actual Clarity error once for both error types
+    // Extract the actual Clarity error once for both error types.
     const clarityError =
       (error as FalsifiedInvariantError | PropertyTestError)?.clarityError ||
       error?.message ||
