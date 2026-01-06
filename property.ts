@@ -226,7 +226,7 @@ export const checkProperties = async (
 
     // Persist failures for regression testing.
     if (runDetails.failed) {
-      await persistFailure(runDetails, "test", testContractId);
+      persistFailure(runDetails, "test", testContractId);
     }
   };
 

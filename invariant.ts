@@ -264,7 +264,7 @@ export const checkInvariants = async (
 
     // Persist failures for regression testing.
     if (runDetails.failed) {
-      await persistFailure(runDetails, "invariant", rendezvousContractId);
+      persistFailure(runDetails, "invariant", rendezvousContractId);
     }
   };
 

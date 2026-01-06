@@ -1,5 +1,5 @@
-import { promises } from "fs";
-import * as path from "path";
+import { mkdirSync, readFileSync, writeFileSync } from "fs";
+import { resolve } from "path";
 import { RunDetails } from "./heatstroke.types";
 
 /**
@@ -8,8 +8,6 @@ import { RunDetails } from "./heatstroke.types";
 interface FailureRecord {
   /** The seed used by fast-check for this test run */
   seed: number;
-  /** The path for reproducing the exact failure (if available) */
-  path?: string;
   /** Timestamp when the failure was recorded */
   timestamp: number;
 }
@@ -30,18 +28,15 @@ interface FailureStore {
 interface PersistenceConfig {
   /** Base directory for storing regression files. Default: '.rendezvous-regressions' */
   baseDir?: string;
-  /** Maximum number of failures to keep per contract. Default: 100 */
-  maxFailures?: number;
 }
 
 /** Default configuration for persistence behavior. */
 const DEFAULT_CONFIG: Required<PersistenceConfig> = {
   baseDir: ".rendezvous-regressions",
-  maxFailures: 100,
 };
 
 /**
- * Gets the file path for a contract's failure store.
+ * Gets the absolute file path for a contract's failure store.
  * Uses contractId as filename (e.g., "ST1...ADDR.counter.json")
  * @param contractId The contract identifier being tested
  * @param baseDir The base directory for storing regression files
@@ -51,23 +46,23 @@ export const getFailureFilePath = (
   contractId: string,
   baseDir: string = DEFAULT_CONFIG.baseDir
 ): string => {
-  return path.join(baseDir, `${contractId}.json`);
+  return resolve(baseDir, `${contractId}.json`);
 };
 
 /**
  * Loads the failure store for a contract, or creates an empty one.
  * @param contractId The contract identifier being tested
  * @param baseDir The base directory for storing regression files
- * @returns A promise that resolves when the failure store is loaded
+ * @returns The failure store
  */
-const loadFailureStore = async (
+const loadFailureStore = (
   contractId: string,
   baseDir: string = DEFAULT_CONFIG.baseDir
-): Promise<FailureStore> => {
+): FailureStore => {
   const filePath = getFailureFilePath(contractId, baseDir);
 
   try {
-    const content = await promises.readFile(filePath, "utf-8");
+    const content = readFileSync(filePath, "utf-8");
     return JSON.parse(content);
   } catch (error: any) {
     return { invariant: [], test: [] };
@@ -79,18 +74,17 @@ const loadFailureStore = async (
  * @param contractId The contract identifier being tested
  * @param baseDir The base directory for storing regression files
  * @param store The failure store to save
- * @returns A promise that resolves when the failure store is saved
  */
-const saveFailureStore = async (
+const saveFailureStore = (
   contractId: string,
   baseDir: string,
   store: FailureStore
-): Promise<void> => {
+): void => {
   // Ensure the base directory exists.
-  await promises.mkdir(baseDir, { recursive: true });
+  mkdirSync(baseDir, { recursive: true });
 
   const filePath = getFailureFilePath(contractId, baseDir);
-  await promises.writeFile(filePath, JSON.stringify(store, null, 2), "utf-8");
+  writeFileSync(filePath, JSON.stringify(store, null, 2), "utf-8");
 };
 
 /**
@@ -100,22 +94,20 @@ const saveFailureStore = async (
  * @param type The type of test that failed
  * @param contractId The contract identifier being tested
  * @param config Optional configuration for persistence behavior
- * @returns A promise that resolves when the failure is persisted
  */
-export const persistFailure = async (
+export const persistFailure = (
   runDetails: RunDetails,
   type: "invariant" | "test",
   contractId: string,
   config?: PersistenceConfig
-): Promise<void> => {
-  const { baseDir, maxFailures } = { ...DEFAULT_CONFIG, ...config };
+): void => {
+  const { baseDir } = { ...DEFAULT_CONFIG, ...config };
 
   // Load existing store.
-  const store = await loadFailureStore(contractId, baseDir);
+  const store = loadFailureStore(contractId, baseDir);
 
   const record: FailureRecord = {
     seed: runDetails.seed,
-    path: runDetails.path,
     timestamp: Date.now(),
   };
 
@@ -132,16 +124,11 @@ export const persistFailure = async (
   // Add new failure.
   failures.push(record);
 
-  // Keep only the most recent failures, bounded by maxFailures.
-  if (failures.length > maxFailures) {
-    // Sort the failures by timestamp in descending order.
-    failures.sort((a, b) => b.timestamp - a.timestamp);
-    // Keep only the most recent failures, bounded by maxFailures.
-    failures.splice(maxFailures);
-  }
+  // Sort the failures in descending order by timestamp.
+  failures.sort((a, b) => b.timestamp - a.timestamp);
 
   // Save back to file.
-  await saveFailureStore(contractId, baseDir, store);
+  saveFailureStore(contractId, baseDir, store);
 };
 
 /**
@@ -152,13 +139,13 @@ export const persistFailure = async (
  * @param config Optional configuration
  * @returns Array of failure records, or empty array if none exist
  */
-export const loadFailures = async (
+export const loadFailures = (
   contractId: string,
   type: "invariant" | "test",
   config?: PersistenceConfig
-): Promise<FailureRecord[]> => {
+): FailureRecord[] => {
   const { baseDir } = { ...DEFAULT_CONFIG, ...config };
-  const store = await loadFailureStore(contractId, baseDir);
+  const store = loadFailureStore(contractId, baseDir);
 
   return store[type];
 };
