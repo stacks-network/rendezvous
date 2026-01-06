@@ -8,6 +8,8 @@ import { RunDetails } from "./heatstroke.types";
 interface FailureRecord {
   /** The seed used by fast-check for this test run */
   seed: number;
+  /** The number of runs needed to reproduce the failure*/
+  numRuns: number;
   /** Timestamp when the failure was recorded */
   timestamp: number;
 }
@@ -108,6 +110,7 @@ export const persistFailure = (
 
   const record: FailureRecord = {
     seed: runDetails.seed,
+    numRuns: runDetails.numRuns,
     timestamp: Date.now(),
   };
 

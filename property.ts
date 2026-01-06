@@ -262,7 +262,7 @@ export const checkProperties = async (
         simnet,
         statistics,
         radio,
-        runs,
+        regression.numRuns,
         bail,
         regression.seed,
         radioReporter
