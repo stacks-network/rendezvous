@@ -236,26 +236,13 @@ export const checkProperties = async (
     }
   };
 
-  if (mode === TestMode.REGRESSION) {
-    // Start a regression round of tests.
-    radio.emit(
-      "logMessage",
-      `Loading ${targetContractName} contract regressions...\n`
-    );
-
-    const regressions = await loadFailures(testContractId, "test");
-
-    radio.emit(
-      "logMessage",
-      `Found ${regressions.length} regressions for the ${targetContractName} contract.\n`
-    );
-
-    for (const regression of regressions) {
+  switch (mode) {
+    case TestMode.NEW: {
+      // Start a fresh round of tests using user-provided configuration.
       radio.emit(
         "logMessage",
-        `Running regression test for the ${targetContractName} contract with:\n`
+        `Starting fresh round of property testing for the ${targetContractName} contract...\n`
       );
-      radio.emit("logMessage", `Seed: ${regression.seed}\n`);
 
       await propertyTest(
         testContractId,
@@ -268,37 +255,62 @@ export const checkProperties = async (
         simnet,
         statistics,
         radio,
-        regression.numRuns,
+        runs,
         bail,
-        regression.seed,
+        seed,
         radioReporter
       );
+      return;
     }
-  }
+    case TestMode.REGRESSION: {
+      // Start a regression round of tests.
+      radio.emit(
+        "logMessage",
+        `Loading ${targetContractName} contract regressions...\n`
+      );
 
-  if (mode === TestMode.NEW) {
-    // Start a fresh round of tests.
-    radio.emit(
-      "logMessage",
-      `Starting fresh round of property testing for the ${targetContractName} contract...\n`
-    );
+      const regressions = loadFailures(testContractId, "test");
 
-    await propertyTest(
-      testContractId,
-      targetContractName,
-      eligibleAccounts,
-      testFunctions,
-      simnetAddresses,
-      projectTraitImplementations,
-      testContractsPairedFunctions,
-      simnet,
-      statistics,
-      radio,
-      runs,
-      bail,
-      seed,
-      radioReporter
-    );
+      radio.emit(
+        "logMessage",
+        `Found ${regressions.length} regressions for the ${targetContractName} contract.\n`
+      );
+
+      for (const regression of regressions) {
+        radio.emit(
+          "logMessage",
+          `-------------------------------------------------------------------------------`
+        );
+        radio.emit(
+          "logMessage",
+          `Running regression test for the ${targetContractName} contract with:\n`
+        );
+        radio.emit("logMessage", `- Seed: ${regression.seed}`);
+        radio.emit("logMessage", `- Number of runs: ${regression.numRuns}`);
+        radio.emit("logMessage", ``);
+
+        await propertyTest(
+          testContractId,
+          targetContractName,
+          eligibleAccounts,
+          testFunctions,
+          simnetAddresses,
+          projectTraitImplementations,
+          testContractsPairedFunctions,
+          simnet,
+          statistics,
+          radio,
+          regression.numRuns,
+          bail,
+          regression.seed,
+          radioReporter
+        );
+      }
+      return;
+    }
+    default: {
+      throw new Error(`Invalid test mode: ${mode}`);
+    }
   }
 };
 
