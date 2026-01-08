@@ -15,16 +15,6 @@ import { existsSync } from "fs";
 import { parseArgs } from "util";
 import { getFailureFilePath } from "./persistence";
 
-/**
- * Test execution modes for Rendezvous.
- */
-export enum TestMode {
-  /** Skip regressions, only run new tests */
-  NEW = "new",
-  /** Only replay regressions, no new tests */
-  REGRESSION = "reg",
-}
-
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
 };
@@ -65,10 +55,8 @@ const helpMessage = `
   Options:
     --seed=<n>    Seed for replay functionality
     --runs=<n>    Number of test iterations [default: 100]
-    --mode=<m>    Test mode: new | reg [default: new]
-                    new - Run a fresh round of tests
-                    reg - Run regression tests
     --dial=<f>    Path to custom dialers file
+    --regr        Run regression tests only
     --bail        Stop on first failure
     -h, --help    Show this message
 
@@ -88,7 +76,7 @@ export async function main() {
       runs: { type: "string" },
       dial: { type: "string" },
       bail: { type: "boolean" },
-      mode: { type: "string" },
+      regr: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -107,8 +95,8 @@ export async function main() {
     runs: options.runs ? parseInt(options.runs, 10) : undefined,
     /** Whether to bail on the first failure. */
     bail: options.bail || false,
-    /** The test mode. Valid values: new, reg. Default: new. */
-    mode: (options.mode?.toLowerCase() as TestMode | undefined) || TestMode.NEW,
+    /** Whether to run regression tests only. */
+    regr: options.regr || false,
     /** The path to the dialer file. */
     dial: options.dial || undefined,
     /** Whether to show the help message. */
@@ -153,15 +141,6 @@ export async function main() {
     return;
   }
 
-  if (!Object.values(TestMode).includes(runConfig.mode as TestMode)) {
-    radio.emit(
-      "logMessage",
-      red("\nInvalid mode provided. Possible values: all (default), new, reg.")
-    );
-    radio.emit("logMessage", helpMessage);
-    return;
-  }
-
   // 79 characters long separator before the run configuration.
   radio.emit(
     "logMessage",
@@ -190,20 +169,14 @@ export async function main() {
     radio.emit("logMessage", `Bailing on first failure.`);
   }
 
-  if (runConfig.mode) {
-    const modeDesc =
-      runConfig.mode === TestMode.NEW
-        ? "NEW (fresh round of tests using provided configuration)"
-        : "REG (run regression tests)";
-    radio.emit("logMessage", `Mode: ${modeDesc}`);
-    if (runConfig.mode === TestMode.REGRESSION) {
-      radio.emit(
-        "logMessage",
-        `Regressions loaded from: ${resolve(
-          getFailureFilePath(runConfig.sutContractName)
-        )}`
-      );
-    }
+  if (runConfig.regr) {
+    radio.emit("logMessage", `Running regression tests.`);
+    radio.emit(
+      "logMessage",
+      `Regressions loaded from: ${resolve(
+        getFailureFilePath(runConfig.sutContractName)
+      )}`
+    );
   }
 
   if (runConfig.dial !== undefined) {
@@ -257,7 +230,7 @@ export async function main() {
         runConfig.runs,
         runConfig.dial,
         runConfig.bail,
-        runConfig.mode,
+        runConfig.regr,
         radio
       );
       break;
@@ -272,7 +245,7 @@ export async function main() {
         runConfig.seed,
         runConfig.runs,
         runConfig.bail,
-        runConfig.mode,
+        runConfig.regr,
         radio
       );
       break;

@@ -22,7 +22,6 @@ import { EnrichedContractInterfaceFunction } from "./shared.types";
 import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
 import { Statistics } from "./heatstroke.types";
 import { loadFailures, persistFailure } from "./persistence";
-import { TestMode } from "./app";
 import { ImplementedTraitType } from "./traits.types";
 
 /**
@@ -38,7 +37,7 @@ import { ImplementedTraitType } from "./traits.types";
  * @param dial The path to the dialer file.
  * @param bail Stop execution after the first failure and prevent further
  * shrinking.
- * @param mode The test mode.
+ * @param regr Whether to run regression tests only.
  * @param radio The custom logging event emitter.
  * @returns void
  */
@@ -51,7 +50,7 @@ export const checkInvariants = async (
   runs: number | undefined,
   dial: string | undefined,
   bail: boolean,
-  mode: TestMode,
+  regr: boolean,
   radio: EventEmitter
 ) => {
   // The Rendezvous identifier is the first one in the list. Only one contract
@@ -186,74 +185,66 @@ export const checkInvariants = async (
     return;
   }
 
-  switch (mode) {
-    case TestMode.NEW: {
-      // Start a fresh round of invariant testing using user-provided configuration.
-      radio.emit(
-        "logMessage",
-        `Starting fresh round of invariant testing using user-provided configuration for the ${targetContractName} contract...\n`
+  if (regr) {
+    // Run regression tests only.
+    radio.emit(
+      "logMessage",
+      `Loading ${targetContractName} contract regressions...\n`
+    );
+
+    const regressions = loadFailures(rendezvousContractId, "invariant");
+
+    radio.emit(
+      "logMessage",
+      `Found ${underline(
+        `${regressions.length} regressions`
+      )} for the ${targetContractName} contract.\n`
+    );
+
+    for (const regression of regressions) {
+      emitInvariantRegressionTestHeader(
+        radio,
+        targetContractName,
+        regression.seed,
+        regression.numRuns,
+        regression.dial,
+        regression.timestamp
       );
 
       await invariantTest({
         simnet,
         targetContractName,
         rendezvousContractId,
-        runs,
-        seed,
+        runs: regression.numRuns < 100 ? 100 : regression.numRuns,
+        seed: regression.seed,
         bail,
-        dial,
+        dial: regression.dial,
         radio,
         functions,
         invariants,
         projectTraitImplementations,
       });
-      return;
     }
-    case TestMode.REGRESSION: {
-      // Start a regression round of invariant testing.
-      radio.emit(
-        "logMessage",
-        `Loading ${targetContractName} contract regressions...\n`
-      );
+  } else {
+    // Run fresh invariant tests using user-provided configuration.
+    radio.emit(
+      "logMessage",
+      `Starting fresh round of invariant testing for the ${targetContractName} contract using user-provided configuration...\n`
+    );
 
-      const regressions = loadFailures(rendezvousContractId, "invariant");
-
-      radio.emit(
-        "logMessage",
-        `Found ${underline(
-          `${regressions.length} regressions`
-        )} for the ${targetContractName} contract.\n`
-      );
-
-      for (const regression of regressions) {
-        emitInvariantRegressionTestHeader(
-          radio,
-          targetContractName,
-          regression.seed,
-          regression.numRuns,
-          regression.dial,
-          regression.timestamp
-        );
-
-        await invariantTest({
-          simnet,
-          targetContractName,
-          rendezvousContractId,
-          runs: regression.numRuns < 100 ? 100 : regression.numRuns,
-          seed: regression.seed,
-          bail,
-          dial: regression.dial,
-          radio,
-          functions,
-          invariants,
-          projectTraitImplementations,
-        });
-      }
-      return;
-    }
-    default: {
-      throw new Error(`Invalid test mode: ${mode}`);
-    }
+    await invariantTest({
+      simnet,
+      targetContractName,
+      rendezvousContractId,
+      runs,
+      seed,
+      bail,
+      dial,
+      radio,
+      functions,
+      invariants,
+      projectTraitImplementations,
+    });
   }
 };
 

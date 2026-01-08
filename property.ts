@@ -20,7 +20,6 @@ import {
   getNonTestableTraitFunctions,
 } from "./traits";
 import { loadFailures, persistFailure } from "./persistence";
-import { TestMode } from "./app";
 import { ImplementedTraitType } from "./traits.types";
 import { EnrichedContractInterfaceFunction } from "./shared.types";
 
@@ -36,7 +35,7 @@ import { EnrichedContractInterfaceFunction } from "./shared.types";
  * @param runs The number of test runs.
  * @param bail Stop execution after the first failure and prevent further
  * shrinking.
- * @param mode The test mode.
+ * @param regr Whether to run regression tests only.
  * @param radio The custom logging event emitter.
  * @returns void
  */
@@ -48,7 +47,7 @@ export const checkProperties = async (
   seed: number | undefined,
   runs: number | undefined,
   bail: boolean,
-  mode: TestMode,
+  regr: boolean,
   radio: EventEmitter
 ) => {
   // A map where the keys are the test contract identifiers and the values are
@@ -181,74 +180,66 @@ export const checkProperties = async (
     return;
   }
 
-  switch (mode) {
-    case TestMode.NEW: {
-      // Start a fresh round of tests using user-provided configuration.
-      radio.emit(
-        "logMessage",
-        `Starting fresh round of property testing using user-provided configuration for the ${targetContractName} contract...\n`
+  if (regr) {
+    // Run regression tests only.
+    radio.emit(
+      "logMessage",
+      `Loading ${targetContractName} contract regressions...\n`
+    );
+
+    const regressions = loadFailures(testContractId, "test");
+
+    radio.emit(
+      "logMessage",
+      `Found ${underline(
+        `${regressions.length} regressions`
+      )} for the ${targetContractName} contract.\n`
+    );
+
+    for (const regression of regressions) {
+      emitPropertyRegressionTestHeader(
+        radio,
+        targetContractName,
+        regression.seed,
+        regression.numRuns,
+        regression.timestamp
       );
 
       await propertyTest({
         simnet,
         targetContractName,
         testContractId,
-        runs,
-        seed,
+        // If the number of runs that failed is less than 100, set it to the
+        // default value of 100. If more runs were needed to reproduce the
+        // failure, use the number of runs that failed.
+        runs: regression.numRuns < 100 ? 100 : regression.numRuns,
+        seed: regression.seed,
         bail,
         radio,
         testFunctions,
         projectTraitImplementations,
         testContractsPairedFunctions,
       });
-      return;
     }
-    case TestMode.REGRESSION: {
-      // Start a regression round of tests.
-      radio.emit(
-        "logMessage",
-        `Loading ${targetContractName} contract regressions...\n`
-      );
+  } else {
+    // Run fresh tests using user-provided configuration.
+    radio.emit(
+      "logMessage",
+      `Starting fresh round of property testing for the ${targetContractName} contract using user-provided configuration...\n`
+    );
 
-      const regressions = loadFailures(testContractId, "test");
-
-      radio.emit(
-        "logMessage",
-        `Found ${underline(
-          `${regressions.length} regressions`
-        )} for the ${targetContractName} contract.\n`
-      );
-
-      for (const regression of regressions) {
-        emitPropertyRegressionTestHeader(
-          radio,
-          targetContractName,
-          regression.seed,
-          regression.numRuns,
-          regression.timestamp
-        );
-
-        await propertyTest({
-          simnet,
-          targetContractName,
-          testContractId,
-          // If the number of runs that failed is less than 100, set it to the
-          // default value of 100. If more runs were needed to reproduce the
-          // failure, use the number of runs that failed.
-          runs: regression.numRuns < 100 ? 100 : regression.numRuns,
-          seed: regression.seed,
-          bail,
-          radio,
-          testFunctions,
-          projectTraitImplementations,
-          testContractsPairedFunctions,
-        });
-      }
-      return;
-    }
-    default: {
-      throw new Error(`Invalid test mode: ${mode}`);
-    }
+    await propertyTest({
+      simnet,
+      targetContractName,
+      testContractId,
+      runs,
+      seed,
+      bail,
+      radio,
+      testFunctions,
+      projectTraitImplementations,
+      testContractsPairedFunctions,
+    });
   }
 };
 

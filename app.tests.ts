@@ -4,6 +4,7 @@ import { version } from "./package.json";
 import { resolve } from "path";
 import fs, { rmSync } from "fs";
 import { createIsolatedTestEnvironment } from "./test.utils";
+import { getFailureFilePath } from "./persistence";
 
 const isolatedTestEnvPrefix = "rendezvous-test-app-";
 
@@ -23,10 +24,8 @@ describe("Command-line arguments handling", () => {
   Options:
     --seed=<n>    Seed for replay functionality
     --runs=<n>    Number of test iterations [default: 100]
-    --mode=<m>    Test mode: new | reg [default: new]
-                    new - Run a fresh round of tests
-                    reg - Run regression tests
     --dial=<f>    Path to custom dialers file
+    --regr        Run regression tests only
     --bail        Stop on first failure
     -h, --help    Show this message
 
@@ -185,9 +184,7 @@ describe("Command-line arguments handling", () => {
         `-------------------------------------------------------------------------------`,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of invariant testing using user-provided configuration for the counter contract...\n`,
       ],
     ],
 
@@ -198,95 +195,26 @@ describe("Command-line arguments handling", () => {
         `-------------------------------------------------------------------------------`,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of invariant testing using user-provided configuration for the counter contract...\n`,
       ],
     ],
     [
-      ["manifest path", "contract name", "type=invariant", "mode=new"],
+      ["manifest path", "contract name", "type=invariant", "regr"],
       [
         "node",
         "app.js",
         manifestDirPlaceholder,
         "counter",
         "invariant",
-        "--mode=new",
+        "--regr",
       ],
       [
         `-------------------------------------------------------------------------------`,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
+        `Running regression tests.`,
+        `Regressions loaded from: ${resolve(getFailureFilePath("counter"))}`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of invariant testing using user-provided configuration for the counter contract...\n`,
-      ],
-    ],
-    [
-      [
-        "manifest path",
-        "contract name",
-        "type=invariant",
-        "mode=nEw (case-insensitive)",
-      ],
-      [
-        "node",
-        "app.js",
-        manifestDirPlaceholder,
-        "counter",
-        "invariant",
-        "--mode=nEw",
-      ],
-      [
-        `-------------------------------------------------------------------------------`,
-        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
-        `Target contract: counter`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
-        `-------------------------------------------------------------------------------`,
-        `Starting fresh round of invariant testing using user-provided configuration for the counter contract...\n`,
-      ],
-    ],
-    [
-      ["manifest path", "contract name", "type=invariant", "mode=reg"],
-      [
-        "node",
-        "app.js",
-        manifestDirPlaceholder,
-        "counter",
-        "invariant",
-        "--mode=reg",
-      ],
-      [
-        `-------------------------------------------------------------------------------`,
-        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
-        `Target contract: counter`,
-        `Mode: REG (run regression tests)`,
-        `-------------------------------------------------------------------------------`,
-        `Loading counter contract regressions...\n`,
-      ],
-    ],
-    [
-      [
-        "manifest path",
-        "contract name",
-        "type=invariant",
-        "mode=ReG (case-insensitive)",
-      ],
-      [
-        "node",
-        "app.js",
-        manifestDirPlaceholder,
-        "counter",
-        "invariant",
-        "--mode=ReG",
-      ],
-      [
-        `-------------------------------------------------------------------------------`,
-        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
-        `Target contract: counter`,
-        `Mode: REG (run regression tests)`,
-        `-------------------------------------------------------------------------------`,
-        `Loading counter contract regressions...\n`,
       ],
     ],
     [
@@ -304,9 +232,7 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Bailing on first failure.`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of invariant testing using user-provided configuration for the counter contract...\n`,
       ],
     ],
     [
@@ -324,9 +250,7 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using dial path: example/sip010.cjs`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of invariant testing using user-provided configuration for the counter contract...\n`,
       ],
     ],
     [
@@ -336,9 +260,7 @@ describe("Command-line arguments handling", () => {
         `-------------------------------------------------------------------------------`,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of property testing using user-provided configuration for the counter contract...\n`,
       ],
     ],
     [
@@ -348,47 +270,19 @@ describe("Command-line arguments handling", () => {
         `-------------------------------------------------------------------------------`,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of property testing using user-provided configuration for the counter contract...\n`,
       ],
     ],
     [
-      ["manifest path", "contract name", "type=test", "mode=new"],
-      [
-        "node",
-        "app.js",
-        manifestDirPlaceholder,
-        "counter",
-        "test",
-        "--mode=new",
-      ],
+      ["manifest path", "contract name", "type=test", "regr"],
+      ["node", "app.js", manifestDirPlaceholder, "counter", "test", "--regr"],
       [
         `-------------------------------------------------------------------------------`,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
+        `Running regression tests.`,
+        `Regressions loaded from: ${resolve(getFailureFilePath("counter"))}`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of property testing using user-provided configuration for the counter contract...\n`,
-      ],
-    ],
-    [
-      ["manifest path", "contract name", "type=test", "mode=reg"],
-      [
-        "node",
-        "app.js",
-        manifestDirPlaceholder,
-        "counter",
-        "test",
-        "--mode=reg",
-      ],
-      [
-        `-------------------------------------------------------------------------------`,
-        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
-        `Target contract: counter`,
-        `Mode: REG (run regression tests)`,
-        `-------------------------------------------------------------------------------`,
-        `Loading counter contract regressions...\n`,
       ],
     ],
     [
@@ -399,9 +293,7 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Bailing on first failure.`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of property testing using user-provided configuration for the counter contract...\n`,
       ],
     ],
     [
@@ -419,9 +311,7 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of invariant testing using user-provided configuration for the counter contract...\n`,
       ],
     ],
     [
@@ -444,9 +334,7 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of invariant testing using user-provided configuration for the counter contract...\n`,
       ],
     ],
     [
@@ -464,9 +352,7 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of property testing using user-provided configuration for the counter contract...\n`,
       ],
     ],
     [
@@ -484,9 +370,7 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: reverse`,
         `Using seed: 123`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of property testing using user-provided configuration for the reverse contract...\n`,
       ],
     ],
     [
@@ -497,9 +381,7 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: slice`,
         `Using seed: 123`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of property testing using user-provided configuration for the slice contract...\n`,
       ],
     ],
     [
@@ -522,9 +404,7 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of property testing using user-provided configuration for the counter contract...\n`,
       ],
     ],
     [
@@ -546,9 +426,7 @@ describe("Command-line arguments handling", () => {
         `Using seed: 123`,
         `Using runs: 10`,
         `Bailing on first failure.`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of property testing using user-provided configuration for the counter contract...\n`,
       ],
     ],
     [
@@ -577,9 +455,7 @@ describe("Command-line arguments handling", () => {
         `Using seed: 123`,
         `Using runs: 10`,
         `Bailing on first failure.`,
-        `Mode: NEW (fresh round of tests using provided configuration)`,
         `-------------------------------------------------------------------------------`,
-        `Starting fresh round of invariant testing using user-provided configuration for the counter contract...\n`,
       ],
     ],
   ])(
