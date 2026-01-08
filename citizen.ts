@@ -45,7 +45,7 @@ export const issueFirstClassCitizenship = async (
   // First simnet initialization: This will generate the deployment plan and
   // will type check the project without any Rendezvous tests.
   try {
-    radio.emit("logMessage", `\nType-checking your Clarinet project...`);
+    radio.emit("logMessage", `Type-checking your Clarinet project...\n`);
     await generateDeployement(manifestPath);
   } catch (error: any) {
     throw new Error(`Error initializing simnet: ${error.message ?? error}`);
@@ -90,7 +90,7 @@ export const issueFirstClassCitizenship = async (
   );
   writeFileSync(rendezvousPath, rendezvousData.rendezvousSourceCode);
 
-  radio.emit("logMessage", `\nType-checking your Rendezvous project...`);
+  radio.emit("logMessage", `Type-checking your Rendezvous project...\n`);
 
   // Update the manifest in the temp directory to point to the Rendezvous
   // concatenation.
