@@ -51,15 +51,6 @@ export const checkProperties = async (
   mode: TestMode,
   radio: EventEmitter
 ) => {
-  const statistics: Statistics = {
-    test: {
-      successful: new Map<string, number>(),
-      discarded: new Map<string, number>(),
-      failed: new Map<string, number>(),
-    },
-  };
-  const testContractId = rendezvousList[0];
-
   // A map where the keys are the test contract identifiers and the values are
   // arrays of their test functions. This map will be used to access the test
   // functions for each test contract in the property-based testing routine.
@@ -67,13 +58,7 @@ export const checkProperties = async (
     rendezvousAllFunctions
   );
 
-  for (const functionInterface of testContractsTestFunctions.get(
-    testContractId
-  )!) {
-    statistics.test!.successful.set(functionInterface.name, 0);
-    statistics.test!.discarded.set(functionInterface.name, 0);
-    statistics.test!.failed.set(functionInterface.name, 0);
-  }
+  const testContractId = rendezvousList[0];
 
   const allTestFunctions = testContractsTestFunctions.get(testContractId)!;
 
@@ -111,24 +96,7 @@ export const checkProperties = async (
 
   // If the tests contain trait reference functions without eligible trait
   // implementations, log a warning and filter out the functions.
-  if (functionsMissingTraitImplementations.length > 0) {
-    const functionList = functionsMissingTraitImplementations
-      .map((fn) => `  - ${fn}`)
-      .join("\n");
-
-    radio.emit(
-      "logMessage",
-      yellow(
-        `\nWarning: The following test functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
-      )
-    );
-    radio.emit(
-      "logMessage",
-      yellow(
-        `Note: You can add contracts implementing traits either as project contracts or as requirements.\n`
-      )
-    );
-  }
+  emitMissingTraitWarning(radio, functionsMissingTraitImplementations);
 
   // Filter out test functions with missing trait implementations from the
   // enriched map.
@@ -200,14 +168,6 @@ export const checkProperties = async (
     return;
   }
 
-  const simnetAccounts = simnet.getAccounts();
-
-  const eligibleAccounts = new Map(
-    [...simnetAccounts].filter(([key]) => key !== "faucet")
-  );
-
-  const simnetAddresses = Array.from(simnetAccounts.values());
-
   const testFunctions = getFunctionsListForContract(
     executableTestContractsTestFunctions,
     testContractId
@@ -219,6 +179,145 @@ export const checkProperties = async (
       red(`No test functions found for the "${targetContractName}" contract.\n`)
     );
     return;
+  }
+
+  switch (mode) {
+    case TestMode.NEW: {
+      // Start a fresh round of tests using user-provided configuration.
+      radio.emit(
+        "logMessage",
+        `Starting fresh round of property testing for the ${targetContractName} contract...\n`
+      );
+
+      await propertyTest({
+        simnet,
+        targetContractName,
+        testContractId,
+        runs,
+        seed,
+        bail,
+        radio,
+        testFunctions,
+        projectTraitImplementations,
+        testContractsPairedFunctions,
+      });
+      return;
+    }
+    case TestMode.REGRESSION: {
+      // Start a regression round of tests.
+      radio.emit(
+        "logMessage",
+        `Loading ${targetContractName} contract regressions...\n`
+      );
+
+      const regressions = loadFailures(testContractId, "test");
+
+      radio.emit(
+        "logMessage",
+        `Found ${underline(
+          `${regressions.length} regressions`
+        )} for the ${targetContractName} contract.\n`
+      );
+
+      for (const regression of regressions) {
+        emitRegressionTestHeader(
+          radio,
+          targetContractName,
+          regression.seed,
+          regression.numRuns,
+          regression.timestamp
+        );
+
+        await propertyTest({
+          simnet,
+          targetContractName,
+          testContractId,
+          // If the number of runs that failed is less than 100, set it to the
+          // default value of 100. If more runs were needed to reproduce the
+          // failure, use the number of runs that failed.
+          runs: regression.numRuns < 100 ? 100 : regression.numRuns,
+          seed: regression.seed,
+          bail,
+          radio,
+          testFunctions,
+          projectTraitImplementations,
+          testContractsPairedFunctions,
+        });
+      }
+      return;
+    }
+    default: {
+      throw new Error(`Invalid test mode: ${mode}`);
+    }
+  }
+};
+
+/**
+ * The configuration for a property test.
+ */
+interface PropertyTestConfig {
+  simnet: Simnet;
+  targetContractName: string;
+  testContractId: string;
+  runs: number | undefined;
+  seed: number | undefined;
+  bail: boolean;
+  radio: EventEmitter;
+}
+
+/**
+ * The context to run a property test with.
+ */
+interface PropertyTestContext {
+  /** Executable test functions. */
+  testFunctions: EnrichedContractInterfaceFunction[];
+  /** Project trait implementations. */
+  projectTraitImplementations: Record<string, ImplementedTraitType[]>;
+  /** Test functions paired with their corresponding discard functions. */
+  testContractsPairedFunctions: Map<string, Map<string, string | undefined>>;
+}
+
+/**
+ * Runs a property test.
+ * @param config The union of the configuration and context for the property
+ * test.
+ * @returns A promise that resolves when the property test is complete.
+ */
+const propertyTest = async (
+  config: PropertyTestConfig & PropertyTestContext
+) => {
+  const {
+    simnet,
+    targetContractName,
+    testContractId,
+    runs,
+    seed,
+    bail,
+    radio,
+    testFunctions,
+    projectTraitImplementations,
+    testContractsPairedFunctions,
+  } = config;
+
+  // Derive accounts and addresses from simnet.
+  const simnetAccounts = simnet.getAccounts();
+  const eligibleAccounts = new Map(
+    [...simnetAccounts].filter(([key]) => key !== "faucet")
+  );
+  const simnetAddresses = Array.from(simnetAccounts.values());
+
+  const statistics: Statistics = {
+    test: {
+      successful: new Map<string, number>(),
+      discarded: new Map<string, number>(),
+      failed: new Map<string, number>(),
+    },
+  };
+
+  for (const functionInterface of testFunctions) {
+    statistics.test!.successful.set(functionInterface.name, 0);
+    statistics.test!.discarded.set(functionInterface.name, 0);
+    statistics.test!.failed.set(functionInterface.name, 0);
   }
 
   const radioReporter = async (runDetails: any) => {
@@ -236,100 +335,6 @@ export const checkProperties = async (
     }
   };
 
-  switch (mode) {
-    case TestMode.NEW: {
-      // Start a fresh round of tests using user-provided configuration.
-      radio.emit(
-        "logMessage",
-        `Starting fresh round of property testing for the ${targetContractName} contract...\n`
-      );
-
-      await propertyTest(
-        testContractId,
-        targetContractName,
-        eligibleAccounts,
-        testFunctions,
-        simnetAddresses,
-        projectTraitImplementations,
-        testContractsPairedFunctions,
-        simnet,
-        statistics,
-        radio,
-        runs,
-        bail,
-        seed,
-        radioReporter
-      );
-      return;
-    }
-    case TestMode.REGRESSION: {
-      // Start a regression round of tests.
-      radio.emit(
-        "logMessage",
-        `Loading ${targetContractName} contract regressions...\n`
-      );
-
-      const regressions = loadFailures(testContractId, "test");
-
-      radio.emit(
-        "logMessage",
-        `Found ${regressions.length} regressions for the ${targetContractName} contract.\n`
-      );
-
-      for (const regression of regressions) {
-        radio.emit(
-          "logMessage",
-          `-------------------------------------------------------------------------------`
-        );
-        radio.emit(
-          "logMessage",
-          `Running regression test for the ${targetContractName} contract with:\n`
-        );
-        radio.emit("logMessage", `- Seed: ${regression.seed}`);
-        radio.emit("logMessage", `- Number of runs: ${regression.numRuns}`);
-        radio.emit("logMessage", ``);
-
-        await propertyTest(
-          testContractId,
-          targetContractName,
-          eligibleAccounts,
-          testFunctions,
-          simnetAddresses,
-          projectTraitImplementations,
-          testContractsPairedFunctions,
-          simnet,
-          statistics,
-          radio,
-          regression.numRuns,
-          bail,
-          regression.seed,
-          radioReporter
-        );
-      }
-      return;
-    }
-    default: {
-      throw new Error(`Invalid test mode: ${mode}`);
-    }
-  }
-};
-
-const propertyTest = async (
-  testContractId: string,
-  targetContractName: string,
-  eligibleAccounts: Map<string, string>,
-  testFunctions: EnrichedContractInterfaceFunction[],
-  simnetAddresses: string[],
-  projectTraitImplementations: Record<string, ImplementedTraitType[]>,
-  testContractsPairedFunctions: Map<string, Map<string, string | undefined>>,
-  simnet: Simnet,
-  statistics: Statistics,
-  radio: EventEmitter,
-  runs: number | undefined,
-  bail: boolean,
-  seed: number | undefined,
-  radioReporter: (runDetails: any) => Promise<void>
-) => {
   await fc.assert(
     fc.asyncProperty(
       fc
@@ -539,6 +544,56 @@ const propertyTest = async (
       seed: seed,
       verbose: true,
     }
+  );
+};
+
+/**
+ * Emits a warning for test functions that reference traits without eligible
+ * implementations.
+ */
+const emitMissingTraitWarning = (
+  radio: EventEmitter,
+  functionNames: string[]
+) => {
+  if (functionNames.length === 0) {
+    return;
+  }
+
+  const functionList = functionNames.map((fn) => `  - ${fn}`).join("\n");
+  radio.emit(
+    "logMessage",
+    yellow(
+      `\nWarning: The following test functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
+    )
+  );
+  radio.emit(
+    "logMessage",
+    yellow(
+      `Note: You can add contracts implementing traits either as project contracts or as requirements.\n`
+    )
+  );
+};
+
+/**
+ * Emits a header for a regression test run with seed and run count information.
+ */
+const emitRegressionTestHeader = (
+  radio: EventEmitter,
+  targetContractName: string,
+  seed: number,
+  numRuns: number,
+  timestamp: number
+) => {
+  radio.emit(
+    "logMessage",
+    `-------------------------------------------------------------------------------
+Running ${underline(
+      timestamp
+    )} regression test for the ${targetContractName} contract with:
+
+- Seed: ${seed}
+- Runs: ${numRuns}
+`
   );
 };
 
