@@ -34,6 +34,7 @@ import { TestMode } from "./app";
  * target contract.
  * @param seed The seed for reproducible invariant testing.
  * @param runs The number of test runs.
+ * @param dial The path to the dialer file.
  * @param bail Stop execution after the first failure and prevent further
  * shrinking.
  * @param mode The test mode.
@@ -48,9 +49,9 @@ export const checkInvariants = async (
   rendezvousAllFunctions: Map<string, ContractInterfaceFunction[]>,
   seed: number | undefined,
   runs: number | undefined,
+  dial: string | undefined,
   bail: boolean,
   mode: TestMode,
-  dialerRegistry: DialerRegistry | undefined,
   radio: EventEmitter
 ) => {
   const statistics: Statistics = {
@@ -63,6 +64,18 @@ export const checkInvariants = async (
       failed: new Map<string, number>(),
     },
   };
+
+  /**
+   * The dialer registry, which is used to keep track of all the custom dialers
+   * registered by the user using the `--dial` flag.
+   */
+  const dialerRegistry =
+    dial !== undefined ? new DialerRegistry(dial) : undefined;
+
+  if (dialerRegistry !== undefined) {
+    dialerRegistry.registerDialers();
+  }
+
   // The Rendezvous identifier is the first one in the list. Only one contract
   // can be fuzzed at a time.
   const rendezvousContractId = rendezvousList[0];
@@ -264,7 +277,7 @@ export const checkInvariants = async (
 
     // Persist failures for regression testing.
     if (runDetails.failed) {
-      persistFailure(runDetails, "invariant", rendezvousContractId);
+      persistFailure(runDetails, "invariant", rendezvousContractId, dial);
     }
   };
 

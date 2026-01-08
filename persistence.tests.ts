@@ -86,7 +86,7 @@ describe("Failure Persistence", () => {
               createTemporaryCustomTestBaseDir(customBaseDirName);
 
             // Exercise
-            persistFailure(runDetails, type, TEST_CONTRACT_ID, {
+            persistFailure(runDetails, type, TEST_CONTRACT_ID, undefined, {
               baseDir: customBaseDir,
             });
 
@@ -121,10 +121,16 @@ describe("Failure Persistence", () => {
               createTemporaryCustomTestBaseDir(customBaseDirName);
 
             // Exercise
-            persistFailure(runDetails1, "invariant", TEST_CONTRACT_ID, {
-              baseDir: customBaseDir,
-            });
-            persistFailure(runDetails2, "test", TEST_CONTRACT_ID, {
+            persistFailure(
+              runDetails1,
+              "invariant",
+              TEST_CONTRACT_ID,
+              undefined,
+              {
+                baseDir: customBaseDir,
+              }
+            );
+            persistFailure(runDetails2, "test", TEST_CONTRACT_ID, undefined, {
               baseDir: customBaseDir,
             });
 
@@ -169,10 +175,10 @@ describe("Failure Persistence", () => {
               createTemporaryCustomTestBaseDir(customBaseDirName);
 
             // Exercise
-            persistFailure(runDetails, type, TEST_CONTRACT_ID, {
+            persistFailure(runDetails, type, TEST_CONTRACT_ID, undefined, {
               baseDir: customBaseDir,
             });
-            persistFailure(runDetails, type, TEST_CONTRACT_ID, {
+            persistFailure(runDetails, type, TEST_CONTRACT_ID, undefined, {
               baseDir: customBaseDir,
             });
 
@@ -207,10 +213,16 @@ describe("Failure Persistence", () => {
               createTemporaryCustomTestBaseDir(customBaseDirName);
 
             // Exercise
-            persistFailure(runDetails, "invariant", TEST_CONTRACT_ID, {
-              baseDir: customBaseDir,
-            });
-            persistFailure(runDetails, "test", TEST_CONTRACT_ID, {
+            persistFailure(
+              runDetails,
+              "invariant",
+              TEST_CONTRACT_ID,
+              undefined,
+              {
+                baseDir: customBaseDir,
+              }
+            );
+            persistFailure(runDetails, "test", TEST_CONTRACT_ID, undefined, {
               baseDir: customBaseDir,
             });
 
@@ -263,6 +275,7 @@ describe("Failure Persistence", () => {
                 createMockRunDetails(seed),
                 "invariant",
                 TEST_CONTRACT_ID,
+                undefined,
                 { baseDir: customBaseDir }
               );
             });
@@ -298,9 +311,15 @@ describe("Failure Persistence", () => {
               createTemporaryCustomTestBaseDir(customBaseDirName);
 
             // Exercise
-            persistFailure(runDetails, "invariant", TEST_CONTRACT_ID, {
-              baseDir: customBaseDir,
-            });
+            persistFailure(
+              runDetails,
+              "invariant",
+              TEST_CONTRACT_ID,
+              undefined,
+              {
+                baseDir: customBaseDir,
+              }
+            );
 
             const after = Date.now();
 
@@ -361,6 +380,7 @@ describe("Failure Persistence", () => {
               createMockRunDetails(seed),
               "test",
               TEST_CONTRACT_ID,
+              undefined,
               {
                 baseDir: customBaseDir,
               }

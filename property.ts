@@ -226,7 +226,13 @@ export const checkProperties = async (
 
     // Persist failures for regression testing.
     if (runDetails.failed) {
-      persistFailure(runDetails, "test", testContractId);
+      persistFailure(
+        runDetails,
+        "test",
+        testContractId,
+        // No dialers in property-based testing.
+        undefined
+      );
     }
   };
 

@@ -13,7 +13,6 @@ import { version } from "./package.json";
 import { red } from "ansicolor";
 import { existsSync } from "fs";
 import { parseArgs } from "util";
-import { DialerRegistry } from "./dialer";
 import { getFailureFilePath } from "./persistence";
 
 /**
@@ -218,19 +217,6 @@ export async function main() {
     "-------------------------------------------------------------------------------\n"
   );
 
-  /**
-   * The dialer registry, which is used to keep track of all the custom dialers
-   * registered by the user using the `--dial` flag.
-   */
-  const dialerRegistry =
-    runConfig.dial !== undefined
-      ? new DialerRegistry(runConfig.dial)
-      : undefined;
-
-  if (dialerRegistry !== undefined) {
-    dialerRegistry.registerDialers();
-  }
-
   const simnet = await issueFirstClassCitizenship(
     runConfig.manifestDir,
     manifestPath,
@@ -269,9 +255,9 @@ export async function main() {
         rendezvousAllFunctions,
         runConfig.seed,
         runConfig.runs,
+        runConfig.dial,
         runConfig.bail,
         runConfig.mode,
-        dialerRegistry,
         radio
       );
       break;

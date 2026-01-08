@@ -10,6 +10,8 @@ interface FailureRecord {
   seed: number;
   /** The number of runs needed to reproduce the failure*/
   numRuns: number;
+  /** The path to the dialer file used for this test run */
+  dial: string | undefined;
   /** Timestamp when the failure was recorded */
   timestamp: number;
 }
@@ -95,12 +97,14 @@ const saveFailureStore = (
  * @param runDetails The test run details from fast-check
  * @param type The type of test that failed
  * @param contractId The contract identifier being tested
+ * @param dial The path to the dialer file used for this test run
  * @param config Optional configuration for persistence behavior
  */
 export const persistFailure = (
   runDetails: RunDetails,
   type: "invariant" | "test",
   contractId: string,
+  dial: string | undefined,
   config?: PersistenceConfig
 ): void => {
   const { baseDir } = { ...DEFAULT_CONFIG, ...config };
@@ -110,6 +114,7 @@ export const persistFailure = (
 
   const record: FailureRecord = {
     seed: runDetails.seed,
+    dial: dial,
     numRuns: runDetails.numRuns,
     timestamp: Date.now(),
   };
