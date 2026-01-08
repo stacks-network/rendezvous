@@ -21,7 +21,7 @@ import {
 import { EnrichedContractInterfaceFunction } from "./shared.types";
 import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
 import { Statistics } from "./heatstroke.types";
-import { persistFailure } from "./persistence";
+import { loadFailures, persistFailure } from "./persistence";
 import { TestMode } from "./app";
 import { ImplementedTraitType } from "./traits.types";
 
@@ -156,11 +156,6 @@ export const checkInvariants = async (
     ],
   ]);
 
-  radio.emit(
-    "logMessage",
-    `\nStarting invariant testing type for the ${targetContractName} contract...\n`
-  );
-
   const functions = getFunctionsListForContract(
     executableSutFunctions,
     rendezvousContractId
@@ -191,19 +186,75 @@ export const checkInvariants = async (
     return;
   }
 
-  await invariantTest({
-    simnet,
-    targetContractName,
-    rendezvousContractId,
-    runs,
-    seed,
-    bail,
-    dial,
-    radio,
-    functions,
-    invariants,
-    projectTraitImplementations,
-  });
+  switch (mode) {
+    case TestMode.NEW: {
+      // Start a fresh round of invariant testing using user-provided configuration.
+      radio.emit(
+        "logMessage",
+        `Starting fresh round of invariant testing using user-provided configuration for the ${targetContractName} contract...\n`
+      );
+
+      await invariantTest({
+        simnet,
+        targetContractName,
+        rendezvousContractId,
+        runs,
+        seed,
+        bail,
+        dial,
+        radio,
+        functions,
+        invariants,
+        projectTraitImplementations,
+      });
+      return;
+    }
+    case TestMode.REGRESSION: {
+      // Start a regression round of invariant testing.
+      radio.emit(
+        "logMessage",
+        `Loading ${targetContractName} contract regressions...\n`
+      );
+
+      const regressions = loadFailures(rendezvousContractId, "invariant");
+
+      radio.emit(
+        "logMessage",
+        `Found ${underline(
+          `${regressions.length} regressions`
+        )} for the ${targetContractName} contract.\n`
+      );
+
+      for (const regression of regressions) {
+        emitInvariantRegressionTestHeader(
+          radio,
+          targetContractName,
+          regression.seed,
+          regression.numRuns,
+          regression.dial,
+          regression.timestamp
+        );
+
+        await invariantTest({
+          simnet,
+          targetContractName,
+          rendezvousContractId,
+          runs: regression.numRuns < 100 ? 100 : regression.numRuns,
+          seed: regression.seed,
+          bail,
+          dial: regression.dial,
+          radio,
+          functions,
+          invariants,
+          projectTraitImplementations,
+        });
+      }
+      return;
+    }
+    default: {
+      throw new Error(`Invalid test mode: ${mode}`);
+    }
+  }
 };
 
 /**
@@ -767,3 +818,25 @@ export class FalsifiedInvariantError extends Error {
     this.clarityError = clarityError;
   }
 }
+
+const emitInvariantRegressionTestHeader = (
+  radio: EventEmitter,
+  targetContractName: string,
+  seed: number,
+  numRuns: number,
+  dial: string | undefined,
+  timestamp: number
+) => {
+  radio.emit(
+    "logMessage",
+    `-------------------------------------------------------------------------------
+Running ${underline(
+      timestamp
+    )} regression test for the ${targetContractName} contract with:
+
+- Seed: ${seed}
+- Runs: ${numRuns}
+- Dial: ${dial ?? "none (default)"}
+`
+  );
+};

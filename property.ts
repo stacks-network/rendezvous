@@ -186,7 +186,7 @@ export const checkProperties = async (
       // Start a fresh round of tests using user-provided configuration.
       radio.emit(
         "logMessage",
-        `Starting fresh round of property testing for the ${targetContractName} contract...\n`
+        `Starting fresh round of property testing using user-provided configuration for the ${targetContractName} contract...\n`
       );
 
       await propertyTest({
@@ -220,7 +220,7 @@ export const checkProperties = async (
       );
 
       for (const regression of regressions) {
-        emitRegressionTestHeader(
+        emitPropertyRegressionTestHeader(
           radio,
           targetContractName,
           regression.seed,
@@ -577,7 +577,7 @@ const emitMissingTraitWarning = (
 /**
  * Emits a header for a regression test run with seed and run count information.
  */
-const emitRegressionTestHeader = (
+const emitPropertyRegressionTestHeader = (
   radio: EventEmitter,
   targetContractName: string,
   seed: number,

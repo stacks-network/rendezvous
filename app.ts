@@ -193,7 +193,7 @@ export async function main() {
   if (runConfig.mode) {
     const modeDesc =
       runConfig.mode === TestMode.NEW
-        ? "NEW (run a fresh round of tests)"
+        ? "NEW (fresh round of tests using provided configuration)"
         : "REG (run regression tests)";
     radio.emit("logMessage", `Mode: ${modeDesc}`);
     if (runConfig.mode === TestMode.REGRESSION) {
