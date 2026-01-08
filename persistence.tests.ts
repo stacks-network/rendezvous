@@ -24,11 +24,12 @@ const createTemporaryCustomTestBaseDir = (dirName: string) => {
 // Mock RunDetails helper
 const createMockRunDetails = (
   seed: number,
-  failed: boolean = true
+  failed: boolean = true,
+  numRuns: number = 100
 ): RunDetails => ({
   failed,
   seed,
-  numRuns: 100,
+  numRuns,
   counterexample: [],
 });
 
@@ -329,6 +330,76 @@ describe("Failure Persistence", () => {
             });
             expect(failures[0].timestamp).toBeGreaterThanOrEqual(before);
             expect(failures[0].timestamp).toBeLessThanOrEqual(after);
+
+            // Teardown
+            rmSync(customBaseDir, { recursive: true, force: true });
+          }
+        )
+      );
+    });
+
+    it("includes the number of runs in the failure record", () => {
+      fc.assert(
+        fc.property(
+          fc.record({
+            customBaseDirName: fc.stringMatching(fileNameRegex),
+            seed: fc.integer(),
+            numRuns: fc.integer(),
+          }),
+          ({ customBaseDirName, seed, numRuns }) => {
+            // Setup
+            const runDetails = createMockRunDetails(seed, true, numRuns);
+            const customBaseDir =
+              createTemporaryCustomTestBaseDir(customBaseDirName);
+
+            // Exercise
+            persistFailure(
+              runDetails,
+              "invariant",
+              TEST_CONTRACT_ID,
+              undefined,
+              {
+                baseDir: customBaseDir,
+              }
+            );
+
+            // Verify
+            const failures = loadFailures(TEST_CONTRACT_ID, "invariant", {
+              baseDir: customBaseDir,
+            });
+            expect(failures[0].numRuns).toBe(numRuns);
+
+            // Teardown
+            rmSync(customBaseDir, { recursive: true, force: true });
+          }
+        )
+      );
+    });
+
+    it("includes the dial path in the failure record", () => {
+      fc.assert(
+        fc.property(
+          fc.record({
+            customBaseDirName: fc.stringMatching(fileNameRegex),
+            seed: fc.integer(),
+            dial: fc.string(),
+          }),
+          ({ customBaseDirName, seed, dial }) => {
+            // Setup
+            const runDetails = createMockRunDetails(seed);
+            const customBaseDir =
+              createTemporaryCustomTestBaseDir(customBaseDirName);
+
+            // Exercise
+            persistFailure(runDetails, "invariant", TEST_CONTRACT_ID, dial, {
+              baseDir: customBaseDir,
+            });
+
+            // Verify
+            const failures = loadFailures(TEST_CONTRACT_ID, "invariant", {
+              baseDir: customBaseDir,
+            });
+            expect(failures[0].dial).toBe(dial);
 
             // Teardown
             rmSync(customBaseDir, { recursive: true, force: true });
