@@ -4,6 +4,7 @@ import {
   argsToCV,
   functionToArbitrary,
   getFunctionsListForContract,
+  LOG_DIVIDER,
 } from "./shared";
 import { LocalContext } from "./invariant.types";
 import { Cl, cvToJSON, cvToString } from "@stacks/transactions";
@@ -818,9 +819,10 @@ const emitInvariantRegressionTestHeader = (
   dial: string | undefined,
   timestamp: number
 ) => {
+  radio.emit("logMessage", LOG_DIVIDER);
   radio.emit(
     "logMessage",
-    `-------------------------------------------------------------------------------
+    `
 Running ${underline(
       timestamp
     )} regression test for the ${targetContractName} contract with:

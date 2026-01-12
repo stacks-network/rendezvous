@@ -9,6 +9,7 @@ import {
   functionToArbitrary,
   getContractNameFromContractId,
   getFunctionsListForContract,
+  LOG_DIVIDER,
 } from "./shared";
 import { dim, green, red, underline, yellow } from "ansicolor";
 import { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
@@ -575,9 +576,10 @@ const emitPropertyRegressionTestHeader = (
   numRuns: number,
   timestamp: number
 ) => {
+  radio.emit("logMessage", LOG_DIVIDER);
   radio.emit(
     "logMessage",
-    `-------------------------------------------------------------------------------
+    `
 Running ${underline(
       timestamp
     )} regression test for the ${targetContractName} contract with:

@@ -7,6 +7,7 @@ import {
   getContractNameFromContractId,
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
+  LOG_DIVIDER,
 } from "./shared";
 import { issueFirstClassCitizenship } from "./citizen";
 import { version } from "./package.json";
@@ -141,11 +142,8 @@ export async function main() {
     return;
   }
 
-  // 79 characters long separator before the run configuration.
-  radio.emit(
-    "logMessage",
-    "-------------------------------------------------------------------------------"
-  );
+  // Divider before the run configuration.
+  radio.emit("logMessage", LOG_DIVIDER);
   /**
    * The relative path to the manifest file, either `Clarinet.toml` or
    * `Clarinet-<contract-name>.toml`. If the latter exists, it is used.
@@ -183,12 +181,8 @@ export async function main() {
     radio.emit("logMessage", `Using dial path: ${runConfig.dial}`);
   }
 
-  // 79 characters long separator between the run configuration and the
-  // execution.
-  radio.emit(
-    "logMessage",
-    "-------------------------------------------------------------------------------\n"
-  );
+  // Divider between the run configuration and the execution.
+  radio.emit("logMessage", LOG_DIVIDER + "\n");
 
   const simnet = await issueFirstClassCitizenship(
     runConfig.manifestDir,
