@@ -4,6 +4,8 @@ import { version } from "./package.json";
 import { resolve } from "path";
 import fs, { rmSync } from "fs";
 import { createIsolatedTestEnvironment } from "./test.utils";
+import { getFailureFilePath } from "./persistence";
+import { LOG_DIVIDER } from "./shared";
 
 const isolatedTestEnvPrefix = "rendezvous-test-app-";
 
@@ -13,19 +15,22 @@ describe("Command-line arguments handling", () => {
   const helpMessage = `
   rv v${version}
   
-  Usage: rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--runs=<runs>] [--dial=<path-to-dialers-file>] [--help]
+  Usage: rv <path> <contract> <type> [OPTIONS]
 
-  Positional arguments:
-    path-to-clarinet-project - The path to the Clarinet project.
-    contract-name - The name of the contract to be fuzzed.
-    type - The type to use for exercising the contracts. Possible values: test, invariant.
+  Arguments:
+    <path>        Path to the Clarinet project
+    <contract>    Contract name to fuzz
+    <type>        Test type: test | invariant
 
   Options:
-    --seed - The seed to use for the replay functionality.
-    --runs - The runs to use for iterating over the tests. Default: 100.
-    --bail - Stop after the first failure.
-    --dial – The path to a JavaScript file containing custom pre- and post-execution functions (dialers).
-    --help - Show the help message.
+    --seed=<n>    Seed for replay functionality
+    --runs=<n>    Number of test iterations [default: 100]
+    --dial=<f>    Path to custom dialers file
+    --regr        Run regression tests only
+    --bail        Stop on first failure
+    -h, --help    Show this message
+
+  Learn more: https://stacks-network.github.io/rendezvous/
   `;
 
   const noManifestMessage = red(
@@ -177,18 +182,40 @@ describe("Command-line arguments handling", () => {
       ["manifest path", "contract name", "type=invariant"],
       ["node", "app.js", manifestDirPlaceholder, "counter", "invariant"],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
-        `\nStarting invariant testing type for the counter contract...\n`,
+        LOG_DIVIDER,
       ],
     ],
+
     [
       ["manifest path", "contract name", "type=InVaRiAnT (case-insensitive)"],
       ["node", "app.js", manifestDirPlaceholder, "counter", "InVaRiAnT"],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
-        `\nStarting invariant testing type for the counter contract...\n`,
+        LOG_DIVIDER,
+      ],
+    ],
+    [
+      ["manifest path", "contract name", "type=invariant", "regr"],
+      [
+        "node",
+        "app.js",
+        manifestDirPlaceholder,
+        "counter",
+        "invariant",
+        "--regr",
+      ],
+      [
+        LOG_DIVIDER,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
+        `Target contract: counter`,
+        `Running regression tests.`,
+        `Regressions loaded from: ${resolve(getFailureFilePath("counter"))}`,
+        LOG_DIVIDER,
       ],
     ],
     [
@@ -202,10 +229,11 @@ describe("Command-line arguments handling", () => {
         "--bail",
       ],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Bailing on first failure.`,
-        `\nStarting invariant testing type for the counter contract...\n`,
+        LOG_DIVIDER,
       ],
     ],
     [
@@ -219,38 +247,54 @@ describe("Command-line arguments handling", () => {
         "--dial=example/sip010.cjs",
       ],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using dial path: example/sip010.cjs`,
-        `\nStarting invariant testing type for the counter contract...\n`,
+        LOG_DIVIDER,
       ],
     ],
     [
       ["manifest path", "contract name", "type=test"],
       ["node", "app.js", manifestDirPlaceholder, "counter", "test"],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
-        `\nStarting property testing type for the counter contract...\n`,
+        LOG_DIVIDER,
       ],
     ],
     [
       ["manifest path", "contract name", "type=tESt (case-insensitive)"],
       ["node", "app.js", manifestDirPlaceholder, "counter", "tESt"],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
-        `\nStarting property testing type for the counter contract...\n`,
+        LOG_DIVIDER,
+      ],
+    ],
+    [
+      ["manifest path", "contract name", "type=test", "regr"],
+      ["node", "app.js", manifestDirPlaceholder, "counter", "test", "--regr"],
+      [
+        LOG_DIVIDER,
+        `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
+        `Target contract: counter`,
+        `Running regression tests.`,
+        `Regressions loaded from: ${resolve(getFailureFilePath("counter"))}`,
+        LOG_DIVIDER,
       ],
     ],
     [
       ["manifest path", "contract name", "type=test", "bail"],
       ["node", "app.js", manifestDirPlaceholder, "counter", "test", "--bail"],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Bailing on first failure.`,
-        `\nStarting property testing type for the counter contract...\n`,
+        LOG_DIVIDER,
       ],
     ],
     [
@@ -264,10 +308,11 @@ describe("Command-line arguments handling", () => {
         "--seed=123",
       ],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `\nStarting invariant testing type for the counter contract...\n`,
+        LOG_DIVIDER,
       ],
     ],
     [
@@ -286,10 +331,11 @@ describe("Command-line arguments handling", () => {
         "--seed=123",
       ],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `\nStarting invariant testing type for the counter contract...\n`,
+        LOG_DIVIDER,
       ],
     ],
     [
@@ -303,10 +349,11 @@ describe("Command-line arguments handling", () => {
         "--seed=123",
       ],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `\nStarting property testing type for the counter contract...\n`,
+        LOG_DIVIDER,
       ],
     ],
     [
@@ -320,20 +367,22 @@ describe("Command-line arguments handling", () => {
         "--seed=123",
       ],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: reverse`,
         `Using seed: 123`,
-        `\nStarting property testing type for the reverse contract...\n`,
+        LOG_DIVIDER,
       ],
     ],
     [
       ["manifest path", "contract name = slice", "type=test", "seed"],
       ["node", "app.js", manifestDirPlaceholder, "slice", "test", "--seed=123"],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: slice`,
         `Using seed: 123`,
-        `\nStarting property testing type for the slice contract...\n`,
+        LOG_DIVIDER,
       ],
     ],
     [
@@ -352,10 +401,11 @@ describe("Command-line arguments handling", () => {
         "--seed=123",
       ],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
-        `\nStarting property testing type for the counter contract...\n`,
+        LOG_DIVIDER,
       ],
     ],
     [
@@ -371,12 +421,13 @@ describe("Command-line arguments handling", () => {
         "--bail",
       ],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
         `Using runs: 10`,
         `Bailing on first failure.`,
-        `\nStarting property testing type for the counter contract...\n`,
+        LOG_DIVIDER,
       ],
     ],
     [
@@ -399,12 +450,13 @@ describe("Command-line arguments handling", () => {
         "--bail",
       ],
       [
+        LOG_DIVIDER,
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Using seed: 123`,
         `Using runs: 10`,
         `Bailing on first failure.`,
-        `\nStarting invariant testing type for the counter contract...\n`,
+        LOG_DIVIDER,
       ],
     ],
   ])(

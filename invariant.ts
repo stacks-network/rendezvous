@@ -4,6 +4,7 @@ import {
   argsToCV,
   functionToArbitrary,
   getFunctionsListForContract,
+  LOG_DIVIDER,
 } from "./shared";
 import { LocalContext } from "./invariant.types";
 import { Cl, cvToJSON, cvToString } from "@stacks/transactions";
@@ -21,6 +22,8 @@ import {
 import { EnrichedContractInterfaceFunction } from "./shared.types";
 import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
 import { Statistics } from "./heatstroke.types";
+import { loadFailures, persistFailure } from "./persistence";
+import { ImplementedTraitType } from "./traits.types";
 
 /**
  * Runs invariant testing on the target contract and logs the progress. Reports
@@ -32,9 +35,10 @@ import { Statistics } from "./heatstroke.types";
  * target contract.
  * @param seed The seed for reproducible invariant testing.
  * @param runs The number of test runs.
+ * @param dial The path to the dialer file.
  * @param bail Stop execution after the first failure and prevent further
  * shrinking.
- * @param dialerRegistry The custom dialer registry.
+ * @param regr Whether to run regression tests only.
  * @param radio The custom logging event emitter.
  * @returns void
  */
@@ -45,20 +49,11 @@ export const checkInvariants = async (
   rendezvousAllFunctions: Map<string, ContractInterfaceFunction[]>,
   seed: number | undefined,
   runs: number | undefined,
+  dial: string | undefined,
   bail: boolean,
-  dialerRegistry: DialerRegistry | undefined,
+  regr: boolean,
   radio: EventEmitter
 ) => {
-  const statistics: Statistics = {
-    sut: {
-      successful: new Map<string, number>(),
-      failed: new Map<string, number>(),
-    },
-    invariant: {
-      successful: new Map<string, number>(),
-      failed: new Map<string, number>(),
-    },
-  };
   // The Rendezvous identifier is the first one in the list. Only one contract
   // can be fuzzed at a time.
   const rendezvousContractId = rendezvousList[0];
@@ -68,28 +63,12 @@ export const checkInvariants = async (
   // to access the SUT functions for each Rendezvous contract afterwards.
   const rendezvousSutFunctions = filterSutFunctions(rendezvousAllFunctions);
 
-  // Initialize the statistics for the SUT functions.
-  for (const functionInterface of rendezvousSutFunctions.get(
-    rendezvousContractId
-  )!) {
-    statistics.sut!.successful.set(functionInterface.name, 0);
-    statistics.sut!.failed.set(functionInterface.name, 0);
-  }
-
   // A map where the keys are the Rendezvous identifiers and the values are
   // arrays of their invariant functions. This map will be used to access the
   // invariant functions for each Rendezvous contract afterwards.
   const rendezvousInvariantFunctions = filterInvariantFunctions(
     rendezvousAllFunctions
   );
-
-  // Initialize the statistics for the invariant functions.
-  for (const functionInterface of rendezvousInvariantFunctions.get(
-    rendezvousContractId
-  )!) {
-    statistics.invariant!.successful.set(functionInterface.name, 0);
-    statistics.invariant!.failed.set(functionInterface.name, 0);
-  }
 
   const sutFunctions = rendezvousSutFunctions.get(rendezvousContractId)!;
   const traitReferenceSutFunctions = sutFunctions.filter(
@@ -148,41 +127,12 @@ export const checkInvariants = async (
     rendezvousContractId
   );
 
-  if (
-    sutFunctionsWithMissingTraits.length > 0 ||
-    invariantFunctionsWithMissingTraits.length > 0
-  ) {
-    if (sutFunctionsWithMissingTraits.length > 0) {
-      const functionList = sutFunctionsWithMissingTraits
-        .map((fn) => `  - ${fn}`)
-        .join("\n");
-
-      radio.emit(
-        "logMessage",
-        yellow(
-          `\nWarning: The following SUT functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
-        )
-      );
-    }
-    if (invariantFunctionsWithMissingTraits.length > 0) {
-      const functionList = invariantFunctionsWithMissingTraits
-        .map((fn) => `  - ${fn}`)
-        .join("\n");
-
-      radio.emit(
-        "logMessage",
-        yellow(
-          `\nWarning: The following invariant functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
-        )
-      );
-    }
-    radio.emit(
-      "logMessage",
-      yellow(
-        `Note: You can add contracts implementing traits either as project contracts or as Clarinet requirements.\n`
-      )
-    );
-  }
+  // Emit warnings for functions with missing trait implementations
+  emitMissingTraitWarnings(
+    radio,
+    sutFunctionsWithMissingTraits,
+    invariantFunctionsWithMissingTraits
+  );
 
   // Filter out functions with missing trait implementations from the enriched
   // map.
@@ -205,25 +155,6 @@ export const checkInvariants = async (
         .filter((f) => !invariantFunctionsWithMissingTraits.includes(f.name)),
     ],
   ]);
-
-  // Set up local context to track SUT function call counts.
-  const localContext = initializeLocalContext(executableSutFunctions);
-
-  // Set up context in simnet by initializing state for SUT.
-  initializeClarityContext(simnet, executableSutFunctions);
-
-  radio.emit(
-    "logMessage",
-    `\nStarting invariant testing type for the ${targetContractName} contract...\n`
-  );
-
-  const simnetAccounts = simnet.getAccounts();
-
-  const eligibleAccounts = new Map(
-    [...simnetAccounts].filter(([key]) => key !== "faucet")
-  );
-
-  const simnetAddresses = Array.from(simnetAccounts.values());
 
   const functions = getFunctionsListForContract(
     executableSutFunctions,
@@ -255,9 +186,173 @@ export const checkInvariants = async (
     return;
   }
 
-  const radioReporter = (runDetails: any) => {
-    reporter(runDetails, radio, "invariant", statistics);
+  if (regr) {
+    // Run regression tests only.
+    radio.emit(
+      "logMessage",
+      `Loading ${targetContractName} contract regressions...\n`
+    );
+
+    const regressions = loadFailures(rendezvousContractId, "invariant");
+
+    radio.emit(
+      "logMessage",
+      `Found ${underline(
+        `${regressions.length} regressions`
+      )} for the ${targetContractName} contract.\n`
+    );
+
+    for (const regression of regressions) {
+      emitInvariantRegressionTestHeader(
+        radio,
+        targetContractName,
+        regression.seed,
+        regression.numRuns,
+        regression.dial,
+        regression.timestamp
+      );
+
+      await invariantTest({
+        simnet,
+        targetContractName,
+        rendezvousContractId,
+        runs: regression.numRuns < 100 ? 100 : regression.numRuns,
+        seed: regression.seed,
+        bail,
+        dial: regression.dial,
+        radio,
+        functions,
+        invariants,
+        projectTraitImplementations,
+      });
+    }
+  } else {
+    // Run fresh invariant tests using user-provided configuration.
+    radio.emit(
+      "logMessage",
+      `Starting fresh round of invariant testing for the ${targetContractName} contract using user-provided configuration...\n`
+    );
+
+    await invariantTest({
+      simnet,
+      targetContractName,
+      rendezvousContractId,
+      runs,
+      seed,
+      bail,
+      dial,
+      radio,
+      functions,
+      invariants,
+      projectTraitImplementations,
+    });
+  }
+};
+
+/**
+ * The configuration for an invariant test.
+ */
+interface InvariantTestConfig {
+  simnet: Simnet;
+  targetContractName: string;
+  rendezvousContractId: string;
+  runs: number | undefined;
+  seed: number | undefined;
+  bail: boolean;
+  dial: string | undefined;
+  radio: EventEmitter;
+}
+
+/**
+ * The context to run an invariant test with.
+ */
+interface InvariantTestContext {
+  /** SUT functions for the target contract. */
+  functions: EnrichedContractInterfaceFunction[];
+  /** Invariant functions for the target contract. */
+  invariants: EnrichedContractInterfaceFunction[];
+  /** Project trait implementations. */
+  projectTraitImplementations: Record<string, ImplementedTraitType[]>;
+}
+
+/**
+ * Runs an invariant test.
+ * @param config The union of the configuration and context for the invariant
+ * test.
+ * @returns A promise that resolves when the invariant test is complete.
+ */
+const invariantTest = async (
+  config: InvariantTestConfig & InvariantTestContext
+) => {
+  const {
+    simnet,
+    targetContractName,
+    rendezvousContractId,
+    runs,
+    seed,
+    bail,
+    dial,
+    radio,
+    functions,
+    invariants,
+    projectTraitImplementations,
+  } = config;
+
+  // Derive accounts and addresses from simnet.
+  const simnetAccounts = simnet.getAccounts();
+  const eligibleAccounts = new Map(
+    [...simnetAccounts].filter(([key]) => key !== "faucet")
+  );
+  const simnetAddresses = Array.from(simnetAccounts.values());
+
+  /**
+   * The dialer registry, which is used to keep track of all the custom dialers
+   * registered by the user using the `--dial` flag.
+   */
+  const dialerRegistry =
+    dial !== undefined ? new DialerRegistry(dial) : undefined;
+
+  if (dialerRegistry !== undefined) {
+    dialerRegistry.registerDialers();
+  }
+
+  const statistics: Statistics = {
+    sut: {
+      successful: new Map<string, number>(),
+      failed: new Map<string, number>(),
+    },
+    invariant: {
+      successful: new Map<string, number>(),
+      failed: new Map<string, number>(),
+    },
   };
+
+  // Initialize the statistics for the SUT functions.
+  for (const functionInterface of functions) {
+    statistics.sut!.successful.set(functionInterface.name, 0);
+    statistics.sut!.failed.set(functionInterface.name, 0);
+  }
+
+  // Initialize the statistics for the invariant functions.
+  for (const functionInterface of invariants) {
+    statistics.invariant!.successful.set(functionInterface.name, 0);
+    statistics.invariant!.failed.set(functionInterface.name, 0);
+  }
+
+  const radioReporter = async (runDetails: any) => {
+    reporter(runDetails, radio, "invariant", statistics);
+
+    // Persist failures for regression testing.
+    if (runDetails.failed) {
+      persistFailure(runDetails, "invariant", rendezvousContractId, dial);
+    }
+  };
+
+  // Set up local context to track SUT function call counts.
+  const localContext = initializeLocalContext(rendezvousContractId, functions);
+
+  // Set up context in simnet by initializing state for SUT.
+  initializeClarityContext(simnet, rendezvousContractId, functions);
 
   await fc.assert(
     fc.asyncProperty(
@@ -545,7 +640,8 @@ export const checkInvariants = async (
             // `true`. Create a custom error to distinguish this case from
             // runtime errors.
             throw new FalsifiedInvariantError(
-              `Invariant failed for ${targetContractName} contract: "${r.selectedInvariant.name}" returned ${invariantCallClarityResult}`
+              `Invariant failed for ${targetContractName} contract: "${r.selectedInvariant.name}" returned ${invariantCallClarityResult}`,
+              invariantCallClarityResult
             );
           }
         } catch (error: any) {
@@ -586,43 +682,87 @@ export const checkInvariants = async (
 };
 
 /**
+ * Emits warnings for functions that reference traits without eligible
+ * implementations.
+ */
+function emitMissingTraitWarnings(
+  radio: EventEmitter,
+  sutFunctions: string[],
+  invariantFunctions: string[]
+): void {
+  if (sutFunctions.length === 0 && invariantFunctions.length === 0) {
+    return;
+  }
+
+  if (sutFunctions.length > 0) {
+    const functionList = sutFunctions.map((fn) => `  - ${fn}`).join("\n");
+    radio.emit(
+      "logMessage",
+      yellow(
+        `\nWarning: The following SUT functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
+      )
+    );
+  }
+
+  if (invariantFunctions.length > 0) {
+    const functionList = invariantFunctions.map((fn) => `  - ${fn}`).join("\n");
+    radio.emit(
+      "logMessage",
+      yellow(
+        `\nWarning: The following invariant functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
+      )
+    );
+  }
+
+  radio.emit(
+    "logMessage",
+    yellow(
+      `Note: You can add contracts implementing traits either as project contracts or as Clarinet requirements.\n`
+    )
+  );
+}
+
+/**
  * Initializes the local context, setting the number of times each function
  * has been called to zero.
- * @param rendezvousSutFunctions The Rendezvous functions.
+ * @param contractId The contract identifier.
+ * @param functions The SUT functions for the contract.
  * @returns The initialized local context.
  */
 export const initializeLocalContext = (
-  rendezvousSutFunctions: Map<string, EnrichedContractInterfaceFunction[]>
-): LocalContext =>
-  Object.fromEntries(
-    Array.from(rendezvousSutFunctions.entries()).map(
-      ([contractId, functions]) => [
-        contractId,
-        Object.fromEntries(functions.map((f) => [f.name, 0])),
-      ]
-    )
-  );
+  contractId: string,
+  functions: EnrichedContractInterfaceFunction[]
+): LocalContext => ({
+  [contractId]: Object.fromEntries(functions.map((f) => [f.name, 0])),
+});
 
+/**
+ * Initializes the Clarity context by calling update-context for each SUT
+ * function.
+ * @param simnet The Simnet instance.
+ * @param contractId The contract identifier.
+ * @param functions The SUT functions for the contract.
+ */
 export const initializeClarityContext = (
   simnet: Simnet,
-  rendezvousSutFunctions: Map<string, EnrichedContractInterfaceFunction[]>
-) =>
-  rendezvousSutFunctions.forEach((fns, contractId) => {
-    fns.forEach((fn) => {
-      const { result: initialize } = simnet.callPublicFn(
-        contractId,
-        "update-context",
-        [Cl.stringAscii(fn.name), Cl.uint(0)],
-        simnet.deployer
+  contractId: string,
+  functions: EnrichedContractInterfaceFunction[]
+) => {
+  functions.forEach((fn) => {
+    const { result: initialize } = simnet.callPublicFn(
+      contractId,
+      "update-context",
+      [Cl.stringAscii(fn.name), Cl.uint(0)],
+      simnet.deployer
+    );
+    const jsonResult = cvToJSON(initialize);
+    if (!jsonResult.value || !jsonResult.success) {
+      throw new Error(
+        `Failed to initialize the context for function: ${fn.name}.`
       );
-      const jsonResult = cvToJSON(initialize);
-      if (!jsonResult.value || !jsonResult.success) {
-        throw new Error(
-          `Failed to initialize the context for function: ${fn.name}.`
-        );
-      }
-    });
+    }
   });
+};
 
 /**
  * Filter the System Under Test (`SUT`) functions from the map of all contract
@@ -663,8 +803,33 @@ const filterInvariantFunctions = (
     ])
   );
 
-class FalsifiedInvariantError extends Error {
-  constructor(message: string) {
+export class FalsifiedInvariantError extends Error {
+  readonly clarityError: string;
+  constructor(message: string, clarityError: string) {
     super(message);
+    this.clarityError = clarityError;
   }
 }
+
+const emitInvariantRegressionTestHeader = (
+  radio: EventEmitter,
+  targetContractName: string,
+  seed: number,
+  numRuns: number,
+  dial: string | undefined,
+  timestamp: number
+) => {
+  radio.emit("logMessage", LOG_DIVIDER);
+  radio.emit(
+    "logMessage",
+    `
+Running ${underline(
+      timestamp
+    )} regression test for the ${targetContractName} contract with:
+
+- Seed: ${seed}
+- Runs: ${numRuns}
+- Dial: ${dial ?? "none (default)"}
+`
+  );
+};

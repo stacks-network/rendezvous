@@ -9,6 +9,7 @@ import {
   functionToArbitrary,
   getContractNameFromContractId,
   getFunctionsListForContract,
+  LOG_DIVIDER,
 } from "./shared";
 import { dim, green, red, underline, yellow } from "ansicolor";
 import { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
@@ -19,6 +20,9 @@ import {
   isTraitReferenceFunction,
   getNonTestableTraitFunctions,
 } from "./traits";
+import { loadFailures, persistFailure } from "./persistence";
+import { ImplementedTraitType } from "./traits.types";
+import { EnrichedContractInterfaceFunction } from "./shared.types";
 
 /**
  * Runs property-based tests on the target contract and logs the progress.
@@ -32,10 +36,11 @@ import {
  * @param runs The number of test runs.
  * @param bail Stop execution after the first failure and prevent further
  * shrinking.
+ * @param regr Whether to run regression tests only.
  * @param radio The custom logging event emitter.
  * @returns void
  */
-export const checkProperties = (
+export const checkProperties = async (
   simnet: Simnet,
   targetContractName: string,
   rendezvousList: string[],
@@ -43,17 +48,9 @@ export const checkProperties = (
   seed: number | undefined,
   runs: number | undefined,
   bail: boolean,
+  regr: boolean,
   radio: EventEmitter
 ) => {
-  const statistics: Statistics = {
-    test: {
-      successful: new Map<string, number>(),
-      discarded: new Map<string, number>(),
-      failed: new Map<string, number>(),
-    },
-  };
-  const testContractId = rendezvousList[0];
-
   // A map where the keys are the test contract identifiers and the values are
   // arrays of their test functions. This map will be used to access the test
   // functions for each test contract in the property-based testing routine.
@@ -61,13 +58,7 @@ export const checkProperties = (
     rendezvousAllFunctions
   );
 
-  for (const functionInterface of testContractsTestFunctions.get(
-    testContractId
-  )!) {
-    statistics.test!.successful.set(functionInterface.name, 0);
-    statistics.test!.discarded.set(functionInterface.name, 0);
-    statistics.test!.failed.set(functionInterface.name, 0);
-  }
+  const testContractId = rendezvousList[0];
 
   const allTestFunctions = testContractsTestFunctions.get(testContractId)!;
 
@@ -105,24 +96,7 @@ export const checkProperties = (
 
   // If the tests contain trait reference functions without eligible trait
   // implementations, log a warning and filter out the functions.
-  if (functionsMissingTraitImplementations.length > 0) {
-    const functionList = functionsMissingTraitImplementations
-      .map((fn) => `  - ${fn}`)
-      .join("\n");
-
-    radio.emit(
-      "logMessage",
-      yellow(
-        `\nWarning: The following test functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
-      )
-    );
-    radio.emit(
-      "logMessage",
-      yellow(
-        `Note: You can add contracts implementing traits either as project contracts or as requirements.\n`
-      )
-    );
-  }
+  emitMissingTraitWarning(radio, functionsMissingTraitImplementations);
 
   // Filter out test functions with missing trait implementations from the
   // enriched map.
@@ -139,11 +113,6 @@ export const checkProperties = (
         ),
     ],
   ]);
-
-  radio.emit(
-    "logMessage",
-    `\nStarting property testing type for the ${targetContractName} contract...\n`
-  );
 
   // Search for discard functions, for each test function. This map will
   // be used to pair the test functions with their corresponding discard
@@ -199,14 +168,6 @@ export const checkProperties = (
     return;
   }
 
-  const simnetAccounts = simnet.getAccounts();
-
-  const eligibleAccounts = new Map(
-    [...simnetAccounts].filter(([key]) => key !== "faucet")
-  );
-
-  const simnetAddresses = Array.from(simnetAccounts.values());
-
   const testFunctions = getFunctionsListForContract(
     executableTestContractsTestFunctions,
     testContractId
@@ -220,15 +181,157 @@ export const checkProperties = (
     return;
   }
 
-  const radioReporter = (runDetails: any) => {
-    reporter(runDetails, radio, "test", statistics);
+  if (regr) {
+    // Run regression tests only.
+    radio.emit(
+      "logMessage",
+      `Loading ${targetContractName} contract regressions...\n`
+    );
+
+    const regressions = loadFailures(testContractId, "test");
+
+    radio.emit(
+      "logMessage",
+      `Found ${underline(
+        `${regressions.length} regressions`
+      )} for the ${targetContractName} contract.\n`
+    );
+
+    for (const regression of regressions) {
+      emitPropertyRegressionTestHeader(
+        radio,
+        targetContractName,
+        regression.seed,
+        regression.numRuns,
+        regression.timestamp
+      );
+
+      await propertyTest({
+        simnet,
+        targetContractName,
+        testContractId,
+        // If the number of runs that failed is less than 100, set it to the
+        // default value of 100. If more runs were needed to reproduce the
+        // failure, use the number of runs that failed.
+        runs: regression.numRuns < 100 ? 100 : regression.numRuns,
+        seed: regression.seed,
+        bail,
+        radio,
+        testFunctions,
+        projectTraitImplementations,
+        testContractsPairedFunctions,
+      });
+    }
+  } else {
+    // Run fresh tests using user-provided configuration.
+    radio.emit(
+      "logMessage",
+      `Starting fresh round of property testing for the ${targetContractName} contract using user-provided configuration...\n`
+    );
+
+    await propertyTest({
+      simnet,
+      targetContractName,
+      testContractId,
+      runs,
+      seed,
+      bail,
+      radio,
+      testFunctions,
+      projectTraitImplementations,
+      testContractsPairedFunctions,
+    });
+  }
+};
+
+/**
+ * The configuration for a property test.
+ */
+interface PropertyTestConfig {
+  simnet: Simnet;
+  targetContractName: string;
+  testContractId: string;
+  runs: number | undefined;
+  seed: number | undefined;
+  bail: boolean;
+  radio: EventEmitter;
+}
+
+/**
+ * The context to run a property test with.
+ */
+interface PropertyTestContext {
+  /** Executable test functions. */
+  testFunctions: EnrichedContractInterfaceFunction[];
+  /** Project trait implementations. */
+  projectTraitImplementations: Record<string, ImplementedTraitType[]>;
+  /** Test functions paired with their corresponding discard functions. */
+  testContractsPairedFunctions: Map<string, Map<string, string | undefined>>;
+}
+
+/**
+ * Runs a property test.
+ * @param config The union of the configuration and context for the property
+ * test.
+ * @returns A promise that resolves when the property test is complete.
+ */
+const propertyTest = async (
+  config: PropertyTestConfig & PropertyTestContext
+) => {
+  const {
+    simnet,
+    targetContractName,
+    testContractId,
+    runs,
+    seed,
+    bail,
+    radio,
+    testFunctions,
+    projectTraitImplementations,
+    testContractsPairedFunctions,
+  } = config;
+
+  // Derive accounts and addresses from simnet.
+  const simnetAccounts = simnet.getAccounts();
+  const eligibleAccounts = new Map(
+    [...simnetAccounts].filter(([key]) => key !== "faucet")
+  );
+  const simnetAddresses = Array.from(simnetAccounts.values());
+
+  const statistics: Statistics = {
+    test: {
+      successful: new Map<string, number>(),
+      discarded: new Map<string, number>(),
+      failed: new Map<string, number>(),
+    },
   };
 
-  fc.assert(
-    fc.property(
+  for (const functionInterface of testFunctions) {
+    statistics.test!.successful.set(functionInterface.name, 0);
+    statistics.test!.discarded.set(functionInterface.name, 0);
+    statistics.test!.failed.set(functionInterface.name, 0);
+  }
+
+  const radioReporter = async (runDetails: any) => {
+    reporter(runDetails, radio, "test", statistics);
+
+    // Persist failures for regression testing.
+    if (runDetails.failed) {
+      persistFailure(
+        runDetails,
+        "test",
+        testContractId,
+        // No dialers in property-based testing.
+        undefined
+      );
+    }
+  };
+
+  await fc.assert(
+    fc.asyncProperty(
       fc
         .record({
-          testContractId: fc.constant(testContractId),
+          rendezvousContractId: fc.constant(testContractId),
           testCaller: fc.constantFrom(...eligibleAccounts.entries()),
           canMineBlocks: fc.boolean(),
         })
@@ -273,7 +376,7 @@ export const checkProperties = (
             })
             .map((burnBlocks) => ({ ...r, ...burnBlocks }))
         ),
-      (r) => {
+      async (r) => {
         const selectedTestFunctionArgs = argsToCV(
           r.selectedTestFunction,
           r.functionArgs
@@ -294,13 +397,13 @@ export const checkProperties = (
         const [testCallerWallet, testCallerAddress] = r.testCaller;
 
         const discardFunctionName = testContractsPairedFunctions
-          .get(r.testContractId)!
+          .get(r.rendezvousContractId)!
           .get(r.selectedTestFunction.name);
 
         const discarded = isTestDiscarded(
           discardFunctionName,
           selectedTestFunctionArgs,
-          r.testContractId,
+          r.rendezvousContractId,
           simnet,
           testCallerAddress
         );
@@ -325,7 +428,7 @@ export const checkProperties = (
             // If the function call results in a runtime error, the error will
             // be caught and logged as a test failure in the catch block.
             const { result: testFunctionCallResult } = simnet.callPublicFn(
-              r.testContractId,
+              r.rendezvousContractId,
               r.selectedTestFunction.name,
               selectedTestFunctionArgs,
               testCallerAddress
@@ -433,6 +536,57 @@ export const checkProperties = (
       seed: seed,
       verbose: true,
     }
+  );
+};
+
+/**
+ * Emits a warning for test functions that reference traits without eligible
+ * implementations.
+ */
+const emitMissingTraitWarning = (
+  radio: EventEmitter,
+  functionNames: string[]
+) => {
+  if (functionNames.length === 0) {
+    return;
+  }
+
+  const functionList = functionNames.map((fn) => `  - ${fn}`).join("\n");
+  radio.emit(
+    "logMessage",
+    yellow(
+      `\nWarning: The following test functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
+    )
+  );
+  radio.emit(
+    "logMessage",
+    yellow(
+      `Note: You can add contracts implementing traits either as project contracts or as requirements.\n`
+    )
+  );
+};
+
+/**
+ * Emits a header for a regression test run with seed and run count information.
+ */
+const emitPropertyRegressionTestHeader = (
+  radio: EventEmitter,
+  targetContractName: string,
+  seed: number,
+  numRuns: number,
+  timestamp: number
+) => {
+  radio.emit("logMessage", LOG_DIVIDER);
+  radio.emit(
+    "logMessage",
+    `
+Running ${underline(
+      timestamp
+    )} regression test for the ${targetContractName} contract with:
+
+- Seed: ${seed}
+- Runs: ${numRuns}
+`
   );
 };
 
@@ -567,7 +721,7 @@ export const isReturnTypeBoolean = (
   discardFunctionInterface: ContractInterfaceFunction
 ) => discardFunctionInterface.outputs.type === "bool";
 
-class PropertyTestError extends Error {
+export class PropertyTestError extends Error {
   readonly clarityError: string;
   constructor(message: string, clarityError: string) {
     super(message);

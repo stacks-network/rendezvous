@@ -26,6 +26,10 @@ import {
 import { getContractIdsImplementingTrait } from "./traits";
 import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
+/** 79 characters long divider for logging. */
+export const LOG_DIVIDER =
+  "-------------------------------------------------------------------------------";
+
 /**
  * Retrieves the contract interfaces of the contracts deployed by a specific
  * deployer from the simnet instance.
