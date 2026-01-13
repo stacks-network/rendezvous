@@ -31,14 +31,14 @@
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
-    "@stacks/clarinet-sdk": "^3.10.0",
+    "@stacks/clarinet-sdk": "^3.12.0",
     "@stacks/transactions": "^7.2.0",
     "ansicolor": "^2.0.3",
     "fast-check": "^4.3.0",
     "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "@stacks/clarinet-sdk-wasm": "^3.10.0",
+    "@stacks/clarinet-sdk-wasm": "^3.12.0",
     "@types/jest": "^30.0.0",
     "jest": "^30.2.0",
     "ts-jest": "^29.4.5",
