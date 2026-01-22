@@ -27,7 +27,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/stacks-network/rendezvous.git"
+    "url": "https://github.com/AdekunleBamz/rendezvous.git"
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
