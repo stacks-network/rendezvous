@@ -184,66 +184,73 @@ export async function main() {
   // Divider between the run configuration and the execution.
   radio.emit("logMessage", LOG_DIVIDER + "\n");
 
-  const simnet = await issueFirstClassCitizenship(
-    runConfig.manifestDir,
-    manifestPath,
-    runConfig.sutContractName,
-    radio
-  );
+  const { simnet, resetSession, cleanupSession } =
+    await issueFirstClassCitizenship(
+      runConfig.manifestDir,
+      manifestPath,
+      runConfig.sutContractName,
+      radio
+    );
 
-  /**
-   * The list of contract IDs for the SUT contract names, as per the simnet.
-   */
-  const rendezvousList = Array.from(
-    getSimnetDeployerContractsInterfaces(simnet).keys()
-  ).filter(
-    (deployedContract) =>
-      getContractNameFromContractId(deployedContract) ===
-      runConfig.sutContractName
-  );
+  try {
+    /**
+     * The list of contract IDs for the SUT contract names, as per the simnet.
+     */
+    const rendezvousList = Array.from(
+      getSimnetDeployerContractsInterfaces(simnet).keys()
+    ).filter(
+      (deployedContract) =>
+        getContractNameFromContractId(deployedContract) ===
+        runConfig.sutContractName
+    );
 
-  const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
-    new Map(
-      Array.from(getSimnetDeployerContractsInterfaces(simnet)).filter(
-        ([contractId]) => rendezvousList.includes(contractId)
+    const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
+      new Map(
+        Array.from(getSimnetDeployerContractsInterfaces(simnet)).filter(
+          ([contractId]) => rendezvousList.includes(contractId)
+        )
       )
-    )
-  );
+    );
 
-  // Select the testing routine based on `type`.
-  // If "invariant", call `checkInvariants` to verify contract invariants.
-  // If "test", call `checkProperties` for property-based testing.
-  switch (runConfig.type) {
-    case "invariant": {
-      await checkInvariants(
-        simnet,
-        runConfig.sutContractName,
-        rendezvousList,
-        rendezvousAllFunctions,
-        runConfig.seed,
-        runConfig.runs,
-        runConfig.dial,
-        runConfig.bail,
-        runConfig.regr,
-        radio
-      );
-      break;
-    }
+    // Select the testing routine based on `type`.
+    // If "invariant", call `checkInvariants` to verify contract invariants.
+    // If "test", call `checkProperties` for property-based testing.
+    switch (runConfig.type) {
+      case "invariant": {
+        await checkInvariants(
+          simnet,
+          resetSession,
+          runConfig.sutContractName,
+          rendezvousList,
+          rendezvousAllFunctions,
+          runConfig.seed,
+          runConfig.runs,
+          runConfig.dial,
+          runConfig.bail,
+          runConfig.regr,
+          radio
+        );
+        break;
+      }
 
-    case "test": {
-      checkProperties(
-        simnet,
-        runConfig.sutContractName,
-        rendezvousList,
-        rendezvousAllFunctions,
-        runConfig.seed,
-        runConfig.runs,
-        runConfig.bail,
-        runConfig.regr,
-        radio
-      );
-      break;
+      case "test": {
+        await checkProperties(
+          simnet,
+          resetSession,
+          runConfig.sutContractName,
+          rendezvousList,
+          rendezvousAllFunctions,
+          runConfig.seed,
+          runConfig.runs,
+          runConfig.bail,
+          runConfig.regr,
+          radio
+        );
+        break;
+      }
     }
+  } finally {
+    cleanupSession();
   }
 }
 

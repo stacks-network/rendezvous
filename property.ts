@@ -28,6 +28,7 @@ import { EnrichedContractInterfaceFunction } from "./shared.types";
  * Runs property-based tests on the target contract and logs the progress.
  * Reports the test results through a custom reporter.
  * @param simnet The simnet instance.
+ * @param resetSession Resets the simnet session to a clean state.
  * @param targetContractName The name of the target contract.
  * @param rendezvousList The list of contract IDs for each target contract.
  * @param rendezvousAllFunctions A map of all target contract IDs to their
@@ -42,6 +43,7 @@ import { EnrichedContractInterfaceFunction } from "./shared.types";
  */
 export const checkProperties = async (
   simnet: Simnet,
+  resetSession: () => Promise<void>,
   targetContractName: string,
   rendezvousList: string[],
   rendezvousAllFunctions: Map<string, ContractInterfaceFunction[]>,
@@ -205,6 +207,8 @@ export const checkProperties = async (
         regression.numRuns,
         regression.timestamp
       );
+
+      await resetSession();
 
       await propertyTest({
         simnet,

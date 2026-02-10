@@ -54,7 +54,7 @@ describe("Simnet contracts operations", () => {
       resolve(__dirname, "example"),
       isolatedTestEnvPrefix
     );
-    const simnet = await issueFirstClassCitizenship(
+    const { simnet, cleanupSession } = await issueFirstClassCitizenship(
       tempDir,
       join(tempDir, getManifestFileName(tempDir, "counter")),
       "counter",
@@ -112,6 +112,7 @@ describe("Simnet contracts operations", () => {
     expect(actualContext).toEqual(expectedContext);
 
     // Teardown
+    cleanupSession();
     rmSync(tempDir, { recursive: true, force: true });
   });
 });

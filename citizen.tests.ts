@@ -184,12 +184,13 @@ describe("Simnet deployment plan operations", () => {
     const radio = new EventEmitter();
 
     // Exercise
-    const firstClassSimnet = await issueFirstClassCitizenship(
-      tempDir,
-      join(tempDir, getManifestFileName(tempDir, "cargo")),
-      "cargo",
-      radio
-    );
+    const { simnet: firstClassSimnet, cleanupSession } =
+      await issueFirstClassCitizenship(
+        tempDir,
+        join(tempDir, getManifestFileName(tempDir, "cargo")),
+        "cargo",
+        radio
+      );
     const actual = firstClassSimnet.getContractSource("cargo");
 
     // Verify
@@ -204,6 +205,7 @@ describe("Simnet deployment plan operations", () => {
     expect(actual).toBe(expected);
 
     // Teardown
+    cleanupSession();
     rmSync(tempDir, { recursive: true, force: true });
   });
 
@@ -216,12 +218,13 @@ describe("Simnet deployment plan operations", () => {
     const radio = new EventEmitter();
 
     // Exercise
-    const firstClassSimnet = await issueFirstClassCitizenship(
-      tempDir,
-      join(tempDir, getManifestFileName(tempDir, "cargo")),
-      "cargo",
-      radio
-    );
+    const { simnet: firstClassSimnet, cleanupSession } =
+      await issueFirstClassCitizenship(
+        tempDir,
+        join(tempDir, getManifestFileName(tempDir, "cargo")),
+        "cargo",
+        radio
+      );
 
     // Verify
     const balancesMap = new Map(
@@ -238,6 +241,7 @@ describe("Simnet deployment plan operations", () => {
     );
 
     // Teardown
+    cleanupSession();
     rmSync(tempDir, { recursive: true, force: true });
   });
 });

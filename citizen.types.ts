@@ -1,14 +1,10 @@
+import { Simnet } from "@stacks/clarinet-sdk";
 import { EpochString } from "@stacks/clarinet-sdk-wasm";
 
-type Wallet = {
-  name: string;
-  address: string;
-  balance: string;
-};
-
-type Genesis = {
-  wallets: Wallet[];
-  contracts: string[];
+export type SimnetSession = {
+  simnet: Simnet;
+  resetSession: () => Promise<void>;
+  cleanupSession: () => void;
 };
 
 export type EmulatedContractPublish = {
@@ -30,6 +26,17 @@ export type Batch = {
 
 type Plan = {
   batches: Batch[];
+};
+
+type Wallet = {
+  name: string;
+  address: string;
+  balance: string;
+};
+
+type Genesis = {
+  wallets: Wallet[];
+  contracts: string[];
 };
 
 export type DeploymentPlan = {

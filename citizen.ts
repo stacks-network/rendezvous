@@ -10,12 +10,13 @@ import { join, relative, basename } from "path";
 import { tmpdir } from "os";
 import { parse as parseToml, stringify as stringifyToml } from "@iarna/toml";
 import yaml from "yaml";
-import { generateDeployement, initSimnet, Simnet } from "@stacks/clarinet-sdk";
+import { generateDeployement, initSimnet } from "@stacks/clarinet-sdk";
 import {
   Batch,
   EmulatedContractPublish,
   DeploymentPlan,
   Transaction,
+  SimnetSession,
 } from "./citizen.types";
 import { EpochString } from "@stacks/clarinet-sdk-wasm";
 import EventEmitter from "events";
@@ -34,14 +35,15 @@ import { yellow } from "ansicolor";
  * @param manifestPath The path to the manifest file.
  * @param sutContractName The target contract name.
  * @param radio The event emitter to send log messages to.
- * @returns The initialized simnet.
+ * @returns The initialized simnet session, including the simnet, a function to
+ * reset the session, and a function to clean up the session.
  */
 export const issueFirstClassCitizenship = async (
   manifestDir: string,
   manifestPath: string,
   sutContractName: string,
   radio: EventEmitter
-): Promise<Simnet> => {
+): Promise<SimnetSession> => {
   // First simnet initialization: This will generate the deployment plan and
   // will type check the project without any Rendezvous tests.
   try {
@@ -150,7 +152,34 @@ export const issueFirstClassCitizenship = async (
     }
     try {
       const simnet = await initSimnet(manifestFileName);
-      return simnet;
+
+      const resetSession = async () => {
+        const cwd = process.cwd();
+        const origWrite = process.stdout.write;
+        process.stdout.write = () => true;
+        try {
+          process.chdir(tempProjectDir);
+          await initSimnet(manifestFileName);
+        } finally {
+          process.stdout.write = origWrite;
+          process.chdir(cwd);
+        }
+      };
+
+      const cleanupSession = () => {
+        try {
+          rmSync(tempProjectDir, { recursive: true, force: true });
+        } catch (error: any) {
+          radio.emit(
+            "logMessage",
+            yellow(
+              `Error cleaning up temporary project directory ${tempProjectDir}: ${error.message}. Remove it manually to avoid unnecessary disk space usage.`
+            )
+          );
+        }
+      };
+
+      return { simnet, resetSession, cleanupSession };
     } finally {
       // Restore stdout.
       process.stdout.write = originalWrite;
@@ -158,17 +187,6 @@ export const issueFirstClassCitizenship = async (
   } finally {
     // Restore the original current working directory.
     process.chdir(originalCwd);
-    // Cleanup the temp project directory.
-    try {
-      rmSync(tempProjectDir, { recursive: true, force: true });
-    } catch (error: any) {
-      radio.emit(
-        "logMessage",
-        yellow(
-          `Error cleaning up temporary project directory ${tempProjectDir}: ${error.message}. Remove it manually to avoid unnecessary disk space usage.`
-        )
-      );
-    }
   }
 };
 
