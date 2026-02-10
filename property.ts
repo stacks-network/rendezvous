@@ -20,7 +20,8 @@ import {
   isTraitReferenceFunction,
   getNonTestableTraitFunctions,
 } from "./traits";
-import { loadFailures, persistFailure } from "./persistence";
+import { getFailureFilePath, loadFailures, persistFailure } from "./persistence";
+import { resolve } from "path";
 import { ImplementedTraitType } from "./traits.types";
 import { EnrichedContractInterfaceFunction } from "./shared.types";
 
@@ -185,6 +186,12 @@ export const checkProperties = async (
 
   if (regr) {
     // Run regression tests only.
+    radio.emit(
+      "logMessage",
+      `Regressions loaded from: ${resolve(
+        getFailureFilePath(testContractId)
+      )}`
+    );
     radio.emit(
       "logMessage",
       `Loading ${targetContractName} contract regressions...\n`

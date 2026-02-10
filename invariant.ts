@@ -22,7 +22,8 @@ import {
 import { EnrichedContractInterfaceFunction } from "./shared.types";
 import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
 import { Statistics } from "./heatstroke.types";
-import { loadFailures, persistFailure } from "./persistence";
+import { getFailureFilePath, loadFailures, persistFailure } from "./persistence";
+import { resolve } from "path";
 import { ImplementedTraitType } from "./traits.types";
 
 /**
@@ -190,6 +191,12 @@ export const checkInvariants = async (
 
   if (regr) {
     // Run regression tests only.
+    radio.emit(
+      "logMessage",
+      `Regressions loaded from: ${resolve(
+        getFailureFilePath(rendezvousContractId)
+      )}`
+    );
     radio.emit(
       "logMessage",
       `Loading ${targetContractName} contract regressions...\n`

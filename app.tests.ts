@@ -4,8 +4,8 @@ import { version } from "./package.json";
 import { resolve } from "path";
 import fs, { rmSync } from "fs";
 import { createIsolatedTestEnvironment } from "./test.utils";
-import { getFailureFilePath } from "./persistence";
 import { LOG_DIVIDER } from "./shared";
+import { getFailureFilePath } from "./persistence";
 
 const isolatedTestEnvPrefix = "rendezvous-test-app-";
 
@@ -214,7 +214,7 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Running regression tests.`,
-        `Regressions loaded from: ${resolve(getFailureFilePath("counter"))}`,
+        `Regressions loaded from: ${resolve(getFailureFilePath("ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.counter"))}`,
         LOG_DIVIDER,
       ],
     ],
@@ -282,7 +282,7 @@ describe("Command-line arguments handling", () => {
         `Using manifest path: ${manifestDirPlaceholder}/Clarinet.toml`,
         `Target contract: counter`,
         `Running regression tests.`,
-        `Regressions loaded from: ${resolve(getFailureFilePath("counter"))}`,
+        `Regressions loaded from: ${resolve(getFailureFilePath("ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.counter"))}`,
         LOG_DIVIDER,
       ],
     ],

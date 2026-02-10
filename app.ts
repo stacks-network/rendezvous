@@ -14,7 +14,7 @@ import { version } from "./package.json";
 import { red } from "ansicolor";
 import { existsSync } from "fs";
 import { parseArgs } from "util";
-import { getFailureFilePath } from "./persistence";
+
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
@@ -169,12 +169,6 @@ export async function main() {
 
   if (runConfig.regr) {
     radio.emit("logMessage", `Running regression tests.`);
-    radio.emit(
-      "logMessage",
-      `Regressions loaded from: ${resolve(
-        getFailureFilePath(runConfig.sutContractName)
-      )}`
-    );
   }
 
   if (runConfig.dial !== undefined) {
