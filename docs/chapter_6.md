@@ -39,7 +39,7 @@ This chapter explains how to use Rendezvous in different situations. By the end,
 To run Rendezvous, use the following command:
 
 ```bash
-rv <path-to-clarinet-project> <contract-name> <type> [--seed] [--runs] [--bail] [--dial]
+rv <path-to-clarinet-project> <contract-name> <type> [--seed] [--runs] [--regr] [--bail] [--dial]
 ```
 
 Let's break down each part of the command.
@@ -263,6 +263,97 @@ async function postTransferSip010PrintEvent(context) {
 
 This dialer ensures that any SIP-010 token contract properly emits the **memo print event** during transfers, helping to catch deviations from the standard.
 
+**5. Regression Testing**
+
+Rendezvous automatically saves failing test cases to prevent regressions. When a test fails, the seed and configuration are persisted to disk. On subsequent runs, you can replay these failures to ensure bugs stay fixed.
+
+**Default Behavior**
+
+By default, Rendezvous runs fresh random tests:
+
+```bash
+rv root contract test
+```
+
+This explores new test cases using the provided configuration (seed, dial, etc.).
+
+**Running Regression Tests**
+
+To verify that previously discovered bugs remain fixed, use the `--regr` flag:
+
+```bash
+rv root contract test --regr
+```
+
+Rendezvous will load all saved failures for the contract and replay them using their original seeds. This ensures that fixed bugs stay fixed.
+
+**How Failure Persistence Works**
+
+When Rendezvous detects a failure, it automatically saves the test configuration to:
+
+```
+.rendezvous-regressions/<contract-address>.<contract-name>.json
+```
+
+For example, failures in the `counter` contract deployed by `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM` would be saved to:
+
+```
+.rendezvous-regressions/ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.counter.json
+```
+
+**Regression File Format**
+
+The regression file stores failures grouped by test type (property-based tests vs invariant tests):
+
+```json
+{
+  "invariant": [
+    {
+      "seed": 901717247,
+      "dial": "example/sip010.cjs",
+      "numRuns": 15,
+      "timestamp": 1767886534833
+    },
+    {
+      "seed": -1374686468,
+      "numRuns": 9,
+      "timestamp": 1767886531457
+    }
+  ],
+  "test": [
+    {
+      "seed": 1656313995,
+      "numRuns": 6,
+      "timestamp": 1767886553125
+    },
+    {
+      "seed": 64830639,
+      "numRuns": 11,
+      "timestamp": 1767886546477
+    }
+  ]
+}
+```
+
+Each failure record includes:
+
+- `seed` – The random seed that triggered the failure
+- `numRuns` – Number of test iterations needed for the failure to occur
+- `timestamp` – When the failure was discovered (Unix timestamp in milliseconds)
+- `dial` (optional) – Path to the dialer file used during the test
+
+Failures are sorted by timestamp in descending order, with the most recent failures first.
+
+**Managing Regressions**
+
+To clear all saved regressions for a contract, simply delete its regression file:
+
+```bash
+rm .rendezvous-regressions/ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.counter.json
+```
+
+You can also manually edit the regression file to remove specific failures while keeping others.
+
 ### Summary
 
 | Argument/Option              | Description                                                                      | Example                                           |
@@ -272,6 +363,7 @@ This dialer ensures that any SIP-010 token contract properly emits the **memo pr
 | `<type>`                     | Type of test (`test` for property-based tests, `invariant` for invariant tests). | `rv root contract test`                           |
 | `--runs=<num>`               | Sets the number of test iterations (default: 100).                               | `rv root contract test --runs=500`                |
 | `--seed=<num>`               | Uses a specific seed for reproducibility.                                        | `rv root contract test --seed=12345`              |
+| `--regr`                     | Run regression tests only (replay saved failures).                               | `rv root contract test --regr`                    |
 | `--dial=<file>`              | Loads JavaScript dialers from a file for pre/post-processing.                    | `rv root contract test --dial=./custom-dialer.js` |
 
 ---

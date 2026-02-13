@@ -16,7 +16,7 @@ import EventEmitter from "events";
 const isolatedTestEnvPrefix = "rendezvous-test-invariant-";
 
 describe("Simnet contracts operations", () => {
-  it("correctly initializes the local context for a given functions map", async () => {
+  it("correctly initializes the local context for a given contract and functions", async () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
@@ -29,19 +29,17 @@ describe("Simnet contracts operations", () => {
       sutContractsInterfaces
     );
 
-    const expectedInitialContext = Object.fromEntries(
-      Array.from(sutContractsAllFunctions.entries()).map(
-        ([contractId, functions]) => [
-          contractId,
-          Object.fromEntries(functions.map((f) => [f.name, 0])),
-        ]
-      )
-    );
+    // Pick the first contract for testing.
+    const [contractId, functions] = Array.from(
+      sutContractsAllFunctions.entries()
+    )[0];
+
+    const expectedInitialContext = {
+      [contractId]: Object.fromEntries(functions.map((f) => [f.name, 0])),
+    };
 
     // Exercise
-    const actualInitialContext = initializeLocalContext(
-      sutContractsAllFunctions
-    );
+    const actualInitialContext = initializeLocalContext(contractId, functions);
 
     // Verify
     expect(actualInitialContext).toEqual(expectedInitialContext);
@@ -56,7 +54,7 @@ describe("Simnet contracts operations", () => {
       resolve(__dirname, "example"),
       isolatedTestEnvPrefix
     );
-    const simnet = await issueFirstClassCitizenship(
+    const { simnet, cleanupSession } = await issueFirstClassCitizenship(
       tempDir,
       join(tempDir, getManifestFileName(tempDir, "counter")),
       "counter",
@@ -77,44 +75,44 @@ describe("Simnet contracts operations", () => {
       )
     );
 
-    // Exercise
-    initializeClarityContext(simnet, rendezvousAllFunctions);
+    // Pick the first contract for testing.
+    const [contractId, functions] = Array.from(
+      rendezvousAllFunctions.entries()
+    )[0];
 
-    const actualContext = Array.from(rendezvousAllFunctions).flatMap(
-      ([contractId, functions]) =>
-        functions.map((f) => {
-          const actualValue = simnet.getMapEntry(
-            contractId,
-            "context",
-            Cl.stringAscii(f.name)
-          );
-          return {
-            contractId,
-            functionName: f.name,
-            called: actualValue,
-          };
-        })
-    );
+    // Exercise
+    initializeClarityContext(simnet, contractId, functions);
+
+    const actualContext = functions.map((f) => {
+      const actualValue = simnet.getMapEntry(
+        contractId,
+        "context",
+        Cl.stringAscii(f.name)
+      );
+      return {
+        contractId,
+        functionName: f.name,
+        called: actualValue,
+      };
+    });
 
     // Verify
 
     // The JS representation of Clarity `(some (tuple (called uint)))`, where
     // `called` is initialized to 0.
     const expectedClarityValue = Cl.some(Cl.tuple({ called: Cl.uint(0) }));
-    const expectedContext = Array.from(rendezvousAllFunctions).flatMap(
-      ([contractId, functions]) =>
-        functions.map((f) => {
-          return {
-            contractId,
-            functionName: f.name,
-            called: expectedClarityValue,
-          };
-        })
-    );
+    const expectedContext = functions.map((f) => {
+      return {
+        contractId,
+        functionName: f.name,
+        called: expectedClarityValue,
+      };
+    });
 
     expect(actualContext).toEqual(expectedContext);
 
     // Teardown
+    cleanupSession();
     rmSync(tempDir, { recursive: true, force: true });
   });
 });

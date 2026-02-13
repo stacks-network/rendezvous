@@ -7,13 +7,14 @@ import {
   getContractNameFromContractId,
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
+  LOG_DIVIDER,
 } from "./shared";
 import { issueFirstClassCitizenship } from "./citizen";
 import { version } from "./package.json";
 import { red } from "ansicolor";
 import { existsSync } from "fs";
 import { parseArgs } from "util";
-import { DialerRegistry } from "./dialer";
+
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
@@ -45,19 +46,22 @@ export const getManifestFileName = (
 const helpMessage = `
   rv v${version}
   
-  Usage: rv <path-to-clarinet-project> <contract-name> <type> [--seed=<seed>] [--runs=<runs>] [--dial=<path-to-dialers-file>] [--help]
+  Usage: rv <path> <contract> <type> [OPTIONS]
 
-  Positional arguments:
-    path-to-clarinet-project - The path to the Clarinet project.
-    contract-name - The name of the contract to be fuzzed.
-    type - The type to use for exercising the contracts. Possible values: test, invariant.
+  Arguments:
+    <path>        Path to the Clarinet project
+    <contract>    Contract name to fuzz
+    <type>        Test type: test | invariant
 
   Options:
-    --seed - The seed to use for the replay functionality.
-    --runs - The runs to use for iterating over the tests. Default: 100.
-    --bail - Stop after the first failure.
-    --dial – The path to a JavaScript file containing custom pre- and post-execution functions (dialers).
-    --help - Show the help message.
+    --seed=<n>    Seed for replay functionality
+    --runs=<n>    Number of test iterations [default: 100]
+    --dial=<f>    Path to custom dialers file
+    --regr        Run regression tests only
+    --bail        Stop on first failure
+    -h, --help    Show this message
+
+  Learn more: https://stacks-network.github.io/rendezvous/
   `;
 
 export async function main() {
@@ -73,6 +77,7 @@ export async function main() {
       runs: { type: "string" },
       dial: { type: "string" },
       bail: { type: "boolean" },
+      regr: { type: "boolean" },
       help: { type: "boolean", short: "h" },
     },
   });
@@ -91,6 +96,8 @@ export async function main() {
     runs: options.runs ? parseInt(options.runs, 10) : undefined,
     /** Whether to bail on the first failure. */
     bail: options.bail || false,
+    /** Whether to run regression tests only. */
+    regr: options.regr || false,
     /** The path to the dialer file. */
     dial: options.dial || undefined,
     /** Whether to show the help message. */
@@ -135,6 +142,8 @@ export async function main() {
     return;
   }
 
+  // Divider before the run configuration.
+  radio.emit("logMessage", LOG_DIVIDER);
   /**
    * The relative path to the manifest file, either `Clarinet.toml` or
    * `Clarinet-<contract-name>.toml`. If the latter exists, it is used.
@@ -158,81 +167,84 @@ export async function main() {
     radio.emit("logMessage", `Bailing on first failure.`);
   }
 
+  if (runConfig.regr) {
+    radio.emit("logMessage", `Running regression tests.`);
+  }
+
   if (runConfig.dial !== undefined) {
     radio.emit("logMessage", `Using dial path: ${runConfig.dial}`);
   }
 
-  /**
-   * The dialer registry, which is used to keep track of all the custom dialers
-   * registered by the user using the `--dial` flag.
-   */
-  const dialerRegistry =
-    runConfig.dial !== undefined
-      ? new DialerRegistry(runConfig.dial)
-      : undefined;
+  // Divider between the run configuration and the execution.
+  radio.emit("logMessage", LOG_DIVIDER + "\n");
 
-  if (dialerRegistry !== undefined) {
-    dialerRegistry.registerDialers();
-  }
+  const { simnet, resetSession, cleanupSession } =
+    await issueFirstClassCitizenship(
+      runConfig.manifestDir,
+      manifestPath,
+      runConfig.sutContractName,
+      radio
+    );
 
-  const simnet = await issueFirstClassCitizenship(
-    runConfig.manifestDir,
-    manifestPath,
-    runConfig.sutContractName,
-    radio
-  );
+  try {
+    /**
+     * The list of contract IDs for the SUT contract names, as per the simnet.
+     */
+    const rendezvousList = Array.from(
+      getSimnetDeployerContractsInterfaces(simnet).keys()
+    ).filter(
+      (deployedContract) =>
+        getContractNameFromContractId(deployedContract) ===
+        runConfig.sutContractName
+    );
 
-  /**
-   * The list of contract IDs for the SUT contract names, as per the simnet.
-   */
-  const rendezvousList = Array.from(
-    getSimnetDeployerContractsInterfaces(simnet).keys()
-  ).filter(
-    (deployedContract) =>
-      getContractNameFromContractId(deployedContract) ===
-      runConfig.sutContractName
-  );
-
-  const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
-    new Map(
-      Array.from(getSimnetDeployerContractsInterfaces(simnet)).filter(
-        ([contractId]) => rendezvousList.includes(contractId)
+    const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
+      new Map(
+        Array.from(getSimnetDeployerContractsInterfaces(simnet)).filter(
+          ([contractId]) => rendezvousList.includes(contractId)
+        )
       )
-    )
-  );
+    );
 
-  // Select the testing routine based on `type`.
-  // If "invariant", call `checkInvariants` to verify contract invariants.
-  // If "test", call `checkProperties` for property-based testing.
-  switch (runConfig.type) {
-    case "invariant": {
-      await checkInvariants(
-        simnet,
-        runConfig.sutContractName,
-        rendezvousList,
-        rendezvousAllFunctions,
-        runConfig.seed,
-        runConfig.runs,
-        runConfig.bail,
-        dialerRegistry,
-        radio
-      );
-      break;
-    }
+    // Select the testing routine based on `type`.
+    // If "invariant", call `checkInvariants` to verify contract invariants.
+    // If "test", call `checkProperties` for property-based testing.
+    switch (runConfig.type) {
+      case "invariant": {
+        await checkInvariants(
+          simnet,
+          resetSession,
+          runConfig.sutContractName,
+          rendezvousList,
+          rendezvousAllFunctions,
+          runConfig.seed,
+          runConfig.runs,
+          runConfig.dial,
+          runConfig.bail,
+          runConfig.regr,
+          radio
+        );
+        break;
+      }
 
-    case "test": {
-      checkProperties(
-        simnet,
-        runConfig.sutContractName,
-        rendezvousList,
-        rendezvousAllFunctions,
-        runConfig.seed,
-        runConfig.runs,
-        runConfig.bail,
-        radio
-      );
-      break;
+      case "test": {
+        await checkProperties(
+          simnet,
+          resetSession,
+          runConfig.sutContractName,
+          rendezvousList,
+          rendezvousAllFunctions,
+          runConfig.seed,
+          runConfig.runs,
+          runConfig.bail,
+          runConfig.regr,
+          radio
+        );
+        break;
+      }
     }
+  } finally {
+    cleanupSession();
   }
 }
 

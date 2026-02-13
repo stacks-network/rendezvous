@@ -9,6 +9,8 @@ import {
   TestCounterExample,
 } from "./heatstroke.types";
 import { getContractNameFromContractId } from "./shared";
+import { PropertyTestError } from "./property";
+import { FalsifiedInvariantError } from "./invariant";
 
 /**
  * Heatstrokes Reporter
@@ -33,35 +35,46 @@ export function reporter(
   type: "invariant" | "test",
   statistics: Statistics
 ) {
-  if (runDetails.failed) {
+  const { counterexample, failed, numRuns, path, seed } = runDetails;
+
+  if (failed) {
+    const error = runDetails.errorInstance || runDetails.error;
+
+    // Extract the actual Clarity error once for both error types.
+    const clarityError =
+      (error as FalsifiedInvariantError | PropertyTestError)?.clarityError ||
+      error?.message ||
+      error?.toString() ||
+      "Unknown error";
+
     // Report general run data.
     radio.emit(
       "logFailure",
-      `\nError: Property failed after ${runDetails.numRuns} tests.`
+      `\nError: Property failed after ${numRuns} tests.`
     );
-    radio.emit("logFailure", `Seed : ${runDetails.seed}`);
-    if (runDetails.path) {
-      radio.emit("logFailure", `Path : ${runDetails.path}`);
+    radio.emit("logFailure", `Seed : ${seed}`);
+    if (path) {
+      radio.emit("logFailure", `Path : ${path}`);
     }
     switch (type) {
       case "invariant": {
-        const r = runDetails.counterexample[0] as InvariantCounterExample;
+        const ce = counterexample[0] as InvariantCounterExample;
         // Report specific run data for the invariant testing type.
         radio.emit("logFailure", `\nCounterexample:`);
         radio.emit(
           "logFailure",
           `- Contract : ${getContractNameFromContractId(
-            r.rendezvousContractId
+            ce.rendezvousContractId
           )}`
         );
         radio.emit(
           "logFailure",
-          `- Functions: ${r.selectedFunctions
+          `- Functions: ${ce.selectedFunctions
             .map(
               (selectedFunction: ContractInterfaceFunction) =>
                 selectedFunction.name
             )
-            .join(", ")} (${r.selectedFunctions
+            .join(", ")} (${ce.selectedFunctions
             .map(
               (selectedFunction: ContractInterfaceFunction) =>
                 selectedFunction.access
@@ -70,7 +83,7 @@ export function reporter(
         );
         radio.emit(
           "logFailure",
-          `- Arguments: ${r.selectedFunctionsArgsList
+          `- Arguments: ${ce.selectedFunctionsArgsList
             .map((selectedFunctionArgs: any[]) =>
               JSON.stringify(selectedFunctionArgs)
             )
@@ -78,13 +91,13 @@ export function reporter(
         );
         radio.emit(
           "logFailure",
-          `- Callers  : ${r.sutCallers
+          `- Callers  : ${ce.sutCallers
             .map((sutCaller: [string, string]) => sutCaller[0])
             .join(", ")}`
         );
         radio.emit(
           "logFailure",
-          `- Outputs  : ${r.selectedFunctions
+          `- Outputs  : ${ce.selectedFunctions
             .map((selectedFunction: ContractInterfaceFunction) =>
               JSON.stringify(selectedFunction.outputs)
             )
@@ -92,13 +105,13 @@ export function reporter(
         );
         radio.emit(
           "logFailure",
-          `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`
+          `- Invariant: ${ce.selectedInvariant.name} (${ce.selectedInvariant.access})`
         );
         radio.emit(
           "logFailure",
-          `- Arguments: ${JSON.stringify(r.invariantArgs)}`
+          `- Arguments: ${JSON.stringify(ce.invariantArgs)}`
         );
-        radio.emit("logFailure", `- Caller   : ${r.invariantCaller[0]}`);
+        radio.emit("logFailure", `- Caller   : ${ce.invariantCaller[0]}`);
 
         radio.emit(
           "logFailure",
@@ -106,11 +119,11 @@ export function reporter(
         );
 
         const formattedError = `The invariant "${
-          r.selectedInvariant.name
-        }" returned:\n\n${runDetails.error
-          ?.toString()
+          ce.selectedInvariant.name
+        }" returned:\n\n${clarityError
+          .toString()
           .split("\n")
-          .map((line) => "    " + line)
+          .map((line: string) => "    " + line)
           .join("\n")}\n`;
 
         radio.emit("logFailure", formattedError);
@@ -118,26 +131,28 @@ export function reporter(
         break;
       }
       case "test": {
-        const r = runDetails.counterexample[0] as TestCounterExample;
+        const ce = counterexample[0] as TestCounterExample;
 
         // Report specific run data for the property testing type.
         radio.emit("logFailure", `\nCounterexample:`);
         radio.emit(
           "logFailure",
-          `- Test Contract : ${getContractNameFromContractId(r.testContractId)}`
+          `- Contract : ${getContractNameFromContractId(
+            ce.rendezvousContractId
+          )}`
         );
         radio.emit(
           "logFailure",
-          `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`
+          `- Test Function : ${ce.selectedTestFunction.name} (${ce.selectedTestFunction.access})`
         );
         radio.emit(
           "logFailure",
-          `- Arguments     : ${JSON.stringify(r.functionArgs)}`
+          `- Arguments     : ${JSON.stringify(ce.functionArgs)}`
         );
-        radio.emit("logFailure", `- Caller        : ${r.testCaller[0]}`);
+        radio.emit("logFailure", `- Caller        : ${ce.testCaller[0]}`);
         radio.emit(
           "logFailure",
-          `- Outputs       : ${JSON.stringify(r.selectedTestFunction.outputs)}`
+          `- Outputs       : ${JSON.stringify(ce.selectedTestFunction.outputs)}`
         );
 
         radio.emit(
@@ -146,11 +161,11 @@ export function reporter(
         );
 
         const formattedError = `The test function "${
-          r.selectedTestFunction.name
-        }" returned:\n\n${runDetails.error
-          ?.toString()
+          ce.selectedTestFunction.name
+        }" returned:\n\n${clarityError
+          .toString()
           .split("\n")
-          .map((line) => "    " + line)
+          .map((line: string) => "    " + line)
           .join("\n")}\n`;
 
         radio.emit("logFailure", formattedError);
@@ -167,7 +182,7 @@ export function reporter(
       green(
         `\nOK, ${
           type === "invariant" ? "invariants" : "properties"
-        } passed after ${runDetails.numRuns} runs.\n`
+        } passed after ${numRuns} runs.\n`
       )
     );
   }
