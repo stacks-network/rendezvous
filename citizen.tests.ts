@@ -7,7 +7,16 @@ import {
 } from "./citizen";
 import { initSimnet } from "@stacks/clarinet-sdk";
 import { join, resolve } from "path";
-import fs, { existsSync, readFileSync, rmSync } from "fs";
+import fs, {
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  rmSync,
+  mkdtempSync,
+  mkdirSync,
+  cpSync,
+} from "fs";
+import { tmpdir } from "os";
 import { createIsolatedTestEnvironment } from "./test.utils";
 import { parse as parseToml } from "@iarna/toml";
 import yaml from "yaml";
@@ -207,6 +216,77 @@ describe("Simnet deployment plan operations", () => {
     // Teardown
     cleanupSession();
     rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  it("issues first-class citizenship for contracts with paths escaping the manifest dir", async () => {
+    // Setup
+
+    // Create a minimal workspace with the project in a subdirectory and a
+    // contract file outside the project directory.
+    const exampleDir = resolve(__dirname, "example");
+    const tmpWorkspace = mkdtempSync(join(tmpdir(), isolatedTestEnvPrefix));
+    const projectDir = join(tmpWorkspace, "project");
+    const externalDir = join(tmpWorkspace, "external");
+    mkdirSync(projectDir, { recursive: true });
+    mkdirSync(externalDir, { recursive: true });
+
+    // Copy only the project structure files (manifest, settings).
+    cpSync(
+      join(exampleDir, "settings"),
+      join(projectDir, "settings"),
+      { recursive: true }
+    );
+
+    // Place the cargo contract and its test file outside the project.
+    const externalContractPath = join(externalDir, "cargo.clar");
+    const externalTestPath = join(externalDir, "cargo.tests.clar");
+    cpSync(join(exampleDir, "contracts", "cargo.clar"), externalContractPath);
+    cpSync(
+      join(exampleDir, "contracts", "cargo.tests.clar"),
+      externalTestPath
+    );
+
+    // Write a minimal manifest referencing the contract via an escaping path.
+    const manifestPath = join(projectDir, "Clarinet.toml");
+    writeFileSync(
+      manifestPath,
+      [
+        "[project]",
+        "name = 'test-escaping-paths'",
+        "telemetry = false",
+        "",
+        "[contracts.cargo]",
+        "path = '../external/cargo.clar'",
+        "clarity_version = 3",
+        "epoch = 3.0",
+      ].join("\n")
+    );
+
+    const radio = new EventEmitter();
+
+    // Exercise
+    const { simnet: firstClassSimnet, cleanupSession } =
+      await issueFirstClassCitizenship(
+        projectDir,
+        manifestPath,
+        "cargo",
+        radio
+      );
+    const actual = firstClassSimnet.getContractSource("cargo");
+
+    // Verify
+    const cargoSrc = readFileSync(externalContractPath, {
+      encoding: "utf-8",
+    });
+    const cargoTestsSrc = readFileSync(externalTestPath, {
+      encoding: "utf-8",
+    });
+    const expected = scheduleRendezvous(cargoSrc, cargoTestsSrc);
+    expect(actual).toBe(expected);
+
+    // Teardown
+    cleanupSession();
+    rmSync(tmpWorkspace, { recursive: true, force: true });
   });
 
   it(`the first-class citizenship simnet has the correct STX balances for the registered accounts`, async () => {
