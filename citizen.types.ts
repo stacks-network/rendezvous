@@ -1,5 +1,5 @@
-import { Simnet } from "@stacks/clarinet-sdk";
-import { EpochString } from "@stacks/clarinet-sdk-wasm";
+import type { Simnet } from "@stacks/clarinet-sdk";
+import type { EpochString } from "@stacks/clarinet-sdk-wasm";
 
 export type SimnetSession = {
   simnet: Simnet;

@@ -1,20 +1,20 @@
+import EventEmitter from "node:events";
+import fs, { existsSync, readFileSync, rmSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { parse as parseToml } from "@iarna/toml";
+import { initSimnet } from "@stacks/clarinet-sdk";
+import { cvToValue, hexToCV } from "@stacks/transactions";
 import fc from "fast-check";
+import yaml from "yaml";
+import { getManifestFileName } from "./app";
 import {
   buildRendezvousData,
   getTestContractSource,
   issueFirstClassCitizenship,
   scheduleRendezvous,
 } from "./citizen";
-import { initSimnet } from "@stacks/clarinet-sdk";
-import { join, resolve } from "path";
-import fs, { existsSync, readFileSync, rmSync } from "fs";
+import type { DeploymentPlan } from "./citizen.types";
 import { createIsolatedTestEnvironment } from "./test.utils";
-import { parse as parseToml } from "@iarna/toml";
-import yaml from "yaml";
-import { getManifestFileName } from "./app";
-import { DeploymentPlan } from "./citizen.types";
-import { cvToValue, hexToCV } from "@stacks/transactions";
-import EventEmitter from "events";
 
 const isolatedTestEnvPrefix = "rendezvous-test-citizen-";
 
@@ -39,7 +39,7 @@ describe("Simnet deployment plan operations", () => {
         // Assert
         const expected = `${contract}\n\n${context}\n\n${invariants}`;
         expect(actual).toBe(expected);
-      })
+      }),
     );
   });
 
@@ -47,12 +47,12 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const deploymentPlanPath = join(
       tempDir,
       "deployments",
-      deploymentPlanFileName
+      deploymentPlanFileName,
     );
 
     rmSync(deploymentPlanPath, { force: true });
@@ -79,35 +79,35 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const deploymentPlanPath = join(
       tempDir,
       "deployments",
-      deploymentPlanFileName
+      deploymentPlanFileName,
     );
 
     const parsedDeploymentPlan = yaml.parse(
-      readFileSync(deploymentPlanPath, { encoding: "utf-8" }).toString()
+      readFileSync(deploymentPlanPath, { encoding: "utf-8" }).toString(),
     );
 
     const parsedManifest = parseToml(
-      readFileSync(join(tempDir, manifestFileName), { encoding: "utf-8" })
+      readFileSync(join(tempDir, manifestFileName), { encoding: "utf-8" }),
     ) as any;
-    const cacheDir = parsedManifest.project?.["cache_dir"] ?? "./.cache";
+    const cacheDir = parsedManifest.project?.cache_dir ?? "./.cache";
 
     // Exercise
     const actual = getTestContractSource(
       cacheDir,
       parsedDeploymentPlan,
       "counter",
-      tempDir
+      tempDir,
     );
 
     // Verify
     const expected = readFileSync(
       join("example", "contracts", "counter.tests.clar"),
-      { encoding: "utf-8" }
+      { encoding: "utf-8" },
     );
 
     expect(actual).toBe(expected);
@@ -120,25 +120,25 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const deploymentPlanPath = join(
       tempDir,
       "deployments",
-      deploymentPlanFileName
+      deploymentPlanFileName,
     );
     const manifestPath = join(tempDir, manifestFileName);
 
     const simnet = await initSimnet(manifestPath);
 
     const parsedDeploymentPlan = yaml.parse(
-      readFileSync(deploymentPlanPath, { encoding: "utf-8" }).toString()
+      readFileSync(deploymentPlanPath, { encoding: "utf-8" }).toString(),
     );
 
     const parsedManifest = parseToml(
-      readFileSync(join(tempDir, manifestFileName), { encoding: "utf-8" })
+      readFileSync(join(tempDir, manifestFileName), { encoding: "utf-8" }),
     ) as any;
-    const cacheDir = parsedManifest.project?.["cache_dir"] ?? "./.cache";
+    const cacheDir = parsedManifest.project?.cache_dir ?? "./.cache";
 
     // Exercise
     const rendezvousSources = new Map(
@@ -148,23 +148,23 @@ describe("Simnet deployment plan operations", () => {
             cacheDir,
             parsedDeploymentPlan,
             contractName,
-            manifestDir
-          )
+            manifestDir,
+          ),
         )
         .map((rendezvousContractData) => [
           rendezvousContractData.rendezvousContractId,
           rendezvousContractData.rendezvousSourceCode,
-        ])
+        ]),
     );
 
     // Verify
     const counterSrc = readFileSync(
       join("example", "contracts", "counter.clar"),
-      { encoding: "utf-8" }
+      { encoding: "utf-8" },
     );
     const counterTestsSrc = readFileSync(
       join("example", "contracts", "counter.tests.clar"),
-      { encoding: "utf-8" }
+      { encoding: "utf-8" },
     );
     const rendezvousSrc = scheduleRendezvous(counterSrc, counterTestsSrc);
     const expected = new Map([[`${simnet.deployer}.counter`, rendezvousSrc]]);
@@ -179,7 +179,7 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const radio = new EventEmitter();
 
@@ -189,7 +189,7 @@ describe("Simnet deployment plan operations", () => {
         tempDir,
         join(tempDir, getManifestFileName(tempDir, "cargo")),
         "cargo",
-        radio
+        radio,
       );
     const actual = firstClassSimnet.getContractSource("cargo");
 
@@ -199,7 +199,7 @@ describe("Simnet deployment plan operations", () => {
     });
     const cargoTestsSrc = readFileSync(
       join("example", "contracts", "cargo.tests.clar"),
-      { encoding: "utf-8" }
+      { encoding: "utf-8" },
     );
     const expected = scheduleRendezvous(cargoSrc, cargoTestsSrc);
     expect(actual).toBe(expected);
@@ -213,7 +213,7 @@ describe("Simnet deployment plan operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const radio = new EventEmitter();
 
@@ -223,21 +223,21 @@ describe("Simnet deployment plan operations", () => {
         tempDir,
         join(tempDir, getManifestFileName(tempDir, "cargo")),
         "cargo",
-        radio
+        radio,
       );
 
     // Verify
     const balancesMap = new Map(
       Array.from([...firstClassSimnet.getAccounts().values()], (address) => {
         const balanceHex = firstClassSimnet.runSnippet(
-          `(stx-get-balance '${address})`
+          `(stx-get-balance '${address})`,
         );
         return [address, cvToValue(hexToCV(balanceHex))];
-      })
+      }),
     );
 
     expect(Array.from(balancesMap.values())).toEqual(
-      Array(firstClassSimnet.getAccounts().size).fill(BigInt(100000000000000))
+      Array(firstClassSimnet.getAccounts().size).fill(BigInt(100000000000000)),
     );
 
     // Teardown
@@ -279,7 +279,7 @@ describe("Test contract path resolution", () => {
     const expectedProjectTestPath = join(
       ".",
       "contracts",
-      "project-contract.tests.clar"
+      "project-contract.tests.clar",
     );
 
     // Mock readFileSync to return test contract content for project contracts
@@ -298,7 +298,7 @@ describe("Test contract path resolution", () => {
       cacheDir,
       mockDeploymentPlan,
       "project-contract",
-      "."
+      ".",
     );
 
     // Verify
@@ -348,7 +348,7 @@ describe("Test contract path resolution", () => {
     const requirementTestPath = join(
       ".",
       "contracts",
-      `${senderAddress}.requirement.tests.clar`
+      `${senderAddress}.requirement.tests.clar`,
     );
 
     // Mock readFileSync to return
@@ -366,7 +366,7 @@ describe("Test contract path resolution", () => {
       cacheDir,
       mockDeploymentPlan,
       "requirement",
-      "."
+      ".",
     );
 
     // Assert
@@ -374,7 +374,7 @@ describe("Test contract path resolution", () => {
     // Verify it searched in the contracts directory (for requirement tests)
     expect(readFileSyncSpy).toHaveBeenCalledWith(
       requirementTestPath,
-      expect.objectContaining({ encoding: "utf-8" })
+      expect.objectContaining({ encoding: "utf-8" }),
     );
 
     // Teardown
@@ -411,9 +411,9 @@ describe("Test contract path resolution", () => {
 
     // Act & Assert
     expect(() =>
-      getTestContractSource(".cache", mockDeploymentPlan, "nonexistent", ".")
+      getTestContractSource(".cache", mockDeploymentPlan, "nonexistent", "."),
     ).toThrow(
-      'Error retrieving the corresponding test contract for the "nonexistent" contract'
+      'Error retrieving the corresponding test contract for the "nonexistent" contract',
     );
   });
 });
@@ -476,7 +476,7 @@ describe("Deployment plan contract source retrieval", () => {
       ".cache",
       mockDeploymentPlan,
       "counter",
-      manifestDir
+      manifestDir,
     );
 
     // Verify
@@ -508,7 +508,7 @@ describe("Deployment plan contract selection edge cases", () => {
 
     // Exercise & Verify
     expect(() =>
-      buildRendezvousData(".cache", mockDeploymentPlan, "nonexistent", ".")
+      buildRendezvousData(".cache", mockDeploymentPlan, "nonexistent", "."),
     ).toThrow('"nonexistent" contract not found in Clarinet.toml');
 
     // Teardown
@@ -565,9 +565,14 @@ describe("Deployment plan contract selection edge cases", () => {
 
     // Act & Assert
     expect(() =>
-      buildRendezvousData(".cache", mockDeploymentPlan, "shared-contract", ".")
+      buildRendezvousData(
+        ".cache",
+        mockDeploymentPlan,
+        "shared-contract",
+        ".",
+      ),
     ).toThrow(
-      `Multiple contracts named "${contractName}" found in the deployment plan, no one deployed by the deployer`
+      `Multiple contracts named "${contractName}" found in the deployment plan, no one deployed by the deployer`,
     );
   });
 
@@ -601,7 +606,8 @@ describe("Deployment plan contract selection edge cases", () => {
                 "emulated-contract-publish": {
                   "contract-name": "shared-name-contract",
                   // Requirement contract sender. Different from deployer.
-                  "emulated-sender": "SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG",
+                  "emulated-sender":
+                    "SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG",
                   "clarity-version": 2,
                   path: ".cache/requirements/SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.shared-name-contract.clar",
                 },
@@ -637,7 +643,7 @@ describe("Deployment plan contract selection edge cases", () => {
       "",
       mockDeploymentPlan,
       contractName,
-      "/project"
+      "/project",
     );
 
     // Verify

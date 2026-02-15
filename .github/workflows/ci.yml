@@ -8,7 +8,21 @@ on:
       - master
 
 jobs:
+  lint-fmt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+
+      - name: Setup Biome
+        uses: biomejs/setup-biome@29711cbb52afee00eb13aeb30636592f9edc0088 # v2.7.0
+
+      - name: Lint and format check
+        run: biome ci .
+
   tests:
+    needs: [lint-fmt]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
@@ -33,6 +47,7 @@ jobs:
         run: npm test
 
   examples:
+    needs: [lint-fmt]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:

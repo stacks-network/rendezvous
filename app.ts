@@ -1,20 +1,19 @@
 #!/usr/bin/env node
-import { join, resolve } from "path";
-import { EventEmitter } from "events";
-import { checkProperties } from "./property";
+import { EventEmitter } from "node:events";
+import { existsSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { parseArgs } from "node:util";
+import { red } from "ansicolor";
+import { issueFirstClassCitizenship } from "./citizen";
 import { checkInvariants } from "./invariant";
+import { version } from "./package.json";
+import { checkProperties } from "./property";
 import {
   getContractNameFromContractId,
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
   LOG_DIVIDER,
 } from "./shared";
-import { issueFirstClassCitizenship } from "./citizen";
-import { version } from "./package.json";
-import { red } from "ansicolor";
-import { existsSync } from "fs";
-import { parseArgs } from "util";
-
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
@@ -30,10 +29,10 @@ const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
  */
 export const getManifestFileName = (
   manifestDir: string,
-  targetContractName: string
+  targetContractName: string,
 ) => {
   const isCustomManifest = existsSync(
-    resolve(manifestDir, `Clarinet-${targetContractName}.toml`)
+    resolve(manifestDir, `Clarinet-${targetContractName}.toml`),
   );
 
   if (isCustomManifest) {
@@ -113,8 +112,8 @@ export async function main() {
     radio.emit(
       "logMessage",
       red(
-        "\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
-      )
+        "\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.",
+      ),
     );
     radio.emit("logMessage", helpMessage);
     return;
@@ -124,8 +123,8 @@ export async function main() {
     radio.emit(
       "logMessage",
       red(
-        "\nNo target contract name provided. Please provide the contract name to be fuzzed."
-      )
+        "\nNo target contract name provided. Please provide the contract name to be fuzzed.",
+      ),
     );
     radio.emit("logMessage", helpMessage);
     return;
@@ -135,8 +134,8 @@ export async function main() {
     radio.emit(
       "logMessage",
       red(
-        "\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant."
-      )
+        "\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.",
+      ),
     );
     radio.emit("logMessage", helpMessage);
     return;
@@ -150,7 +149,7 @@ export async function main() {
    */
   const manifestPath = join(
     runConfig.manifestDir,
-    getManifestFileName(runConfig.manifestDir, runConfig.sutContractName)
+    getManifestFileName(runConfig.manifestDir, runConfig.sutContractName),
   );
   radio.emit("logMessage", `Using manifest path: ${manifestPath}`);
   radio.emit("logMessage", `Target contract: ${runConfig.sutContractName}`);
@@ -176,14 +175,14 @@ export async function main() {
   }
 
   // Divider between the run configuration and the execution.
-  radio.emit("logMessage", LOG_DIVIDER + "\n");
+  radio.emit("logMessage", `${LOG_DIVIDER}\n`);
 
   const { simnet, resetSession, cleanupSession } =
     await issueFirstClassCitizenship(
       runConfig.manifestDir,
       manifestPath,
       runConfig.sutContractName,
-      radio
+      radio,
     );
 
   try {
@@ -191,19 +190,19 @@ export async function main() {
      * The list of contract IDs for the SUT contract names, as per the simnet.
      */
     const rendezvousList = Array.from(
-      getSimnetDeployerContractsInterfaces(simnet).keys()
+      getSimnetDeployerContractsInterfaces(simnet).keys(),
     ).filter(
       (deployedContract) =>
         getContractNameFromContractId(deployedContract) ===
-        runConfig.sutContractName
+        runConfig.sutContractName,
     );
 
     const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
       new Map(
         Array.from(getSimnetDeployerContractsInterfaces(simnet)).filter(
-          ([contractId]) => rendezvousList.includes(contractId)
-        )
-      )
+          ([contractId]) => rendezvousList.includes(contractId),
+        ),
+      ),
     );
 
     // Select the testing routine based on `type`.
@@ -222,7 +221,7 @@ export async function main() {
           runConfig.dial,
           runConfig.bail,
           runConfig.regr,
-          radio
+          radio,
         );
         break;
       }
@@ -238,7 +237,7 @@ export async function main() {
           runConfig.runs,
           runConfig.bail,
           runConfig.regr,
-          radio
+          radio,
         );
         break;
       }

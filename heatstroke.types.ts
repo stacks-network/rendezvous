@@ -1,4 +1,4 @@
-import { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
+import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 
 export type RunDetails = {
   failed: boolean;

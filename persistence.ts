@@ -1,6 +1,6 @@
-import { mkdirSync, readFileSync, writeFileSync } from "fs";
-import { resolve } from "path";
-import { RunDetails } from "./heatstroke.types";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+import type { RunDetails } from "./heatstroke.types";
 
 /**
  * Represents a persisted failure record for regression testing.
@@ -48,7 +48,7 @@ const DEFAULT_CONFIG: Required<PersistenceConfig> = {
  */
 export const getFailureFilePath = (
   contractId: string,
-  baseDir: string = DEFAULT_CONFIG.baseDir
+  baseDir: string = DEFAULT_CONFIG.baseDir,
 ): string => {
   return resolve(baseDir, `${contractId}.json`);
 };
@@ -61,14 +61,14 @@ export const getFailureFilePath = (
  */
 const loadFailureStore = (
   contractId: string,
-  baseDir: string = DEFAULT_CONFIG.baseDir
+  baseDir: string = DEFAULT_CONFIG.baseDir,
 ): FailureStore => {
   const filePath = getFailureFilePath(contractId, baseDir);
 
   try {
     const content = readFileSync(filePath, "utf-8");
     return JSON.parse(content);
-  } catch (error: any) {
+  } catch (_error) {
     return { invariant: [], test: [] };
   }
 };
@@ -82,7 +82,7 @@ const loadFailureStore = (
 const saveFailureStore = (
   contractId: string,
   baseDir: string,
-  store: FailureStore
+  store: FailureStore,
 ): void => {
   // Ensure the base directory exists.
   mkdirSync(baseDir, { recursive: true });
@@ -105,7 +105,7 @@ export const persistFailure = (
   type: "invariant" | "test",
   contractId: string,
   dial: string | undefined,
-  config?: PersistenceConfig
+  config?: PersistenceConfig,
 ): void => {
   const { baseDir } = { ...DEFAULT_CONFIG, ...config };
 
@@ -150,7 +150,7 @@ export const persistFailure = (
 export const loadFailures = (
   contractId: string,
   type: "invariant" | "test",
-  config?: PersistenceConfig
+  config?: PersistenceConfig,
 ): FailureRecord[] => {
   const { baseDir } = { ...DEFAULT_CONFIG, ...config };
   const store = loadFailureStore(contractId, baseDir);

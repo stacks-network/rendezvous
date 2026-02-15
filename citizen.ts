@@ -1,26 +1,26 @@
+import type EventEmitter from "node:events";
 import {
-  readFileSync,
-  writeFileSync,
-  mkdtempSync,
   cpSync,
-  rmSync,
   existsSync,
-} from "fs";
-import { join, relative, basename } from "path";
-import { tmpdir } from "os";
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, join, relative } from "node:path";
 import { parse as parseToml, stringify as stringifyToml } from "@iarna/toml";
-import yaml from "yaml";
 import { generateDeployement, initSimnet } from "@stacks/clarinet-sdk";
-import {
-  Batch,
-  EmulatedContractPublish,
-  DeploymentPlan,
-  Transaction,
-  SimnetSession,
-} from "./citizen.types";
-import { EpochString } from "@stacks/clarinet-sdk-wasm";
-import EventEmitter from "events";
+import type { EpochString } from "@stacks/clarinet-sdk-wasm";
 import { yellow } from "ansicolor";
+import yaml from "yaml";
+import type {
+  Batch,
+  DeploymentPlan,
+  EmulatedContractPublish,
+  SimnetSession,
+  Transaction,
+} from "./citizen.types";
 
 /**
  * Prepares the simnet with the Rendezvous tests as first-class citizens of the
@@ -42,7 +42,7 @@ export const issueFirstClassCitizenship = async (
   manifestDir: string,
   manifestPath: string,
   sutContractName: string,
-  radio: EventEmitter
+  radio: EventEmitter,
 ): Promise<SimnetSession> => {
   // First simnet initialization: This will generate the deployment plan and
   // will type check the project without any Rendezvous tests.
@@ -55,21 +55,21 @@ export const issueFirstClassCitizenship = async (
 
   const deploymentPlanRelativePath = relative(
     manifestDir,
-    join(manifestDir, "deployments", "default.simnet-plan.yaml")
+    join(manifestDir, "deployments", "default.simnet-plan.yaml"),
   );
   const deploymentPlanAbsolutePath = join(
     manifestDir,
-    deploymentPlanRelativePath
+    deploymentPlanRelativePath,
   );
 
   const deploymentPlan = yaml.parse(
     readFileSync(deploymentPlanAbsolutePath, {
       encoding: "utf-8",
-    })
+    }),
   ) as DeploymentPlan;
 
   const parsedManifest = parseToml(
-    readFileSync(manifestPath, { encoding: "utf-8" })
+    readFileSync(manifestPath, { encoding: "utf-8" }),
   ) as any;
   const cacheDir = parsedManifest.project?.cache_dir ?? "./.cache";
 
@@ -77,7 +77,7 @@ export const issueFirstClassCitizenship = async (
     cacheDir,
     deploymentPlan,
     sutContractName,
-    manifestDir
+    manifestDir,
   );
 
   // Create isolated temp directory for the Rendezvous testing run.
@@ -88,7 +88,7 @@ export const issueFirstClassCitizenship = async (
   const rendezvousContractsDir = join(tempProjectDir, "contracts");
   const rendezvousPath = join(
     rendezvousContractsDir,
-    `${contractName}-rendezvous.clar`
+    `${contractName}-rendezvous.clar`,
   );
   writeFileSync(rendezvousPath, rendezvousData.rendezvousSourceCode);
 
@@ -99,7 +99,7 @@ export const issueFirstClassCitizenship = async (
   const manifestFileName = basename(manifestPath);
   const tempManifestPath = join(tempProjectDir, manifestFileName);
   const tempParsedManifest = parseToml(
-    readFileSync(tempManifestPath, { encoding: "utf-8" })
+    readFileSync(tempManifestPath, { encoding: "utf-8" }),
   ) as any;
 
   if (!tempParsedManifest.contracts) {
@@ -173,8 +173,8 @@ export const issueFirstClassCitizenship = async (
           radio.emit(
             "logMessage",
             yellow(
-              `Error cleaning up temporary project directory ${tempProjectDir}: ${error.message}. Remove it manually to avoid unnecessary disk space usage.`
-            )
+              `Error cleaning up temporary project directory ${tempProjectDir}: ${error.message}. Remove it manually to avoid unnecessary disk space usage.`,
+            ),
           );
         }
       };
@@ -203,31 +203,32 @@ export const buildRendezvousData = (
   cacheDir: string,
   deploymentPlan: DeploymentPlan,
   contractName: string,
-  manifestDir: string
+  manifestDir: string,
 ): { rendezvousContractId: string; rendezvousSourceCode: string } => {
   try {
     const sutContractSource = getDeploymentPlanContractSource(
       deploymentPlan,
       contractName,
-      manifestDir
+      manifestDir,
     );
 
     const testContractSource = getTestContractSource(
       cacheDir,
       deploymentPlan,
       contractName,
-      manifestDir
+      manifestDir,
     );
 
     const rendezvousSource = scheduleRendezvous(
       sutContractSource!,
-      testContractSource
+      testContractSource,
     );
 
     const rendezvousContractEmulatedSender =
-      getSutContractDeploymentPlanEmulatedPublish(deploymentPlan, contractName)[
-        "emulated-sender"
-      ];
+      getSutContractDeploymentPlanEmulatedPublish(
+        deploymentPlan,
+        contractName,
+      )["emulated-sender"];
 
     // Use the contract ID as a unique identifier of the contract within the
     // deployment plan.
@@ -239,7 +240,7 @@ export const buildRendezvousData = (
     };
   } catch (error: any) {
     throw new Error(
-      `Error processing "${contractName}" contract: ${error.message}`
+      `Error processing "${contractName}" contract: ${error.message}`,
     );
   }
 };
@@ -254,11 +255,11 @@ export const buildRendezvousData = (
 const getDeploymentPlanContractSource = (
   deploymentPlan: DeploymentPlan,
   sutContractName: string,
-  manifestDir: string
+  manifestDir: string,
 ) => {
   const sutContractPath = getSutContractDeploymentPlanEmulatedPublish(
     deploymentPlan,
-    sutContractName
+    sutContractName,
   ).path;
 
   return readFileSync(join(manifestDir, sutContractPath), {
@@ -279,7 +280,7 @@ const getDeploymentPlanContractSource = (
  */
 const getSutContractDeploymentPlanEmulatedPublish = (
   deploymentPlan: DeploymentPlan,
-  sutContractName: string
+  sutContractName: string,
 ): EmulatedContractPublish => {
   // Filter all emulated contract publish transactions matching the target
   // contract name from the deployment plan.
@@ -289,13 +290,13 @@ const getSutContractDeploymentPlanEmulatedPublish = (
       (transaction: Transaction) =>
         transaction["emulated-contract-publish"] &&
         transaction["emulated-contract-publish"]["contract-name"] ===
-          sutContractName
+          sutContractName,
     );
 
   // If no matches are found, something went wrong.
   if (contractPublishMatchesByName.length === 0) {
     throw new Error(
-      `"${sutContractName}" contract not found in Clarinet.toml.`
+      `"${sutContractName}" contract not found in Clarinet.toml.`,
     );
   }
 
@@ -304,12 +305,12 @@ const getSutContractDeploymentPlanEmulatedPublish = (
   // is the project contract.
   if (contractPublishMatchesByName.length > 1) {
     const deployer = deploymentPlan.genesis.wallets.find(
-      (wallet) => wallet.name === "deployer"
+      (wallet) => wallet.name === "deployer",
     )?.address;
 
     if (!deployer) {
       throw new Error(
-        `Something went wrong. Deployer not found in the deployment plan.`
+        `Something went wrong. Deployer not found in the deployment plan.`,
       );
     }
 
@@ -318,7 +319,7 @@ const getSutContractDeploymentPlanEmulatedPublish = (
     const targetContractDeploymentData = contractPublishMatchesByName.find(
       (transaction: Transaction) =>
         transaction["emulated-contract-publish"]!["emulated-sender"]! ===
-        deployer
+        deployer,
     )?.["emulated-contract-publish"];
 
     // TODO: Consider handling requirements and project contracts separately.
@@ -331,7 +332,7 @@ const getSutContractDeploymentPlanEmulatedPublish = (
     // be to include the target contract in the Clarinet project.
     if (!targetContractDeploymentData) {
       throw new Error(
-        `Multiple contracts named "${sutContractName}" found in the deployment plan, no one deployed by the deployer.`
+        `Multiple contracts named "${sutContractName}" found in the deployment plan, no one deployed by the deployer.`,
       );
     }
 
@@ -358,7 +359,7 @@ const getSutContractDeploymentPlanEmulatedPublish = (
  */
 const getProjectContractTestSrc = (
   contractPath: string,
-  manifestDir: string
+  manifestDir: string,
 ): string | null => {
   const clarityExtension = ".clar";
   const lastExtensionIndex = contractPath.lastIndexOf(clarityExtension);
@@ -375,7 +376,7 @@ const getProjectContractTestSrc = (
       encoding: "utf-8",
     }).toString();
     return content;
-  } catch (error: any) {
+  } catch (_error) {
     return null;
   }
 };
@@ -393,9 +394,9 @@ const getProjectContractTestSrc = (
 const getRequirementContractTestSrc = (
   cacheDir: string,
   sutContractPath: string,
-  manifestDir: string
+  manifestDir: string,
 ): string | null => {
-  const normalizedCacheDir = cacheDir.replace(/[\/\\]$/, "");
+  const normalizedCacheDir = cacheDir.replace(/[/\\]$/, "");
   const requirementsRelativePath = `${normalizedCacheDir}/requirements/`;
 
   if (!sutContractPath.includes(requirementsRelativePath)) {
@@ -417,7 +418,7 @@ const getRequirementContractTestSrc = (
     join(manifestDir, "contracts", relativePathTestContract),
     {
       encoding: "utf-8",
-    }
+    },
   ).toString();
 };
 
@@ -435,17 +436,17 @@ export const getTestContractSource = (
   cacheDir: string,
   deploymentPlan: DeploymentPlan,
   sutContractName: string,
-  manifestDir: string
+  manifestDir: string,
 ): string => {
   const sutContractPath = getSutContractDeploymentPlanEmulatedPublish(
     deploymentPlan,
-    sutContractName
+    sutContractName,
   ).path;
 
   // Prioritize project contracts. Try project contract test first.
   const projectTestContract = getProjectContractTestSrc(
     sutContractPath,
-    manifestDir
+    manifestDir,
   );
   if (projectTestContract !== null) {
     return projectTestContract;
@@ -456,7 +457,7 @@ export const getTestContractSource = (
   const requirementTestContract = getRequirementContractTestSrc(
     normalizedCacheDir,
     sutContractPath,
-    manifestDir
+    manifestDir,
   );
   if (requirementTestContract !== null) {
     return requirementTestContract;
@@ -464,7 +465,7 @@ export const getTestContractSource = (
 
   // No corresponding test contract was found for the SUT contract.
   throw new Error(
-    `Error retrieving the corresponding test contract for the "${sutContractName}" contract.`
+    `Error retrieving the corresponding test contract for the "${sutContractName}" contract.`,
   );
 };
 
@@ -477,7 +478,7 @@ export const getTestContractSource = (
  */
 export function scheduleRendezvous(
   targetContractSource: string,
-  tests: string
+  tests: string,
 ): string {
   /**
    * The `context` map tracks how many times each function has been called.

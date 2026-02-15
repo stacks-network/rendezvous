@@ -1,16 +1,16 @@
-import {
+import type { Simnet } from "@stacks/clarinet-sdk";
+import type {
   Atom,
   ContractInterfaceFunction,
   IContractAST,
   List,
   TraitReference,
 } from "@stacks/clarinet-sdk-wasm";
-import {
+import type {
   EnrichedContractInterfaceFunction,
   ParameterType,
 } from "./shared.types";
-import { Simnet } from "@stacks/clarinet-sdk";
-import {
+import type {
   DefinedTraitType,
   ImplementedTraitType,
   ImportedTraitType,
@@ -32,7 +32,7 @@ export const enrichInterfaceWithTraitData = (
   ast: IContractAST,
   traitReferenceMap: Map<string, any>,
   functionInterfaceList: ContractInterfaceFunction[],
-  targetContractId: string
+  targetContractId: string,
 ): Map<string, EnrichedContractInterfaceFunction[]> => {
   const enriched = new Map<string, EnrichedContractInterfaceFunction[]>();
 
@@ -40,7 +40,7 @@ export const enrichInterfaceWithTraitData = (
     args: any[],
     functionName: string,
     traitReferenceMap: any,
-    path: string[] = []
+    path: string[] = [],
   ): any[] => {
     return args.map((arg) => {
       const listNested = !arg.name;
@@ -63,7 +63,7 @@ export const enrichInterfaceWithTraitData = (
       ) {
         return arg;
       }
-      if (arg.type && arg.type.tuple) {
+      if (arg.type?.tuple) {
         return {
           ...arg,
           type: {
@@ -73,11 +73,11 @@ export const enrichInterfaceWithTraitData = (
               listNested
                 ? traitReferenceMap.tuple
                 : traitReferenceMap[arg.name]?.tuple,
-              currentPath
+              currentPath,
             ),
           },
         };
-      } else if (arg.type && arg.type.list) {
+      } else if (arg.type?.list) {
         return {
           ...arg,
           type: {
@@ -90,14 +90,14 @@ export const enrichInterfaceWithTraitData = (
               arg.type.list.type.tuple
                 ? [...currentPath, "tuple"]
                 : arg.type.list.type.response
-                ? [...currentPath, "response"]
-                : arg.type.list.type.optional
-                ? [...currentPath, "optional"]
-                : [...currentPath, "list"]
+                  ? [...currentPath, "response"]
+                  : arg.type.list.type.optional
+                    ? [...currentPath, "optional"]
+                    : [...currentPath, "list"],
             )[0],
           },
         };
-      } else if (arg.type && arg.type.response) {
+      } else if (arg.type?.response) {
         const okPath = listNested ? currentPath : [...currentPath, "ok"];
         const errorPath = listNested ? currentPath : [...currentPath, "error"];
 
@@ -109,7 +109,7 @@ export const enrichInterfaceWithTraitData = (
               ? traitReferenceMap.response?.ok
               : traitReferenceMap[arg.name]?.response?.ok,
           },
-          okPath
+          okPath,
         )[0];
         const errorTraitReference = enrichArgs(
           [{ name: "error", type: arg.type.response.error }],
@@ -119,7 +119,7 @@ export const enrichInterfaceWithTraitData = (
               ? traitReferenceMap.response?.error
               : traitReferenceMap[arg.name]?.response?.error,
           },
-          errorPath
+          errorPath,
         )[0];
         return {
           ...arg,
@@ -130,7 +130,7 @@ export const enrichInterfaceWithTraitData = (
             },
           },
         };
-      } else if (arg.type && arg.type.optional) {
+      } else if (arg.type?.optional) {
         const optionalPath = [...currentPath, "optional"];
         const optionalTraitReference = enrichArgs(
           [{ name: "optional", type: arg.type.optional }],
@@ -140,7 +140,7 @@ export const enrichInterfaceWithTraitData = (
               ? traitReferenceMap.optional
               : traitReferenceMap[arg.name]?.optional,
           },
-          optionalPath
+          optionalPath,
         )[0];
         return {
           ...arg,
@@ -148,12 +148,12 @@ export const enrichInterfaceWithTraitData = (
             optional: optionalTraitReference.type,
           },
         };
-      } else if (traitReferenceMap && traitReferenceMap[arg.name]) {
+      } else if (traitReferenceMap?.[arg.name]) {
         const [traitReferenceName, traitReferenceImport] =
           getTraitReferenceData(
             ast,
             functionName,
-            currentPath.filter((x) => x !== undefined)
+            currentPath.filter((x) => x !== undefined),
           );
         if (traitReferenceName && traitReferenceImport) {
           return {
@@ -213,7 +213,7 @@ export const enrichInterfaceWithTraitData = (
 export const getTraitReferenceData = (
   ast: IContractAST,
   functionName: string,
-  parameterPath: string[]
+  parameterPath: string[],
 ): [string, ImportedTraitType] | [undefined, undefined] => {
   /**
    * Recursively searches for a trait reference import details in the contract
@@ -229,7 +229,7 @@ export const getTraitReferenceData = (
    */
   const findTraitReference = (
     functionParameterNodes: any[],
-    path: string[]
+    path: string[],
   ): [string, ImportedTraitType] | [undefined, undefined] => {
     for (const parameterNode of functionParameterNodes) {
       // Check if the current parameter node is a trait reference in the first
@@ -285,15 +285,16 @@ export const getTraitReferenceData = (
               .expr as List | TraitReference;
 
             if ((nestedParameterList as TraitReference).TraitReference) {
-              const [name, importData] = (nestedParameterList as TraitReference)
-                .TraitReference;
+              const [name, importData] = (
+                nestedParameterList as TraitReference
+              ).TraitReference;
               return [name, importData];
             } else {
               // Recursively search for the trait reference in the nested
               // parameter list.
               const result = findTraitReference(
                 (nestedParameterList as List).List,
-                path.slice(1)
+                path.slice(1),
               );
 
               if (result[0] !== undefined) return result;
@@ -322,7 +323,7 @@ export const getTraitReferenceData = (
     if (
       !potentialFunctionDefinitionAtom ||
       !["define-public", "define-read-only"].includes(
-        (potentialFunctionDefinitionAtom.expr as Atom).Atom.toString()
+        (potentialFunctionDefinitionAtom.expr as Atom).Atom.toString(),
       )
     ) {
       continue;
@@ -347,7 +348,9 @@ export const getTraitReferenceData = (
       continue;
     }
 
-    const currentFunctionName = (functionNameAtom.expr as Atom).Atom.toString();
+    const currentFunctionName = (
+      functionNameAtom.expr as Atom
+    ).Atom.toString();
 
     // Check if the current function name matches the function name we are
     // looking for.
@@ -361,7 +364,7 @@ export const getTraitReferenceData = (
 
     const traitReferenceImportData = findTraitReference(
       functionParameterNodes,
-      parameterPath
+      parameterPath,
     );
 
     if (traitReferenceImportData[0] !== undefined)
@@ -378,26 +381,26 @@ export const getTraitReferenceData = (
  * @returns The function names mapped to their trait reference parameter paths.
  */
 export const buildTraitReferenceMap = (
-  functionInterfaces: ContractInterfaceFunction[]
+  functionInterfaces: ContractInterfaceFunction[],
 ): Map<string, any> => {
   const traitReferenceMap = new Map<string, any>();
 
   const findTraitReferences = (args: any[]): any => {
     const traitReferences: any = {};
     args.forEach((arg) => {
-      if (arg.type && arg.type.tuple) {
+      if (arg.type?.tuple) {
         const nestedTraitReferences = findTraitReferences(arg.type.tuple);
         if (Object.keys(nestedTraitReferences).length > 0) {
           traitReferences[arg.name] = { tuple: nestedTraitReferences };
         }
-      } else if (arg.type && arg.type.list) {
+      } else if (arg.type?.list) {
         const nestedTraitReferences = findTraitReferences([arg.type.list]);
         if (Object.keys(nestedTraitReferences).length > 0) {
           traitReferences[arg.name] = {
-            list: nestedTraitReferences["undefined"],
+            list: nestedTraitReferences.undefined,
           };
         }
-      } else if (arg.type && arg.type.response) {
+      } else if (arg.type?.response) {
         const okTraitReferences = findTraitReferences([arg.type.response.ok]);
         const errorTraitReferences = findTraitReferences([
           arg.type.response.error,
@@ -414,7 +417,7 @@ export const buildTraitReferenceMap = (
         if (Object.keys(responseTraitReferences).length > 0) {
           traitReferences[arg.name] = { response: responseTraitReferences };
         }
-      } else if (arg.type && arg.type.optional) {
+      } else if (arg.type?.optional) {
         const nestedTraitReferences = findTraitReferences([arg.type.optional]);
         if (Object.keys(nestedTraitReferences).length > 0) {
           traitReferences[arg.name] = {
@@ -449,7 +452,7 @@ export const buildTraitReferenceMap = (
  */
 export const getContractIdsImplementingTrait = (
   trait: ImportedTraitType | DefinedTraitType,
-  projectTraitImplementations: Record<string, ImplementedTraitType[]>
+  projectTraitImplementations: Record<string, ImplementedTraitType[]>,
 ): string[] => {
   const contracts = Object.keys(projectTraitImplementations);
 
@@ -466,16 +469,16 @@ export const getContractIdsImplementingTrait = (
           JSON.stringify(implementedTrait.contract_identifier.issuer) ===
             JSON.stringify(
               (trait as ImportedTraitType).import.Imported?.contract_identifier
-                .issuer
+                .issuer,
             ) ||
           JSON.stringify(implementedTrait.contract_identifier.issuer) ===
             JSON.stringify(
               (trait as DefinedTraitType).import.Defined?.contract_identifier
-                .issuer
+                .issuer,
             );
 
         return isTraitNamesMatch && isTraitIssuersMatch;
-      }
+      },
     );
     return traitImplemented;
   });
@@ -490,7 +493,7 @@ export const getContractIdsImplementingTrait = (
  * otherwise.
  */
 export const isTraitReferenceFunction = (
-  fn: ContractInterfaceFunction
+  fn: ContractInterfaceFunction,
 ): boolean => {
   const hasTraitReference = (type: ParameterType): boolean => {
     if (typeof type === "string") {
@@ -505,7 +508,7 @@ export const isTraitReferenceFunction = (
         return hasTraitReference(type.list.type as ParameterType);
       if ("tuple" in type)
         return type.tuple.some((item) =>
-          hasTraitReference(item.type as ParameterType)
+          hasTraitReference(item.type as ParameterType),
         );
       if ("optional" in type)
         return hasTraitReference(type.optional as ParameterType);
@@ -567,10 +570,13 @@ export const extractProjectTraitImplementations = (simnet: Simnet) => {
  * trait implementations.
  */
 export const getNonTestableTraitFunctions = (
-  enrichedFunctionsInterfaces: Map<string, EnrichedContractInterfaceFunction[]>,
+  enrichedFunctionsInterfaces: Map<
+    string,
+    EnrichedContractInterfaceFunction[]
+  >,
   traitReferenceMap: Map<string, any>,
   projectTraitImplementations: Record<string, ImplementedTraitType[]>,
-  contractId: string
+  contractId: string,
 ): string[] => {
   const hasTraitReferenceWithoutImplementation = (type: any): boolean => {
     if (!type) return false;
@@ -578,7 +584,7 @@ export const getNonTestableTraitFunctions = (
     if (typeof type === "object" && "trait_reference" in type) {
       const contractIdsImplementingTrait = getContractIdsImplementingTrait(
         type.trait_reference as ImportedTraitType | DefinedTraitType,
-        projectTraitImplementations
+        projectTraitImplementations,
       );
       return contractIdsImplementingTrait.length === 0;
     }
@@ -589,7 +595,7 @@ export const getNonTestableTraitFunctions = (
           hasTraitReferenceWithoutImplementation(type.list.type)) ||
         ("tuple" in type &&
           type.tuple.some((item: any) =>
-            hasTraitReferenceWithoutImplementation(item.type)
+            hasTraitReferenceWithoutImplementation(item.type),
           )) ||
         ("optional" in type &&
           hasTraitReferenceWithoutImplementation(type.optional)) ||
@@ -609,7 +615,7 @@ export const getNonTestableTraitFunctions = (
 
     return (
       enrichedFunctionInterface?.args.some((param) =>
-        hasTraitReferenceWithoutImplementation(param.type)
+        hasTraitReferenceWithoutImplementation(param.type),
       ) ?? false
     );
   });
