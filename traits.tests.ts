@@ -1,10 +1,12 @@
-import {
+import { rmSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { initSimnet } from "@stacks/clarinet-sdk";
+import type {
   ContractInterfaceFunction,
   IContractAST,
 } from "@stacks/clarinet-sdk-wasm";
-import { initSimnet } from "@stacks/clarinet-sdk";
-import { rmSync } from "fs";
-import { join, resolve } from "path";
+import type { EnrichedContractInterfaceFunction } from "./shared.types";
+import { createIsolatedTestEnvironment } from "./test.utils";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
@@ -13,9 +15,7 @@ import {
   getNonTestableTraitFunctions,
   isTraitReferenceFunction,
 } from "./traits";
-import { createIsolatedTestEnvironment } from "./test.utils";
-import { EnrichedContractInterfaceFunction } from "./shared.types";
-import { ImplementedTraitType } from "./traits.types";
+import type { ImplementedTraitType } from "./traits.types";
 
 const isolatedTestEnvPrefix = "rendezvous-test-traits-";
 
@@ -28,7 +28,7 @@ describe("Trait reference processing", () => {
     const expected = new Map(
       Object.entries({
         "test-trait": { token: "trait_reference" },
-      })
+      }),
     );
 
     // Act
@@ -46,7 +46,7 @@ describe("Trait reference processing", () => {
     const expected = new Map(
       Object.entries({
         "test-trait": { token: "trait_reference" },
-      })
+      }),
     );
 
     // Act
@@ -66,7 +66,7 @@ describe("Trait reference processing", () => {
       Object.entries({
         "test-trait": { token: "trait_reference" },
         "invariant-trait": { token: "trait_reference" },
-      })
+      }),
     );
 
     // Act
@@ -84,7 +84,7 @@ describe("Trait reference processing", () => {
     const expected = new Map(
       Object.entries({
         "test-trait": { token: "trait_reference" },
-      })
+      }),
     );
 
     // Act
@@ -102,7 +102,7 @@ describe("Trait reference processing", () => {
     const expected = new Map(
       Object.entries({
         "test-trait": { e: "trait_reference" },
-      })
+      }),
     );
 
     // Act
@@ -122,7 +122,7 @@ describe("Trait reference processing", () => {
         "test-trait": {
           "tuple-param": { tuple: { token: "trait_reference" } },
         },
-      })
+      }),
     );
 
     // Act
@@ -142,7 +142,7 @@ describe("Trait reference processing", () => {
         "test-trait": {
           "token-list": { list: "trait_reference" },
         },
-      })
+      }),
     );
 
     // Act
@@ -162,7 +162,7 @@ describe("Trait reference processing", () => {
         "test-trait": {
           "resp-trait-param": { response: { ok: "trait_reference" } },
         },
-      })
+      }),
     );
 
     // Act
@@ -182,7 +182,7 @@ describe("Trait reference processing", () => {
         "test-trait": {
           "resp-trait-param": { response: { error: "trait_reference" } },
         },
-      })
+      }),
     );
 
     // Act
@@ -204,7 +204,7 @@ describe("Trait reference processing", () => {
             response: { ok: "trait_reference", error: "trait_reference" },
           },
         },
-      })
+      }),
     );
 
     // Act
@@ -226,7 +226,7 @@ describe("Trait reference processing", () => {
             optional: "trait_reference",
           },
         },
-      })
+      }),
     );
 
     // Act
@@ -248,7 +248,7 @@ describe("Trait reference processing", () => {
             list: { tuple: { "mad-inner": "trait_reference" } },
           },
         },
-      })
+      }),
     );
 
     // Act
@@ -276,7 +276,7 @@ describe("Trait reference processing", () => {
             },
           },
         },
-      })
+      }),
     );
 
     // Act
@@ -318,7 +318,7 @@ describe("Trait reference processing", () => {
             },
           },
         },
-      })
+      }),
     );
 
     // Act
@@ -358,7 +358,7 @@ describe("Trait reference processing", () => {
             },
           },
         },
-      })
+      }),
     );
 
     // Act
@@ -449,7 +449,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -457,7 +457,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -545,7 +545,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -553,7 +553,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -673,7 +673,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -681,7 +681,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -769,7 +769,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -777,7 +777,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -875,7 +875,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -883,7 +883,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -953,8 +953,9 @@ describe("Trait reference processing", () => {
                                 issuer: [
                                   22,
                                   [
-                                    9, 159, 184, 137, 38, 216, 47, 48, 178, 244,
-                                    14, 175, 62, 228, 35, 203, 114, 91, 219, 59,
+                                    9, 159, 184, 137, 38, 216, 47, 48, 178,
+                                    244, 14, 175, 62, 228, 35, 203, 114, 91,
+                                    219, 59,
                                   ],
                                 ],
                               },
@@ -977,7 +978,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -985,7 +986,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1097,7 +1098,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1105,7 +1106,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1197,7 +1198,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1205,7 +1206,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1297,7 +1298,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1305,7 +1306,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1321,7 +1322,8 @@ describe("Trait reference processing", () => {
 
     const traitReferenceMap = buildTraitReferenceMap(allFunctionsInterfaces);
 
-    const ast = testInputs.responseErrTraitParameter.ast as any as IContractAST;
+    const ast = testInputs.responseErrTraitParameter
+      .ast as any as IContractAST;
 
     const targetContractId = "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.trait";
 
@@ -1397,7 +1399,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1405,7 +1407,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1517,7 +1519,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1525,7 +1527,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1592,8 +1594,8 @@ describe("Trait reference processing", () => {
                             issuer: [
                               22,
                               [
-                                9, 159, 184, 137, 38, 216, 47, 48, 178, 244, 14,
-                                175, 62, 228, 35, 203, 114, 91, 219, 59,
+                                9, 159, 184, 137, 38, 216, 47, 48, 178, 244,
+                                14, 175, 62, 228, 35, 203, 114, 91, 219, 59,
                               ],
                             ],
                           },
@@ -1614,7 +1616,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1622,7 +1624,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1683,8 +1685,8 @@ describe("Trait reference processing", () => {
                                       22,
                                       [
                                         9, 159, 184, 137, 38, 216, 47, 48, 178,
-                                        244, 14, 175, 62, 228, 35, 203, 114, 91,
-                                        219, 59,
+                                        244, 14, 175, 62, 228, 35, 203, 114,
+                                        91, 219, 59,
                                       ],
                                     ],
                                   },
@@ -1709,7 +1711,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1717,7 +1719,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1833,9 +1835,9 @@ describe("Trait reference processing", () => {
                                           issuer: [
                                             22,
                                             [
-                                              9, 159, 184, 137, 38, 216, 47, 48,
-                                              178, 244, 14, 175, 62, 228, 35,
-                                              203, 114, 91, 219, 59,
+                                              9, 159, 184, 137, 38, 216, 47,
+                                              48, 178, 244, 14, 175, 62, 228,
+                                              35, 203, 114, 91, 219, 59,
                                             ],
                                           ],
                                         },
@@ -1863,7 +1865,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1871,7 +1873,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1955,8 +1957,8 @@ describe("Trait reference processing", () => {
                                       22,
                                       [
                                         9, 159, 184, 137, 38, 216, 47, 48, 178,
-                                        244, 14, 175, 62, 228, 35, 203, 114, 91,
-                                        219, 59,
+                                        244, 14, 175, 62, 228, 35, 203, 114,
+                                        91, 219, 59,
                                       ],
                                     ],
                                   },
@@ -2055,7 +2057,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -2063,7 +2065,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -2147,8 +2149,8 @@ describe("Trait reference processing", () => {
                                       22,
                                       [
                                         9, 159, 184, 137, 38, 216, 47, 48, 178,
-                                        244, 14, 175, 62, 228, 35, 203, 114, 91,
-                                        219, 59,
+                                        244, 14, 175, 62, 228, 35, 203, 114,
+                                        91, 219, 59,
                                       ],
                                     ],
                                   },
@@ -2194,8 +2196,9 @@ describe("Trait reference processing", () => {
                                 issuer: [
                                   22,
                                   [
-                                    9, 159, 184, 137, 38, 216, 47, 48, 178, 244,
-                                    14, 175, 62, 228, 35, 203, 114, 91, 219, 59,
+                                    9, 159, 184, 137, 38, 216, 47, 48, 178,
+                                    244, 14, 175, 62, 228, 35, 203, 114, 91,
+                                    219, 59,
                                   ],
                                 ],
                                 name: "sip-010-trait-ft-standard",
@@ -2243,7 +2246,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -2251,7 +2254,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -2262,7 +2265,7 @@ describe("Trait reference processing", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const simnet = await initSimnet(join(tempDir, "Clarinet.toml"));
 
@@ -2295,7 +2298,7 @@ describe("Trait reference processing", () => {
 
     // Exercise
     const actual = new Set(
-      getContractIdsImplementingTrait(traitData, projectTraitImplementations)
+      getContractIdsImplementingTrait(traitData, projectTraitImplementations),
     );
 
     // Verify
@@ -2309,7 +2312,7 @@ describe("Trait reference processing", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const simnet = await initSimnet(join(tempDir, "Clarinet.toml"));
 
@@ -2338,7 +2341,7 @@ describe("Trait reference processing", () => {
     // Exercise
     const actual = getContractIdsImplementingTrait(
       traitImplementationData,
-      projectTraitImplementations
+      projectTraitImplementations,
     );
 
     // Verify
@@ -2352,7 +2355,7 @@ describe("Trait reference processing", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const simnet = await initSimnet(join(tempDir, "Clarinet.toml"));
 
@@ -2385,7 +2388,7 @@ describe("Trait reference processing", () => {
 
     // Exercise
     const actual = new Set(
-      getContractIdsImplementingTrait(traitData, projectTraitImplementations)
+      getContractIdsImplementingTrait(traitData, projectTraitImplementations),
     );
 
     // Verify
@@ -2855,7 +2858,7 @@ describe("Non-testable trait function filtering", () => {
       enrichedFunctionsInterfaces,
       traitReferenceMap,
       projectTraitImplementations,
-      contractId
+      contractId,
     );
 
     // Assert
@@ -2942,8 +2945,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -3902,8 +3905,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -4840,8 +4843,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -5802,8 +5805,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -6895,8 +6898,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -7922,8 +7925,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -8873,8 +8876,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -9638,10 +9641,10 @@ const testInputs = {
                                                   issuer: [
                                                     22,
                                                     [
-                                                      9, 159, 184, 137, 38, 216,
-                                                      47, 48, 178, 244, 14, 175,
-                                                      62, 228, 35, 203, 114, 91,
-                                                      219, 59,
+                                                      9, 159, 184, 137, 38,
+                                                      216, 47, 48, 178, 244,
+                                                      14, 175, 62, 228, 35,
+                                                      203, 114, 91, 219, 59,
                                                     ],
                                                   ],
                                                   name: "sip-010-trait-ft-standard",
@@ -9806,8 +9809,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -9963,8 +9966,8 @@ const testInputs = {
                                                     [
                                                       64, 45, 162, 192, 121,
                                                       229, 211, 29, 88, 185,
-                                                      207, 199, 40, 109, 27, 30,
-                                                      178, 247, 131, 78,
+                                                      207, 199, 40, 109, 27,
+                                                      30, 178, 247, 131, 78,
                                                     ],
                                                   ],
                                                   name: "trait-sip-010",
@@ -10019,8 +10022,8 @@ const testInputs = {
                                                     [
                                                       64, 45, 162, 192, 121,
                                                       229, 211, 29, 88, 185,
-                                                      207, 199, 40, 109, 27, 30,
-                                                      178, 247, 131, 78,
+                                                      207, 199, 40, 109, 27,
+                                                      30, 178, 247, 131, 78,
                                                     ],
                                                   ],
                                                   name: "trait-sip-010",
@@ -10848,8 +10851,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -11795,8 +11798,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -12742,8 +12745,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -13704,8 +13707,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -14653,8 +14656,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -15776,8 +15779,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -16771,8 +16774,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -16926,10 +16929,10 @@ const testInputs = {
                                                   issuer: [
                                                     22,
                                                     [
-                                                      9, 159, 184, 137, 38, 216,
-                                                      47, 48, 178, 244, 14, 175,
-                                                      62, 228, 35, 203, 114, 91,
-                                                      219, 59,
+                                                      9, 159, 184, 137, 38,
+                                                      216, 47, 48, 178, 244,
+                                                      14, 175, 62, 228, 35,
+                                                      203, 114, 91, 219, 59,
                                                     ],
                                                   ],
                                                   name: "sip-010-trait-ft-standard",
@@ -18355,8 +18358,8 @@ const testInputs = {
                                                       issuer: [
                                                         26,
                                                         [
-                                                          109, 120, 222, 123, 6,
-                                                          37, 223, 191, 193,
+                                                          109, 120, 222, 123,
+                                                          6, 37, 223, 191, 193,
                                                           108, 58, 138, 87, 53,
                                                           246, 220, 61, 195,
                                                           242, 206,
@@ -18470,8 +18473,8 @@ const testInputs = {
                                                       issuer: [
                                                         26,
                                                         [
-                                                          109, 120, 222, 123, 6,
-                                                          37, 223, 191, 193,
+                                                          109, 120, 222, 123,
+                                                          6, 37, 223, 191, 193,
                                                           108, 58, 138, 87, 53,
                                                           246, 220, 61, 195,
                                                           242, 206,
@@ -18734,10 +18737,10 @@ const testInputs = {
                                                   issuer: [
                                                     22,
                                                     [
-                                                      9, 159, 184, 137, 38, 216,
-                                                      47, 48, 178, 244, 14, 175,
-                                                      62, 228, 35, 203, 114, 91,
-                                                      219, 59,
+                                                      9, 159, 184, 137, 38,
+                                                      216, 47, 48, 178, 244,
+                                                      14, 175, 62, 228, 35,
+                                                      203, 114, 91, 219, 59,
                                                     ],
                                                   ],
                                                   name: "sip-010-trait-ft-standard",
@@ -19105,8 +19108,8 @@ const testInputs = {
         issuer: [
           26,
           [
-            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53, 246,
-            220, 61, 195, 242, 206,
+            109, 120, 222, 123, 6, 37, 223, 191, 193, 108, 58, 138, 87, 53,
+            246, 220, 61, 195, 242, 206,
           ],
         ],
         name: "trait-contract",
@@ -19260,10 +19263,10 @@ const testInputs = {
                                                   issuer: [
                                                     22,
                                                     [
-                                                      9, 159, 184, 137, 38, 216,
-                                                      47, 48, 178, 244, 14, 175,
-                                                      62, 228, 35, 203, 114, 91,
-                                                      219, 59,
+                                                      9, 159, 184, 137, 38,
+                                                      216, 47, 48, 178, 244,
+                                                      14, 175, 62, 228, 35,
+                                                      203, 114, 91, 219, 59,
                                                     ],
                                                   ],
                                                   name: "sip-010-trait-ft-standard",
@@ -20689,8 +20692,8 @@ const testInputs = {
                                                       issuer: [
                                                         26,
                                                         [
-                                                          109, 120, 222, 123, 6,
-                                                          37, 223, 191, 193,
+                                                          109, 120, 222, 123,
+                                                          6, 37, 223, 191, 193,
                                                           108, 58, 138, 87, 53,
                                                           246, 220, 61, 195,
                                                           242, 206,
@@ -20804,8 +20807,8 @@ const testInputs = {
                                                       issuer: [
                                                         26,
                                                         [
-                                                          109, 120, 222, 123, 6,
-                                                          37, 223, 191, 193,
+                                                          109, 120, 222, 123,
+                                                          6, 37, 223, 191, 193,
                                                           108, 58, 138, 87, 53,
                                                           246, 220, 61, 195,
                                                           242, 206,
@@ -21068,10 +21071,10 @@ const testInputs = {
                                                   issuer: [
                                                     22,
                                                     [
-                                                      9, 159, 184, 137, 38, 216,
-                                                      47, 48, 178, 244, 14, 175,
-                                                      62, 228, 35, 203, 114, 91,
-                                                      219, 59,
+                                                      9, 159, 184, 137, 38,
+                                                      216, 47, 48, 178, 244,
+                                                      14, 175, 62, 228, 35,
+                                                      203, 114, 91, 219, 59,
                                                     ],
                                                   ],
                                                   name: "sip-010-trait-ft-standard",

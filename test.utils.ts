@@ -1,6 +1,6 @@
-import { join } from "path";
-import { mkdtempSync, cpSync } from "fs";
-import { tmpdir } from "os";
+import { cpSync, mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 /**
  * Creates an isolated test environment by copying the Clarinet project to a
@@ -14,7 +14,7 @@ import { tmpdir } from "os";
  */
 export function createIsolatedTestEnvironment(
   manifestDir: string,
-  testPrefix: string
+  testPrefix: string,
 ): string {
   const tempDir = mkdtempSync(join(tmpdir(), testPrefix));
   cpSync(manifestDir, tempDir, { recursive: true });

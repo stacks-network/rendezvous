@@ -1,6 +1,6 @@
-import { join } from "path";
-import { DialerContext } from "./dialer.types";
+import { join } from "node:path";
 import { DialerRegistry } from "./dialer";
+import type { DialerContext } from "./dialer.types";
 
 const dialPath = join("example", "dialer.ts");
 
@@ -82,7 +82,7 @@ describe("DialerRegistry interaction", () => {
 
     // Act & Assert
     expect(registry.registerDialers()).rejects.toThrow(
-      "process.exit was called"
+      "process.exit was called",
     );
   });
 });

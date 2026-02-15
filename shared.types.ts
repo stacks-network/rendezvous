@@ -1,9 +1,9 @@
-import {
+import type {
   ContractInterfaceFunctionAccess,
   ContractInterfaceFunctionArg,
   ContractInterfaceFunctionOutput,
 } from "@stacks/clarinet-sdk-wasm";
-import {
+import type {
   boolCV,
   bufferCV,
   ClarityValue,
@@ -18,8 +18,8 @@ import {
   tupleCV,
   uintCV,
 } from "@stacks/transactions";
-import fc from "fast-check";
-import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
+import type fc from "fast-check";
+import type { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 // Types used for Clarity Value conversion.
 
@@ -63,7 +63,7 @@ export type ComplexTypesToCV = {
   optional: (arg: ClarityValue | null) => ReturnType<typeof optionalCVOf>;
   response: (
     status: ResponseStatus,
-    value: ClarityValue
+    value: ClarityValue,
   ) => ReturnType<typeof responseOkCV | typeof responseErrorCV>;
   trait_reference: (trait: string) => ReturnType<typeof principalCV>;
 };
@@ -131,26 +131,26 @@ export type ComplexTypesToArbitrary = {
     type: EnrichedParameterType,
     length: number,
     addresses: string[],
-    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>,
   ) => fc.Arbitrary<any[]>;
   tuple: (
     items: { name: string; type: EnrichedParameterType }[],
     addresses: string[],
-    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>,
   ) => fc.Arbitrary<object>;
   optional: (
     type: EnrichedParameterType,
     addresses: string[],
-    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>,
   ) => fc.Arbitrary<any>;
   response: (
     okType: EnrichedParameterType,
     errType: EnrichedParameterType,
     addresses: string[],
-    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>,
   ) => fc.Arbitrary<any>;
   trait_reference: (
     traitData: ImportedTraitType,
-    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>,
   ) => fc.Arbitrary<any>;
 };
