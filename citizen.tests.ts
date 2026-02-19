@@ -257,12 +257,11 @@ describe("Test contract path resolution", () => {
             epoch: "2.1",
             transactions: [
               {
-                "emulated-contract-publish": {
-                  "contract-name": "project-contract",
-                  "emulated-sender": "",
-                  "clarity-version": 2,
-                  path: "contracts/project-contract.clar",
-                },
+                "transaction-type": "emulated-contract-publish",
+                "contract-name": "project-contract",
+                "emulated-sender": "",
+                "clarity-version": 2,
+                path: "contracts/project-contract.clar",
               },
             ],
             id: 0,
@@ -322,12 +321,11 @@ describe("Test contract path resolution", () => {
             epoch: "2.1",
             transactions: [
               {
-                "emulated-contract-publish": {
-                  "contract-name": "requirement",
-                  "emulated-sender": senderAddress,
-                  "clarity-version": 2,
-                  path: `./.cache/requirements/${senderAddress}.requirement.clar`,
-                },
+                "transaction-type": "emulated-contract-publish",
+                "contract-name": "requirement",
+                "emulated-sender": senderAddress,
+                "clarity-version": 2,
+                path: `./.cache/requirements/${senderAddress}.requirement.clar`,
               },
             ],
             id: 0,
@@ -391,13 +389,12 @@ describe("Test contract path resolution", () => {
             epoch: "2.1",
             transactions: [
               {
-                "emulated-contract-publish": {
-                  "contract-name": "nonexistent",
-                  "emulated-sender":
-                    "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
-                  "clarity-version": 2,
-                  path: "contracts/nonexistent.clar",
-                },
+                "transaction-type": "emulated-contract-publish",
+                "contract-name": "nonexistent",
+                "emulated-sender":
+                  "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
+                "clarity-version": 2,
+                path: "contracts/nonexistent.clar",
               },
             ],
             id: 0,
@@ -430,12 +427,11 @@ describe("Deployment plan contract source retrieval", () => {
             epoch: "2.1",
             transactions: [
               {
-                "emulated-contract-publish": {
-                  "contract-name": "counter",
-                  "emulated-sender": senderAddress,
-                  "clarity-version": 2,
-                  path: "contracts/counter.clar",
-                },
+                "transaction-type": "emulated-contract-publish",
+                "contract-name": "counter",
+                "emulated-sender": senderAddress,
+                "clarity-version": 2,
+                path: "contracts/counter.clar",
               },
             ],
             id: 0,
@@ -538,20 +534,18 @@ describe("Deployment plan contract selection edge cases", () => {
             epoch: "2.1",
             transactions: [
               {
-                "emulated-contract-publish": {
-                  "contract-name": contractName,
-                  "emulated-sender": sender1Address,
-                  "clarity-version": 2,
-                  path: `.cache/requirements/${sender1Address}.shared-contract.clar`,
-                },
+                "transaction-type": "emulated-contract-publish",
+                "contract-name": contractName,
+                "emulated-sender": sender1Address,
+                "clarity-version": 2,
+                path: `.cache/requirements/${sender1Address}.shared-contract.clar`,
               },
               {
-                "emulated-contract-publish": {
-                  "contract-name": contractName,
-                  "emulated-sender": sender2Address,
-                  "clarity-version": 2,
-                  path: `.cache/requirements/${sender2Address}.shared-contract.clar`,
-                },
+                "transaction-type": "emulated-contract-publish",
+                "contract-name": contractName,
+                "emulated-sender": sender2Address,
+                "clarity-version": 2,
+                path: `.cache/requirements/${sender2Address}.shared-contract.clar`,
               },
             ],
             id: 0,
@@ -598,13 +592,12 @@ describe("Deployment plan contract selection edge cases", () => {
             epoch: "2.1",
             transactions: [
               {
-                "emulated-contract-publish": {
-                  "contract-name": "shared-name-contract",
-                  // Requirement contract sender. Different from deployer.
-                  "emulated-sender": "SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG",
-                  "clarity-version": 2,
-                  path: ".cache/requirements/SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.shared-name-contract.clar",
-                },
+                "transaction-type": "emulated-contract-publish",
+                "contract-name": "shared-name-contract",
+                // Requirement contract sender. Different from deployer.
+                "emulated-sender": "SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG",
+                "clarity-version": 2,
+                path: ".cache/requirements/SP4SZE494VC2YC5JYG7AYFQ44F5Q4PYV7DVMDPBG.shared-name-contract.clar",
               },
             ],
             id: 0,
@@ -613,12 +606,11 @@ describe("Deployment plan contract selection edge cases", () => {
             epoch: "3.0",
             transactions: [
               {
-                "emulated-contract-publish": {
-                  "contract-name": "shared-name-contract",
-                  "emulated-sender": deployerAddress,
-                  "clarity-version": 3,
-                  path: "contracts/shared-name-contract.clar",
-                },
+                "transaction-type": "emulated-contract-publish",
+                "contract-name": "shared-name-contract",
+                "emulated-sender": deployerAddress,
+                "clarity-version": 3,
+                path: "contracts/shared-name-contract.clar",
               },
             ],
             id: 0,

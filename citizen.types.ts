@@ -8,15 +8,16 @@ export type SimnetSession = {
 };
 
 export type EmulatedContractPublish = {
+  "transaction-type": "emulated-contract-publish";
   "contract-name": string;
   "emulated-sender": string;
   path: string;
   "clarity-version": 1 | 2 | 3 | 4;
 };
 
-export type Transaction = {
-  "emulated-contract-publish"?: EmulatedContractPublish;
-};
+// Enough to support EmulatedContractPublish for now, but can be extended to
+// support more transaction types in the future.
+export type Transaction = EmulatedContractPublish;
 
 export type Batch = {
   id: number;

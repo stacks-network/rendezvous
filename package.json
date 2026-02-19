@@ -31,17 +31,17 @@
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
-    "@stacks/clarinet-sdk": "^3.12.0",
-    "@stacks/transactions": "^7.2.0",
+    "@stacks/clarinet-sdk": "^3.14.0",
+    "@stacks/transactions": "^7.3.1",
     "ansicolor": "^2.0.3",
-    "fast-check": "^4.3.0",
-    "yaml": "^2.8.1"
+    "fast-check": "^4.5.3",
+    "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@stacks/clarinet-sdk-wasm": "^3.12.0",
+    "@stacks/clarinet-sdk-wasm": "^3.14.0",
     "@types/jest": "^30.0.0",
     "jest": "^30.2.0",
-    "ts-jest": "^29.4.5",
+    "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"
   }
 }
