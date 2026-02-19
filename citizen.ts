@@ -287,9 +287,8 @@ const getSutContractDeploymentPlanEmulatedPublish = (
     .flatMap((batch: Batch) => batch.transactions)
     .filter(
       (transaction: Transaction) =>
-        transaction["emulated-contract-publish"] &&
-        transaction["emulated-contract-publish"]["contract-name"] ===
-          sutContractName
+        transaction["transaction-type"] === "emulated-contract-publish" &&
+        transaction["contract-name"] === sutContractName
     );
 
   // If no matches are found, something went wrong.
@@ -317,9 +316,8 @@ const getSutContractDeploymentPlanEmulatedPublish = (
     // having the same name, select the one deployed by the deployer.
     const targetContractDeploymentData = contractPublishMatchesByName.find(
       (transaction: Transaction) =>
-        transaction["emulated-contract-publish"]!["emulated-sender"]! ===
-        deployer
-    )?.["emulated-contract-publish"];
+        transaction["emulated-sender"] === deployer
+    );
 
     // TODO: Consider handling requirements and project contracts separately.
     // Eventually let the user specify if the contract is a requirement or a
@@ -338,9 +336,9 @@ const getSutContractDeploymentPlanEmulatedPublish = (
     return targetContractDeploymentData;
   }
 
-  // Only one match was found, return the path to the contract.
+  // Only one match was found, return the contract publish data.
   const contractNameMatch =
-    contractPublishMatchesByName[0]["emulated-contract-publish"];
+    contractPublishMatchesByName[0]
 
   if (!contractNameMatch) {
     throw new Error(`Could not locate "${sutContractName}" contract.`);
