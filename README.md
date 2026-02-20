@@ -2,6 +2,9 @@
 <img width="304" src="https://raw.githubusercontent.com/moodmosaic/nikosbaxevanis.com/gh-pages/images/rv.png" />
 </div>
 
+[![CI](https://github.com/Earnwithalee7890/rendezvous/actions/workflows/ci.yml/badge.svg)](https://github.com/Earnwithalee7890/rendezvous/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/Earnwithalee7890/rendezvous)](LICENSE)
+
 ## Rendezvous `rv`: The Clarity Fuzzer
 
 Rendezvous `rv` is a Clarity fuzzer designed to cut through your smart contract's defenses with precision. Uncover vulnerabilities with unmatched power and intensity. Get ready to meet your contract's vulnerabilities head-on.
@@ -109,6 +112,12 @@ rv example counter invariant
 ### Documentation
 
 For full documentation, see the official [Rendezvous Book](https://stacks-network.github.io/rendezvous/).
+
+### Community
+
+- [Contributing](CONTRIBUTING.md)
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security Policy](SECURITY.md)
 
 ---
 
