@@ -10,7 +10,7 @@ import {
   LOG_DIVIDER,
 } from "./shared";
 import { issueFirstClassCitizenship } from "./citizen";
-import { version } from "./package.json";
+import { version } from "../package.json";
 import { red } from "ansicolor";
 import { existsSync } from "fs";
 import { parseArgs } from "util";
