@@ -15,7 +15,6 @@ import { red } from "ansicolor";
 import { existsSync } from "fs";
 import { parseArgs } from "util";
 
-
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
 };

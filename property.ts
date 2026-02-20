@@ -20,7 +20,11 @@ import {
   isTraitReferenceFunction,
   getNonTestableTraitFunctions,
 } from "./traits";
-import { getFailureFilePath, loadFailures, persistFailure } from "./persistence";
+import {
+  getFailureFilePath,
+  loadFailures,
+  persistFailure,
+} from "./persistence";
 import { resolve } from "path";
 import { ImplementedTraitType } from "./traits.types";
 import { EnrichedContractInterfaceFunction } from "./shared.types";
@@ -188,9 +192,7 @@ export const checkProperties = async (
     // Run regression tests only.
     radio.emit(
       "logMessage",
-      `Regressions loaded from: ${resolve(
-        getFailureFilePath(testContractId)
-      )}`
+      `Regressions loaded from: ${resolve(getFailureFilePath(testContractId))}`
     );
     radio.emit(
       "logMessage",
@@ -514,10 +516,10 @@ const propertyTest = async (
               error instanceof PropertyTestError
                 ? error.clarityError
                 : error &&
-                  typeof error === "string" &&
-                  error.toLowerCase().includes("runtime")
-                ? "(runtime)"
-                : "(unknown)";
+                    typeof error === "string" &&
+                    error.toLowerCase().includes("runtime")
+                  ? "(runtime)"
+                  : "(unknown)";
 
             // Capture the error and log the test failure.
             radio.emit(

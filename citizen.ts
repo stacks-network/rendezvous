@@ -315,8 +315,7 @@ const getSutContractDeploymentPlanEmulatedPublish = (
     // From the list of filtered emulated contract publish transactions with
     // having the same name, select the one deployed by the deployer.
     const targetContractDeploymentData = contractPublishMatchesByName.find(
-      (transaction: Transaction) =>
-        transaction["emulated-sender"] === deployer
+      (transaction: Transaction) => transaction["emulated-sender"] === deployer
     );
 
     // TODO: Consider handling requirements and project contracts separately.
@@ -337,8 +336,7 @@ const getSutContractDeploymentPlanEmulatedPublish = (
   }
 
   // Only one match was found, return the contract publish data.
-  const contractNameMatch =
-    contractPublishMatchesByName[0]
+  const contractNameMatch = contractPublishMatchesByName[0];
 
   if (!contractNameMatch) {
     throw new Error(`Could not locate "${sutContractName}" contract.`);

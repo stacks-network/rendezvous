@@ -90,10 +90,10 @@ export const enrichInterfaceWithTraitData = (
               arg.type.list.type.tuple
                 ? [...currentPath, "tuple"]
                 : arg.type.list.type.response
-                ? [...currentPath, "response"]
-                : arg.type.list.type.optional
-                ? [...currentPath, "optional"]
-                : [...currentPath, "list"]
+                  ? [...currentPath, "response"]
+                  : arg.type.list.type.optional
+                    ? [...currentPath, "optional"]
+                    : [...currentPath, "list"]
             )[0],
           },
         };

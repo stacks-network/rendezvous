@@ -391,8 +391,7 @@ describe("Test contract path resolution", () => {
               {
                 "transaction-type": "emulated-contract-publish",
                 "contract-name": "nonexistent",
-                "emulated-sender":
-                  "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
+                "emulated-sender": "ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM",
                 "clarity-version": 2,
                 path: "contracts/nonexistent.clar",
               },

@@ -9,7 +9,8 @@
   "scripts": {
     "build": "npx -p typescript tsc --project tsconfig.json && node -e \"if (process.platform !== 'win32') require('fs').chmodSync('./dist/app.js', 0o755);\"",
     "test": "npx jest",
-    "test:coverage": "npx jest --coverage"
+    "test:coverage": "npx jest --coverage",
+    "format": "prettier --write ."
   },
   "keywords": [
     "stacks",

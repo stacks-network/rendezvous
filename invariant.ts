@@ -22,7 +22,11 @@ import {
 import { EnrichedContractInterfaceFunction } from "./shared.types";
 import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
 import { Statistics } from "./heatstroke.types";
-import { getFailureFilePath, loadFailures, persistFailure } from "./persistence";
+import {
+  getFailureFilePath,
+  loadFailures,
+  persistFailure,
+} from "./persistence";
 import { resolve } from "path";
 import { ImplementedTraitType } from "./traits.types";
 

@@ -5,32 +5,38 @@ This chapter explains how to use Rendezvous in different situations. By the end,
 ## What's Inside
 
 [Running Rendezvous](#running-rendezvous)
-  - [Positional Arguments](#positional-arguments)
-  - [Options](#options)
-  - [Summary](#summary)
+
+- [Positional Arguments](#positional-arguments)
+- [Options](#options)
+- [Summary](#summary)
 
 [Understanding Rendezvous](#understanding-rendezvous)
-  - [Example](#example)
+
+- [Example](#example)
 
 [The Rendezvous Context](#the-rendezvous-context)
-  - [How the Context Works](#how-the-context-works)
-  - [Using the context to write invariants](#using-the-context-to-write-invariants)
+
+- [How the Context Works](#how-the-context-works)
+- [Using the context to write invariants](#using-the-context-to-write-invariants)
 
 [Discarding Property-Based Tests](#discarding-property-based-tests)
-  - [Discard Function](#discard-function)
-  - [In-Place Discarding](#in-place-discarding)
-  - [Discarding summary](#discarding-summary)
+
+- [Discard Function](#discard-function)
+- [In-Place Discarding](#in-place-discarding)
+- [Discarding summary](#discarding-summary)
 
 [Custom Manifest Files](#custom-manifest-files)
-  - [Why use a custom manifest?](#why-use-a-custom-manifest)
-  - [A test double for `sbtc-registry`](#a-test-double-for-sbtc-registry)
-  - [A Custom Manifest File](#a-custom-manifest-file)
-  - [How It Works](#how-it-works)
+
+- [Why use a custom manifest?](#why-use-a-custom-manifest)
+- [A test double for `sbtc-registry`](#a-test-double-for-sbtc-registry)
+- [A Custom Manifest File](#a-custom-manifest-file)
+- [How It Works](#how-it-works)
 
 [Trait Reference Parameters](#trait-reference-parameters)
-  - [How Trait Reference Selection Works](#how-trait-reference-selection-works)
-  - [Example](#example-1)
-  - [Adding More Implementations](#adding-more-implementations)
+
+- [How Trait Reference Selection Works](#how-trait-reference-selection-works)
+- [Example](#example-1)
+- [Adding More Implementations](#adding-more-implementations)
 
 ---
 
