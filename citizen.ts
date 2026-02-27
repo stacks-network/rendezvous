@@ -338,7 +338,7 @@ const getSutContractDeploymentPlanEmulatedPublish = (
 
   // Only one match was found, return the contract publish data.
   const contractNameMatch =
-    contractPublishMatchesByName[0]
+    contractPublishMatchesByName[0];
 
   if (!contractNameMatch) {
     throw new Error(`Could not locate "${sutContractName}" contract.`);
