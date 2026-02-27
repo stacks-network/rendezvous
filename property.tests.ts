@@ -240,10 +240,10 @@ describe("Test discarding related operations", () => {
     const functionCallResultJson = cvToJSON(functionCallResult);
 
     // Exercise
-    const dircardedInPlace = isTestDiscardedInPlace(functionCallResultJson);
+    const discardedInPlace = isTestDiscardedInPlace(functionCallResultJson);
 
     // Verify
-    expect(dircardedInPlace).toBe(true);
+    expect(discardedInPlace).toBe(true);
 
     // Teardown
     rmSync(tempDir, { recursive: true, force: true });
@@ -275,10 +275,10 @@ describe("Test discarding related operations", () => {
     const functionCallResultJson = cvToJSON(functionCallResult);
 
     // Exercise
-    const dircardedInPlace = isTestDiscardedInPlace(functionCallResultJson);
+    const discardedInPlace = isTestDiscardedInPlace(functionCallResultJson);
 
     // Verify
-    expect(dircardedInPlace).toBe(false);
+    expect(discardedInPlace).toBe(false);
 
     // Teardown
     rmSync(tempDir, { recursive: true, force: true });
