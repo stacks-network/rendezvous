@@ -2,11 +2,12 @@ import {
   readFileSync,
   writeFileSync,
   mkdtempSync,
+  mkdirSync,
   cpSync,
   rmSync,
   existsSync,
 } from "fs";
-import { join, relative, basename } from "path";
+import { join, relative, resolve, basename } from "path";
 import { tmpdir } from "os";
 import { parse as parseToml, stringify as stringifyToml } from "@iarna/toml";
 import yaml from "yaml";
@@ -61,17 +62,15 @@ export const issueFirstClassCitizenship = async (
     manifestDir,
     deploymentPlanRelativePath
   );
-
   const deploymentPlan = yaml.parse(
     readFileSync(deploymentPlanAbsolutePath, {
       encoding: "utf-8",
     })
   ) as DeploymentPlan;
-
   const parsedManifest = parseToml(
     readFileSync(manifestPath, { encoding: "utf-8" })
   ) as any;
-  const cacheDir = parsedManifest.project?.cache_dir ?? "./.cache";
+  const cacheDir = parsedManifest.project?.cache_dir ?? ".cache";
 
   const rendezvousData = buildRendezvousData(
     cacheDir,
@@ -81,26 +80,54 @@ export const issueFirstClassCitizenship = async (
   );
 
   // Create isolated temp directory for the Rendezvous testing run.
+  // Only copy the project structure files needed for simnet initialization.
+  // Contract source files are copied individually by the normalization loop
+  // below, so there is no need to copy the entire manifest directory (which
+  // could include node_modules, .git, etc.).
   const tempProjectDir = mkdtempSync(join(tmpdir(), "rendezvous-run-"));
-  cpSync(manifestDir, tempProjectDir, { recursive: true });
+  const manifestFileName = basename(manifestPath);
+  cpSync(manifestPath, join(tempProjectDir, manifestFileName));
+  const settingsSrc = join(manifestDir, "settings");
+  if (existsSync(settingsSrc)) {
+    cpSync(settingsSrc, join(tempProjectDir, "settings"), { recursive: true });
+  }
+  const cacheSrc = join(manifestDir, cacheDir);
+  if (existsSync(cacheSrc)) {
+    cpSync(cacheSrc, join(tempProjectDir, cacheDir), { recursive: true });
+  }
 
   const [, contractName] = rendezvousData.rendezvousContractId.split(".");
   const rendezvousContractsDir = join(tempProjectDir, "contracts");
+  mkdirSync(rendezvousContractsDir, { recursive: true });
+  /** Path to the concatenated Rendezvous contract */
   const rendezvousPath = join(
     rendezvousContractsDir,
     `${contractName}-rendezvous.clar`
   );
   writeFileSync(rendezvousPath, rendezvousData.rendezvousSourceCode);
 
-  radio.emit("logMessage", `Type-checking your Rendezvous project...\n`);
-
   // Update the manifest in the temp directory to point to the Rendezvous
   // concatenation.
-  const manifestFileName = basename(manifestPath);
   const tempManifestPath = join(tempProjectDir, manifestFileName);
   const tempParsedManifest = parseToml(
     readFileSync(tempManifestPath, { encoding: "utf-8" })
   ) as any;
+
+  // Copy all contracts into a single flat directory inside the temp dir and
+  // rewrite their paths in the manifest file. This normalizes any path
+  // structure (deeply nested, versioned subdirectories, paths escaping the
+  // manifest dir) so the SDK can always find them. Contract names are unique
+  // in Clarinet.toml, so using {contractName}.clar avoids collisions.
+  for (const name in tempParsedManifest.contracts) {
+    const contract = tempParsedManifest.contracts[name];
+
+    if (!contract?.path) continue;
+
+    const resolvedPath = resolve(manifestDir, contract.path);
+    const destFile = join(rendezvousContractsDir, `${name}.clar`);
+    cpSync(resolvedPath, destFile);
+    contract.path = relative(tempProjectDir, destFile);
+  }
 
   if (!tempParsedManifest.contracts) {
     tempParsedManifest.contracts = {};
@@ -125,6 +152,8 @@ export const issueFirstClassCitizenship = async (
   }
 
   writeFileSync(tempManifestPath, stringifyToml(tempParsedManifest));
+
+  radio.emit("logMessage", `Type-checking your Rendezvous project...\n`);
 
   // Final simnet initialization: This will initialize the simnet with the
   // target contract containing Rendezvous tests as first-class citizens.
