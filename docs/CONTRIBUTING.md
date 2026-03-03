@@ -8,7 +8,7 @@ To keep things simple and to maintain quality, please follow these guidelines.
 
 - Please read our `README.md` and `ACKNOWLEDGEMENTS` to understand our work.
 - Familiarize yourself with our directory structure. Each file is hand-crafted.
-- Make sure that you have Node.js v20.18.0 (LTS) or any later version.
+- Make sure that you are using Node.js LTS or later.
 
 ## How to Contribute
 
