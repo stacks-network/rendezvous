@@ -31,8 +31,8 @@ export const LOG_DIVIDER =
   "-------------------------------------------------------------------------------";
 
 /**
- * Retrieves the contract interfaces of the contracts deployed by a specific
- * deployer from the simnet instance.
+ * Retrieves the contract interfaces of the contracts deployed by the deployer
+ * account from the simnet instance.
  * @param simnet The simnet instance.
  * @returns The contract IDs mapped to their interfaces.
  */
