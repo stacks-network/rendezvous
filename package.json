@@ -30,12 +30,10 @@
     "url": "https://github.com/stacks-network/rendezvous.git"
   },
   "dependencies": {
-    "@iarna/toml": "^2.2.5",
     "@stacks/clarinet-sdk": "^3.15.0",
     "@stacks/transactions": "^7.3.1",
     "ansicolor": "^2.0.3",
-    "fast-check": "^4.5.3",
-    "yaml": "^2.8.2"
+    "fast-check": "^4.5.3"
   },
   "devDependencies": {
     "@stacks/clarinet-sdk-wasm": "^3.15.0",
