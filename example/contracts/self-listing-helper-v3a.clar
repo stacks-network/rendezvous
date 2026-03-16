@@ -349,9 +349,34 @@
 (define-private (join-template-parts-iter (part (string-ascii 5000)) (state {token: (string-ascii 100), result: (string-ascii 10000)}))
   {
     token: (get token state),
-    result: (unwrap-panic (as-max-len? 
-      (concat 
-        (get result state) 
+    result: (unwrap-panic (as-max-len?
+      (concat
+        (get result state)
         (if (is-eq (len (get result state)) u0) part (concat (get token state) part)))
       u10000))
   })
+
+;; #[env(simnet)]
+(define-map context (string-ascii 100) {
+    called: uint
+    ;; other data
+  }
+)
+
+;; #[env(simnet)]
+(define-public (update-context (function-name (string-ascii 100)) (called uint))
+  (ok (map-set context function-name {called: called}))
+)
+
+;; Placeholder invariant and property test that verify the Rendezvous can
+;; properly execute testing runs against Alex's self-listing contract.
+
+;; #[env(simnet)]
+(define-read-only (invariant-always-true)
+  true
+)
+
+;; #[env(simnet)]
+(define-public (test-always-true)
+  (ok true)
+)

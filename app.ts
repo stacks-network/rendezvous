@@ -9,12 +9,11 @@ import {
   getSimnetDeployerContractsInterfaces,
   LOG_DIVIDER,
 } from "./shared";
-import { issueFirstClassCitizenship } from "./citizen";
 import { version } from "./package.json";
 import { red } from "ansicolor";
 import { existsSync } from "fs";
 import { parseArgs } from "util";
-
+import { initSimnet } from "@stacks/clarinet-sdk";
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
@@ -178,73 +177,76 @@ export async function main() {
   // Divider between the run configuration and the execution.
   radio.emit("logMessage", LOG_DIVIDER + "\n");
 
-  const { simnet, resetSession, cleanupSession } =
-    await issueFirstClassCitizenship(
-      runConfig.manifestDir,
-      manifestPath,
-      runConfig.sutContractName,
-      radio
-    );
+  const simnet = await initSimnet(manifestPath);
 
-  try {
-    /**
-     * The list of contract IDs for the SUT contract names, as per the simnet.
-     */
-    const rendezvousList = Array.from(
-      getSimnetDeployerContractsInterfaces(simnet).keys()
-    ).filter(
-      (deployedContract) =>
-        getContractNameFromContractId(deployedContract) ===
-        runConfig.sutContractName
-    );
+  const resetSession = async () => {
+    await initSimnet(manifestPath);
+    radio.emit("logMessage", "Simnet session reset.");
+  };
 
-    const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
-      new Map(
-        Array.from(getSimnetDeployerContractsInterfaces(simnet)).filter(
-          ([contractId]) => rendezvousList.includes(contractId)
-        )
+  /**
+   * The list of contract IDs for the SUT contract names, as per the simnet.
+   */
+  const rendezvousList = Array.from(
+    getSimnetDeployerContractsInterfaces(simnet).keys(),
+  ).filter(
+    (deployedContract) =>
+      getContractNameFromContractId(deployedContract) ===
+      runConfig.sutContractName
+  );
+
+  if (rendezvousList.length === 0) {
+    radio.emit(
+      "logFailure",
+      `\nContract "${runConfig.sutContractName}" not found among project contracts.\n`
+    );
+    return;
+  }
+
+  const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
+    new Map(
+      Array.from(getSimnetDeployerContractsInterfaces(simnet)).filter(
+        ([contractId]) => rendezvousList.includes(contractId)
       )
-    );
+    )
+  );
 
-    // Select the testing routine based on `type`.
-    // If "invariant", call `checkInvariants` to verify contract invariants.
-    // If "test", call `checkProperties` for property-based testing.
-    switch (runConfig.type) {
-      case "invariant": {
-        await checkInvariants(
-          simnet,
-          resetSession,
-          runConfig.sutContractName,
-          rendezvousList,
-          rendezvousAllFunctions,
-          runConfig.seed,
-          runConfig.runs,
-          runConfig.dial,
-          runConfig.bail,
-          runConfig.regr,
-          radio
-        );
-        break;
-      }
-
-      case "test": {
-        await checkProperties(
-          simnet,
-          resetSession,
-          runConfig.sutContractName,
-          rendezvousList,
-          rendezvousAllFunctions,
-          runConfig.seed,
-          runConfig.runs,
-          runConfig.bail,
-          runConfig.regr,
-          radio
-        );
-        break;
-      }
+  // Select the testing routine based on `type`.
+  // If "invariant", call `checkInvariants` to verify contract invariants.
+  // If "test", call `checkProperties` for property-based testing.
+  switch (runConfig.type) {
+    case "invariant": {
+      await checkInvariants(
+        simnet,
+        resetSession,
+        runConfig.sutContractName,
+        rendezvousList,
+        rendezvousAllFunctions,
+        runConfig.seed,
+        runConfig.runs,
+        runConfig.dial,
+        runConfig.bail,
+        runConfig.regr,
+        radio
+      );
+      break;
     }
-  } finally {
-    cleanupSession();
+
+    case "test": {
+      await checkProperties(
+        simnet,
+        resetSession,
+        runConfig.sutContractName,
+        rendezvousList,
+        rendezvousAllFunctions,
+        runConfig.seed,
+        runConfig.runs,
+        runConfig.bail,
+        runConfig.regr,
+        radio
+      );
+      break;
+    }
   }
 }
 
