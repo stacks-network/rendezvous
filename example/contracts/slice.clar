@@ -362,6 +362,7 @@
 ;; #[env(simnet)]
 (define-constant ERR_ASSERTION_FAILED_3 (err 3))
 
+;; #[env(simnet)]
 ;; Some tests, like 'test-slice-list-int', are valid only for specific inputs.
 ;; Rendezvous generates a wide range of inputs, which may include values that
 ;; are unsuitable for those tests.
@@ -371,7 +372,6 @@
 ;; - Name should match the property test function's, prefixed with "can-".
 ;; - Parameters should mirror those of the property test.
 ;; - Returns true only if inputs are valid, allowing the test to run.
-;; #[env(simnet)]
 (define-read-only (can-test-slice-list-int
     (seq (list 127 int))
     (skip int)
@@ -407,11 +407,11 @@
   )
 )
 
+;; #[env(simnet)]
 ;; Same as 'test-slice-list-int', this test is valid only for specific
 ;; inputs. The second way to skip the test when inputs are invalid is the
 ;; in-place 'discard' mechanism. A test is considered discarded when the test
 ;; function call returns `(ok false)`.
-;; #[env(simnet)]
 (define-public (test-slice-list-uint (seq (list 127 uint)) (skip int) (n int))
   (if
     ;; Discard the test if the input is invalid by returning `(ok false)`.

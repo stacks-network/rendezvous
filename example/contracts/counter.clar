@@ -55,14 +55,10 @@
   (ok (map-set context function-name {called: called}))
 )
 
-;; The idea of having tests side by side to the contract is to ensure that
-;; they are treated as first-class citizens.
-;; Each invariant is a read-only function that starts with "invariant-".
-;; Each property test is a public function that starts with "test-".
-
-;; Invariants
-
 ;; #[env(simnet)]
+;; Invariant function that checks that the counter is greater than zero if the
+;; number of calls to `increment` is greater than the number of calls to
+;; `decrement`.
 (define-read-only (invariant-counter-gt-zero)
   (let
     (
@@ -85,10 +81,8 @@
   )
 )
 
-;; Properties
-
-;; This test catches the bug in the counter contract.
 ;; #[env(simnet)]
+;; This test catches the bug in the counter contract.
 (define-public (test-increment)
   (let
     ((counter-before (get-counter)))
@@ -98,9 +92,9 @@
   )
 )
 
+;; #[env(simnet)]
 ;; Test that takes a parameter. This will be run using property-based
 ;; techniques.
-;; #[env(simnet)]
 (define-public (test-add (n uint))
   (let
     ((counter-before (get-counter)))

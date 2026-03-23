@@ -77,8 +77,6 @@
 (define-read-only (reverse-ascii (seq (string-ascii 127)))
  (reverse-string2 seq))
 
-;; Properties
-
 ;; #[env(simnet)]
 (define-constant ERR_ASSERTION_FAILED (err 1))
 

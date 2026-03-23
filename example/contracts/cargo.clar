@@ -82,8 +82,6 @@
   (ok (map-set context function-name {called: called}))
 )
 
-;; Invariants
-
 ;; #[env(simnet)]
 (define-read-only (invariant-last-shipment-id-gt-0-after-create-shipment)
   (let 
@@ -99,10 +97,6 @@
     )
   )
 )
-
-;; Properties
-
-;; Constants for errors
 
 ;; #[env(simnet)]
 (define-constant ERR_ASSERTION_FAILED (err 1))

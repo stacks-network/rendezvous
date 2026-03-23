@@ -192,8 +192,6 @@
   )
 )
 
-;; Properties
-
 ;; #[env(simnet)]
 (define-public (test-deposit (amount uint))
   (if

@@ -30,8 +30,6 @@
   (ok (map-set context function-name {called: called}))
 )
 
-;; Invariants
-
 ;; #[env(simnet)]
 (define-read-only (invariant-token-supply-vs-balance (address principal))
   (let
@@ -51,8 +49,6 @@
     (<= user-balance total-supply)
   )
 )
-
-;; Properties
 
 ;; #[env(simnet)]
 (define-public (test-transfer

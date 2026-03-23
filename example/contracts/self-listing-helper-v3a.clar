@@ -368,6 +368,7 @@
   (ok (map-set context function-name {called: called}))
 )
 
+;; #[env(simnet)]
 ;; Placeholder invariant and property test that verify the Rendezvous can
 ;; properly execute testing runs against Alex's self-listing contract.
 
