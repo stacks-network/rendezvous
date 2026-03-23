@@ -219,7 +219,6 @@ export async function main() {
       await checkInvariants(
         simnet,
         resetSession,
-        runConfig.sutContractName,
         rendezvousList,
         rendezvousAllFunctions,
         runConfig.seed,
@@ -236,7 +235,6 @@ export async function main() {
       await checkProperties(
         simnet,
         resetSession,
-        runConfig.sutContractName,
         rendezvousList,
         rendezvousAllFunctions,
         runConfig.seed,
