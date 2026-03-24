@@ -28,14 +28,13 @@ As noted in our contributing guidelines, we believe in handcrafted code with a p
 
 ## Project Structure
 
-Rendezvous integrates seamlessly with Clarinet projects, looking for test files alongside your contract implementations:
+Rendezvous integrates seamlessly with Clarinet projects. Tests are written directly inside the contract file using `#[env(simnet)]` annotations for conditional deployment:
 
 ```
 root
 ├── Clarinet.toml
 ├── contracts
-│   ├── contract.clar
-│   ├── contract.tests.clar
+│   └── contract.clar
 └── settings
     └── Devnet.toml
 ```

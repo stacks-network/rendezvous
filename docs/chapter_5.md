@@ -108,17 +108,15 @@ For Rendezvous to work properly, your Clarinet project should have the following
 my-project/
 ├── Clarinet.toml
 ├── contracts/
-│   ├── my-contract.clar       # Your contract implementation.
-│   ├── my-contract.tests.clar # Tests for your contract.
+│   └── my-contract.clar       # Your contract with tests inside.
 └── settings/
     └── Devnet.toml
 ```
 
 >Key points to note:
 >
->1. The test file (`my-contract.tests.clar`) must be in the same directory as the contract it tests.
->2. The test file name must match the pattern `{contract-name}.tests.clar`.
->3. A valid `Clarinet.toml` file must exist at the project root.
+>1. Rendezvous functions (invariants and property-based tests) are written directly inside the contract file, annotated with `#[env(simnet)]` for conditional deployment.
+>2. A valid `Clarinet.toml` file must exist at the project root.
 
 ## Troubleshooting Installation Issues
 
@@ -145,7 +143,7 @@ If Rendezvous cannot find your Clarinet project:
 
 1. Ensure you're running the command from the correct directory.
 2. Verify that your `Clarinet.toml` file exists and is properly formatted.
-3. Check that your contract and test files are correctly named and located.
+3. Check that your contract files are correctly named and located and pass Simnet type-checking.
 
 **Permission Issues**
 

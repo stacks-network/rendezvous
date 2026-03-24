@@ -52,8 +52,7 @@ Consider this example Clarinet project structure:
 root
 ├── Clarinet.toml
 ├── contracts
-│   ├── contract.clar
-│   ├── contract.tests.clar
+│   └── contract.clar
 └── settings
     └── Devnet.toml
 ```
@@ -96,13 +95,9 @@ For a deeper understanding of these techniques and when to use each, see [Testin
 
 **Running property-based tests**
 
-To run property-based tests for the `contract` contract, ensure that your test functions are defined in:
+Property-based testing requires one or more **test functions** (e.g. `test-xyz`) in the contract file (`contract.clar`), annotated with `#[env(simnet)]`.
 
-```
-./root/contracts/contract.tests.clar
-```
-
-Then, execute:
+To run property-based tests, use:
 
 ```bash
 rv ./root contract test
@@ -111,15 +106,14 @@ rv ./root contract test
 This tells Rendezvous to:
 
 - Load the **Clarinet project** located in `./root`.
-- Target the **contract** named `contract` as defined in `Clarinet.toml` by executing **property-based tests** defined in `contract.tests.clar`.
+- Target the **contract** named `contract` as defined in `Clarinet.toml` by executing **property-based tests** defined within the contract.
 
 **Running invariant tests**
 
-To run invariant tests for the `contract` contract, ensure that your invariant functions are defined in:
+Invariant testing requires two things in the contract file (`contract.clar`), both annotated with `#[env(simnet)]`:
 
-```
-./root/contracts/contract.tests.clar
-```
+1. One or more **invariant functions** (e.g. `invariant-xyz`).
+2. The **Rendezvous context** — the `context` map and `update-context` function (see [The Rendezvous Context](#the-rendezvous-context)).
 
 To run invariant tests, use:
 
@@ -372,11 +366,7 @@ You can also manually edit the regression file to remove specific failures while
 
 Rendezvous makes **property-based tests** and **invariant tests** first-class. Tests are written in the same language as the system under test. This helps developers master the contract language. It also pushes boundaries—programmers shape their thoughts first, then express them using the language's tools.
 
-When Rendezvous initializes a **Simnet session** using a given Clarinet project, it **does not modify any contract** listed in Clarinet.toml—except for the **target contract**. During testing, Rendezvous updates the target contract by merging:
-
-1. **The original contract source code**
-2. **The test contract** (which includes property-based tests and invariants)
-3. **The Rendezvous context**, which helps track function calls and execution details
+When Rendezvous initializes a **Simnet session** using a given Clarinet project, it deploys the contracts as defined in `Clarinet.toml`.
 
 ### Example
 
@@ -388,53 +378,37 @@ Let’s say we have a contract named `checker` with the following source:
 (define-public (check-it (flag bool))
   (if flag (ok 1) (err u100))
 )
-```
 
-And its test contract, `checker.tests`:
-
-```clarity
-;; checker.tests.clar
-
-(define-public (test-1)
-  (ok true)
-)
-
-(define-read-only (invariant-1)
-  true
-)
-```
-
-When Rendezvous runs the tests, it **automatically generates a modified contract** that includes the original contract, the tests, and an additional **context** for tracking execution. The final contract source deployed in the Simnet session will look like this:
-
-```
-(define-public (check-it (flag bool))
-  (if flag (ok 1) (err u100))
-)
-
+;; #[env(simnet)]
 (define-map context (string-ascii 100) {
     called: uint
     ;; other data
   }
 )
 
+;; #[env(simnet)]
 (define-public (update-context (function-name (string-ascii 100)) (called uint))
   (ok (map-set context function-name {called: called}))
 )
 
+;; #[env(simnet)]
 (define-public (test-1)
   (ok true)
 )
 
+;; #[env(simnet)]
 (define-read-only (invariant-1)
   true
 )
 ```
 
-While the original contract source and test functions are familiar, the **context** is new. Let's take a closer look at it.
+The contract source, test functions, and **context** all live in the same file. The `#[env(simnet)]` annotation ensures the test functions are only deployed during simnet testing. Let’s take a closer look at the context.
 
 ## The Rendezvous Context
 
-Rendezvous introduces a **context** to track function calls and execution details during testing. This allows for better tracking of execution details and invariant validation.
+Rendezvous uses a **context** to track function calls and execution details during invariant testing. This allows for better tracking of execution details and invariant validation.
+
+> **Important:** Every contract tested with Rendezvous **invariant testing** must include the `context` map and the `update-context` public function. During invariant testing, Rendezvous calls public functions and uses `update-context` to track successful executions. This tracking enables invariants to reason about how many times each function has been called. If these are missing during invariant testing, Rendezvous will throw a runtime error. The context is not required for property-based testing.
 
 ### How the Context Works
 
@@ -443,11 +417,13 @@ When a function is successfully executed during a test, Rendezvous records its e
 Here’s how the context is structured:
 
 ```clarity
+;; #[env(simnet)]
 (define-map context (string-ascii 100) {
     called: uint
     ;; Additional fields can be added here
 })
 
+;; #[env(simnet)]
 (define-public (update-context (function-name (string-ascii 100)) (called uint))
   (ok (map-set context function-name {called: called}))
 )
@@ -635,7 +611,7 @@ This process allows Rendezvous to create meaningful state transitions and valida
 
 ### Example
 
-The `example` Clarinet project demonstrates this feature. The [send-tokens](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.clar) contract contains [one public function](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.clar#L3-L7) and [one property-based test](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.tests.clar#L24-L47) that both accept trait references.
+The `example` Clarinet project demonstrates this feature. The [send-tokens](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.clar) contract contains one public function and one property-based test that both accept trait references.
 
 To enable testing, the project includes [rendezvous-token](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/rendezvous-token.clar), which implements the required trait.
 

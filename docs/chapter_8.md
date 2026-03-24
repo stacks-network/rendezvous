@@ -1,6 +1,6 @@
 # Examples
 
-The Rendezvous repo has a Clarinet project, `example`, that shows how to test Clarity smart contracts natively. Each contract, like `xyz.clar`, has a matching test contract, `xyz.tests.clar`.
+The Rendezvous repo has a Clarinet project, `example`, that shows how to test Clarity smart contracts natively. Each contract includes its test functions (invariants and property-based tests) directly in the `.clar` file, annotated with `#[env(simnet)]` for conditional deployment.
 
 ## What's Inside
 
@@ -146,7 +146,7 @@ To run Rendezvous property-based tests against the counter contract, use:
 rv ./example counter test
 ```
 
-Using this command, Rendezvous will **randomly select and execute** property-based tests from the `counter`'s test contract. This process will detect the bug in the faulty increment function. However, if the test contract contains only `test-increment`, **the number of runs must be increased**. By default, Rendezvous executes **100 runs**, which is not sufficient to expose the issue.
+Using this command, Rendezvous will **randomly select and execute** property-based tests from the `counter` contract. This process will detect the bug in the faulty increment function. However, if the contract contains only `test-increment`, **the number of runs must be increased**. By default, Rendezvous executes **100 runs**, which may not be sufficient to expose the issue.
 
 To make sure you always catch the bug, set the `--runs` option to something higher than `1001`, e.g. **1002**:
 
@@ -277,7 +277,7 @@ To run Rendezvous property-based tests against the `cargo` contract, use:
 rv ./example cargo test
 ```
 
-Using this command, Rendezvous will **randomly select and execute** property-based tests from the `cargo`'s test contract. If `test-get-last-shipment-id` is the only test in the contract, Rendezvous will immediately detect the bug.
+Using this command, Rendezvous will **randomly select and execute** property-based tests from the `cargo` contract. If `test-get-last-shipment-id` is the only test in the contract, Rendezvous will immediately detect the bug.
 
 ---
 
@@ -528,7 +528,7 @@ A key aspect introduced in this test is the **discarding** mechanism. Let's revi
 
 **Discarding property-based tests using discard functions**
 
-An example of a property-based test with an attached discard function can also be found in `slice.tests.clar`:
+An example of a property-based test with an attached discard function can also be found in `slice.clar`:
 
 ```clarity
 ;; Some tests, like 'test-slice-list-int', are valid only for specific inputs.
