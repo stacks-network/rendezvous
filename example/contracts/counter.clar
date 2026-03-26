@@ -42,3 +42,73 @@
     (ok (var-set counter (+ (var-get counter) n)))
   )
 )
+
+;; #[env(simnet)]
+(define-map context (string-ascii 100) {
+    called: uint
+    ;; other data
+  }
+)
+
+;; #[env(simnet)]
+(define-public (update-context (function-name (string-ascii 100)) (called uint))
+  (ok (map-set context function-name {called: called}))
+)
+
+;; #[env(simnet)]
+;; Invariant function that checks that the counter is greater than zero if the
+;; number of calls to `increment` is greater than the number of calls to
+;; `decrement`.
+(define-read-only (invariant-counter-gt-zero)
+  (let
+    (
+      (increment-num-calls
+        (default-to u0
+          (get called (map-get? context "increment"))
+        )
+      )
+      (decrement-num-calls
+        (default-to u0
+          (get called (map-get? context "decrement"))
+        )
+      )
+    )
+    (if
+      (<= increment-num-calls decrement-num-calls)
+      true
+      (> (var-get counter) u0)
+    )
+  )
+)
+
+;; #[env(simnet)]
+;; This test catches the bug in the counter contract.
+(define-public (test-increment)
+  (let
+    ((counter-before (get-counter)))
+    (unwrap-panic (increment))
+    (asserts! (is-eq (get-counter) (+ counter-before u1)) (err u404))
+    (ok true)
+  )
+)
+
+;; #[env(simnet)]
+;; Test that takes a parameter. This will be run using property-based
+;; techniques.
+(define-public (test-add (n uint))
+  (let
+    ((counter-before (get-counter)))
+    (ok
+      (if
+        (<= n u1)
+        ;; Discard the test if `add` cannot be called with the given parameter.
+        false
+        (begin
+          (try! (add n))
+          (asserts! (is-eq (get-counter) (+ counter-before n)) (err u403))
+          true
+        )
+      )
+    )
+  )
+)

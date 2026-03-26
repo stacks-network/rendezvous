@@ -100,7 +100,7 @@ describe("Custom reporter logging", () => {
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
-          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_rendezvous`;
+          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}`;
 
           radio.on("logFailure", (message: string) => {
             emittedErrorLogs.push(message);
@@ -260,7 +260,7 @@ describe("Custom reporter logging", () => {
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
-          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_rendezvous`;
+          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}`;
 
           radio.on("logFailure", (message: string) => {
             emittedErrorLogs.push(message);
@@ -419,7 +419,7 @@ describe("Custom reporter logging", () => {
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
-          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_rendezvous`;
+          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}`;
 
           radio.on("logFailure", (message: string) => {
             emittedErrorLogs.push(message);
@@ -514,7 +514,7 @@ describe("Custom reporter logging", () => {
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
-          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_rendezvous`;
+          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}`;
 
           radio.on("logFailure", (message: string) => {
             emittedErrorLogs.push(message);
@@ -629,7 +629,7 @@ describe("Custom reporter logging", () => {
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
-          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_rendezvous`;
+          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}`;
 
           radio.on("logFailure", (message: string) => {
             emittedErrorLogs.push(message);
@@ -740,7 +740,7 @@ describe("Custom reporter logging", () => {
         }) => {
           const emittedErrorLogs: string[] = [];
           const radio = new EventEmitter();
-          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}_rendezvous`;
+          const rendezvousContractId = `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.${r.contractName}`;
 
           radio.on("logFailure", (message: string) => {
             emittedErrorLogs.push(message);

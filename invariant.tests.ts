@@ -7,11 +7,8 @@ import {
 } from "./shared";
 import { join, resolve } from "path";
 import { rmSync } from "fs";
-import { issueFirstClassCitizenship } from "./citizen";
 import { Cl } from "@stacks/transactions";
-import { getManifestFileName } from "./app";
 import { createIsolatedTestEnvironment } from "./test.utils";
-import EventEmitter from "events";
 
 const isolatedTestEnvPrefix = "rendezvous-test-invariant-";
 
@@ -20,18 +17,19 @@ describe("Simnet contracts operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
-    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
+    const sutContractsInterfaces =
+      getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsAllFunctions = getFunctionsFromContractInterfaces(
-      sutContractsInterfaces
+      sutContractsInterfaces,
     );
 
     // Pick the first contract for testing.
     const [contractId, functions] = Array.from(
-      sutContractsAllFunctions.entries()
+      sutContractsAllFunctions.entries(),
     )[0];
 
     const expectedInitialContext = {
@@ -52,32 +50,27 @@ describe("Simnet contracts operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
-    const { simnet, cleanupSession } = await issueFirstClassCitizenship(
-      tempDir,
-      join(tempDir, getManifestFileName(tempDir, "counter")),
-      "counter",
-      new EventEmitter()
-    );
+    const simnet = await initSimnet(join(tempDir, "Clarinet.toml"));
 
     const rendezvousList = Array.from(
-      getSimnetDeployerContractsInterfaces(simnet).keys()
+      getSimnetDeployerContractsInterfaces(simnet).keys(),
     ).filter((deployedContract) =>
-      ["counter"].includes(getContractNameFromContractId(deployedContract))
+      ["counter"].includes(getContractNameFromContractId(deployedContract)),
     );
 
     const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
       new Map(
         Array.from(getSimnetDeployerContractsInterfaces(simnet)).filter(
-          ([contractId]) => rendezvousList.includes(contractId)
-        )
-      )
+          ([contractId]) => rendezvousList.includes(contractId),
+        ),
+      ),
     );
 
     // Pick the first contract for testing.
     const [contractId, functions] = Array.from(
-      rendezvousAllFunctions.entries()
+      rendezvousAllFunctions.entries(),
     )[0];
 
     // Exercise
@@ -87,7 +80,7 @@ describe("Simnet contracts operations", () => {
       const actualValue = simnet.getMapEntry(
         contractId,
         "context",
-        Cl.stringAscii(f.name)
+        Cl.stringAscii(f.name),
       );
       return {
         contractId,
@@ -112,7 +105,6 @@ describe("Simnet contracts operations", () => {
     expect(actualContext).toEqual(expectedContext);
 
     // Teardown
-    cleanupSession();
     rmSync(tempDir, { recursive: true, force: true });
   });
 });

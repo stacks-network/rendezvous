@@ -507,6 +507,38 @@ describe("Command-line arguments handling", () => {
   );
 });
 
+describe("Contract selection", () => {
+  const initialArgv = process.argv;
+
+  it("logs an error when the contract is not found among project contracts", async () => {
+    // Setup
+    const tempDir = createIsolatedTestEnvironment(
+      resolve(__dirname, "example"),
+      isolatedTestEnvPrefix,
+    );
+    process.argv = ["node", "app.js", tempDir, "nonexistent", "test"];
+
+    const consoleErrors: string[] = [];
+    jest.spyOn(console, "log").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation((message: string) => {
+      consoleErrors.push(message);
+    });
+
+    // Exercise
+    await main();
+
+    // Verify
+    expect(consoleErrors).toContain(
+      red(`\nContract "nonexistent" not found among project contracts.\n`),
+    );
+
+    // Teardown
+    process.argv = initialArgv;
+    jest.restoreAllMocks();
+    rmSync(tempDir, { recursive: true, force: true });
+  });
+});
+
 describe("Custom manifest detection", () => {
   it("returns the default manifest file name for the example project", () => {
     // Arrange

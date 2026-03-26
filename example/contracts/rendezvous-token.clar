@@ -57,3 +57,22 @@
     (ft-mint? rendezvous amount recipient)
   )
 )
+
+;; #[env(simnet)]
+(define-map context (string-ascii 100) {
+    called: uint
+    ;; other data
+  }
+)
+
+;; #[env(simnet)]
+(define-public (update-context (function-name (string-ascii 100)) (called uint))
+  (ok (map-set context function-name {called: called}))
+)
+
+;; #[env(simnet)]
+;; This invariant returns true regardless of the state of the contract. Its
+;; purpose is to allow the demonstration of the `dialers` feature.
+(define-read-only (invariant-always-true)
+  true
+)

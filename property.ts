@@ -30,7 +30,6 @@ import { EnrichedContractInterfaceFunction } from "./shared.types";
  * Reports the test results through a custom reporter.
  * @param simnet The simnet instance.
  * @param resetSession Resets the simnet session to a clean state.
- * @param targetContractName The name of the target contract.
  * @param rendezvousList The list of contract IDs for each target contract.
  * @param rendezvousAllFunctions A map of all target contract IDs to their
  * function interfaces.
@@ -45,7 +44,6 @@ import { EnrichedContractInterfaceFunction } from "./shared.types";
 export const checkProperties = async (
   simnet: Simnet,
   resetSession: () => Promise<void>,
-  targetContractName: string,
   rendezvousList: string[],
   rendezvousAllFunctions: Map<string, ContractInterfaceFunction[]>,
   seed: number | undefined,
@@ -61,13 +59,15 @@ export const checkProperties = async (
     rendezvousAllFunctions
   );
 
-  const testContractId = rendezvousList[0];
+  const rendezvousContractId = rendezvousList[0];
 
-  const allTestFunctions = testContractsTestFunctions.get(testContractId)!;
+  const allTestFunctions = testContractsTestFunctions.get(rendezvousContractId)!;
 
   const traitReferenceFunctionsCount = allTestFunctions.filter(
     isTraitReferenceFunction
   ).length;
+
+  const targetContractName = getContractNameFromContractId(rendezvousContractId);
 
   const traitReferenceMap = buildTraitReferenceMap(allTestFunctions);
   const enrichedTestFunctionsInterfaces =
@@ -76,7 +76,7 @@ export const checkProperties = async (
           simnet.getContractAST(targetContractName),
           traitReferenceMap,
           allTestFunctions,
-          testContractId
+          rendezvousContractId
         )
       : testContractsTestFunctions;
 
@@ -93,7 +93,7 @@ export const checkProperties = async (
           enrichedTestFunctionsInterfaces,
           traitReferenceMap,
           projectTraitImplementations,
-          testContractId
+          rendezvousContractId
         )
       : [];
 
@@ -105,9 +105,9 @@ export const checkProperties = async (
   // enriched map.
   const executableTestContractsTestFunctions = new Map([
     [
-      testContractId,
+      rendezvousContractId,
       enrichedTestFunctionsInterfaces
-        .get(testContractId)!
+        .get(rendezvousContractId)!
         .filter(
           (functionInterface) =>
             !functionsMissingTraitImplementations.includes(
@@ -173,7 +173,7 @@ export const checkProperties = async (
 
   const testFunctions = getFunctionsListForContract(
     executableTestContractsTestFunctions,
-    testContractId
+    rendezvousContractId
   );
 
   if (testFunctions?.length === 0) {
@@ -189,7 +189,7 @@ export const checkProperties = async (
     radio.emit(
       "logMessage",
       `Regressions loaded from: ${resolve(
-        getFailureFilePath(testContractId)
+        getFailureFilePath(rendezvousContractId)
       )}`
     );
     radio.emit(
@@ -197,7 +197,7 @@ export const checkProperties = async (
       `Loading ${targetContractName} contract regressions...\n`
     );
 
-    const regressions = loadFailures(testContractId, "test");
+    const regressions = loadFailures(rendezvousContractId, "test");
 
     radio.emit(
       "logMessage",
@@ -220,7 +220,7 @@ export const checkProperties = async (
       await propertyTest({
         simnet,
         targetContractName,
-        testContractId,
+        rendezvousContractId,
         // If the number of runs that failed is less than 100, set it to the
         // default value of 100. If more runs were needed to reproduce the
         // failure, use the number of runs that failed.
@@ -243,7 +243,7 @@ export const checkProperties = async (
     await propertyTest({
       simnet,
       targetContractName,
-      testContractId,
+      rendezvousContractId,
       runs,
       seed,
       bail,
@@ -261,7 +261,7 @@ export const checkProperties = async (
 interface PropertyTestConfig {
   simnet: Simnet;
   targetContractName: string;
-  testContractId: string;
+  rendezvousContractId: string;
   runs: number | undefined;
   seed: number | undefined;
   bail: boolean;
@@ -292,7 +292,7 @@ const propertyTest = async (
   const {
     simnet,
     targetContractName,
-    testContractId,
+    rendezvousContractId,
     runs,
     seed,
     bail,
@@ -331,7 +331,7 @@ const propertyTest = async (
       persistFailure(
         runDetails,
         "test",
-        testContractId,
+        rendezvousContractId,
         // No dialers in property-based testing.
         undefined
       );
@@ -342,7 +342,7 @@ const propertyTest = async (
     fc.asyncProperty(
       fc
         .record({
-          rendezvousContractId: fc.constant(testContractId),
+          rendezvousContractId: fc.constant(rendezvousContractId),
           testCaller: fc.constantFrom(...eligibleAccounts.entries()),
           canMineBlocks: fc.boolean(),
         })

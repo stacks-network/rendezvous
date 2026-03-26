@@ -240,16 +240,13 @@ The main functions and state of the contract are now covered by tests. Line cove
 
 Rendezvous lets you test a broader range of inputs, not just specific examples. Let's see how to write your first property-based test and why it matters.
 
-### Create the Test File
-
-Go to the `contracts` folder, and create the Rendezvous test file named  `stx-defi.tests.clar`.
 
 ### Add an Ice-Breaker Test
 
-Before writing any meaningful properties, it's a good idea to check that Rendezvous can run. Add a simple "always-true" test to verify your setup.
-Open `contracts/stx-defi.tests.clar` and add an always-true test:
+Before writing any meaningful properties, it's a good idea to check that Rendezvous can run. Add a simple "always-true" test, annotated with `#[env(simnet)]`:
 
 ```clarity
+;; #[env(simnet)]
 (define-public (test-always-true)
   (ok true)
 )
@@ -306,11 +303,10 @@ If you see similar output, your setup works. You're ready to write a **real prop
 
 ### Define a Borrowing Property
 
-You want to test that **borrowing always updates the loan amount correctly**:
+You want to test that **borrowing always updates the loan amount correctly**. Add this to the end of `contracts/stx-defi.clar`:
 
 ```clarity
-;; stx-defi.tests.clar
-
+;; #[env(simnet)]
 ;; Property: Borrowing should always update the loan amount correctly.
 ;; The new loan amount should equal the old loan amount plus the borrowed
 ;; amount.
@@ -343,7 +339,7 @@ You want to test that **borrowing always updates the loan amount correctly**:
 
 Rendezvous:
 
-1. Injects all property-based tests directly into the deployed contract.
+1. Deploys the contract with all `#[env(simnet)]`-annotated test functions included.
 2. Detects all public `test-*` functions automatically.
 3. Generates a random sequence to call each test.
 4. Produces random argument values for each function parameter.
@@ -368,9 +364,10 @@ Let's address them one by one.
 
 ### Handle Preconditions
 
-**First, you need deposits.** You can create a helper function that Rendezvous will pick up during property-based testing runs. This helper will allow deposits to be created so other tests can check properties that require deposits:
+**First, you need deposits.** You can create a helper function that Rendezvous will pick up during property-based testing runs. Add this to `contracts/stx-defi.clar`:
 
 ```clarity
+;; #[env(simnet)]
 ;; This is a helper function that will eventually be picked up during
 ;; property-based-testing runs. It allows creating deposits in the smart
 ;; contract so other tests can check properties requiring a deposit.
@@ -384,9 +381,10 @@ Let's address them one by one.
 )
 ```
 
-**Next, add discard logic to the borrow test.** A test is discarded when it returns `(ok false)`. Wrap the core test logic in a conditional that checks for invalid preconditions (the three cases listed above) and returns `(ok false)` to discard those cases:
+**Next, add discard logic to the borrow test.** A test is discarded when it returns `(ok false)`. Replace the previous `test-borrow` with this version that checks for invalid preconditions:
 
 ```clarity
+;; #[env(simnet)]
 ;; Property: Borrowing should always update the loan amount correctly.
 ;; The new loan amount should equal the old loan amount plus the borrowed
 ;; amount.

@@ -20,8 +20,7 @@ The `rv` fuzzer, inspired by John Hughes' paper _"Testing the Hard Stuff and Sta
 root
 ├── Clarinet.toml
 ├── contracts
-│   ├── contract.clar
-│   ├── contract.tests.clar
+│   └── contract.clar
 └── settings
     └── Devnet.toml
 ```
@@ -55,6 +54,7 @@ npx rv <path-to-clarinet-project> <contract-name> <type>
 - `--seed` – The seed to use for the replay functionality.
 - `--runs` – The number of test iterations to use for exercising the contracts.
   (default: `100`)
+- `--regr` – Run regression tests only (replay saved failures).
 - `--bail` – Stop after the first failure.
 - `--dial` – The path to a JavaScript file containing custom pre- and
   post-execution functions (dialers).

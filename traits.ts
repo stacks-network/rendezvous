@@ -210,7 +210,7 @@ export const enrichInterfaceWithTraitData = (
  * trait data` if the trait reference is found. Otherwise, returns a tuple of
  * `undefined` values.
  */
-export const getTraitReferenceData = (
+const getTraitReferenceData = (
   ast: IContractAST,
   functionName: string,
   parameterPath: string[]
