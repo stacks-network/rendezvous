@@ -3,7 +3,6 @@ import {
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
   getSimnetDeployerContractsInterfaces,
-  hexaString,
   getContractNameFromContractId,
 } from "./shared";
 import { rmSync } from "fs";

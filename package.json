@@ -8,6 +8,8 @@
   },
   "scripts": {
     "build": "npx -p typescript tsc --project tsconfig.json && node -e \"if (process.platform !== 'win32') require('fs').chmodSync('./dist/app.js', 0o755);\"",
+    "lint": "oxlint -c oxlintrc.json",
+    "lint:fix": "oxlint -c oxlintrc.json --fix",
     "test": "npx jest",
     "test:coverage": "npx jest --coverage"
   },

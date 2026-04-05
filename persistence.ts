@@ -68,7 +68,7 @@ const loadFailureStore = (
   try {
     const content = readFileSync(filePath, "utf-8");
     return JSON.parse(content);
-  } catch (error: any) {
+  } catch {
     return { invariant: [], test: [] };
   }
 };
