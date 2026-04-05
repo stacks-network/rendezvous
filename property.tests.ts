@@ -1,13 +1,7 @@
+import { rmSync } from "node:fs";
+import { join, resolve } from "node:path";
+
 import { initSimnet } from "@stacks/clarinet-sdk";
-import {
-  isParamsMatch,
-  isReturnTypeBoolean,
-  isTestDiscardedInPlace,
-} from "./property";
-import { rmSync } from "fs";
-import { join, resolve } from "path";
-import fc from "fast-check";
-import { createIsolatedTestEnvironment } from "./test.utils";
 import type {
   ContractInterfaceFunction,
   ContractInterfaceFunctionAccess,
@@ -15,6 +9,14 @@ import type {
   ContractInterfaceFunctionOutput,
 } from "@stacks/clarinet-sdk-wasm";
 import { cvToJSON } from "@stacks/transactions";
+import fc from "fast-check";
+
+import {
+  isParamsMatch,
+  isReturnTypeBoolean,
+  isTestDiscardedInPlace,
+} from "./property";
+import { createIsolatedTestEnvironment } from "./test.utils";
 
 const isolatedTestEnvPrefix = "rendezvous-test-property-";
 

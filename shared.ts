@@ -1,4 +1,18 @@
+import type { Simnet } from "@stacks/clarinet-sdk";
+import type {
+  ContractInterfaceFunction,
+  IContractInterface,
+} from "@stacks/clarinet-sdk-wasm";
+import {
+  Cl,
+  optionalCVOf,
+  principalCV,
+  responseErrorCV,
+  responseOkCV,
+  type ClarityValue,
+} from "@stacks/transactions";
 import fc from "fast-check";
+
 import type {
   BaseTypesToArbitrary,
   BaseTypesToCV,
@@ -10,19 +24,6 @@ import type {
   ResponseStatus,
   TupleData,
 } from "./shared.types";
-import type { Simnet } from "@stacks/clarinet-sdk";
-import type {
-  ContractInterfaceFunction,
-  IContractInterface,
-} from "@stacks/clarinet-sdk-wasm";
-import {
-  type ClarityValue,
-  Cl,
-  optionalCVOf,
-  principalCV,
-  responseErrorCV,
-  responseOkCV,
-} from "@stacks/transactions";
 import { getContractIdsImplementingTrait } from "./traits";
 import type { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
@@ -40,7 +41,7 @@ export const getSimnetDeployerContractsInterfaces = (
   simnet: Simnet,
 ): Map<string, IContractInterface> =>
   new Map(
-    Array.from(simnet.getContractsInterfaces()).filter(
+    [...simnet.getContractsInterfaces()].filter(
       ([key]) => key.split(".")[0] === simnet.deployer,
     ),
   );
@@ -310,16 +311,21 @@ const argToCV = (
   if (isBaseType(type)) {
     // Base type.
     switch (type) {
-      case "int128":
+      case "int128": {
         return baseTypesToCV.int128(generatedArgument as number);
-      case "uint128":
+      }
+      case "uint128": {
         return baseTypesToCV.uint128(generatedArgument as number);
-      case "bool":
+      }
+      case "bool": {
         return baseTypesToCV.bool(generatedArgument as boolean);
-      case "principal":
+      }
+      case "principal": {
         return baseTypesToCV.principal(generatedArgument as string);
-      default:
+      }
+      default: {
         throw new Error(`Unsupported base parameter type: ${type}`);
+      }
     }
   } else {
     // Complex type.

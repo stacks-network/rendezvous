@@ -1,11 +1,13 @@
+import fs, { rmSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { red } from "ansicolor";
+
 import { getManifestFileName, main } from "./app";
 import { version } from "./package.json";
-import { resolve } from "path";
-import fs, { rmSync } from "fs";
-import { createIsolatedTestEnvironment } from "./test.utils";
-import { LOG_DIVIDER } from "./shared";
 import { getFailureFilePath } from "./persistence";
+import { LOG_DIVIDER } from "./shared";
+import { createIsolatedTestEnvironment } from "./test.utils";
 
 const isolatedTestEnvPrefix = "rendezvous-test-app-";
 

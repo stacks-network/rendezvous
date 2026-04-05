@@ -1,6 +1,8 @@
-import type { EventEmitter } from "events";
+import type { EventEmitter } from "node:events";
+
 import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 import { green } from "ansicolor";
+
 import type {
   InvariantCounterExample,
   RunDetails,
@@ -8,9 +10,9 @@ import type {
   StatisticsTreeOptions,
   TestCounterExample,
 } from "./heatstroke.types";
-import { getContractNameFromContractId } from "./shared";
-import type { PropertyTestError } from "./property";
 import type { FalsifiedInvariantError } from "./invariant";
+import type { PropertyTestError } from "./property";
+import { getContractNameFromContractId } from "./shared";
 
 /**
  * Heatstrokes Reporter

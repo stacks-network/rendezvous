@@ -1,9 +1,19 @@
+import type { EventEmitter } from "node:events";
+import { resolve } from "node:path";
+
 import type { Simnet } from "@stacks/clarinet-sdk";
-import type { EventEmitter } from "events";
-import fc from "fast-check";
+import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 import { cvToJSON, cvToString } from "@stacks/transactions";
+import { dim, green, red, underline, yellow } from "ansicolor";
+import fc from "fast-check";
+
 import { reporter } from "./heatstroke";
 import type { Statistics } from "./heatstroke.types";
+import {
+  getFailureFilePath,
+  loadFailures,
+  persistFailure,
+} from "./persistence";
 import {
   argsToCV,
   functionToArbitrary,
@@ -11,23 +21,15 @@ import {
   getFunctionsListForContract,
   LOG_DIVIDER,
 } from "./shared";
-import { dim, green, red, underline, yellow } from "ansicolor";
-import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
+import type { EnrichedContractInterfaceFunction } from "./shared.types";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
   extractProjectTraitImplementations,
-  isTraitReferenceFunction,
   getNonTestableTraitFunctions,
+  isTraitReferenceFunction,
 } from "./traits";
-import {
-  getFailureFilePath,
-  loadFailures,
-  persistFailure,
-} from "./persistence";
-import { resolve } from "path";
 import type { ImplementedTraitType } from "./traits.types";
-import type { EnrichedContractInterfaceFunction } from "./shared.types";
 
 /**
  * Runs property-based tests on the target contract and logs the progress.
@@ -156,21 +158,20 @@ export const checkProperties = async (
     ),
   );
 
-  const hasDiscardFunctionErrors = Array.from(
-    testContractsPairedFunctions,
-  ).some(([contractId, pairedMap]) =>
-    Array.from(pairedMap).some(([testFunctionName, discardFunctionName]) =>
-      discardFunctionName
-        ? !validateDiscardFunction(
-            contractId,
-            discardFunctionName,
-            testFunctionName,
-            testContractsDiscardFunctions,
-            testContractsTestFunctions,
-            radio,
-          )
-        : false,
-    ),
+  const hasDiscardFunctionErrors = [...testContractsPairedFunctions].some(
+    ([contractId, pairedMap]) =>
+      [...pairedMap].some(([testFunctionName, discardFunctionName]) =>
+        discardFunctionName
+          ? !validateDiscardFunction(
+              contractId,
+              discardFunctionName,
+              testFunctionName,
+              testContractsDiscardFunctions,
+              testContractsTestFunctions,
+              radio,
+            )
+          : false,
+      ),
   );
 
   if (hasDiscardFunctionErrors) {
@@ -315,7 +316,7 @@ const propertyTest = async (
   const eligibleAccounts = new Map(
     [...simnetAccounts].filter(([key]) => key !== "faucet"),
   );
-  const simnetAddresses = Array.from(simnetAccounts.values());
+  const simnetAddresses = [...simnetAccounts.values()];
 
   const statistics: Statistics = {
     test: {

@@ -1,3 +1,4 @@
+import type { Simnet } from "@stacks/clarinet-sdk";
 import type {
   Atom,
   ContractInterfaceFunction,
@@ -5,11 +6,11 @@ import type {
   List,
   TraitReference,
 } from "@stacks/clarinet-sdk-wasm";
+
 import type {
   EnrichedContractInterfaceFunction,
   ParameterType,
 } from "./shared.types";
-import type { Simnet } from "@stacks/clarinet-sdk";
 import type {
   DefinedTraitType,
   ImplementedTraitType,
@@ -614,7 +615,7 @@ export const getNonTestableTraitFunctions = (
     return false;
   };
 
-  return Array.from(traitReferenceMap.keys()).filter((functionName) => {
+  return [...traitReferenceMap.keys()].filter((functionName) => {
     const enrichedFunctionInterface = enrichedFunctionsInterfaces
       .get(contractId)
       ?.find((f) => f.name === functionName);

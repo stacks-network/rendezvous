@@ -1,19 +1,21 @@
 #!/usr/bin/env node
-import { join, resolve } from "path";
-import { EventEmitter } from "events";
-import { checkProperties } from "./property";
+import { EventEmitter } from "node:events";
+import { existsSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { parseArgs } from "node:util";
+
+import { initSimnet } from "@stacks/clarinet-sdk";
+import { red } from "ansicolor";
+
 import { checkInvariants } from "./invariant";
+import { version } from "./package.json";
+import { checkProperties } from "./property";
 import {
   getContractNameFromContractId,
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
   LOG_DIVIDER,
 } from "./shared";
-import { version } from "./package.json";
-import { red } from "ansicolor";
-import { existsSync } from "fs";
-import { parseArgs } from "util";
-import { initSimnet } from "@stacks/clarinet-sdk";
 
 const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
   console[logLevel](log);
@@ -187,9 +189,9 @@ export async function main() {
   /**
    * The list of contract IDs for the SUT contract names, as per the simnet.
    */
-  const rendezvousList = Array.from(
-    getSimnetDeployerContractsInterfaces(simnet).keys(),
-  ).filter(
+  const rendezvousList = [
+    ...getSimnetDeployerContractsInterfaces(simnet).keys(),
+  ].filter(
     (deployedContract) =>
       getContractNameFromContractId(deployedContract) ===
       runConfig.sutContractName,
@@ -205,8 +207,8 @@ export async function main() {
 
   const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
     new Map(
-      Array.from(getSimnetDeployerContractsInterfaces(simnet)).filter(
-        ([contractId]) => rendezvousList.includes(contractId),
+      [...getSimnetDeployerContractsInterfaces(simnet)].filter(([contractId]) =>
+        rendezvousList.includes(contractId),
       ),
     ),
   );

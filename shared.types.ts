@@ -19,6 +19,7 @@ import type {
   uintCV,
 } from "@stacks/transactions";
 import type fc from "fast-check";
+
 import type { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 // Types used for Clarity Value conversion.

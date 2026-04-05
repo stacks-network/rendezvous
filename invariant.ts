@@ -1,5 +1,21 @@
+import type { EventEmitter } from "node:events";
+import { resolve } from "node:path";
+
 import type { Simnet } from "@stacks/clarinet-sdk";
-import type { EventEmitter } from "events";
+import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
+import { Cl, cvToJSON, cvToString } from "@stacks/transactions";
+import { dim, green, red, underline, yellow } from "ansicolor";
+import fc from "fast-check";
+
+import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
+import { reporter } from "./heatstroke";
+import type { Statistics } from "./heatstroke.types";
+import type { LocalContext } from "./invariant.types";
+import {
+  getFailureFilePath,
+  loadFailures,
+  persistFailure,
+} from "./persistence";
 import {
   argsToCV,
   functionToArbitrary,
@@ -7,28 +23,14 @@ import {
   getFunctionsListForContract,
   LOG_DIVIDER,
 } from "./shared";
-import type { LocalContext } from "./invariant.types";
-import { Cl, cvToJSON, cvToString } from "@stacks/transactions";
-import { reporter } from "./heatstroke";
-import fc from "fast-check";
-import { dim, green, red, underline, yellow } from "ansicolor";
-import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
+import type { EnrichedContractInterfaceFunction } from "./shared.types";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
   extractProjectTraitImplementations,
-  isTraitReferenceFunction,
   getNonTestableTraitFunctions,
+  isTraitReferenceFunction,
 } from "./traits";
-import type { EnrichedContractInterfaceFunction } from "./shared.types";
-import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
-import type { Statistics } from "./heatstroke.types";
-import {
-  getFailureFilePath,
-  loadFailures,
-  persistFailure,
-} from "./persistence";
-import { resolve } from "path";
 import type { ImplementedTraitType } from "./traits.types";
 
 /**
@@ -319,7 +321,7 @@ const invariantTest = async (
   const eligibleAccounts = new Map(
     [...simnetAccounts].filter(([key]) => key !== "faucet"),
   );
-  const simnetAddresses = Array.from(simnetAccounts.values());
+  const simnetAddresses = [...simnetAccounts.values()];
 
   /**
    * The dialer registry, which is used to keep track of all the custom dialers

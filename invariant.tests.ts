@@ -1,13 +1,15 @@
+import { rmSync } from "node:fs";
+import { join, resolve } from "node:path";
+
 import { initSimnet } from "@stacks/clarinet-sdk";
+import { Cl } from "@stacks/transactions";
+
 import { initializeClarityContext, initializeLocalContext } from "./invariant";
 import {
   getContractNameFromContractId,
   getFunctionsFromContractInterfaces,
   getSimnetDeployerContractsInterfaces,
 } from "./shared";
-import { join, resolve } from "path";
-import { rmSync } from "fs";
-import { Cl } from "@stacks/transactions";
 import { createIsolatedTestEnvironment } from "./test.utils";
 
 const isolatedTestEnvPrefix = "rendezvous-test-invariant-";
@@ -27,9 +29,7 @@ describe("Simnet contracts operations", () => {
     );
 
     // Pick the first contract for testing.
-    const [contractId, functions] = Array.from(
-      sutContractsAllFunctions.entries(),
-    )[0];
+    const [contractId, functions] = [...sutContractsAllFunctions.entries()][0];
 
     const expectedInitialContext = {
       [contractId]: Object.fromEntries(functions.map((f) => [f.name, 0])),
@@ -53,24 +53,22 @@ describe("Simnet contracts operations", () => {
     );
     const simnet = await initSimnet(join(tempDir, "Clarinet.toml"));
 
-    const rendezvousList = Array.from(
-      getSimnetDeployerContractsInterfaces(simnet).keys(),
-    ).filter((deployedContract) =>
+    const rendezvousList = [
+      ...getSimnetDeployerContractsInterfaces(simnet).keys(),
+    ].filter((deployedContract) =>
       ["counter"].includes(getContractNameFromContractId(deployedContract)),
     );
 
     const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
       new Map(
-        Array.from(getSimnetDeployerContractsInterfaces(simnet)).filter(
+        [...getSimnetDeployerContractsInterfaces(simnet)].filter(
           ([contractId]) => rendezvousList.includes(contractId),
         ),
       ),
     );
 
     // Pick the first contract for testing.
-    const [contractId, functions] = Array.from(
-      rendezvousAllFunctions.entries(),
-    )[0];
+    const [contractId, functions] = [...rendezvousAllFunctions.entries()][0];
 
     // Exercise
     initializeClarityContext(simnet, contractId, functions);

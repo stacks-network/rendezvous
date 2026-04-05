@@ -1,13 +1,15 @@
+import { rmSync } from "node:fs";
+import { join, resolve } from "node:path";
+
 import { initSimnet } from "@stacks/clarinet-sdk";
+import fc from "fast-check";
+
 import {
+  getContractNameFromContractId,
   getFunctionsFromContractInterfaces,
   getFunctionsListForContract,
   getSimnetDeployerContractsInterfaces,
-  getContractNameFromContractId,
 } from "./shared";
-import { rmSync } from "fs";
-import { join, resolve } from "path";
-import fc from "fast-check";
 import { createIsolatedTestEnvironment } from "./test.utils";
 
 const isolatedTestEnvPrefix = "rendezvous-test-shared-";
@@ -22,7 +24,7 @@ describe("Simnet contracts operations", () => {
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const expectedDeployerContracts = new Map(
-      Array.from(simnet.getContractsInterfaces()).filter(
+      [...simnet.getContractsInterfaces()].filter(
         ([key]) => key.split(".")[0] === simnet.deployer,
       ),
     );
@@ -47,7 +49,7 @@ describe("Simnet contracts operations", () => {
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
-    const sutContractsList = Array.from(sutContractsInterfaces.keys());
+    const sutContractsList = [...sutContractsInterfaces.keys()];
     const allFunctionsMap = new Map(
       Array.from(sutContractsInterfaces, ([contractId, contractInterface]) => [
         contractId,

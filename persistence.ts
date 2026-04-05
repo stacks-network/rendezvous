@@ -1,5 +1,6 @@
-import { mkdirSync, readFileSync, writeFileSync } from "fs";
-import { resolve } from "path";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import type { RunDetails } from "./heatstroke.types";
 
 /**

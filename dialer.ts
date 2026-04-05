@@ -1,5 +1,6 @@
-import { existsSync } from "fs";
-import { resolve } from "path";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
 import type { Dialer, DialerContext } from "./dialer.types";
 
 // In telephony, a registry is used for maintaining a known set of handlers,

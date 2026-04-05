@@ -1,10 +1,14 @@
+import { rmSync } from "node:fs";
+import { join, resolve } from "node:path";
+
+import { initSimnet } from "@stacks/clarinet-sdk";
 import type {
   ContractInterfaceFunction,
   IContractAST,
 } from "@stacks/clarinet-sdk-wasm";
-import { initSimnet } from "@stacks/clarinet-sdk";
-import { rmSync } from "fs";
-import { join, resolve } from "path";
+
+import type { EnrichedContractInterfaceFunction } from "./shared.types";
+import { createIsolatedTestEnvironment } from "./test.utils";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
@@ -13,8 +17,6 @@ import {
   getNonTestableTraitFunctions,
   isTraitReferenceFunction,
 } from "./traits";
-import { createIsolatedTestEnvironment } from "./test.utils";
-import type { EnrichedContractInterfaceFunction } from "./shared.types";
 import type { ImplementedTraitType } from "./traits.types";
 
 const isolatedTestEnvPrefix = "rendezvous-test-traits-";

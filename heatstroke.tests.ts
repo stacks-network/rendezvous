@@ -1,14 +1,16 @@
-import { EventEmitter } from "events";
-import { rmSync } from "fs";
-import { join, resolve } from "path";
+import { EventEmitter } from "node:events";
+import { rmSync } from "node:fs";
+import { join, resolve } from "node:path";
+
 import { initSimnet } from "@stacks/clarinet-sdk";
 import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 import fc from "fast-check";
+
 import { reporter } from "./heatstroke";
+import { FalsifiedInvariantError } from "./invariant";
+import { PropertyTestError } from "./property";
 import { getContractNameFromContractId } from "./shared";
 import { createIsolatedTestEnvironment } from "./test.utils";
-import { PropertyTestError } from "./property";
-import { FalsifiedInvariantError } from "./invariant";
 
 const isolatedTestEnvPrefix = "rendezvous-test-heatstroke-";
 

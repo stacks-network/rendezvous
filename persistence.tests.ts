@@ -1,13 +1,15 @@
-import { mkdirSync, rmSync, statSync } from "fs";
-import { tmpdir } from "os";
-import { join, resolve } from "path";
+import { mkdirSync, rmSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+
+import fc from "fast-check";
+
+import type { RunDetails } from "./heatstroke.types";
 import {
   getFailureFilePath,
-  persistFailure,
   loadFailures,
+  persistFailure,
 } from "./persistence";
-import type { RunDetails } from "./heatstroke.types";
-import fc from "fast-check";
 
 const temporaryTestBaseDir = resolve(tmpdir(), "rendezvous-test-persistence");
 
