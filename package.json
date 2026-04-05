@@ -8,6 +8,8 @@
   },
   "scripts": {
     "build": "npx -p typescript tsc --project tsconfig.json && node -e \"if (process.platform !== 'win32') require('fs').chmodSync('./dist/app.js', 0o755);\"",
+    "fmt": "prettier --write .",
+    "fmt:check": "prettier --check .",
     "lint": "oxlint -c oxlintrc.json",
     "lint:fix": "oxlint -c oxlintrc.json --fix",
     "test": "npx jest",
@@ -42,6 +44,7 @@
     "@types/jest": "^30.0.0",
     "jest": "^30.2.0",
     "oxlint": "^1.58.0",
+    "prettier": "^3.8.1",
     "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"
   }
