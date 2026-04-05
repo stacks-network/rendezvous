@@ -82,7 +82,7 @@ describe("DialerRegistry interaction", () => {
 
     // Act & Assert
     expect(registry.registerDialers()).rejects.toThrow(
-      "process.exit was called"
+      "process.exit was called",
     );
   });
 });

@@ -21,8 +21,7 @@ describe("Simnet contracts operations", () => {
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
-    const sutContractsInterfaces =
-      getSimnetDeployerContractsInterfaces(simnet);
+    const sutContractsInterfaces = getSimnetDeployerContractsInterfaces(simnet);
     const sutContractsAllFunctions = getFunctionsFromContractInterfaces(
       sutContractsInterfaces,
     );
@@ -95,10 +94,10 @@ describe("Simnet contracts operations", () => {
     // `called` is initialized to 0.
     const expectedClarityValue = Cl.some(Cl.tuple({ called: Cl.uint(0) }));
     const expectedContext = functions.map((f) => ({
-        contractId,
-        functionName: f.name,
-        called: expectedClarityValue,
-      }));
+      contractId,
+      functionName: f.name,
+      called: expectedClarityValue,
+    }));
 
     expect(actualContext).toEqual(expectedContext);
 

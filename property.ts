@@ -20,7 +20,11 @@ import {
   isTraitReferenceFunction,
   getNonTestableTraitFunctions,
 } from "./traits";
-import { getFailureFilePath, loadFailures, persistFailure } from "./persistence";
+import {
+  getFailureFilePath,
+  loadFailures,
+  persistFailure,
+} from "./persistence";
 import { resolve } from "path";
 import type { ImplementedTraitType } from "./traits.types";
 import type { EnrichedContractInterfaceFunction } from "./shared.types";
@@ -50,24 +54,26 @@ export const checkProperties = async (
   runs: number | undefined,
   bail: boolean,
   regr: boolean,
-  radio: EventEmitter
+  radio: EventEmitter,
 ) => {
   // A map where the keys are the test contract identifiers and the values are
   // arrays of their test functions. This map will be used to access the test
   // functions for each test contract in the property-based testing routine.
   const testContractsTestFunctions = filterTestFunctions(
-    rendezvousAllFunctions
+    rendezvousAllFunctions,
   );
 
   const rendezvousContractId = rendezvousList[0];
 
-  const allTestFunctions = testContractsTestFunctions.get(rendezvousContractId)!;
+  const allTestFunctions =
+    testContractsTestFunctions.get(rendezvousContractId)!;
 
   const traitReferenceFunctionsCount = allTestFunctions.filter(
-    isTraitReferenceFunction
+    isTraitReferenceFunction,
   ).length;
 
-  const targetContractName = getContractNameFromContractId(rendezvousContractId);
+  const targetContractName =
+    getContractNameFromContractId(rendezvousContractId);
 
   const traitReferenceMap = buildTraitReferenceMap(allTestFunctions);
   const enrichedTestFunctionsInterfaces =
@@ -76,7 +82,7 @@ export const checkProperties = async (
           simnet.getContractAST(targetContractName),
           traitReferenceMap,
           allTestFunctions,
-          rendezvousContractId
+          rendezvousContractId,
         )
       : testContractsTestFunctions;
 
@@ -93,7 +99,7 @@ export const checkProperties = async (
           enrichedTestFunctionsInterfaces,
           traitReferenceMap,
           projectTraitImplementations,
-          rendezvousContractId
+          rendezvousContractId,
         )
       : [];
 
@@ -111,8 +117,8 @@ export const checkProperties = async (
         .filter(
           (functionInterface) =>
             !functionsMissingTraitImplementations.includes(
-              functionInterface.name
-            )
+              functionInterface.name,
+            ),
         ),
     ],
   ]);
@@ -124,9 +130,9 @@ export const checkProperties = async (
     Array.from(rendezvousAllFunctions, ([contractId, functions]) => [
       contractId,
       functions.filter(
-        ({ access, name }) => access === "read_only" && name.startsWith("can-")
+        ({ access, name }) => access === "read_only" && name.startsWith("can-"),
       ),
-    ])
+    ]),
   );
 
   // Pair each test function with its corresponding discard function. When a
@@ -144,14 +150,14 @@ export const checkProperties = async (
               ?.find((pf) => pf.name === `can-${f.name}`);
 
             return [f.name, discardFunction?.name];
-          })
+          }),
         ),
-      ]
-    )
+      ],
+    ),
   );
 
   const hasDiscardFunctionErrors = Array.from(
-    testContractsPairedFunctions
+    testContractsPairedFunctions,
   ).some(([contractId, pairedMap]) =>
     Array.from(pairedMap).some(([testFunctionName, discardFunctionName]) =>
       discardFunctionName
@@ -161,10 +167,10 @@ export const checkProperties = async (
             testFunctionName,
             testContractsDiscardFunctions,
             testContractsTestFunctions,
-            radio
+            radio,
           )
-        : false
-    )
+        : false,
+    ),
   );
 
   if (hasDiscardFunctionErrors) {
@@ -173,13 +179,15 @@ export const checkProperties = async (
 
   const testFunctions = getFunctionsListForContract(
     executableTestContractsTestFunctions,
-    rendezvousContractId
+    rendezvousContractId,
   );
 
   if (testFunctions?.length === 0) {
     radio.emit(
       "logMessage",
-      red(`No test functions found for the "${targetContractName}" contract.\n`)
+      red(
+        `No test functions found for the "${targetContractName}" contract.\n`,
+      ),
     );
     return;
   }
@@ -189,12 +197,12 @@ export const checkProperties = async (
     radio.emit(
       "logMessage",
       `Regressions loaded from: ${resolve(
-        getFailureFilePath(rendezvousContractId)
-      )}`
+        getFailureFilePath(rendezvousContractId),
+      )}`,
     );
     radio.emit(
       "logMessage",
-      `Loading ${targetContractName} contract regressions...\n`
+      `Loading ${targetContractName} contract regressions...\n`,
     );
 
     const regressions = loadFailures(rendezvousContractId, "test");
@@ -202,8 +210,8 @@ export const checkProperties = async (
     radio.emit(
       "logMessage",
       `Found ${underline(
-        `${regressions.length} regressions`
-      )} for the ${targetContractName} contract.\n`
+        `${regressions.length} regressions`,
+      )} for the ${targetContractName} contract.\n`,
     );
 
     for (const regression of regressions) {
@@ -212,7 +220,7 @@ export const checkProperties = async (
         targetContractName,
         regression.seed,
         regression.numRuns,
-        regression.timestamp
+        regression.timestamp,
       );
 
       await resetSession();
@@ -237,7 +245,7 @@ export const checkProperties = async (
     // Run fresh tests using user-provided configuration.
     radio.emit(
       "logMessage",
-      `Starting fresh round of property testing for the ${targetContractName} contract using user-provided configuration...\n`
+      `Starting fresh round of property testing for the ${targetContractName} contract using user-provided configuration...\n`,
     );
 
     await propertyTest({
@@ -287,7 +295,7 @@ interface PropertyTestContext {
  * @returns A promise that resolves when the property test is complete.
  */
 const propertyTest = async (
-  config: PropertyTestConfig & PropertyTestContext
+  config: PropertyTestConfig & PropertyTestContext,
 ) => {
   const {
     simnet,
@@ -305,7 +313,7 @@ const propertyTest = async (
   // Derive accounts and addresses from simnet.
   const simnetAccounts = simnet.getAccounts();
   const eligibleAccounts = new Map(
-    [...simnetAccounts].filter(([key]) => key !== "faucet")
+    [...simnetAccounts].filter(([key]) => key !== "faucet"),
   );
   const simnetAddresses = Array.from(simnetAccounts.values());
 
@@ -333,7 +341,7 @@ const propertyTest = async (
         "test",
         rendezvousContractId,
         // No dialers in property-based testing.
-        undefined
+        undefined,
       );
     }
   };
@@ -354,7 +362,7 @@ const propertyTest = async (
             .map((selectedTestFunction) => ({
               ...r,
               ...selectedTestFunction,
-            }))
+            })),
         )
         .chain((r) =>
           fc
@@ -363,11 +371,11 @@ const propertyTest = async (
                 ...functionToArbitrary(
                   r.selectedTestFunction,
                   simnetAddresses,
-                  projectTraitImplementations
-                )
+                  projectTraitImplementations,
+                ),
               ),
             })
-            .map((args) => ({ ...r, ...args }))
+            .map((args) => ({ ...r, ...args })),
         )
         .chain((r) =>
           fc
@@ -385,12 +393,12 @@ const propertyTest = async (
                   })
                 : fc.constant(0),
             })
-            .map((burnBlocks) => ({ ...r, ...burnBlocks }))
+            .map((burnBlocks) => ({ ...r, ...burnBlocks })),
         ),
       async (r) => {
         const selectedTestFunctionArgs = argsToCV(
           r.selectedTestFunction,
-          r.functionArgs
+          r.functionArgs,
         );
 
         const printedTestFunctionArgs = r.functionArgs
@@ -416,13 +424,13 @@ const propertyTest = async (
           selectedTestFunctionArgs,
           r.rendezvousContractId,
           simnet,
-          testCallerAddress
+          testCallerAddress,
         );
 
         if (discarded) {
           statistics.test!.discarded.set(
             r.selectedTestFunction.name,
-            statistics.test!.discarded.get(r.selectedTestFunction.name)! + 1
+            statistics.test!.discarded.get(r.selectedTestFunction.name)! + 1,
           );
           radio.emit(
             "logMessage",
@@ -432,7 +440,7 @@ const propertyTest = async (
               `${yellow("[WARN]")} ` +
               `${targetContractName} ` +
               `${underline(r.selectedTestFunction.name)} ` +
-              dim(printedTestFunctionArgs)
+              dim(printedTestFunctionArgs),
           );
         } else {
           try {
@@ -442,23 +450,24 @@ const propertyTest = async (
               r.rendezvousContractId,
               r.selectedTestFunction.name,
               selectedTestFunctionArgs,
-              testCallerAddress
+              testCallerAddress,
             );
 
             const testFunctionCallResultJson = cvToJSON(testFunctionCallResult);
 
             const discardedInPlace = isTestDiscardedInPlace(
-              testFunctionCallResultJson
+              testFunctionCallResultJson,
             );
 
             const testFunctionCallClarityResult = cvToString(
-              testFunctionCallResult
+              testFunctionCallResult,
             );
 
             if (discardedInPlace) {
               statistics.test!.discarded.set(
                 r.selectedTestFunction.name,
-                statistics.test!.discarded.get(r.selectedTestFunction.name)! + 1
+                statistics.test!.discarded.get(r.selectedTestFunction.name)! +
+                  1,
               );
               radio.emit(
                 "logMessage",
@@ -469,7 +478,7 @@ const propertyTest = async (
                   `${targetContractName} ` +
                   `${underline(r.selectedTestFunction.name)} ` +
                   `${dim(printedTestFunctionArgs)} ` +
-                  yellow(testFunctionCallClarityResult)
+                  yellow(testFunctionCallClarityResult),
               );
             } else if (
               !discardedInPlace &&
@@ -479,7 +488,7 @@ const propertyTest = async (
               statistics.test!.successful.set(
                 r.selectedTestFunction.name,
                 statistics.test!.successful.get(r.selectedTestFunction.name)! +
-                  1
+                  1,
               );
               radio.emit(
                 "logMessage",
@@ -490,7 +499,7 @@ const propertyTest = async (
                   `${targetContractName} ` +
                   `${underline(r.selectedTestFunction.name)} ` +
                   `${printedTestFunctionArgs} ` +
-                  green(testFunctionCallClarityResult)
+                  green(testFunctionCallClarityResult),
               );
 
               if (r.canMineBlocks) {
@@ -499,14 +508,14 @@ const propertyTest = async (
             } else {
               statistics.test!.failed.set(
                 r.selectedTestFunction.name,
-                statistics.test!.failed.get(r.selectedTestFunction.name)! + 1
+                statistics.test!.failed.get(r.selectedTestFunction.name)! + 1,
               );
               // The function call did not result in (ok true) or (ok false).
               // Either the test failed or the test function returned an
               // unexpected value i.e. `(ok 1)`.
               throw new PropertyTestError(
                 `Test failed for ${targetContractName} contract: "${r.selectedTestFunction.name}" returned ${testFunctionCallClarityResult}`,
-                testFunctionCallClarityResult
+                testFunctionCallClarityResult,
               );
             }
           } catch (error: any) {
@@ -514,10 +523,10 @@ const propertyTest = async (
               error instanceof PropertyTestError
                 ? error.clarityError
                 : error &&
-                  typeof error === "string" &&
-                  error.toLowerCase().includes("runtime")
-                ? "(runtime)"
-                : "(unknown)";
+                    typeof error === "string" &&
+                    error.toLowerCase().includes("runtime")
+                  ? "(runtime)"
+                  : "(unknown)";
 
             // Capture the error and log the test failure.
             radio.emit(
@@ -530,15 +539,15 @@ const propertyTest = async (
                   `${targetContractName} ` +
                   `${underline(r.selectedTestFunction.name)} ` +
                   `${printedTestFunctionArgs} ` +
-                  displayedError
-              )
+                  displayedError,
+              ),
             );
 
             // Re-throw the error for fast-check to catch and process.
             throw error;
           }
         }
-      }
+      },
     ),
     {
       endOnFailure: bail,
@@ -546,7 +555,7 @@ const propertyTest = async (
       reporter: radioReporter,
       seed: seed,
       verbose: true,
-    }
+    },
   );
 };
 
@@ -556,7 +565,7 @@ const propertyTest = async (
  */
 const emitMissingTraitWarning = (
   radio: EventEmitter,
-  functionNames: string[]
+  functionNames: string[],
 ) => {
   if (functionNames.length === 0) {
     return;
@@ -566,14 +575,14 @@ const emitMissingTraitWarning = (
   radio.emit(
     "logMessage",
     yellow(
-      `\nWarning: The following test functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
-    )
+      `\nWarning: The following test functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`,
+    ),
   );
   radio.emit(
     "logMessage",
     yellow(
-      `Note: You can add contracts implementing traits either as project contracts or as requirements.\n`
-    )
+      `Note: You can add contracts implementing traits either as project contracts or as requirements.\n`,
+    ),
   );
 };
 
@@ -585,32 +594,32 @@ const emitPropertyRegressionTestHeader = (
   targetContractName: string,
   seed: number,
   numRuns: number,
-  timestamp: number
+  timestamp: number,
 ) => {
   radio.emit("logMessage", LOG_DIVIDER);
   radio.emit(
     "logMessage",
     `
 Running ${underline(
-      timestamp
+      timestamp,
     )} regression test for the ${targetContractName} contract with:
 
 - Seed: ${seed}
 - Runs: ${numRuns}
-`
+`,
   );
 };
 
 const filterTestFunctions = (
-  allFunctionsMap: Map<string, ContractInterfaceFunction[]>
+  allFunctionsMap: Map<string, ContractInterfaceFunction[]>,
 ) =>
   new Map(
     Array.from(allFunctionsMap, ([contractId, functions]) => [
       contractId,
       functions.filter(
-        (f) => f.access === "public" && f.name.startsWith("test-")
+        (f) => f.access === "public" && f.name.startsWith("test-"),
       ),
-    ])
+    ]),
   );
 
 export const isTestDiscardedInPlace = (testFunctionCallResultJson: any) =>
@@ -631,15 +640,17 @@ const isTestDiscarded = (
   selectedTestFunctionArgs: any[],
   contractId: string,
   simnet: Simnet,
-  selectedCaller: string
+  selectedCaller: string,
 ) => {
-  if (!discardFunctionName) {return false;}
+  if (!discardFunctionName) {
+    return false;
+  }
 
   const { result: discardFunctionCallResult } = simnet.callReadOnlyFn(
     contractId,
     discardFunctionName,
     selectedTestFunctionArgs,
-    selectedCaller
+    selectedCaller,
   );
   const jsonDiscardFunctionCallResult = cvToJSON(discardFunctionCallResult);
   return jsonDiscardFunctionCallResult.value === false;
@@ -662,7 +673,7 @@ const validateDiscardFunction = (
   testFunctionName: string,
   testContractsDiscardFunctions: Map<string, ContractInterfaceFunction[]>,
   testContractsTestFunctions: Map<string, ContractInterfaceFunction[]>,
-  radio: EventEmitter
+  radio: EventEmitter,
 ) => {
   const testFunction = testContractsTestFunctions
     .get(contractId)
@@ -671,16 +682,18 @@ const validateDiscardFunction = (
     .get(contractId)
     ?.find((f) => f.name === discardFunctionName);
 
-  if (!testFunction || !discardFunction) {return false;}
+  if (!testFunction || !discardFunction) {
+    return false;
+  }
 
   if (!isParamsMatch(testFunction, discardFunction)) {
     radio.emit(
       "logMessage",
       red(
         `\nError: Parameter mismatch for discard function "${discardFunctionName}" in contract "${getContractNameFromContractId(
-          contractId
-        )}".\n`
-      )
+          contractId,
+        )}".\n`,
+      ),
     );
     return false;
   }
@@ -690,9 +703,9 @@ const validateDiscardFunction = (
       "logMessage",
       red(
         `\nError: Return type must be boolean for discard function "${discardFunctionName}" in contract "${getContractNameFromContractId(
-          contractId
-        )}".\n`
-      )
+          contractId,
+        )}".\n`,
+      ),
     );
     return false;
   }
@@ -709,13 +722,13 @@ const validateDiscardFunction = (
  */
 export const isParamsMatch = (
   testFunctionInterface: ContractInterfaceFunction,
-  discardFunctionInterface: ContractInterfaceFunction
+  discardFunctionInterface: ContractInterfaceFunction,
 ) => {
   const sortedTestFunctionArgs = [...testFunctionInterface.args].sort((a, b) =>
-    a.name.localeCompare(b.name)
+    a.name.localeCompare(b.name),
   );
   const sortedDiscardFunctionArgs = [...discardFunctionInterface.args].sort(
-    (a, b) => a.name.localeCompare(b.name)
+    (a, b) => a.name.localeCompare(b.name),
   );
   return (
     JSON.stringify(sortedTestFunctionArgs) ===
@@ -729,7 +742,7 @@ export const isParamsMatch = (
  * @returns A boolean indicating if the return type is boolean.
  */
 export const isReturnTypeBoolean = (
-  discardFunctionInterface: ContractInterfaceFunction
+  discardFunctionInterface: ContractInterfaceFunction,
 ) => discardFunctionInterface.outputs.type === "bool";
 
 export class PropertyTestError extends Error {

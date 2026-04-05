@@ -29,10 +29,10 @@ const logger = (log: string, logLevel: "log" | "error" | "info" = "log") => {
  */
 export const getManifestFileName = (
   manifestDir: string,
-  targetContractName: string
+  targetContractName: string,
 ) => {
   const isCustomManifest = existsSync(
-    resolve(manifestDir, `Clarinet-${targetContractName}.toml`)
+    resolve(manifestDir, `Clarinet-${targetContractName}.toml`),
   );
 
   if (isCustomManifest) {
@@ -112,8 +112,8 @@ export async function main() {
     radio.emit(
       "logMessage",
       red(
-        "\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities."
-      )
+        "\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.",
+      ),
     );
     radio.emit("logMessage", helpMessage);
     return;
@@ -123,8 +123,8 @@ export async function main() {
     radio.emit(
       "logMessage",
       red(
-        "\nNo target contract name provided. Please provide the contract name to be fuzzed."
-      )
+        "\nNo target contract name provided. Please provide the contract name to be fuzzed.",
+      ),
     );
     radio.emit("logMessage", helpMessage);
     return;
@@ -134,8 +134,8 @@ export async function main() {
     radio.emit(
       "logMessage",
       red(
-        "\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant."
-      )
+        "\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.",
+      ),
     );
     radio.emit("logMessage", helpMessage);
     return;
@@ -149,7 +149,7 @@ export async function main() {
    */
   const manifestPath = join(
     runConfig.manifestDir,
-    getManifestFileName(runConfig.manifestDir, runConfig.sutContractName)
+    getManifestFileName(runConfig.manifestDir, runConfig.sutContractName),
   );
   radio.emit("logMessage", `Using manifest path: ${manifestPath}`);
   radio.emit("logMessage", `Target contract: ${runConfig.sutContractName}`);
@@ -192,13 +192,13 @@ export async function main() {
   ).filter(
     (deployedContract) =>
       getContractNameFromContractId(deployedContract) ===
-      runConfig.sutContractName
+      runConfig.sutContractName,
   );
 
   if (rendezvousList.length === 0) {
     radio.emit(
       "logFailure",
-      `\nContract "${runConfig.sutContractName}" not found among project contracts.\n`
+      `\nContract "${runConfig.sutContractName}" not found among project contracts.\n`,
     );
     return;
   }
@@ -206,9 +206,9 @@ export async function main() {
   const rendezvousAllFunctions = getFunctionsFromContractInterfaces(
     new Map(
       Array.from(getSimnetDeployerContractsInterfaces(simnet)).filter(
-        ([contractId]) => rendezvousList.includes(contractId)
-      )
-    )
+        ([contractId]) => rendezvousList.includes(contractId),
+      ),
+    ),
   );
 
   // Select the testing routine based on `type`.
@@ -226,7 +226,7 @@ export async function main() {
         runConfig.dial,
         runConfig.bail,
         runConfig.regr,
-        radio
+        radio,
       );
       break;
     }
@@ -241,7 +241,7 @@ export async function main() {
         runConfig.runs,
         runConfig.bail,
         runConfig.regr,
-        radio
+        radio,
       );
       break;
     }

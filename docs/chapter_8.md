@@ -5,30 +5,34 @@ The Rendezvous repo has a Clarinet project, `example`, that shows how to test Cl
 ## What's Inside
 
 [The `counter` Contract](#the-counter-contract)
-  - [Invariants](#invariants)
-    - [Invariant logic](#invariant-logic)
-    - [Checking the invariants](#checking-the-invariants)
-  - [Property-Based Tests](#property-based-tests)
-    - [Test logic](#test-logic)
-    - [Checking the properties](#checking-the-properties)
+
+- [Invariants](#invariants)
+  - [Invariant logic](#invariant-logic)
+  - [Checking the invariants](#checking-the-invariants)
+- [Property-Based Tests](#property-based-tests)
+  - [Test logic](#test-logic)
+  - [Checking the properties](#checking-the-properties)
 
 [The `cargo` Contract](#the-cargo-contract)
-  - [Invariants](#invariants-1)
-    - [Invariant logic](#invariant-logic-1)
-    - [Checking the invariants](#checking-the-invariants-1)
-  - [Property-Based Tests](#property-based-tests-1)
-    - [Test logic](#test-logic-1)
-    - [Checking the properties](#checking-the-properties-1)
+
+- [Invariants](#invariants-1)
+  - [Invariant logic](#invariant-logic-1)
+  - [Checking the invariants](#checking-the-invariants-1)
+- [Property-Based Tests](#property-based-tests-1)
+  - [Test logic](#test-logic-1)
+  - [Checking the properties](#checking-the-properties-1)
 
 [The `reverse` Contract](#the-reverse-contract)
-  - [Property-Based Tests](#property-based-tests-2)
-    - [Test logic](#test-logic-2)
-    - [Checking the properties (shrinking)](#checking-the-properties-2)
+
+- [Property-Based Tests](#property-based-tests-2)
+  - [Test logic](#test-logic-2)
+  - [Checking the properties (shrinking)](#checking-the-properties-2)
 
 [The `slice` Contract](#the-slice-contract)
-  - [Property-Based Tests](#property-based-tests-3)
-    - [Test logic](#test-logic-3)
-    - [Checking the properties (discarding)](#checking-the-properties-3)
+
+- [Property-Based Tests](#property-based-tests-3)
+  - [Test logic](#test-logic-3)
+  - [Checking the properties (discarding)](#checking-the-properties-3)
 
 ---
 

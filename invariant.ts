@@ -23,7 +23,11 @@ import {
 import type { EnrichedContractInterfaceFunction } from "./shared.types";
 import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
 import type { Statistics } from "./heatstroke.types";
-import { getFailureFilePath, loadFailures, persistFailure } from "./persistence";
+import {
+  getFailureFilePath,
+  loadFailures,
+  persistFailure,
+} from "./persistence";
 import { resolve } from "path";
 import type { ImplementedTraitType } from "./traits.types";
 
@@ -54,7 +58,7 @@ export const checkInvariants = async (
   dial: string | undefined,
   bail: boolean,
   regr: boolean,
-  radio: EventEmitter
+  radio: EventEmitter,
 ) => {
   // The Rendezvous identifier is the first one in the list. Only one contract
   // can be fuzzed at a time.
@@ -69,20 +73,21 @@ export const checkInvariants = async (
   // arrays of their invariant functions. This map will be used to access the
   // invariant functions for each Rendezvous contract afterwards.
   const rendezvousInvariantFunctions = filterInvariantFunctions(
-    rendezvousAllFunctions
+    rendezvousAllFunctions,
   );
 
   const sutFunctions = rendezvousSutFunctions.get(rendezvousContractId)!;
   const traitReferenceSutFunctions = sutFunctions.filter(
-    isTraitReferenceFunction
+    isTraitReferenceFunction,
   );
   const invariantFunctions =
     rendezvousInvariantFunctions.get(rendezvousContractId)!;
   const traitReferenceInvariantFunctions = invariantFunctions.filter(
-    isTraitReferenceFunction
+    isTraitReferenceFunction,
   );
 
-  const targetContractName = getContractNameFromContractId(rendezvousContractId);
+  const targetContractName =
+    getContractNameFromContractId(rendezvousContractId);
   const sutTraitReferenceMap = buildTraitReferenceMap(sutFunctions);
   const invariantTraitReferenceMap = buildTraitReferenceMap(invariantFunctions);
 
@@ -92,7 +97,7 @@ export const checkInvariants = async (
           simnet.getContractAST(targetContractName),
           sutTraitReferenceMap,
           sutFunctions,
-          rendezvousContractId
+          rendezvousContractId,
         )
       : rendezvousSutFunctions;
 
@@ -102,7 +107,7 @@ export const checkInvariants = async (
           simnet.getContractAST(targetContractName),
           invariantTraitReferenceMap,
           invariantFunctions,
-          rendezvousContractId
+          rendezvousContractId,
         )
       : rendezvousInvariantFunctions;
 
@@ -117,7 +122,7 @@ export const checkInvariants = async (
     enrichedSutFunctionsInterfaces,
     sutTraitReferenceMap,
     projectTraitImplementations,
-    rendezvousContractId
+    rendezvousContractId,
   );
 
   // Extract invariant functions with missing trait implementations. These
@@ -127,14 +132,14 @@ export const checkInvariants = async (
     enrichedInvariantFunctionsInterfaces,
     invariantTraitReferenceMap,
     projectTraitImplementations,
-    rendezvousContractId
+    rendezvousContractId,
   );
 
   // Emit warnings for functions with missing trait implementations
   emitMissingTraitWarnings(
     radio,
     sutFunctionsWithMissingTraits,
-    invariantFunctionsWithMissingTraits
+    invariantFunctionsWithMissingTraits,
   );
 
   // Filter out functions with missing trait implementations from the enriched
@@ -161,20 +166,20 @@ export const checkInvariants = async (
 
   const functions = getFunctionsListForContract(
     executableSutFunctions,
-    rendezvousContractId
+    rendezvousContractId,
   );
 
   const invariants = getFunctionsListForContract(
     executableInvariantFunctions,
-    rendezvousContractId
+    rendezvousContractId,
   );
 
   if (functions?.length === 0) {
     radio.emit(
       "logMessage",
       red(
-        `No public functions found for the "${targetContractName}" contract. Without public functions, no state transitions can happen inside the contract, and the invariant test is not meaningful.\n`
-      )
+        `No public functions found for the "${targetContractName}" contract. Without public functions, no state transitions can happen inside the contract, and the invariant test is not meaningful.\n`,
+      ),
     );
     return;
   }
@@ -183,8 +188,8 @@ export const checkInvariants = async (
     radio.emit(
       "logMessage",
       red(
-        `No invariant functions found for the "${targetContractName}" contract. Beware, for your contract may be exposed to unforeseen issues.\n`
-      )
+        `No invariant functions found for the "${targetContractName}" contract. Beware, for your contract may be exposed to unforeseen issues.\n`,
+      ),
     );
     return;
   }
@@ -194,12 +199,12 @@ export const checkInvariants = async (
     radio.emit(
       "logMessage",
       `Regressions loaded from: ${resolve(
-        getFailureFilePath(rendezvousContractId)
-      )}`
+        getFailureFilePath(rendezvousContractId),
+      )}`,
     );
     radio.emit(
       "logMessage",
-      `Loading ${targetContractName} contract regressions...\n`
+      `Loading ${targetContractName} contract regressions...\n`,
     );
 
     const regressions = loadFailures(rendezvousContractId, "invariant");
@@ -207,8 +212,8 @@ export const checkInvariants = async (
     radio.emit(
       "logMessage",
       `Found ${underline(
-        `${regressions.length} regressions`
-      )} for the ${targetContractName} contract.\n`
+        `${regressions.length} regressions`,
+      )} for the ${targetContractName} contract.\n`,
     );
 
     for (const regression of regressions) {
@@ -218,7 +223,7 @@ export const checkInvariants = async (
         regression.seed,
         regression.numRuns,
         regression.dial,
-        regression.timestamp
+        regression.timestamp,
       );
 
       await resetSession();
@@ -241,7 +246,7 @@ export const checkInvariants = async (
     // Run fresh invariant tests using user-provided configuration.
     radio.emit(
       "logMessage",
-      `Starting fresh round of invariant testing for the ${targetContractName} contract using user-provided configuration...\n`
+      `Starting fresh round of invariant testing for the ${targetContractName} contract using user-provided configuration...\n`,
     );
 
     await invariantTest({
@@ -293,7 +298,7 @@ interface InvariantTestContext {
  * @returns A promise that resolves when the invariant test is complete.
  */
 const invariantTest = async (
-  config: InvariantTestConfig & InvariantTestContext
+  config: InvariantTestConfig & InvariantTestContext,
 ) => {
   const {
     simnet,
@@ -312,7 +317,7 @@ const invariantTest = async (
   // Derive accounts and addresses from simnet.
   const simnetAccounts = simnet.getAccounts();
   const eligibleAccounts = new Map(
-    [...simnetAccounts].filter(([key]) => key !== "faucet")
+    [...simnetAccounts].filter(([key]) => key !== "faucet"),
   );
   const simnetAddresses = Array.from(simnetAccounts.values());
 
@@ -384,7 +389,7 @@ const invariantTest = async (
               }),
               selectedInvariant: fc.constantFrom(...invariants),
             })
-            .map((selectedFunctions) => ({ ...r, ...selectedFunctions }))
+            .map((selectedFunctions) => ({ ...r, ...selectedFunctions })),
         )
         .chain((r) =>
           fc
@@ -394,7 +399,7 @@ const invariantTest = async (
                 {
                   minLength: r.selectedFunctions.length,
                   maxLength: r.selectedFunctions.length,
-                }
+                },
               ),
               selectedFunctionsArgsList: fc.tuple(
                 ...r.selectedFunctions.map((selectedFunction) =>
@@ -402,20 +407,20 @@ const invariantTest = async (
                     ...functionToArbitrary(
                       selectedFunction,
                       simnetAddresses,
-                      projectTraitImplementations
-                    )
-                  )
-                )
+                      projectTraitImplementations,
+                    ),
+                  ),
+                ),
               ),
               invariantArgs: fc.tuple(
                 ...functionToArbitrary(
                   r.selectedInvariant,
                   simnetAddresses,
-                  projectTraitImplementations
-                )
+                  projectTraitImplementations,
+                ),
               ),
             })
-            .map((args) => ({ ...r, ...args }))
+            .map((args) => ({ ...r, ...args })),
         )
         .chain((r) =>
           fc
@@ -433,16 +438,16 @@ const invariantTest = async (
                   })
                 : fc.constant(0),
             })
-            .map((burnBlocks) => ({ ...r, ...burnBlocks }))
+            .map((burnBlocks) => ({ ...r, ...burnBlocks })),
         ),
       async (r) => {
         const selectedFunctionsArgsCV = r.selectedFunctions.map(
           (selectedFunction, index) =>
-            argsToCV(selectedFunction, r.selectedFunctionsArgsList[index])
+            argsToCV(selectedFunction, r.selectedFunctionsArgsList[index]),
         );
         const selectedInvariantArgsCV = argsToCV(
           r.selectedInvariant,
-          r.invariantArgs
+          r.invariantArgs,
         );
 
         for (const [index, selectedFunction] of r.selectedFunctions.entries()) {
@@ -477,7 +482,7 @@ const invariantTest = async (
               r.rendezvousContractId,
               selectedFunction.name,
               selectedFunctionsArgsCV[index],
-              sutCallerAddress
+              sutCallerAddress,
             );
 
             const functionCallResultJson = cvToJSON(functionCall.result);
@@ -488,13 +493,13 @@ const invariantTest = async (
             // experiance by providing important information about the function
             // call during the run.
             const selectedFunctionClarityResult = cvToString(
-              functionCall.result
+              functionCall.result,
             );
 
             if (functionCallResultJson.success) {
               statistics.sut!.successful.set(
                 selectedFunction.name,
-                statistics.sut!.successful.get(selectedFunction.name)! + 1
+                statistics.sut!.successful.get(selectedFunction.name)! + 1,
               );
               localContext[r.rendezvousContractId][selectedFunction.name]++;
 
@@ -504,10 +509,10 @@ const invariantTest = async (
                 [
                   Cl.stringAscii(selectedFunction.name),
                   Cl.uint(
-                    localContext[r.rendezvousContractId][selectedFunction.name]
+                    localContext[r.rendezvousContractId][selectedFunction.name],
                   ),
                 ],
-                simnet.deployer
+                simnet.deployer,
               );
 
               // Function call passed.
@@ -519,7 +524,7 @@ const invariantTest = async (
                   `${targetContractName} ` +
                   `${underline(selectedFunction.name)} ` +
                   `${printedFunctionArgs} ` +
-                  green(selectedFunctionClarityResult)
+                  green(selectedFunctionClarityResult),
               );
 
               try {
@@ -537,7 +542,7 @@ const invariantTest = async (
               // Function call failed.
               statistics.sut!.failed.set(
                 selectedFunction.name,
-                statistics.sut!.failed.get(selectedFunction.name)! + 1
+                statistics.sut!.failed.get(selectedFunction.name)! + 1,
               );
               radio.emit(
                 "logMessage",
@@ -548,8 +553,8 @@ const invariantTest = async (
                     `${targetContractName} ` +
                     `${underline(selectedFunction.name)} ` +
                     `${printedFunctionArgs} ` +
-                    red(selectedFunctionClarityResult)
-                )
+                    red(selectedFunctionClarityResult),
+                ),
               );
             }
           } catch (error: any) {
@@ -577,8 +582,8 @@ const invariantTest = async (
                     `${targetContractName} ` +
                     `${underline(selectedFunction.name)} ` +
                     `${printedFunctionArgs} ` +
-                    red(displayedError)
-                )
+                    red(displayedError),
+                ),
               );
             }
           }
@@ -604,7 +609,7 @@ const invariantTest = async (
             r.rendezvousContractId,
             r.selectedInvariant.name,
             selectedInvariantArgsCV,
-            invariantCallerAddress
+            invariantCallerAddress,
           );
 
           const invariantCallResultJson = cvToJSON(invariantCallResult);
@@ -615,7 +620,7 @@ const invariantTest = async (
             statistics.invariant!.successful.set(
               r.selectedInvariant.name,
               statistics.invariant!.successful.get(r.selectedInvariant.name)! +
-                1
+                1,
             );
             radio.emit(
               "logMessage",
@@ -626,12 +631,12 @@ const invariantTest = async (
                 `${targetContractName} ` +
                 `${underline(r.selectedInvariant.name)} ` +
                 `${printedInvariantArgs} ` +
-                green(invariantCallClarityResult)
+                green(invariantCallClarityResult),
             );
           } else {
             statistics.invariant!.failed.set(
               r.selectedInvariant.name,
-              statistics.invariant!.failed.get(r.selectedInvariant.name)! + 1
+              statistics.invariant!.failed.get(r.selectedInvariant.name)! + 1,
             );
             radio.emit(
               "logMessage",
@@ -643,8 +648,8 @@ const invariantTest = async (
                   `${targetContractName} ` +
                   `${underline(r.selectedInvariant.name)} ` +
                   `${printedInvariantArgs} ` +
-                  red(invariantCallClarityResult)
-              )
+                  red(invariantCallClarityResult),
+              ),
             );
 
             // Invariant call went through, but returned something other than
@@ -652,7 +657,7 @@ const invariantTest = async (
             // runtime errors.
             throw new FalsifiedInvariantError(
               `Invariant failed for ${targetContractName} contract: "${r.selectedInvariant.name}" returned ${invariantCallClarityResult}`,
-              invariantCallClarityResult
+              invariantCallClarityResult,
             );
           }
         } catch (error: any) {
@@ -668,8 +673,8 @@ const invariantTest = async (
                   `[FAIL] ` +
                   `${targetContractName} ` +
                   `${underline(r.selectedInvariant.name)} ` +
-                  printedInvariantArgs
-              )
+                  printedInvariantArgs,
+              ),
             );
           }
 
@@ -680,7 +685,7 @@ const invariantTest = async (
         if (r.canMineBlocks) {
           simnet.mineEmptyBurnBlocks(r.burnBlocks);
         }
-      }
+      },
     ),
     {
       endOnFailure: bail,
@@ -688,7 +693,7 @@ const invariantTest = async (
       reporter: radioReporter,
       seed: seed,
       verbose: true,
-    }
+    },
   );
 };
 
@@ -699,7 +704,7 @@ const invariantTest = async (
 function emitMissingTraitWarnings(
   radio: EventEmitter,
   sutFunctions: string[],
-  invariantFunctions: string[]
+  invariantFunctions: string[],
 ): void {
   if (sutFunctions.length === 0 && invariantFunctions.length === 0) {
     return;
@@ -710,8 +715,8 @@ function emitMissingTraitWarnings(
     radio.emit(
       "logMessage",
       yellow(
-        `\nWarning: The following SUT functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
-      )
+        `\nWarning: The following SUT functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`,
+      ),
     );
   }
 
@@ -720,16 +725,16 @@ function emitMissingTraitWarnings(
     radio.emit(
       "logMessage",
       yellow(
-        `\nWarning: The following invariant functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`
-      )
+        `\nWarning: The following invariant functions reference traits without eligible implementations and will be skipped:\n\n${functionList}\n`,
+      ),
     );
   }
 
   radio.emit(
     "logMessage",
     yellow(
-      `Note: You can add contracts implementing traits either as project contracts or as Clarinet requirements.\n`
-    )
+      `Note: You can add contracts implementing traits either as project contracts or as Clarinet requirements.\n`,
+    ),
   );
 }
 
@@ -742,7 +747,7 @@ function emitMissingTraitWarnings(
  */
 export const initializeLocalContext = (
   contractId: string,
-  functions: EnrichedContractInterfaceFunction[]
+  functions: EnrichedContractInterfaceFunction[],
 ): LocalContext => ({
   [contractId]: Object.fromEntries(functions.map((f) => [f.name, 0])),
 });
@@ -757,19 +762,19 @@ export const initializeLocalContext = (
 export const initializeClarityContext = (
   simnet: Simnet,
   contractId: string,
-  functions: EnrichedContractInterfaceFunction[]
+  functions: EnrichedContractInterfaceFunction[],
 ) => {
   functions.forEach((fn) => {
     const { result: initialize } = simnet.callPublicFn(
       contractId,
       "update-context",
       [Cl.stringAscii(fn.name), Cl.uint(0)],
-      simnet.deployer
+      simnet.deployer,
     );
     const jsonResult = cvToJSON(initialize);
     if (!jsonResult.value || !jsonResult.success) {
       throw new Error(
-        `Failed to initialize the context for function: ${fn.name}.`
+        `Failed to initialize the context for function: ${fn.name}.`,
       );
     }
   });
@@ -787,7 +792,7 @@ export const initializeClarityContext = (
  * contract.
  */
 const filterSutFunctions = (
-  allFunctionsMap: Map<string, ContractInterfaceFunction[]>
+  allFunctionsMap: Map<string, ContractInterfaceFunction[]>,
 ) =>
   new Map(
     Array.from(allFunctionsMap, ([contractId, functions]) => [
@@ -796,22 +801,22 @@ const filterSutFunctions = (
         (f) =>
           f.access === "public" &&
           f.name !== "update-context" &&
-          !f.name.startsWith("test-")
+          !f.name.startsWith("test-"),
       ),
-    ])
+    ]),
   );
 
 const filterInvariantFunctions = (
-  allFunctionsMap: Map<string, ContractInterfaceFunction[]>
+  allFunctionsMap: Map<string, ContractInterfaceFunction[]>,
 ) =>
   new Map(
     Array.from(allFunctionsMap, ([contractId, functions]) => [
       contractId,
       functions.filter(
         ({ access, name }) =>
-          access === "read_only" && name.startsWith("invariant-")
+          access === "read_only" && name.startsWith("invariant-"),
       ),
-    ])
+    ]),
   );
 
 export class FalsifiedInvariantError extends Error {
@@ -828,19 +833,19 @@ const emitInvariantRegressionTestHeader = (
   seed: number,
   numRuns: number,
   dial: string | undefined,
-  timestamp: number
+  timestamp: number,
 ) => {
   radio.emit("logMessage", LOG_DIVIDER);
   radio.emit(
     "logMessage",
     `
 Running ${underline(
-      timestamp
+      timestamp,
     )} regression test for the ${targetContractName} contract with:
 
 - Seed: ${seed}
 - Runs: ${numRuns}
 - Dial: ${dial ?? "none (default)"}
-`
+`,
   );
 };

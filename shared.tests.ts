@@ -17,14 +17,14 @@ describe("Simnet contracts operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
     const expectedDeployerContracts = new Map(
       Array.from(simnet.getContractsInterfaces()).filter(
-        ([key]) => key.split(".")[0] === simnet.deployer
-      )
+        ([key]) => key.split(".")[0] === simnet.deployer,
+      ),
     );
 
     // Exercise
@@ -42,7 +42,7 @@ describe("Simnet contracts operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -52,15 +52,15 @@ describe("Simnet contracts operations", () => {
       Array.from(sutContractsInterfaces, ([contractId, contractInterface]) => [
         contractId,
         contractInterface.functions,
-      ])
+      ]),
     );
     const expectedContractFunctionsList = sutContractsList.map(
-      (contractId) => allFunctionsMap.get(contractId) || []
+      (contractId) => allFunctionsMap.get(contractId) || [],
     );
 
     // Exercise
     const actualContractFunctionsList = sutContractsList.map((contractId) =>
-      getFunctionsListForContract(allFunctionsMap, contractId)
+      getFunctionsListForContract(allFunctionsMap, contractId),
     );
 
     // Verify
@@ -74,7 +74,7 @@ describe("Simnet contracts operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -83,12 +83,12 @@ describe("Simnet contracts operations", () => {
       Array.from(sutContractsInterfaces, ([contractId, contractInterface]) => [
         contractId,
         contractInterface.functions,
-      ])
+      ]),
     );
 
     // Exercise
     const actualAllFunctionsMap = getFunctionsFromContractInterfaces(
-      sutContractsInterfaces
+      sutContractsInterfaces,
     );
 
     // Verify
@@ -117,8 +117,8 @@ describe("Contract identifier parsing", () => {
 
           // Assert
           expect(actual).toBe(contractName);
-        }
-      )
+        },
+      ),
     );
   });
 });

@@ -43,7 +43,10 @@ export type EnrichedContractInterfaceFunction = {
 
 export type ResponseStatus = "ok" | "error";
 
-export type TupleData<T extends ClarityValue = ClarityValue> = Record<string, T>;
+export type TupleData<T extends ClarityValue = ClarityValue> = Record<
+  string,
+  T
+>;
 
 export type BaseTypesToCV = {
   int128: (arg: number) => ReturnType<typeof intCV>;
@@ -61,7 +64,7 @@ export type ComplexTypesToCV = {
   optional: (arg: ClarityValue | null) => ReturnType<typeof optionalCVOf>;
   response: (
     status: ResponseStatus,
-    value: ClarityValue
+    value: ClarityValue,
   ) => ReturnType<typeof responseOkCV | typeof responseErrorCV>;
   trait_reference: (trait: string) => ReturnType<typeof principalCV>;
 };
@@ -129,26 +132,26 @@ export type ComplexTypesToArbitrary = {
     type: EnrichedParameterType,
     length: number,
     addresses: string[],
-    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>,
   ) => fc.Arbitrary<any[]>;
   tuple: (
     items: { name: string; type: EnrichedParameterType }[],
     addresses: string[],
-    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>,
   ) => fc.Arbitrary<object>;
   optional: (
     type: EnrichedParameterType,
     addresses: string[],
-    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>,
   ) => fc.Arbitrary<any>;
   response: (
     okType: EnrichedParameterType,
     errType: EnrichedParameterType,
     addresses: string[],
-    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>,
   ) => fc.Arbitrary<any>;
   trait_reference: (
     traitData: ImportedTraitType,
-    projectTraitImplementations: Record<string, ImplementedTraitType[]>
+    projectTraitImplementations: Record<string, ImplementedTraitType[]>,
   ) => fc.Arbitrary<any>;
 };

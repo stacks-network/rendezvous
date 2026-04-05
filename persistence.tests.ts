@@ -25,7 +25,7 @@ const createTemporaryCustomTestBaseDir = (dirName: string) => {
 const createMockRunDetails = (
   seed: number,
   failed = true,
-  numRuns = 100
+  numRuns = 100,
 ): RunDetails => ({
   failed,
   seed,
@@ -45,7 +45,7 @@ describe("Failure Persistence", () => {
 
       // Assert
       expect(filePath).toBe(
-        resolve(".rendezvous-regressions", `${TEST_CONTRACT_ID}.json`)
+        resolve(".rendezvous-regressions", `${TEST_CONTRACT_ID}.json`),
       );
     });
 
@@ -58,15 +58,15 @@ describe("Failure Persistence", () => {
             // Act
             const filePath = getFailureFilePath(
               TEST_CONTRACT_ID,
-              customBaseDir
+              customBaseDir,
             );
 
             // Assert
             expect(filePath).toBe(
-              resolve(customBaseDir, `${TEST_CONTRACT_ID}.json`)
+              resolve(customBaseDir, `${TEST_CONTRACT_ID}.json`),
             );
-          }
-        )
+          },
+        ),
       );
     });
   });
@@ -93,7 +93,7 @@ describe("Failure Persistence", () => {
 
             // Verify
             expect(
-              statSync(getFailureFilePath(TEST_CONTRACT_ID, customBaseDir))
+              statSync(getFailureFilePath(TEST_CONTRACT_ID, customBaseDir)),
             ).toBeDefined();
 
             // Teardown
@@ -101,8 +101,8 @@ describe("Failure Persistence", () => {
               recursive: true,
               force: true,
             });
-          }
-        )
+          },
+        ),
       );
     });
 
@@ -129,7 +129,7 @@ describe("Failure Persistence", () => {
               undefined,
               {
                 baseDir: customBaseDir,
-              }
+              },
             );
             persistFailure(runDetails2, "test", TEST_CONTRACT_ID, undefined, {
               baseDir: customBaseDir,
@@ -141,7 +141,7 @@ describe("Failure Persistence", () => {
               "invariant",
               {
                 baseDir: customBaseDir,
-              }
+              },
             );
             const testFailures = loadFailures(TEST_CONTRACT_ID, "test", {
               baseDir: customBaseDir,
@@ -156,8 +156,8 @@ describe("Failure Persistence", () => {
               recursive: true,
               force: true,
             });
-          }
-        )
+          },
+        ),
       );
     });
 
@@ -195,8 +195,8 @@ describe("Failure Persistence", () => {
               recursive: true,
               force: true,
             });
-          }
-        )
+          },
+        ),
       );
     });
 
@@ -221,7 +221,7 @@ describe("Failure Persistence", () => {
               undefined,
               {
                 baseDir: customBaseDir,
-              }
+              },
             );
             persistFailure(runDetails, "test", TEST_CONTRACT_ID, undefined, {
               baseDir: customBaseDir,
@@ -233,7 +233,7 @@ describe("Failure Persistence", () => {
               "invariant",
               {
                 baseDir: customBaseDir,
-              }
+              },
             );
             const testFailures = loadFailures(TEST_CONTRACT_ID, "test", {
               baseDir: customBaseDir,
@@ -248,8 +248,8 @@ describe("Failure Persistence", () => {
               recursive: true,
               force: true,
             });
-          }
-        )
+          },
+        ),
       );
     });
 
@@ -277,7 +277,7 @@ describe("Failure Persistence", () => {
                 "invariant",
                 TEST_CONTRACT_ID,
                 undefined,
-                { baseDir: customBaseDir }
+                { baseDir: customBaseDir },
               );
             });
 
@@ -292,8 +292,8 @@ describe("Failure Persistence", () => {
 
             // Teardown
             rmSync(customBaseDir, { recursive: true, force: true });
-          }
-        )
+          },
+        ),
       );
     });
 
@@ -319,7 +319,7 @@ describe("Failure Persistence", () => {
               undefined,
               {
                 baseDir: customBaseDir,
-              }
+              },
             );
 
             const after = Date.now();
@@ -333,8 +333,8 @@ describe("Failure Persistence", () => {
 
             // Teardown
             rmSync(customBaseDir, { recursive: true, force: true });
-          }
-        )
+          },
+        ),
       );
     });
 
@@ -360,7 +360,7 @@ describe("Failure Persistence", () => {
               undefined,
               {
                 baseDir: customBaseDir,
-              }
+              },
             );
 
             // Verify
@@ -371,8 +371,8 @@ describe("Failure Persistence", () => {
 
             // Teardown
             rmSync(customBaseDir, { recursive: true, force: true });
-          }
-        )
+          },
+        ),
       );
     });
 
@@ -403,8 +403,8 @@ describe("Failure Persistence", () => {
 
             // Teardown
             rmSync(customBaseDir, { recursive: true, force: true });
-          }
-        )
+          },
+        ),
       );
     });
   });
@@ -431,8 +431,8 @@ describe("Failure Persistence", () => {
 
             // Teardown
             rmSync(customBaseDir, { recursive: true, force: true });
-          }
-        )
+          },
+        ),
       );
     });
 
@@ -454,7 +454,7 @@ describe("Failure Persistence", () => {
               undefined,
               {
                 baseDir: customBaseDir,
-              }
+              },
             );
 
             // Exercise
@@ -467,8 +467,8 @@ describe("Failure Persistence", () => {
 
             // Teardown
             rmSync(customBaseDir, { recursive: true, force: true });
-          }
-        )
+          },
+        ),
       );
     });
   });

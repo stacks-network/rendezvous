@@ -29,7 +29,7 @@ describe("Test discarding related operations", () => {
             fc.record({
               name: fc.string(),
               type: fc.constantFrom("int128", "uint128", "bool", "principal"),
-            })
+            }),
           ),
           outputs: fc.record({ type: fc.constant("bool") }),
         }),
@@ -47,8 +47,8 @@ describe("Test discarding related operations", () => {
           };
           const actual = isReturnTypeBoolean(discardFunctionInterface);
           expect(actual).toBe(true);
-        }
-      )
+        },
+      ),
     );
   });
 
@@ -62,7 +62,7 @@ describe("Test discarding related operations", () => {
             fc.record({
               name: fc.string(),
               type: fc.constantFrom("int128", "uint128", "bool", "principal"),
-            })
+            }),
           ),
           outputs: fc.record({
             type: fc.constantFrom("int128", "uint128", "principal"),
@@ -82,8 +82,8 @@ describe("Test discarding related operations", () => {
           };
           const actual = isReturnTypeBoolean(discardFunctionInterface);
           expect(actual).toBe(false);
-        }
-      )
+        },
+      ),
     );
   });
 
@@ -97,7 +97,7 @@ describe("Test discarding related operations", () => {
             fc.record({
               name: fc.string(),
               type: fc.constantFrom("int128", "uint128", "bool", "principal"),
-            })
+            }),
           ),
           outputs: fc.record({ type: fc.constant("bool") }),
         }),
@@ -121,11 +121,11 @@ describe("Test discarding related operations", () => {
           };
           const actual = isParamsMatch(
             testFunctionInterface,
-            discardFunctionInterface
+            discardFunctionInterface,
           );
           expect(actual).toBe(true);
-        }
-      )
+        },
+      ),
     );
   });
 
@@ -144,9 +144,9 @@ describe("Test discarding related operations", () => {
                     "int128",
                     "uint128",
                     "bool",
-                    "principal"
+                    "principal",
                   ),
-                })
+                }),
               ),
               outputs: fc.record({ type: fc.constant("bool") }),
             }),
@@ -160,9 +160,9 @@ describe("Test discarding related operations", () => {
                     "int128",
                     "uint128",
                     "bool",
-                    "principal"
+                    "principal",
                   ),
-                })
+                }),
               ),
               outputs: fc.record({ type: fc.constant("bool") }),
             }),
@@ -170,13 +170,13 @@ describe("Test discarding related operations", () => {
           .filter(
             (r) =>
               JSON.stringify(
-                [...r.testFn.args].sort((a, b) => a.name.localeCompare(b.name))
+                [...r.testFn.args].sort((a, b) => a.name.localeCompare(b.name)),
               ) !==
               JSON.stringify(
                 [...r.discardFn.args].sort((a, b) =>
-                  a.name.localeCompare(b.name)
-                )
-              )
+                  a.name.localeCompare(b.name),
+                ),
+              ),
           ),
         (r: {
           testFn: {
@@ -206,11 +206,11 @@ describe("Test discarding related operations", () => {
           };
           const actual = isParamsMatch(
             testFunctionInterface,
-            discardFunctionInterface
+            discardFunctionInterface,
           );
           expect(actual).toBe(false);
-        }
-      )
+        },
+      ),
     );
   });
 
@@ -218,7 +218,7 @@ describe("Test discarding related operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -227,14 +227,14 @@ describe("Test discarding related operations", () => {
       "contract",
       "(define-public (discarded-fn) (ok false))",
       { clarityVersion: 2 },
-      simnet.deployer
+      simnet.deployer,
     );
 
     const { result: functionCallResult } = simnet.callPublicFn(
       "contract",
       "discarded-fn",
       [],
-      simnet.deployer
+      simnet.deployer,
     );
 
     const functionCallResultJson = cvToJSON(functionCallResult);
@@ -253,7 +253,7 @@ describe("Test discarding related operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -262,14 +262,14 @@ describe("Test discarding related operations", () => {
       "contract",
       "(define-public (not-discarded-fn) (ok true))",
       { clarityVersion: 2 },
-      simnet.deployer
+      simnet.deployer,
     );
 
     const { result: functionCallResult } = simnet.callPublicFn(
       "contract",
       "not-discarded-fn",
       [],
-      simnet.deployer
+      simnet.deployer,
     );
 
     const functionCallResultJson = cvToJSON(functionCallResult);

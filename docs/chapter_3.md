@@ -2,7 +2,7 @@
 
 ## Programming In vs. Into a Language
 
-Steve McConnell's *Code Complete* discusses the concept of "programming in vs. into a language." This distinction is particularly relevant for Clarity smart contract development:
+Steve McConnell's _Code Complete_ discusses the concept of "programming in vs. into a language." This distinction is particularly relevant for Clarity smart contract development:
 
 - **Programming into a language**: Thinking in one language (like TypeScript) and then translating those thoughts into another language (like Clarity). This approach often leads to code that doesn't fully leverage the target language's strengths.
 

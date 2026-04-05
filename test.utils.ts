@@ -14,7 +14,7 @@ import { tmpdir } from "os";
  */
 export function createIsolatedTestEnvironment(
   manifestDir: string,
-  testPrefix: string
+  testPrefix: string,
 ): string {
   const tempDir = mkdtempSync(join(tmpdir(), testPrefix));
   cpSync(manifestDir, tempDir, { recursive: true });
