@@ -94,13 +94,11 @@ describe("Simnet contracts operations", () => {
     // The JS representation of Clarity `(some (tuple (called uint)))`, where
     // `called` is initialized to 0.
     const expectedClarityValue = Cl.some(Cl.tuple({ called: Cl.uint(0) }));
-    const expectedContext = functions.map((f) => {
-      return {
+    const expectedContext = functions.map((f) => ({
         contractId,
         functionName: f.name,
         called: expectedClarityValue,
-      };
-    });
+      }));
 
     expect(actualContext).toEqual(expectedContext);
 

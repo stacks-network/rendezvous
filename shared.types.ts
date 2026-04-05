@@ -1,9 +1,9 @@
-import {
+import type {
   ContractInterfaceFunctionAccess,
   ContractInterfaceFunctionArg,
   ContractInterfaceFunctionOutput,
 } from "@stacks/clarinet-sdk-wasm";
-import {
+import type {
   boolCV,
   bufferCV,
   ClarityValue,
@@ -18,8 +18,8 @@ import {
   tupleCV,
   uintCV,
 } from "@stacks/transactions";
-import fc from "fast-check";
-import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
+import type fc from "fast-check";
+import type { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 // Types used for Clarity Value conversion.
 
@@ -43,9 +43,7 @@ export type EnrichedContractInterfaceFunction = {
 
 export type ResponseStatus = "ok" | "error";
 
-export type TupleData<T extends ClarityValue = ClarityValue> = {
-  [key: string]: T;
-};
+export type TupleData<T extends ClarityValue = ClarityValue> = Record<string, T>;
 
 export type BaseTypesToCV = {
   int128: (arg: number) => ReturnType<typeof intCV>;

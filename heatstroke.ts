@@ -1,7 +1,7 @@
-import { EventEmitter } from "events";
-import { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
+import type { EventEmitter } from "events";
+import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 import { green } from "ansicolor";
-import {
+import type {
   InvariantCounterExample,
   RunDetails,
   Statistics,
@@ -9,8 +9,8 @@ import {
   TestCounterExample,
 } from "./heatstroke.types";
 import { getContractNameFromContractId } from "./shared";
-import { PropertyTestError } from "./property";
-import { FalsifiedInvariantError } from "./invariant";
+import type { PropertyTestError } from "./property";
+import type { FalsifiedInvariantError } from "./invariant";
 
 /**
  * Heatstrokes Reporter
@@ -321,7 +321,7 @@ function logAsTree(
   const printTree = (
     node: Record<string, any>,
     indent: string = baseIndent,
-    isLastParent: boolean = true,
+    isLastParent = true,
     radioEmitter: EventEmitter
   ): void => {
     const keys = Object.keys(node);

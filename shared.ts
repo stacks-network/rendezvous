@@ -1,5 +1,5 @@
 import fc from "fast-check";
-import {
+import type {
   BaseTypesToArbitrary,
   BaseTypesToCV,
   ComplexTypesToArbitrary,
@@ -10,21 +10,21 @@ import {
   ResponseStatus,
   TupleData,
 } from "./shared.types";
-import { Simnet } from "@stacks/clarinet-sdk";
-import {
+import type { Simnet } from "@stacks/clarinet-sdk";
+import type {
   ContractInterfaceFunction,
   IContractInterface,
 } from "@stacks/clarinet-sdk-wasm";
 import {
+  type ClarityValue,
   Cl,
-  ClarityValue,
   optionalCVOf,
   principalCV,
   responseErrorCV,
   responseOkCV,
 } from "@stacks/transactions";
 import { getContractIdsImplementingTrait } from "./traits";
-import { ImplementedTraitType, ImportedTraitType } from "./traits.types";
+import type { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 /** 79 characters long divider for logging. */
 export const LOG_DIVIDER =
@@ -104,11 +104,11 @@ const parameterTypeToArbitrary = (
     // The type is a base type.
     if (type === "principal") {
       if (addresses.length === 0)
-        throw new Error(
+        {throw new Error(
           "No addresses could be retrieved from the simnet instance!"
-        );
+        );}
       return baseTypesToArbitrary.principal(addresses);
-    } else return baseTypesToArbitrary[type];
+    } else {return baseTypesToArbitrary[type];}
   } else {
     // The type is a complex type.
     if ("buffer" in type) {
@@ -199,7 +199,7 @@ const complexTypesToArbitrary: ComplexTypesToArbitrary = {
     addresses: string[],
     projectTraitImplementations: Record<string, ImplementedTraitType[]>
   ) => {
-    const tupleArbitraries: { [key: string]: fc.Arbitrary<any> } = {};
+    const tupleArbitraries: Record<string, fc.Arbitrary<any>> = {};
     items.forEach((item) => {
       tupleArbitraries[item.name] = parameterTypeToArbitrary(
         item.type,
@@ -244,11 +244,9 @@ const complexTypesToArbitrary: ComplexTypesToArbitrary = {
   trait_reference: (
     traitData: ImportedTraitType,
     projectTraitImplementations: Record<string, ImplementedTraitType[]>
-  ) => {
-    return fc.constantFrom(
+  ) => fc.constantFrom(
       ...getContractIdsImplementingTrait(traitData, projectTraitImplementations)
-    );
-  },
+    ),
 };
 
 /**
@@ -330,7 +328,7 @@ const argToCV = (
       );
       return complexTypesToCV.list(listItems);
     } else if ("tuple" in type) {
-      const tupleData: { [key: string]: ClarityValue } = {};
+      const tupleData: Record<string, ClarityValue> = {};
       type.tuple.forEach((field) => {
         tupleData[field.name] = argToCV(
           generatedArgument[field.name],
@@ -376,28 +374,22 @@ const complexTypesToCV: ComplexTypesToCV = {
   buffer: (arg: string) => Cl.bufferFromHex(arg),
   "string-ascii": (arg: string) => Cl.stringAscii(arg),
   "string-utf8": (arg: string) => Cl.stringUtf8(arg),
-  list: (items: ClarityValue[]) => {
-    return Cl.list(items);
-  },
-  tuple: (tupleData: TupleData<ClarityValue>) => {
-    return Cl.tuple(tupleData);
-  },
+  list: (items: ClarityValue[]) => Cl.list(items),
+  tuple: (tupleData: TupleData<ClarityValue>) => Cl.tuple(tupleData),
   optional: (arg: ClarityValue | null) =>
     arg ? optionalCVOf(arg) : optionalCVOf(undefined),
   response: (status: ResponseStatus, value: ClarityValue) => {
-    if (status === "ok") return responseOkCV(value);
-    else if (status === "error") return responseErrorCV(value);
-    else throw new Error(`Unsupported response status: ${status}`);
+    if (status === "ok") {return responseOkCV(value);}
+    else if (status === "error") {return responseErrorCV(value);}
+    else {throw new Error(`Unsupported response status: ${status}`);}
   },
   trait_reference: (traitImplementation: string) =>
     principalCV(traitImplementation),
 };
 
-const isBaseType = (type: EnrichedParameterType): type is EnrichedBaseType => {
-  return ["int128", "uint128", "bool", "principal"].includes(
+const isBaseType = (type: EnrichedParameterType): type is EnrichedBaseType => ["int128", "uint128", "bool", "principal"].includes(
     type as EnrichedBaseType
   );
-};
 
 export const getContractNameFromContractId = (contractId: string): string =>
   contractId.split(".")[1];

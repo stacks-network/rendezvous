@@ -8,7 +8,7 @@ import { rmSync } from "fs";
 import { join, resolve } from "path";
 import fc from "fast-check";
 import { createIsolatedTestEnvironment } from "./test.utils";
-import {
+import type {
   ContractInterfaceFunction,
   ContractInterfaceFunctionAccess,
   ContractInterfaceFunctionArg,

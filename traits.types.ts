@@ -33,5 +33,5 @@ export type DefinedTraitType = {
 
 type TraitData = {
   name: string;
-  contract_identifier: { issuer: Array<any>; name: string };
+  contract_identifier: { issuer: any[]; name: string };
 };

@@ -1,5 +1,5 @@
 import { join } from "path";
-import { DialerContext } from "./dialer.types";
+import type { DialerContext } from "./dialer.types";
 import { DialerRegistry } from "./dialer";
 
 const dialPath = join("example", "dialer.ts");

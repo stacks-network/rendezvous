@@ -1,16 +1,16 @@
-import {
+import type {
   Atom,
   ContractInterfaceFunction,
   IContractAST,
   List,
   TraitReference,
 } from "@stacks/clarinet-sdk-wasm";
-import {
+import type {
   EnrichedContractInterfaceFunction,
   ParameterType,
 } from "./shared.types";
-import { Simnet } from "@stacks/clarinet-sdk";
-import {
+import type { Simnet } from "@stacks/clarinet-sdk";
+import type {
   DefinedTraitType,
   ImplementedTraitType,
   ImportedTraitType,
@@ -41,8 +41,7 @@ export const enrichInterfaceWithTraitData = (
     functionName: string,
     traitRefMapNode: any,
     path: string[] = []
-  ): any[] => {
-    return args.map((arg) => {
+  ): any[] => args.map((arg) => {
       const listNested = !arg.name;
       const currentPath = listNested ? path : [...path, arg.name];
       // Exit early if the traitReferenceMap does not have anything we are
@@ -184,14 +183,11 @@ export const enrichInterfaceWithTraitData = (
 
       return arg;
     });
-  };
 
-  const enrichedFunctions = functionInterfaceList.map((f) => {
-    return {
+  const enrichedFunctions = functionInterfaceList.map((f) => ({
       ...f,
       args: enrichArgs(f.args, f.name, traitReferenceMap.get(f.name)),
-    };
-  });
+    }));
 
   enriched.set(targetContractId, enrichedFunctions);
   return enriched;
@@ -296,7 +292,7 @@ const getTraitReferenceData = (
                 path.slice(1)
               );
 
-              if (result[0] !== undefined) return result;
+              if (result[0] !== undefined) {return result;}
             }
           }
         }
@@ -365,7 +361,7 @@ const getTraitReferenceData = (
     );
 
     if (traitReferenceImportData[0] !== undefined)
-      return traitReferenceImportData;
+      {return traitReferenceImportData;}
   }
   return [undefined, undefined];
 };
@@ -498,22 +494,22 @@ export const isTraitReferenceFunction = (
       return type === "trait_reference";
     } else {
       // The type is a complex type.
-      if ("buffer" in type) return false;
-      if ("string-ascii" in type) return false;
-      if ("string-utf8" in type) return false;
+      if ("buffer" in type) {return false;}
+      if ("string-ascii" in type) {return false;}
+      if ("string-utf8" in type) {return false;}
       if ("list" in type)
-        return hasTraitReference(type.list.type as ParameterType);
+        {return hasTraitReference(type.list.type as ParameterType);}
       if ("tuple" in type)
-        return type.tuple.some((item) =>
+        {return type.tuple.some((item) =>
           hasTraitReference(item.type as ParameterType)
-        );
+        );}
       if ("optional" in type)
-        return hasTraitReference(type.optional as ParameterType);
+        {return hasTraitReference(type.optional as ParameterType);}
       if ("response" in type)
-        return (
+        {return (
           hasTraitReference(type.response.ok as ParameterType) ||
           hasTraitReference(type.response.error as ParameterType)
-        );
+        );}
       // Default to false for unexpected types.
       return false;
     }
@@ -573,7 +569,7 @@ export const getNonTestableTraitFunctions = (
   contractId: string
 ): string[] => {
   const hasTraitReferenceWithoutImplementation = (type: any): boolean => {
-    if (!type) return false;
+    if (!type) {return false;}
 
     if (typeof type === "object" && "trait_reference" in type) {
       const contractIdsImplementingTrait = getContractIdsImplementingTrait(

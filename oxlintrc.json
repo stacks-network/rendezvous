@@ -1,9 +1,30 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "rules": {},
+  "rules": {
+    "no-magic-numbers": "off",
+    "sort-keys": "off",
+    "sort-imports": "off",
+    "capitalized-comments": "off",
+    "id-length": "off",
+    "max-params": "off",
+    "max-lines-per-function": "off",
+    "max-statements": "off",
+    "consistent-type-definitions": "off",
+    "func-style": "off",
+    "prefer-destructuring": "off",
+    "no-ternary": "off",
+    "no-nested-ternary": "off",
+    "no-await-in-loop": "off",
+    "consistent-indexed-object-style": "off",
+    "default-param-last": "off",
+    "no-continue": "off",
+    "prefer-template": "off"
+  },
   "categories": {
     "correctness": "error",
-    "suspicious": "warn"
+    "suspicious": "error",
+    "perf": "error",
+    "style": "warn"
   },
   "ignorePatterns": ["dist", "example", "node_modules"],
   "plugins": ["typescript"]

@@ -1,5 +1,5 @@
-import { Simnet } from "@stacks/clarinet-sdk";
-import { EventEmitter } from "events";
+import type { Simnet } from "@stacks/clarinet-sdk";
+import type { EventEmitter } from "events";
 import {
   argsToCV,
   functionToArbitrary,
@@ -7,12 +7,12 @@ import {
   getFunctionsListForContract,
   LOG_DIVIDER,
 } from "./shared";
-import { LocalContext } from "./invariant.types";
+import type { LocalContext } from "./invariant.types";
 import { Cl, cvToJSON, cvToString } from "@stacks/transactions";
 import { reporter } from "./heatstroke";
 import fc from "fast-check";
 import { dim, green, red, underline, yellow } from "ansicolor";
-import { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
+import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
@@ -20,12 +20,12 @@ import {
   isTraitReferenceFunction,
   getNonTestableTraitFunctions,
 } from "./traits";
-import { EnrichedContractInterfaceFunction } from "./shared.types";
+import type { EnrichedContractInterfaceFunction } from "./shared.types";
 import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
-import { Statistics } from "./heatstroke.types";
+import type { Statistics } from "./heatstroke.types";
 import { getFailureFilePath, loadFailures, persistFailure } from "./persistence";
 import { resolve } from "path";
-import { ImplementedTraitType } from "./traits.types";
+import type { ImplementedTraitType } from "./traits.types";
 
 /**
  * Runs invariant testing on the target contract and logs the progress. Reports

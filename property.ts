@@ -1,9 +1,9 @@
-import { Simnet } from "@stacks/clarinet-sdk";
-import { EventEmitter } from "events";
+import type { Simnet } from "@stacks/clarinet-sdk";
+import type { EventEmitter } from "events";
 import fc from "fast-check";
 import { cvToJSON, cvToString } from "@stacks/transactions";
 import { reporter } from "./heatstroke";
-import { Statistics } from "./heatstroke.types";
+import type { Statistics } from "./heatstroke.types";
 import {
   argsToCV,
   functionToArbitrary,
@@ -12,7 +12,7 @@ import {
   LOG_DIVIDER,
 } from "./shared";
 import { dim, green, red, underline, yellow } from "ansicolor";
-import { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
+import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
@@ -22,8 +22,8 @@ import {
 } from "./traits";
 import { getFailureFilePath, loadFailures, persistFailure } from "./persistence";
 import { resolve } from "path";
-import { ImplementedTraitType } from "./traits.types";
-import { EnrichedContractInterfaceFunction } from "./shared.types";
+import type { ImplementedTraitType } from "./traits.types";
+import type { EnrichedContractInterfaceFunction } from "./shared.types";
 
 /**
  * Runs property-based tests on the target contract and logs the progress.
@@ -633,7 +633,7 @@ const isTestDiscarded = (
   simnet: Simnet,
   selectedCaller: string
 ) => {
-  if (!discardFunctionName) return false;
+  if (!discardFunctionName) {return false;}
 
   const { result: discardFunctionCallResult } = simnet.callReadOnlyFn(
     contractId,
@@ -671,7 +671,7 @@ const validateDiscardFunction = (
     .get(contractId)
     ?.find((f) => f.name === discardFunctionName);
 
-  if (!testFunction || !discardFunction) return false;
+  if (!testFunction || !discardFunction) {return false;}
 
   if (!isParamsMatch(testFunction, discardFunction)) {
     radio.emit(

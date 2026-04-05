@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "fs";
 import { resolve } from "path";
-import { RunDetails } from "./heatstroke.types";
+import type { RunDetails } from "./heatstroke.types";
 
 /**
  * Represents a persisted failure record for regression testing.
@@ -49,9 +49,7 @@ const DEFAULT_CONFIG: Required<PersistenceConfig> = {
 export const getFailureFilePath = (
   contractId: string,
   baseDir: string = DEFAULT_CONFIG.baseDir
-): string => {
-  return resolve(baseDir, `${contractId}.json`);
-};
+): string => resolve(baseDir, `${contractId}.json`);
 
 /**
  * Loads the failure store for a contract, or creates an empty one.

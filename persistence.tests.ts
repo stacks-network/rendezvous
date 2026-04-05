@@ -6,7 +6,7 @@ import {
   persistFailure,
   loadFailures,
 } from "./persistence";
-import { RunDetails } from "./heatstroke.types";
+import type { RunDetails } from "./heatstroke.types";
 import fc from "fast-check";
 
 const temporaryTestBaseDir = resolve(tmpdir(), "rendezvous-test-persistence");
@@ -24,8 +24,8 @@ const createTemporaryCustomTestBaseDir = (dirName: string) => {
 // Mock RunDetails helper
 const createMockRunDetails = (
   seed: number,
-  failed: boolean = true,
-  numRuns: number = 100
+  failed = true,
+  numRuns = 100
 ): RunDetails => ({
   failed,
   seed,

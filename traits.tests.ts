@@ -1,4 +1,4 @@
-import {
+import type {
   ContractInterfaceFunction,
   IContractAST,
 } from "@stacks/clarinet-sdk-wasm";
@@ -14,8 +14,8 @@ import {
   isTraitReferenceFunction,
 } from "./traits";
 import { createIsolatedTestEnvironment } from "./test.utils";
-import { EnrichedContractInterfaceFunction } from "./shared.types";
-import { ImplementedTraitType } from "./traits.types";
+import type { EnrichedContractInterfaceFunction } from "./shared.types";
+import type { ImplementedTraitType } from "./traits.types";
 
 const isolatedTestEnvPrefix = "rendezvous-test-traits-";
 

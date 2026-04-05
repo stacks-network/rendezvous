@@ -6,7 +6,5 @@
  * - The value is the count of times the SUT function has been invoked.
  */
 export type LocalContext = {
-  [contractId: string]: {
-    [functionName: string]: number;
-  };
+  [contractId: string]: Record<string, number>;
 };
