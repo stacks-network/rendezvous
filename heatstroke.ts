@@ -322,7 +322,7 @@ function logAsTree(
     node: Record<string, any>,
     indent: string = baseIndent,
     isLastParent: boolean = true,
-    radio: EventEmitter
+    radioEmitter: EventEmitter
   ): void => {
     const keys = Object.keys(node);
 
@@ -333,14 +333,14 @@ function logAsTree(
       const leadingChar = isLastSection ? " " : "│";
 
       if (typeof node[key] === "object" && node[key] !== null) {
-        radio.emit(
+        radioEmitter.emit(
           "logMessage",
           `${leadingChar} ${indent}${connector} ${ARROW} ${key}`
         );
-        printTree(node[key], nextIndent, isLast, radio);
+        printTree(node[key], nextIndent, isLast, radioEmitter);
       } else {
         const count = node[key] as number;
-        radio.emit(
+        radioEmitter.emit(
           "logMessage",
           `${leadingChar} ${indent}${connector} ${key}: x${count}`
         );

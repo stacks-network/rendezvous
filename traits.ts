@@ -39,7 +39,7 @@ export const enrichInterfaceWithTraitData = (
   const enrichArgs = (
     args: any[],
     functionName: string,
-    traitReferenceMap: any,
+    traitRefMapNode: any,
     path: string[] = []
   ): any[] => {
     return args.map((arg) => {
@@ -49,17 +49,17 @@ export const enrichInterfaceWithTraitData = (
       // looking for. It means that the current parameter does not have an
       // associated trait reference.
       if (
-        !traitReferenceMap ||
-        (!traitReferenceMap[arg.name] &&
-          !traitReferenceMap.tuple &&
-          !traitReferenceMap.list &&
-          !traitReferenceMap.response &&
-          !traitReferenceMap.optional &&
-          !traitReferenceMap[arg.name]?.tuple &&
-          !traitReferenceMap[arg.name]?.list &&
-          !traitReferenceMap[arg.name]?.response &&
-          !traitReferenceMap[arg.name]?.optional &&
-          traitReferenceMap !== "trait_reference")
+        !traitRefMapNode ||
+        (!traitRefMapNode[arg.name] &&
+          !traitRefMapNode.tuple &&
+          !traitRefMapNode.list &&
+          !traitRefMapNode.response &&
+          !traitRefMapNode.optional &&
+          !traitRefMapNode[arg.name]?.tuple &&
+          !traitRefMapNode[arg.name]?.list &&
+          !traitRefMapNode[arg.name]?.response &&
+          !traitRefMapNode[arg.name]?.optional &&
+          traitRefMapNode !== "trait_reference")
       ) {
         return arg;
       }
@@ -71,8 +71,8 @@ export const enrichInterfaceWithTraitData = (
               arg.type.tuple,
               functionName,
               listNested
-                ? traitReferenceMap.tuple
-                : traitReferenceMap[arg.name]?.tuple,
+                ? traitRefMapNode.tuple
+                : traitRefMapNode[arg.name]?.tuple,
               currentPath
             ),
           },
@@ -85,8 +85,8 @@ export const enrichInterfaceWithTraitData = (
               [arg.type.list],
               functionName,
               listNested
-                ? traitReferenceMap.list
-                : traitReferenceMap[arg.name]?.list,
+                ? traitRefMapNode.list
+                : traitRefMapNode[arg.name]?.list,
               arg.type.list.type.tuple
                 ? [...currentPath, "tuple"]
                 : arg.type.list.type.response
@@ -106,8 +106,8 @@ export const enrichInterfaceWithTraitData = (
           functionName,
           {
             ok: listNested
-              ? traitReferenceMap.response?.ok
-              : traitReferenceMap[arg.name]?.response?.ok,
+              ? traitRefMapNode.response?.ok
+              : traitRefMapNode[arg.name]?.response?.ok,
           },
           okPath
         )[0];
@@ -116,8 +116,8 @@ export const enrichInterfaceWithTraitData = (
           functionName,
           {
             error: listNested
-              ? traitReferenceMap.response?.error
-              : traitReferenceMap[arg.name]?.response?.error,
+              ? traitRefMapNode.response?.error
+              : traitRefMapNode[arg.name]?.response?.error,
           },
           errorPath
         )[0];
@@ -137,8 +137,8 @@ export const enrichInterfaceWithTraitData = (
           functionName,
           {
             optional: listNested
-              ? traitReferenceMap.optional
-              : traitReferenceMap[arg.name]?.optional,
+              ? traitRefMapNode.optional
+              : traitRefMapNode[arg.name]?.optional,
           },
           optionalPath
         )[0];
@@ -148,7 +148,7 @@ export const enrichInterfaceWithTraitData = (
             optional: optionalTraitReference.type,
           },
         };
-      } else if (traitReferenceMap && traitReferenceMap[arg.name]) {
+      } else if (traitRefMapNode && traitRefMapNode[arg.name]) {
         const [traitReferenceName, traitReferenceImport] =
           getTraitReferenceData(
             ast,
@@ -166,7 +166,7 @@ export const enrichInterfaceWithTraitData = (
             },
           };
         }
-      } else if (traitReferenceMap === "trait_reference") {
+      } else if (traitRefMapNode === "trait_reference") {
         const [traitReferenceName, traitReferenceImport] =
           getTraitReferenceData(ast, functionName, path);
         if (traitReferenceName && traitReferenceImport) {
