@@ -8,7 +8,7 @@ on:
       - master
 
 jobs:
-  lint:
+  fmt-lint:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
@@ -30,6 +30,7 @@ jobs:
         run: npm run lint
 
   tests:
+    needs: [fmt-lint]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
@@ -54,6 +55,7 @@ jobs:
         run: npm test
 
   examples:
+    needs: [fmt-lint]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
