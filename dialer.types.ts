@@ -5,8 +5,8 @@ import type { EnrichedContractInterfaceFunction } from "./shared.types";
 
 export type Dialer = (context: DialerContext) => Promise<void> | void;
 
-export type DialerContext = {
+export interface DialerContext {
   clarityValueArguments: ClarityValue[];
   functionCall: ParsedTransactionResult | undefined;
   selectedFunction: EnrichedContractInterfaceFunction;
-};
+}

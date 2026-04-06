@@ -24,23 +24,23 @@ import type { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 
 // Types used for Clarity Value conversion.
 
-type ImportedTraitReferenceFunctionArg = {
+interface ImportedTraitReferenceFunctionArg {
   type: {
     trait_reference: ImportedTraitType;
   };
   name: string;
-};
+}
 
 /**
  * The type of the function interface, after the contract interface is
  * "enriched" with additional information about trait references.
  */
-export type EnrichedContractInterfaceFunction = {
+export interface EnrichedContractInterfaceFunction {
   args: (ContractInterfaceFunctionArg | ImportedTraitReferenceFunctionArg)[];
   name: string;
   access: ContractInterfaceFunctionAccess;
   outputs: ContractInterfaceFunctionOutput;
-};
+}
 
 export type ResponseStatus = "ok" | "error";
 
@@ -49,14 +49,14 @@ export type TupleData<T extends ClarityValue = ClarityValue> = Record<
   T
 >;
 
-export type BaseTypesToCV = {
+export interface BaseTypesToCV {
   int128: (arg: number) => ReturnType<typeof intCV>;
   uint128: (arg: number) => ReturnType<typeof uintCV>;
   bool: (arg: boolean) => ReturnType<typeof boolCV>;
   principal: (arg: string) => ReturnType<typeof principalCV>;
-};
+}
 
-export type ComplexTypesToCV = {
+export interface ComplexTypesToCV {
   buffer: (arg: string) => ReturnType<typeof bufferCV>;
   "string-ascii": (arg: string) => ReturnType<typeof stringAsciiCV>;
   "string-utf8": (arg: string) => ReturnType<typeof stringUtf8CV>;
@@ -68,7 +68,7 @@ export type ComplexTypesToCV = {
     value: ClarityValue,
   ) => ReturnType<typeof responseOkCV | typeof responseErrorCV>;
   trait_reference: (trait: string) => ReturnType<typeof principalCV>;
-};
+}
 
 // Types used for argument generation.
 
@@ -118,14 +118,14 @@ export type ParameterType = BaseType | ComplexType;
 /** The Clarity parameter types after the contract interface is "enriched". */
 export type EnrichedParameterType = EnrichedBaseType | EnrichedComplexType;
 
-export type BaseTypesToArbitrary = {
+export interface BaseTypesToArbitrary {
   int128: ReturnType<typeof fc.integer>;
   uint128: ReturnType<typeof fc.nat>;
   bool: ReturnType<typeof fc.boolean>;
   principal: (addresses: string[]) => ReturnType<typeof fc.constantFrom>;
-};
+}
 
-export type ComplexTypesToArbitrary = {
+export interface ComplexTypesToArbitrary {
   buffer: (length: number) => fc.Arbitrary<string>;
   "string-ascii": (length: number) => fc.Arbitrary<string>;
   "string-utf8": (length: number) => fc.Arbitrary<string>;
@@ -155,4 +155,4 @@ export type ComplexTypesToArbitrary = {
     traitData: ImportedTraitType,
     projectTraitImplementations: Record<string, ImplementedTraitType[]>,
   ) => fc.Arbitrary<any>;
-};
+}

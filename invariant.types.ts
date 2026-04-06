@@ -5,6 +5,6 @@
  * - The inner key is the SUT function name within the contract.
  * - The value is the count of times the SUT function has been invoked.
  */
-export type LocalContext = {
+export interface LocalContext {
   [contractId: string]: Record<string, number>;
-};
+}
