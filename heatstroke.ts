@@ -31,12 +31,12 @@ import { getContractNameFromContractId } from "./shared";
  * @param type The type of test that failed: invariant or property.
  * @returns void
  */
-export function reporter(
+export const reporter = (
   runDetails: RunDetails,
   radio: EventEmitter,
   type: "invariant" | "test",
   statistics: Statistics,
-) {
+) => {
   const { counterexample, failed, numRuns, path, seed } = runDetails;
 
   if (failed) {
@@ -190,7 +190,7 @@ export function reporter(
   }
   reportStatistics(statistics, type, radio);
   radio.emit("logMessage", "\n");
-}
+};
 
 const ARROW = "->";
 const SUCCESS_SYMBOL = "+";
@@ -203,11 +203,11 @@ const WARN_SYMBOL = "!";
  * @param type The type of test being reported.
  * @param radio The event emitter for logging messages.
  */
-function reportStatistics(
+const reportStatistics = (
   statistics: Statistics,
   type: "invariant" | "test",
   radio: EventEmitter,
-): void {
+): void => {
   if (
     (type === "invariant" && (!statistics.invariant || !statistics.sut)) ||
     (type === "test" && !statistics.test)
@@ -305,7 +305,7 @@ function reportStatistics(
       break;
     }
   }
-}
+};
 
 /**
  * Displays a tree structure of data.
@@ -313,11 +313,11 @@ function reportStatistics(
  * @param radio The event emitter for logging messages.
  * @param options Configuration options for tree display.
  */
-function logAsTree(
+const logAsTree = (
   tree: Record<string, any>,
   radio: EventEmitter,
   options: StatisticsTreeOptions = {},
-): void {
+): void => {
   const { isLastSection = false, baseIndent = "   " } = options;
 
   const printTree = (
@@ -351,7 +351,7 @@ function logAsTree(
   };
 
   printTree(tree, baseIndent, true, radio);
-}
+};
 
 /**
  * Computes the total number of failures from a failure map.

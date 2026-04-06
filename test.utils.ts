@@ -12,11 +12,11 @@ import { join } from "node:path";
  * @returns The path to the temporary directory containing the isolated project
  * copy.
  */
-export function createIsolatedTestEnvironment(
+export const createIsolatedTestEnvironment = (
   manifestDir: string,
   testPrefix: string,
-): string {
+): string => {
   const tempDir = mkdtempSync(join(tmpdir(), testPrefix));
   cpSync(manifestDir, tempDir, { recursive: true });
   return tempDir;
-}
+};

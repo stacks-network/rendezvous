@@ -8,7 +8,6 @@
     "id-length": "off",
     "max-params": "off",
     "max-statements": "off",
-    "func-style": "off",
     "prefer-destructuring": "off",
     "no-ternary": "off",
     "no-nested-ternary": "off",

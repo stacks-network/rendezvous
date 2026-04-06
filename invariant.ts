@@ -703,11 +703,11 @@ const invariantTest = async (
  * Emits warnings for functions that reference traits without eligible
  * implementations.
  */
-function emitMissingTraitWarnings(
+const emitMissingTraitWarnings = (
   radio: EventEmitter,
   sutFunctions: string[],
   invariantFunctions: string[],
-): void {
+): void => {
   if (sutFunctions.length === 0 && invariantFunctions.length === 0) {
     return;
   }
@@ -738,7 +738,7 @@ function emitMissingTraitWarnings(
       `Note: You can add contracts implementing traits either as project contracts or as Clarinet requirements.\n`,
     ),
   );
-}
+};
 
 /**
  * Initializes the local context, setting the number of times each function

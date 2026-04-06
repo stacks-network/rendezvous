@@ -65,7 +65,7 @@ const helpMessage = `
   Learn more: https://stacks-network.github.io/rendezvous/
   `;
 
-export async function main() {
+export const main = async () => {
   const radio = new EventEmitter();
   radio.on("logMessage", (log) => logger(log));
   radio.on("logFailure", (log) => logger(red(log), "error"));
@@ -248,7 +248,7 @@ export async function main() {
       break;
     }
   }
-}
+};
 
 if (require.main === module) {
   main();
