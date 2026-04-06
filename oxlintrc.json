@@ -12,7 +12,6 @@
     "no-ternary": "off",
     "no-nested-ternary": "off",
     "no-await-in-loop": "off",
-    "consistent-indexed-object-style": "off",
     "default-param-last": "off",
     "no-continue": "off",
     "prefer-template": "off"

@@ -1,3 +1,7 @@
+type ContractId = string;
+
+type SutFunctionName = string;
+
 /**
  * LocalContext is a data structure used to track the number of times each SUT
  * function is called for every contract. It is a nested map where:
@@ -5,6 +9,4 @@
  * - The inner key is the SUT function name within the contract.
  * - The value is the count of times the SUT function has been invoked.
  */
-export interface LocalContext {
-  [contractId: string]: Record<string, number>;
-}
+export type LocalContext = Record<ContractId, Record<SutFunctionName, number>>;
