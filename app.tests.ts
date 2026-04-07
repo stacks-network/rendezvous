@@ -1,11 +1,13 @@
+import fs, { rmSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { red } from "ansicolor";
+
 import { getManifestFileName, main } from "./app";
 import { version } from "./package.json";
-import { resolve } from "path";
-import fs, { rmSync } from "fs";
-import { createIsolatedTestEnvironment } from "./test.utils";
-import { LOG_DIVIDER } from "./shared";
 import { getFailureFilePath } from "./persistence";
+import { LOG_DIVIDER } from "./shared";
+import { createIsolatedTestEnvironment } from "./test.utils";
 
 const isolatedTestEnvPrefix = "rendezvous-test-app-";
 
@@ -34,10 +36,10 @@ describe("Command-line arguments handling", () => {
   `;
 
   const noManifestMessage = red(
-    `\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.`
+    `\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.`,
   );
   const noContractNameMessage = red(
-    `\nNo target contract name provided. Please provide the contract name to be fuzzed.`
+    `\nNo target contract name provided. Please provide the contract name to be fuzzed.`,
   );
   const manifestDirPlaceholder = "isolated-example";
 
@@ -51,7 +53,7 @@ describe("Command-line arguments handling", () => {
       process.argv = argv;
       expect(await main()).toBeUndefined();
       process.argv = initialArgv;
-    }
+    },
   );
 
   it("logs the help message at the end when --help is specified", async () => {
@@ -107,7 +109,7 @@ describe("Command-line arguments handling", () => {
 
       process.argv = initialArgv;
       jest.restoreAllMocks();
-    }
+    },
   );
 
   it.each([
@@ -126,7 +128,7 @@ describe("Command-line arguments handling", () => {
       ["node", "app.js", manifestDirPlaceholder, "counter"],
       [
         red(
-          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
+          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
         ),
         helpMessage,
       ],
@@ -136,7 +138,7 @@ describe("Command-line arguments handling", () => {
       ["node", "app.js", manifestDirPlaceholder, "counter", "--bail"],
       [
         red(
-          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
+          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
         ),
         helpMessage,
       ],
@@ -146,7 +148,7 @@ describe("Command-line arguments handling", () => {
       ["node", "app.js", manifestDirPlaceholder, "counter", "--seed=123"],
       [
         red(
-          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
+          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
         ),
         helpMessage,
       ],
@@ -156,7 +158,7 @@ describe("Command-line arguments handling", () => {
       ["node", "app.js", manifestDirPlaceholder, "counter", "--runs=10"],
       [
         red(
-          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
+          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
         ),
         helpMessage,
       ],
@@ -173,7 +175,7 @@ describe("Command-line arguments handling", () => {
       ],
       [
         red(
-          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`
+          `\nInvalid type provided. Please provide the type of test to be executed. Possible values: test, invariant.`,
         ),
         helpMessage,
       ],
@@ -465,12 +467,12 @@ describe("Command-line arguments handling", () => {
       // Setup
       const tempDir = createIsolatedTestEnvironment(
         resolve(__dirname, "example"),
-        isolatedTestEnvPrefix
+        isolatedTestEnvPrefix,
       );
 
       // Update argv to use the isolated test environment.
       const updatedArgv = argv.map((arg) =>
-        arg === manifestDirPlaceholder ? tempDir : arg
+        arg === manifestDirPlaceholder ? tempDir : arg,
       );
       process.argv = updatedArgv;
 
@@ -491,7 +493,7 @@ describe("Command-line arguments handling", () => {
       expectedLogs.forEach((expectedLog) => {
         // Update expected log to use the isolated test environment path.
         const updatedExpectedLog = expectedLog.startsWith(
-          "Using manifest path:"
+          "Using manifest path:",
         )
           ? expectedLog.replace(manifestDirPlaceholder, tempDir)
           : expectedLog;
@@ -503,7 +505,7 @@ describe("Command-line arguments handling", () => {
       process.argv = initialArgv;
       jest.restoreAllMocks();
       rmSync(tempDir, { recursive: true, force: true });
-    }
+    },
   );
 });
 

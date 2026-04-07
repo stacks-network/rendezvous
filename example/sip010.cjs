@@ -44,12 +44,12 @@ async function postTransferSip010PrintEvent(context) {
   }
 
   const sip010PrintEvent = functionCallEvents.find(
-    (ev) => ev.event === "print_event"
+    (ev) => ev.event === "print_event",
   );
 
   if (!sip010PrintEvent) {
     throw new Error(
-      "No print event found. The transfer function must emit the SIP-010 print event containing the memo!"
+      "No print event found. The transfer function must emit the SIP-010 print event containing the memo!",
     );
   }
 
@@ -58,7 +58,7 @@ async function postTransferSip010PrintEvent(context) {
 
   if (printEventValue !== memoValue) {
     throw new Error(
-      `The print event memo value is not equal to the memo parameter value: ${memoValue} !== ${printEventValue}`
+      `The print event memo value is not equal to the memo parameter value: ${memoValue} !== ${printEventValue}`,
     );
   }
 

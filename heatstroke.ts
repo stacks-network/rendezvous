@@ -1,16 +1,18 @@
-import { EventEmitter } from "events";
-import { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
+import type { EventEmitter } from "node:events";
+
+import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 import { green } from "ansicolor";
-import {
+
+import type {
   InvariantCounterExample,
   RunDetails,
   Statistics,
   StatisticsTreeOptions,
   TestCounterExample,
 } from "./heatstroke.types";
+import type { FalsifiedInvariantError } from "./invariant";
+import type { PropertyTestError } from "./property";
 import { getContractNameFromContractId } from "./shared";
-import { PropertyTestError } from "./property";
-import { FalsifiedInvariantError } from "./invariant";
 
 /**
  * Heatstrokes Reporter
@@ -29,12 +31,12 @@ import { FalsifiedInvariantError } from "./invariant";
  * @param type The type of test that failed: invariant or property.
  * @returns void
  */
-export function reporter(
+export const reporter = (
   runDetails: RunDetails,
   radio: EventEmitter,
   type: "invariant" | "test",
-  statistics: Statistics
-) {
+  statistics: Statistics,
+) => {
   const { counterexample, failed, numRuns, path, seed } = runDetails;
 
   if (failed) {
@@ -50,7 +52,7 @@ export function reporter(
     // Report general run data.
     radio.emit(
       "logFailure",
-      `\nError: Property failed after ${numRuns} tests.`
+      `\nError: Property failed after ${numRuns} tests.`,
     );
     radio.emit("logFailure", `Seed : ${seed}`);
     if (path) {
@@ -64,58 +66,58 @@ export function reporter(
         radio.emit(
           "logFailure",
           `- Contract : ${getContractNameFromContractId(
-            ce.rendezvousContractId
-          )}`
+            ce.rendezvousContractId,
+          )}`,
         );
         radio.emit(
           "logFailure",
           `- Functions: ${ce.selectedFunctions
             .map(
               (selectedFunction: ContractInterfaceFunction) =>
-                selectedFunction.name
+                selectedFunction.name,
             )
             .join(", ")} (${ce.selectedFunctions
             .map(
               (selectedFunction: ContractInterfaceFunction) =>
-                selectedFunction.access
+                selectedFunction.access,
             )
-            .join(", ")})`
+            .join(", ")})`,
         );
         radio.emit(
           "logFailure",
           `- Arguments: ${ce.selectedFunctionsArgsList
             .map((selectedFunctionArgs: any[]) =>
-              JSON.stringify(selectedFunctionArgs)
+              JSON.stringify(selectedFunctionArgs),
             )
-            .join(", ")}`
+            .join(", ")}`,
         );
         radio.emit(
           "logFailure",
           `- Callers  : ${ce.sutCallers
             .map((sutCaller: [string, string]) => sutCaller[0])
-            .join(", ")}`
+            .join(", ")}`,
         );
         radio.emit(
           "logFailure",
           `- Outputs  : ${ce.selectedFunctions
             .map((selectedFunction: ContractInterfaceFunction) =>
-              JSON.stringify(selectedFunction.outputs)
+              JSON.stringify(selectedFunction.outputs),
             )
-            .join(", ")}`
+            .join(", ")}`,
         );
         radio.emit(
           "logFailure",
-          `- Invariant: ${ce.selectedInvariant.name} (${ce.selectedInvariant.access})`
+          `- Invariant: ${ce.selectedInvariant.name} (${ce.selectedInvariant.access})`,
         );
         radio.emit(
           "logFailure",
-          `- Arguments: ${JSON.stringify(ce.invariantArgs)}`
+          `- Arguments: ${JSON.stringify(ce.invariantArgs)}`,
         );
         radio.emit("logFailure", `- Caller   : ${ce.invariantCaller[0]}`);
 
         radio.emit(
           "logFailure",
-          `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`
+          `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
         );
 
         const formattedError = `The invariant "${
@@ -138,26 +140,26 @@ export function reporter(
         radio.emit(
           "logFailure",
           `- Contract : ${getContractNameFromContractId(
-            ce.rendezvousContractId
-          )}`
+            ce.rendezvousContractId,
+          )}`,
         );
         radio.emit(
           "logFailure",
-          `- Test Function : ${ce.selectedTestFunction.name} (${ce.selectedTestFunction.access})`
+          `- Test Function : ${ce.selectedTestFunction.name} (${ce.selectedTestFunction.access})`,
         );
         radio.emit(
           "logFailure",
-          `- Arguments     : ${JSON.stringify(ce.functionArgs)}`
+          `- Arguments     : ${JSON.stringify(ce.functionArgs)}`,
         );
         radio.emit("logFailure", `- Caller        : ${ce.testCaller[0]}`);
         radio.emit(
           "logFailure",
-          `- Outputs       : ${JSON.stringify(ce.selectedTestFunction.outputs)}`
+          `- Outputs       : ${JSON.stringify(ce.selectedTestFunction.outputs)}`,
         );
 
         radio.emit(
           "logFailure",
-          `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`
+          `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
         );
 
         const formattedError = `The test function "${
@@ -182,13 +184,13 @@ export function reporter(
       green(
         `\nOK, ${
           type === "invariant" ? "invariants" : "properties"
-        } passed after ${numRuns} runs.\n`
-      )
+        } passed after ${numRuns} runs.\n`,
+      ),
     );
   }
   reportStatistics(statistics, type, radio);
   radio.emit("logMessage", "\n");
-}
+};
 
 const ARROW = "->";
 const SUCCESS_SYMBOL = "+";
@@ -201,11 +203,11 @@ const WARN_SYMBOL = "!";
  * @param type The type of test being reported.
  * @param radio The event emitter for logging messages.
  */
-function reportStatistics(
+const reportStatistics = (
   statistics: Statistics,
   type: "invariant" | "test",
-  radio: EventEmitter
-): void {
+  radio: EventEmitter,
+): void => {
   if (
     (type === "invariant" && (!statistics.invariant || !statistics.sut)) ||
     (type === "test" && !statistics.test)
@@ -242,24 +244,24 @@ function reportStatistics(
       radio.emit("logMessage", "\nLEGEND:\n");
       radio.emit(
         "logMessage",
-        "  SUCCESSFUL calls executed and advanced the test"
+        "  SUCCESSFUL calls executed and advanced the test",
       );
       radio.emit(
         "logMessage",
-        "  IGNORED    calls failed but did not affect the test"
+        "  IGNORED    calls failed but did not affect the test",
       );
       radio.emit(
         "logMessage",
-        "  PASSED     invariants maintained system integrity"
+        "  PASSED     invariants maintained system integrity",
       );
       radio.emit(
         "logMessage",
-        "  FAILED     invariants indicate contract vulnerabilities"
+        "  FAILED     invariants indicate contract vulnerabilities",
       );
       if (computeTotalCount(statistics.invariant!.failed) > 0) {
         radio.emit(
           "logFailure",
-          "\n! FAILED invariants require immediate attention as they indicate that your contract can enter an invalid state under certain conditions."
+          "\n! FAILED invariants require immediate attention as they indicate that your contract can enter an invalid state under certain conditions.",
         );
       }
       break;
@@ -284,26 +286,26 @@ function reportStatistics(
       radio.emit("logMessage", "\nLEGEND:\n");
       radio.emit(
         "logMessage",
-        "  PASSED    properties verified for given inputs"
+        "  PASSED    properties verified for given inputs",
       );
       radio.emit(
         "logMessage",
-        "  DISCARDED skipped due to invalid preconditions"
+        "  DISCARDED skipped due to invalid preconditions",
       );
       radio.emit(
         "logMessage",
-        "  FAILED    property violations or unexpected behavior"
+        "  FAILED    property violations or unexpected behavior",
       );
       if (computeTotalCount(statistics.test!.failed) > 0) {
         radio.emit(
           "logFailure",
-          "\n! FAILED tests indicate that your function properties don't hold for all inputs. Review the counterexamples above for debugging."
+          "\n! FAILED tests indicate that your function properties don't hold for all inputs. Review the counterexamples above for debugging.",
         );
       }
       break;
     }
   }
-}
+};
 
 /**
  * Displays a tree structure of data.
@@ -311,18 +313,18 @@ function reportStatistics(
  * @param radio The event emitter for logging messages.
  * @param options Configuration options for tree display.
  */
-function logAsTree(
+const logAsTree = (
   tree: Record<string, any>,
   radio: EventEmitter,
-  options: StatisticsTreeOptions = {}
-): void {
+  options: StatisticsTreeOptions = {},
+): void => {
   const { isLastSection = false, baseIndent = "   " } = options;
 
   const printTree = (
     node: Record<string, any>,
+    radioEmitter: EventEmitter,
     indent: string = baseIndent,
-    isLastParent: boolean = true,
-    radio: EventEmitter
+    isLastParent = true,
   ): void => {
     const keys = Object.keys(node);
 
@@ -333,23 +335,23 @@ function logAsTree(
       const leadingChar = isLastSection ? " " : "│";
 
       if (typeof node[key] === "object" && node[key] !== null) {
-        radio.emit(
+        radioEmitter.emit(
           "logMessage",
-          `${leadingChar} ${indent}${connector} ${ARROW} ${key}`
+          `${leadingChar} ${indent}${connector} ${ARROW} ${key}`,
         );
-        printTree(node[key], nextIndent, isLast, radio);
+        printTree(node[key], radioEmitter, nextIndent, isLast);
       } else {
         const count = node[key] as number;
-        radio.emit(
+        radioEmitter.emit(
           "logMessage",
-          `${leadingChar} ${indent}${connector} ${key}: x${count}`
+          `${leadingChar} ${indent}${connector} ${key}: x${count}`,
         );
       }
     });
   };
 
-  printTree(tree, baseIndent, true, radio);
-}
+  printTree(tree, radio, baseIndent);
+};
 
 /**
  * Computes the total number of failures from a failure map.

@@ -1,20 +1,22 @@
+import { rmSync } from "node:fs";
+import { join, resolve } from "node:path";
+
 import { initSimnet } from "@stacks/clarinet-sdk";
-import {
-  isParamsMatch,
-  isReturnTypeBoolean,
-  isTestDiscardedInPlace,
-} from "./property";
-import { rmSync } from "fs";
-import { join, resolve } from "path";
-import fc from "fast-check";
-import { createIsolatedTestEnvironment } from "./test.utils";
-import {
+import type {
   ContractInterfaceFunction,
   ContractInterfaceFunctionAccess,
   ContractInterfaceFunctionArg,
   ContractInterfaceFunctionOutput,
 } from "@stacks/clarinet-sdk-wasm";
 import { cvToJSON } from "@stacks/transactions";
+import fc from "fast-check";
+
+import {
+  isParamsMatch,
+  isReturnTypeBoolean,
+  isTestDiscardedInPlace,
+} from "./property";
+import { createIsolatedTestEnvironment } from "./test.utils";
 
 const isolatedTestEnvPrefix = "rendezvous-test-property-";
 
@@ -29,7 +31,7 @@ describe("Test discarding related operations", () => {
             fc.record({
               name: fc.string(),
               type: fc.constantFrom("int128", "uint128", "bool", "principal"),
-            })
+            }),
           ),
           outputs: fc.record({ type: fc.constant("bool") }),
         }),
@@ -47,8 +49,8 @@ describe("Test discarding related operations", () => {
           };
           const actual = isReturnTypeBoolean(discardFunctionInterface);
           expect(actual).toBe(true);
-        }
-      )
+        },
+      ),
     );
   });
 
@@ -62,7 +64,7 @@ describe("Test discarding related operations", () => {
             fc.record({
               name: fc.string(),
               type: fc.constantFrom("int128", "uint128", "bool", "principal"),
-            })
+            }),
           ),
           outputs: fc.record({
             type: fc.constantFrom("int128", "uint128", "principal"),
@@ -82,8 +84,8 @@ describe("Test discarding related operations", () => {
           };
           const actual = isReturnTypeBoolean(discardFunctionInterface);
           expect(actual).toBe(false);
-        }
-      )
+        },
+      ),
     );
   });
 
@@ -97,7 +99,7 @@ describe("Test discarding related operations", () => {
             fc.record({
               name: fc.string(),
               type: fc.constantFrom("int128", "uint128", "bool", "principal"),
-            })
+            }),
           ),
           outputs: fc.record({ type: fc.constant("bool") }),
         }),
@@ -121,11 +123,11 @@ describe("Test discarding related operations", () => {
           };
           const actual = isParamsMatch(
             testFunctionInterface,
-            discardFunctionInterface
+            discardFunctionInterface,
           );
           expect(actual).toBe(true);
-        }
-      )
+        },
+      ),
     );
   });
 
@@ -144,9 +146,9 @@ describe("Test discarding related operations", () => {
                     "int128",
                     "uint128",
                     "bool",
-                    "principal"
+                    "principal",
                   ),
-                })
+                }),
               ),
               outputs: fc.record({ type: fc.constant("bool") }),
             }),
@@ -160,9 +162,9 @@ describe("Test discarding related operations", () => {
                     "int128",
                     "uint128",
                     "bool",
-                    "principal"
+                    "principal",
                   ),
-                })
+                }),
               ),
               outputs: fc.record({ type: fc.constant("bool") }),
             }),
@@ -170,13 +172,13 @@ describe("Test discarding related operations", () => {
           .filter(
             (r) =>
               JSON.stringify(
-                [...r.testFn.args].sort((a, b) => a.name.localeCompare(b.name))
+                [...r.testFn.args].sort((a, b) => a.name.localeCompare(b.name)),
               ) !==
               JSON.stringify(
                 [...r.discardFn.args].sort((a, b) =>
-                  a.name.localeCompare(b.name)
-                )
-              )
+                  a.name.localeCompare(b.name),
+                ),
+              ),
           ),
         (r: {
           testFn: {
@@ -206,11 +208,11 @@ describe("Test discarding related operations", () => {
           };
           const actual = isParamsMatch(
             testFunctionInterface,
-            discardFunctionInterface
+            discardFunctionInterface,
           );
           expect(actual).toBe(false);
-        }
-      )
+        },
+      ),
     );
   });
 
@@ -218,7 +220,7 @@ describe("Test discarding related operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -227,14 +229,14 @@ describe("Test discarding related operations", () => {
       "contract",
       "(define-public (discarded-fn) (ok false))",
       { clarityVersion: 2 },
-      simnet.deployer
+      simnet.deployer,
     );
 
     const { result: functionCallResult } = simnet.callPublicFn(
       "contract",
       "discarded-fn",
       [],
-      simnet.deployer
+      simnet.deployer,
     );
 
     const functionCallResultJson = cvToJSON(functionCallResult);
@@ -253,7 +255,7 @@ describe("Test discarding related operations", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -262,14 +264,14 @@ describe("Test discarding related operations", () => {
       "contract",
       "(define-public (not-discarded-fn) (ok true))",
       { clarityVersion: 2 },
-      simnet.deployer
+      simnet.deployer,
     );
 
     const { result: functionCallResult } = simnet.callPublicFn(
       "contract",
       "not-discarded-fn",
       [],
-      simnet.deployer
+      simnet.deployer,
     );
 
     const functionCallResultJson = cvToJSON(functionCallResult);

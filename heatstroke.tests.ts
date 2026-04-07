@@ -1,21 +1,23 @@
-import { EventEmitter } from "events";
-import { rmSync } from "fs";
-import { join, resolve } from "path";
+import { EventEmitter } from "node:events";
+import { rmSync } from "node:fs";
+import { join, resolve } from "node:path";
+
 import { initSimnet } from "@stacks/clarinet-sdk";
-import { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
+import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 import fc from "fast-check";
+
 import { reporter } from "./heatstroke";
+import { FalsifiedInvariantError } from "./invariant";
+import { PropertyTestError } from "./property";
 import { getContractNameFromContractId } from "./shared";
 import { createIsolatedTestEnvironment } from "./test.utils";
-import { PropertyTestError } from "./property";
-import { FalsifiedInvariantError } from "./invariant";
 
 const isolatedTestEnvPrefix = "rendezvous-test-heatstroke-";
 
 const asciiString = () =>
   fc.string({
     unit: fc.constantFrom(
-      ..."ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+      ..."ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_",
     ),
     minLength: 1,
   });
@@ -25,7 +27,7 @@ describe("Custom reporter logging", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -45,10 +47,10 @@ describe("Custom reporter logging", () => {
               access: asciiString(),
               outputs: fc.array(asciiString()),
               args: fc.anything(),
-            })
+            }),
           ),
           selectedFunctionsArgsList: fc.tuple(
-            fc.array(fc.oneof(asciiString(), fc.nat(), fc.boolean()))
+            fc.array(fc.oneof(asciiString(), fc.nat(), fc.boolean())),
           ),
           selectedInvariant: fc.record({
             name: asciiString(),
@@ -57,21 +59,21 @@ describe("Custom reporter logging", () => {
             args: fc.anything(),
           }),
           invariantArgs: fc.array(
-            fc.oneof(asciiString(), fc.nat(), fc.boolean())
+            fc.oneof(asciiString(), fc.nat(), fc.boolean()),
           ),
           errorMessage: asciiString(),
           clarityError: asciiString(),
           sutCallers: fc.array(
             fc.constantFrom(
               ...new Map(
-                [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-              ).entries()
-            )
+                [...simnet.getAccounts()].filter(([key]) => key !== "faucet"),
+              ).entries(),
+            ),
           ),
           invariantCaller: fc.constantFrom(
             ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet"),
+            ).entries(),
           ),
         }),
         (r: {
@@ -135,7 +137,7 @@ describe("Custom reporter logging", () => {
             `Seed : ${r.seed}`,
             `\nCounterexample:`,
             `- Contract : ${getContractNameFromContractId(
-              rendezvousContractId
+              rendezvousContractId,
             )}`,
             `- Functions: ${r.selectedFunctions
               .map((selectedFunction) => selectedFunction.name)
@@ -144,7 +146,7 @@ describe("Custom reporter logging", () => {
               .join(", ")})`,
             `- Arguments: ${r.selectedFunctionsArgsList
               .map((selectedFunctionArgs) =>
-                JSON.stringify(selectedFunctionArgs)
+                JSON.stringify(selectedFunctionArgs),
               )
               .join(", ")}`,
             `- Callers  : ${r.sutCallers
@@ -152,7 +154,7 @@ describe("Custom reporter logging", () => {
               .join(", ")}`,
             `- Outputs  : ${r.selectedFunctions
               .map((selectedFunction) =>
-                JSON.stringify(selectedFunction.outputs)
+                JSON.stringify(selectedFunction.outputs),
               )
               .join(", ")}`,
             `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`,
@@ -169,9 +171,9 @@ describe("Custom reporter logging", () => {
           ];
 
           expect(emittedErrorLogs).toEqual(expectedMessages);
-        }
+        },
       ),
-      { numRuns: 10 }
+      { numRuns: 10 },
     );
 
     // Teardown
@@ -183,7 +185,7 @@ describe("Custom reporter logging", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -204,10 +206,10 @@ describe("Custom reporter logging", () => {
               access: asciiString(),
               outputs: fc.array(asciiString()),
               args: fc.anything(),
-            })
+            }),
           ),
           selectedFunctionsArgsList: fc.tuple(
-            fc.array(fc.oneof(asciiString(), fc.nat(), fc.boolean()))
+            fc.array(fc.oneof(asciiString(), fc.nat(), fc.boolean())),
           ),
           selectedInvariant: fc.record({
             name: asciiString(),
@@ -216,21 +218,21 @@ describe("Custom reporter logging", () => {
             args: fc.anything(),
           }),
           invariantArgs: fc.array(
-            fc.oneof(asciiString(), fc.nat(), fc.boolean())
+            fc.oneof(asciiString(), fc.nat(), fc.boolean()),
           ),
           errorMessage: asciiString(),
           clarityError: asciiString(),
           sutCallers: fc.array(
             fc.constantFrom(
               ...new Map(
-                [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-              ).entries()
-            )
+                [...simnet.getAccounts()].filter(([key]) => key !== "faucet"),
+              ).entries(),
+            ),
           ),
           invariantCaller: fc.constantFrom(
             ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet"),
+            ).entries(),
           ),
         }),
         (r: {
@@ -297,7 +299,7 @@ describe("Custom reporter logging", () => {
             `Path : ${r.path}`,
             `\nCounterexample:`,
             `- Contract : ${getContractNameFromContractId(
-              rendezvousContractId
+              rendezvousContractId,
             )}`,
             `- Functions: ${r.selectedFunctions
               .map((selectedFunction) => selectedFunction.name)
@@ -306,7 +308,7 @@ describe("Custom reporter logging", () => {
               .join(", ")})`,
             `- Arguments: ${r.selectedFunctionsArgsList
               .map((selectedFunctionArgs) =>
-                JSON.stringify(selectedFunctionArgs)
+                JSON.stringify(selectedFunctionArgs),
               )
               .join(", ")}`,
             `- Callers  : ${r.sutCallers
@@ -314,7 +316,7 @@ describe("Custom reporter logging", () => {
               .join(", ")}`,
             `- Outputs  : ${r.selectedFunctions
               .map((selectedFunction) =>
-                JSON.stringify(selectedFunction.outputs)
+                JSON.stringify(selectedFunction.outputs),
               )
               .join(", ")}`,
             `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`,
@@ -332,9 +334,9 @@ describe("Custom reporter logging", () => {
 
           expect(emittedErrorLogs).toEqual(expectedMessages);
           radio.removeAllListeners();
-        }
+        },
       ),
-      { numRuns: 10 }
+      { numRuns: 10 },
     );
 
     // Teardown
@@ -346,7 +348,7 @@ describe("Custom reporter logging", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -365,10 +367,10 @@ describe("Custom reporter logging", () => {
               access: asciiString(),
               outputs: fc.array(asciiString()),
               args: fc.anything(),
-            })
+            }),
           ),
           selectedFunctionsArgsList: fc.tuple(
-            fc.array(fc.oneof(asciiString(), fc.nat(), fc.boolean()))
+            fc.array(fc.oneof(asciiString(), fc.nat(), fc.boolean())),
           ),
           selectedInvariant: fc.record({
             name: asciiString(),
@@ -377,20 +379,20 @@ describe("Custom reporter logging", () => {
             args: fc.anything(),
           }),
           invariantArgs: fc.array(
-            fc.oneof(asciiString(), fc.nat(), fc.boolean())
+            fc.oneof(asciiString(), fc.nat(), fc.boolean()),
           ),
           errorMessage: asciiString(),
           sutCallers: fc.array(
             fc.constantFrom(
               ...new Map(
-                [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-              ).entries()
-            )
+                [...simnet.getAccounts()].filter(([key]) => key !== "faucet"),
+              ).entries(),
+            ),
           ),
           invariantCaller: fc.constantFrom(
             ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet"),
+            ).entries(),
           ),
         }),
         (r: {
@@ -452,9 +454,9 @@ describe("Custom reporter logging", () => {
           // Verify
           expect(emittedErrorLogs).toEqual([]);
           radio.removeAllListeners();
-        }
+        },
       ),
-      { numRuns: 10 }
+      { numRuns: 10 },
     );
 
     // Teardown
@@ -465,7 +467,7 @@ describe("Custom reporter logging", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -486,14 +488,14 @@ describe("Custom reporter logging", () => {
             args: fc.anything(),
           }),
           functionArgs: fc.array(
-            fc.oneof(asciiString(), fc.nat(), fc.boolean())
+            fc.oneof(asciiString(), fc.nat(), fc.boolean()),
           ),
           errorMessage: asciiString(),
           clarityError: asciiString(),
           testCaller: fc.constantFrom(
             ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet"),
+            ).entries(),
           ),
         }),
         (r: {
@@ -545,13 +547,13 @@ describe("Custom reporter logging", () => {
             `Seed : ${r.seed}`,
             `\nCounterexample:`,
             `- Contract : ${getContractNameFromContractId(
-              rendezvousContractId
+              rendezvousContractId,
             )}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
             `- Arguments     : ${JSON.stringify(r.functionArgs)}`,
             `- Caller        : ${r.testCaller[0]}`,
             `- Outputs       : ${JSON.stringify(
-              r.selectedTestFunction.outputs
+              r.selectedTestFunction.outputs,
             )}`,
             `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
             `The test function "${
@@ -564,9 +566,9 @@ describe("Custom reporter logging", () => {
           ];
 
           expect(emittedErrorLogs).toEqual(expectedMessages);
-        }
+        },
       ),
-      { numRuns: 10 }
+      { numRuns: 10 },
     );
 
     // Teardown
@@ -578,7 +580,7 @@ describe("Custom reporter logging", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -600,14 +602,14 @@ describe("Custom reporter logging", () => {
             args: fc.anything(),
           }),
           functionArgs: fc.array(
-            fc.oneof(asciiString(), fc.nat(), fc.boolean())
+            fc.oneof(asciiString(), fc.nat(), fc.boolean()),
           ),
           errorMessage: asciiString(),
           clarityError: asciiString(),
           testCaller: fc.constantFrom(
             ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet"),
+            ).entries(),
           ),
         }),
         (r: {
@@ -662,13 +664,13 @@ describe("Custom reporter logging", () => {
             `Path : ${r.path}`,
             `\nCounterexample:`,
             `- Contract : ${getContractNameFromContractId(
-              rendezvousContractId
+              rendezvousContractId,
             )}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
             `- Arguments     : ${JSON.stringify(r.functionArgs)}`,
             `- Caller        : ${r.testCaller[0]}`,
             `- Outputs       : ${JSON.stringify(
-              r.selectedTestFunction.outputs
+              r.selectedTestFunction.outputs,
             )}`,
             `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
             `The test function "${
@@ -681,9 +683,9 @@ describe("Custom reporter logging", () => {
           ];
 
           expect(emittedErrorLogs).toEqual(expectedMessages);
-        }
+        },
       ),
-      { numRuns: 10 }
+      { numRuns: 10 },
     );
 
     // Teardown
@@ -695,7 +697,7 @@ describe("Custom reporter logging", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const manifestPath = join(tempDir, "Clarinet.toml");
     const simnet = await initSimnet(manifestPath);
@@ -714,13 +716,13 @@ describe("Custom reporter logging", () => {
             args: fc.anything(),
           }),
           functionArgs: fc.array(
-            fc.oneof(asciiString(), fc.nat(), fc.boolean())
+            fc.oneof(asciiString(), fc.nat(), fc.boolean()),
           ),
           errorMessage: asciiString(),
           testCaller: fc.constantFrom(
             ...new Map(
-              [...simnet.getAccounts()].filter(([key]) => key !== "faucet")
-            ).entries()
+              [...simnet.getAccounts()].filter(([key]) => key !== "faucet"),
+            ).entries(),
           ),
         }),
         (r: {
@@ -768,9 +770,9 @@ describe("Custom reporter logging", () => {
           // Verify
 
           expect(emittedErrorLogs).toEqual([]);
-        }
+        },
       ),
-      { numRuns: 10 }
+      { numRuns: 10 },
     );
 
     // Teardown

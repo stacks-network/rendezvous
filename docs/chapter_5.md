@@ -17,12 +17,14 @@ This chapter covers how to install Rendezvous and set up your environment for ef
 [Project Setup](#project-setup)
 
 [Troubleshooting Installation Issues](#troubleshooting-installation-issues)
-  - [Common Issues and Solutions](#common-issues-and-solutions)
+
+- [Common Issues and Solutions](#common-issues-and-solutions)
 
 [Uninstalling Rendezvous](#uninstalling-rendezvous)
-  - [Removing a Local Installation](#removing-a-local-installation)
-  - [Removing a Global Installation](#removing-a-global-installation)
-  - [Removing a Development Installation](#removing-a-development-installation)
+
+- [Removing a Local Installation](#removing-a-local-installation)
+- [Removing a Global Installation](#removing-a-global-installation)
+- [Removing a Development Installation](#removing-a-development-installation)
 
 [Next Steps](#next-steps)
 
@@ -60,21 +62,25 @@ With a global installation, you can run the `rv` command from any directory with
 If you want to contribute to Rendezvous or run it from source:
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/stacks-network/rendezvous.git
    ```
 
 2. Navigate to the project directory:
+
    ```bash
    cd rendezvous
    ```
 
 3. Install dependencies:
+
    ```bash
    npm install
    ```
 
 4. Build the project:
+
    ```bash
    npm run build
    ```
@@ -113,10 +119,10 @@ my-project/
     └── Devnet.toml
 ```
 
->Key points to note:
+> Key points to note:
 >
->1. Rendezvous functions (invariants and property-based tests) are written directly inside the contract file, annotated with `#[env(simnet)]` for conditional deployment.
->2. A valid `Clarinet.toml` file must exist at the project root.
+> 1.  Rendezvous functions (invariants and property-based tests) are written directly inside the contract file, annotated with `#[env(simnet)]` for conditional deployment.
+> 2.  A valid `Clarinet.toml` file must exist at the project root.
 
 ## Troubleshooting Installation Issues
 
@@ -176,6 +182,7 @@ npm uninstall -g @stacks/rendezvous
 If you installed from source:
 
 1. If you linked the package globally, unlink it first:
+
    ```bash
    npm unlink -g @stacks/rendezvous
    ```

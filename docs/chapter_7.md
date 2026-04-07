@@ -145,7 +145,7 @@ describe("stx-defi unit tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
 
     expect(result).toBeOk(Cl.bool(true));
@@ -159,7 +159,7 @@ describe("stx-defi unit tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
     expect(depositResult).toBeOk(Cl.bool(true));
 
@@ -167,7 +167,7 @@ describe("stx-defi unit tests", () => {
       "stx-defi",
       "borrow",
       [Cl.uint(amountToBorrow)],
-      address1
+      address1,
     );
 
     expect(result).toBeOk(Cl.bool(true));
@@ -181,21 +181,21 @@ describe("stx-defi unit tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
 
     simnet.callPublicFn(
       "stx-defi",
       "borrow",
       [Cl.uint(amountToBorrow)],
-      address1
+      address1,
     );
 
     const { result } = simnet.callReadOnlyFn(
       "stx-defi",
       "get-loan-amount",
       [],
-      address1
+      address1,
     );
 
     expect(result).toBeOk(Cl.uint(amountToBorrow));
@@ -209,14 +209,14 @@ describe("stx-defi unit tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
 
     const { result } = simnet.callPublicFn(
       "stx-defi",
       "borrow",
       [Cl.uint(amountToBorrow)],
-      address1
+      address1,
     );
 
     // err-overborrow
@@ -239,7 +239,6 @@ The main functions and state of the contract are now covered by tests. Line cove
 ## Step 5: Add Rendezvous Property-Based Tests
 
 Rendezvous lets you test a broader range of inputs, not just specific examples. Let's see how to write your first property-based test and why it matters.
-
 
 ### Add an Ice-Breaker Test
 
@@ -598,7 +597,7 @@ it("loan amount is correct after single borrow", () => {
     "stx-defi",
     "borrow",
     [Cl.uint(amountToBorrow)],
-    address1
+    address1,
   );
   // ...
 });

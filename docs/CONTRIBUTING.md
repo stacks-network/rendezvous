@@ -18,6 +18,7 @@ To keep things simple and to maintain quality, please follow these guidelines.
 
 2. **Create a fork and branch:**
    Work in a dedicated branch. Use short, clear names:
+
    ```
    git checkout -b my-fix
    ```
@@ -30,6 +31,7 @@ To keep things simple and to maintain quality, please follow these guidelines.
    - Keep logic small and focused.
 
    Example code comment:
+
    ```js
    // Good: Explains why, offering crucial context.
    // Bad: Focuses on how or adds unnecessary verbosity.
@@ -38,6 +40,7 @@ To keep things simple and to maintain quality, please follow these guidelines.
 4. **Write tests:**
    Test your changes. Add or update tests in `*.tests.ts` files.
    Run tests:
+
    ```
    npm test
    ```
@@ -57,6 +60,7 @@ To keep things simple and to maintain quality, please follow these guidelines.
 6. **Open a pull request (PR) targeting the `master` branch:**
    Keep it small and focused. Explain what and why.
    Example PR description:
+
    ```
    This PR fixes a minor off-by-one error in the property-based tests.
    The fuzzing process now produces the expected results.
@@ -81,11 +85,11 @@ Your contributions help keep `rv` robust, helpful, and accessible to everyone.
 
 ---
 
-*This CONTRIBUTING guide is crafted with inspiration from the following:*
+_This CONTRIBUTING guide is crafted with inspiration from the following:_
 
 - [AutoFixture CONTRIBUTING.md](https://github.com/AutoFixture/AutoFixture/blob/master/CONTRIBUTING.md) by AutoFixture contributors
 - [Hedgehog STYLE_GUIDE.md](https://github.com/hedgehogqa/haskell-hedgehog/blob/master/STYLE_GUIDE.md) by Hedgehog contributors
 - [10 Tips for Better Pull Requests](https://blog.ploeh.dk/2015/01/15/10-tips-for-better-pull-requests/) by Mark Seemann (ploeh)
 - [The Importance of Comments](https://ayende.com/blog/163297/the-importance-of-comments) by Oren Eini (Ayende Rahien)
 
-*(These references also highlight some of our roots and past influences.)*
+_(These references also highlight some of our roots and past influences.)_

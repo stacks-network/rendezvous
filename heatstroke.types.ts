@@ -1,6 +1,6 @@
-import { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
+import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
 
-export type RunDetails = {
+export interface RunDetails {
   failed: boolean;
   counterexample: CounterExample[];
   numRuns: number;
@@ -8,18 +8,18 @@ export type RunDetails = {
   path?: string;
   error?: Error;
   errorInstance?: Error;
-};
+}
 
 type CounterExample = TestCounterExample | InvariantCounterExample;
 
-export type TestCounterExample = {
+export interface TestCounterExample {
   rendezvousContractId: string;
   selectedTestFunction: ContractInterfaceFunction;
   functionArgs: any;
   testCaller: [string, string];
-};
+}
 
-export type InvariantCounterExample = {
+export interface InvariantCounterExample {
   rendezvousContractId: string;
   selectedFunctions: ContractInterfaceFunction[];
   selectedFunctionsArgsList: any[];
@@ -27,29 +27,29 @@ export type InvariantCounterExample = {
   selectedInvariant: ContractInterfaceFunction;
   invariantArgs: any;
   invariantCaller: [string, string];
-};
+}
 
-type SutFunctionStatistics = {
+interface SutFunctionStatistics {
   successful: Map<string, number>;
   failed: Map<string, number>;
-};
+}
 
-type InvariantFunctionStatistics = {
+interface InvariantFunctionStatistics {
   successful: Map<string, number>;
   failed: Map<string, number>;
-};
+}
 
-type TestFunctionStatistics = {
+interface TestFunctionStatistics {
   successful: Map<string, number>;
   discarded: Map<string, number>;
   failed: Map<string, number>;
-};
+}
 
-export type Statistics = {
+export interface Statistics {
   sut?: SutFunctionStatistics;
   invariant?: InvariantFunctionStatistics;
   test?: TestFunctionStatistics;
-};
+}
 
 /**
  * Options for configuring tree statistics reporting.

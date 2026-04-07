@@ -1,10 +1,14 @@
-import {
+import { rmSync } from "node:fs";
+import { join, resolve } from "node:path";
+
+import { initSimnet } from "@stacks/clarinet-sdk";
+import type {
   ContractInterfaceFunction,
   IContractAST,
 } from "@stacks/clarinet-sdk-wasm";
-import { initSimnet } from "@stacks/clarinet-sdk";
-import { rmSync } from "fs";
-import { join, resolve } from "path";
+
+import type { EnrichedContractInterfaceFunction } from "./shared.types";
+import { createIsolatedTestEnvironment } from "./test.utils";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
@@ -13,9 +17,7 @@ import {
   getNonTestableTraitFunctions,
   isTraitReferenceFunction,
 } from "./traits";
-import { createIsolatedTestEnvironment } from "./test.utils";
-import { EnrichedContractInterfaceFunction } from "./shared.types";
-import { ImplementedTraitType } from "./traits.types";
+import type { ImplementedTraitType } from "./traits.types";
 
 const isolatedTestEnvPrefix = "rendezvous-test-traits-";
 
@@ -28,7 +30,7 @@ describe("Trait reference processing", () => {
     const expected = new Map(
       Object.entries({
         "test-trait": { token: "trait_reference" },
-      })
+      }),
     );
 
     // Act
@@ -46,7 +48,7 @@ describe("Trait reference processing", () => {
     const expected = new Map(
       Object.entries({
         "test-trait": { token: "trait_reference" },
-      })
+      }),
     );
 
     // Act
@@ -66,7 +68,7 @@ describe("Trait reference processing", () => {
       Object.entries({
         "test-trait": { token: "trait_reference" },
         "invariant-trait": { token: "trait_reference" },
-      })
+      }),
     );
 
     // Act
@@ -84,7 +86,7 @@ describe("Trait reference processing", () => {
     const expected = new Map(
       Object.entries({
         "test-trait": { token: "trait_reference" },
-      })
+      }),
     );
 
     // Act
@@ -102,7 +104,7 @@ describe("Trait reference processing", () => {
     const expected = new Map(
       Object.entries({
         "test-trait": { e: "trait_reference" },
-      })
+      }),
     );
 
     // Act
@@ -122,7 +124,7 @@ describe("Trait reference processing", () => {
         "test-trait": {
           "tuple-param": { tuple: { token: "trait_reference" } },
         },
-      })
+      }),
     );
 
     // Act
@@ -142,7 +144,7 @@ describe("Trait reference processing", () => {
         "test-trait": {
           "token-list": { list: "trait_reference" },
         },
-      })
+      }),
     );
 
     // Act
@@ -162,7 +164,7 @@ describe("Trait reference processing", () => {
         "test-trait": {
           "resp-trait-param": { response: { ok: "trait_reference" } },
         },
-      })
+      }),
     );
 
     // Act
@@ -182,7 +184,7 @@ describe("Trait reference processing", () => {
         "test-trait": {
           "resp-trait-param": { response: { error: "trait_reference" } },
         },
-      })
+      }),
     );
 
     // Act
@@ -204,7 +206,7 @@ describe("Trait reference processing", () => {
             response: { ok: "trait_reference", error: "trait_reference" },
           },
         },
-      })
+      }),
     );
 
     // Act
@@ -226,7 +228,7 @@ describe("Trait reference processing", () => {
             optional: "trait_reference",
           },
         },
-      })
+      }),
     );
 
     // Act
@@ -248,7 +250,7 @@ describe("Trait reference processing", () => {
             list: { tuple: { "mad-inner": "trait_reference" } },
           },
         },
-      })
+      }),
     );
 
     // Act
@@ -276,7 +278,7 @@ describe("Trait reference processing", () => {
             },
           },
         },
-      })
+      }),
     );
 
     // Act
@@ -318,7 +320,7 @@ describe("Trait reference processing", () => {
             },
           },
         },
-      })
+      }),
     );
 
     // Act
@@ -358,7 +360,7 @@ describe("Trait reference processing", () => {
             },
           },
         },
-      })
+      }),
     );
 
     // Act
@@ -449,7 +451,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -457,7 +459,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -545,7 +547,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -553,7 +555,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -673,7 +675,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -681,7 +683,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -769,7 +771,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -777,7 +779,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -875,7 +877,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -883,7 +885,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -977,7 +979,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -985,7 +987,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1097,7 +1099,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1105,7 +1107,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1197,7 +1199,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1205,7 +1207,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1297,7 +1299,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1305,7 +1307,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1397,7 +1399,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1405,7 +1407,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1517,7 +1519,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1525,7 +1527,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1614,7 +1616,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1622,7 +1624,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1709,7 +1711,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1717,7 +1719,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -1863,7 +1865,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -1871,7 +1873,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -2055,7 +2057,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -2063,7 +2065,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -2243,7 +2245,7 @@ describe("Trait reference processing", () => {
             },
           },
         ],
-      })
+      }),
     );
 
     // Act
@@ -2251,7 +2253,7 @@ describe("Trait reference processing", () => {
       ast,
       traitReferenceMap,
       allFunctionsInterfaces,
-      targetContractId
+      targetContractId,
     );
 
     // Assert
@@ -2262,7 +2264,7 @@ describe("Trait reference processing", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const simnet = await initSimnet(join(tempDir, "Clarinet.toml"));
 
@@ -2295,7 +2297,7 @@ describe("Trait reference processing", () => {
 
     // Exercise
     const actual = new Set(
-      getContractIdsImplementingTrait(traitData, projectTraitImplementations)
+      getContractIdsImplementingTrait(traitData, projectTraitImplementations),
     );
 
     // Verify
@@ -2309,7 +2311,7 @@ describe("Trait reference processing", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const simnet = await initSimnet(join(tempDir, "Clarinet.toml"));
 
@@ -2338,7 +2340,7 @@ describe("Trait reference processing", () => {
     // Exercise
     const actual = getContractIdsImplementingTrait(
       traitImplementationData,
-      projectTraitImplementations
+      projectTraitImplementations,
     );
 
     // Verify
@@ -2352,7 +2354,7 @@ describe("Trait reference processing", () => {
     // Setup
     const tempDir = createIsolatedTestEnvironment(
       resolve(__dirname, "example"),
-      isolatedTestEnvPrefix
+      isolatedTestEnvPrefix,
     );
     const simnet = await initSimnet(join(tempDir, "Clarinet.toml"));
 
@@ -2385,7 +2387,7 @@ describe("Trait reference processing", () => {
 
     // Exercise
     const actual = new Set(
-      getContractIdsImplementingTrait(traitData, projectTraitImplementations)
+      getContractIdsImplementingTrait(traitData, projectTraitImplementations),
     );
 
     // Verify
@@ -2855,7 +2857,7 @@ describe("Non-testable trait function filtering", () => {
       enrichedFunctionsInterfaces,
       traitReferenceMap,
       projectTraitImplementations,
-      contractId
+      contractId,
     );
 
     // Assert

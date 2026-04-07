@@ -18,7 +18,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
 
     // Assert
@@ -34,7 +34,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
 
     // Assert
@@ -50,7 +50,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
 
     // Act
@@ -58,7 +58,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
 
     // Assert
@@ -75,7 +75,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
 
     // Act
@@ -83,7 +83,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "borrow",
       [Cl.uint(amountToBorrow)],
-      address1
+      address1,
     );
 
     // Assert
@@ -91,7 +91,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "get-amount-owed",
       [],
-      address1
+      address1,
     );
 
     expect(result).toBeOk(Cl.uint(amountToBorrow));
@@ -106,7 +106,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
 
     // Act
@@ -114,7 +114,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "borrow",
       [Cl.uint(amountToBorrow)],
-      address1
+      address1,
     );
 
     // Assert
@@ -122,7 +122,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "get-amount-owed",
       [],
-      address1
+      address1,
     );
 
     expect(result).toBeOk(Cl.uint(0));
@@ -137,14 +137,14 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
 
     simnet.callPublicFn(
       "stx-defi",
       "borrow",
       [Cl.uint(amountToBorrow)],
-      address1
+      address1,
     );
 
     // Act
@@ -152,7 +152,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "repay",
       [Cl.uint(amountToBorrow)],
-      address1
+      address1,
     );
 
     // Assert
@@ -160,7 +160,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "get-amount-owed",
       [],
-      address1
+      address1,
     );
     expect(result).toBeOk(Cl.uint(0));
   });
@@ -176,7 +176,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
 
     // Act
@@ -184,7 +184,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "borrow",
       [Cl.uint(amountToBorrow)],
-      address1
+      address1,
     );
 
     simnet.mineEmptyBurnBlocks(blocksToPass);
@@ -194,7 +194,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "get-amount-owed",
       [],
-      address1
+      address1,
     );
 
     expect(owedAmount).toBeOk(Cl.uint(amountToBorrow + accruedInterest));
@@ -210,21 +210,21 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
 
     simnet.callPublicFn(
       "stx-defi",
       "borrow",
       [Cl.uint(amountToBorrow)],
-      address1
+      address1,
     );
 
     simnet.callPublicFn(
       "stx-defi",
       "repay",
       [Cl.uint(amountToBorrow)],
-      address1
+      address1,
     );
 
     // Act
@@ -232,7 +232,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "claim-yield",
       [],
-      address1
+      address1,
     );
 
     // Assert
@@ -249,14 +249,14 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "deposit",
       [Cl.uint(amountToDeposit)],
-      address1
+      address1,
     );
 
     simnet.callPublicFn(
       "stx-defi",
       "borrow",
       [Cl.uint(amountToBorrow)],
-      address1
+      address1,
     );
 
     simnet.mineEmptyBurnBlocks(blocksToPass);
@@ -265,7 +265,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "repay",
       [Cl.uint(amountToBorrow)],
-      address1
+      address1,
     );
 
     // Act
@@ -273,7 +273,7 @@ describe("stx-defi tests", () => {
       "stx-defi",
       "claim-yield",
       [],
-      address1
+      address1,
     );
 
     // Assert
