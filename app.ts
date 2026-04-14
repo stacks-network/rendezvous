@@ -4,9 +4,15 @@ import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import { initSimnet } from "@stacks/clarinet-sdk";
-import { red } from "ansicolor";
+import { red, yellow } from "ansicolor";
 
-import { helpMessage, logRunConfig, parseCli, type RunConfig } from "./cli";
+import {
+  helpMessage,
+  logRunConfig,
+  logWarnings,
+  parseCli,
+  type RunConfig,
+} from "./cli";
 import { resolveAccounts } from "./config";
 import { checkInvariants } from "./invariant";
 import { checkProperties } from "./property";
@@ -62,6 +68,7 @@ const parseCliOrExit = (
 export const main = async () => {
   const radio = new EventEmitter();
   radio.on("logMessage", (log) => logger(log));
+  radio.on("logInfo", (log) => logger(yellow(log), "info"));
   radio.on("logFailure", (log) => logger(red(log), "error"));
 
   const runConfig = parseCliOrExit(process.argv.slice(2), radio);
@@ -70,6 +77,8 @@ export const main = async () => {
     radio.emit("logMessage", helpMessage);
     return;
   }
+
+  logWarnings(radio, runConfig.warnings);
 
   const manifestPath = join(
     runConfig.manifestDir,

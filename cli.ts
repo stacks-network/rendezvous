@@ -47,6 +47,7 @@ export interface RunConfig {
   accounts: ConfigAccount[] | undefined;
   accountsMode: AccountsMode;
   configPath: string | undefined;
+  warnings: string[];
 }
 
 /**
@@ -80,8 +81,16 @@ export const parseCli = (argv: string[]): RunConfig | undefined => {
 
   // Load config file if provided.
   let fileConfig: RendezvousConfig = {};
+  const configWarnings: string[] = [];
   if (options.config) {
-    fileConfig = loadConfig(options.config);
+    const result = loadConfig(options.config);
+    fileConfig = result.config;
+
+    if (result.unknownKeys.length > 0) {
+      configWarnings.push(
+        `Warning: unrecognized config keys: ${result.unknownKeys.join(", ")}.`,
+      );
+    }
   }
 
   const [manifestDir, sutContractName, type] = positionalArgs;
@@ -108,6 +117,20 @@ export const parseCli = (argv: string[]): RunConfig | undefined => {
   // If a config file is provided, use its values exclusively.
   // Otherwise, use CLI options.
   if (options.config) {
+    const ignoredFlags = [
+      options.seed && "--seed",
+      options.runs && "--runs",
+      options.bail && "--bail",
+      options.regr && "--regr",
+      options.dial && "--dial",
+    ].filter(Boolean) as string[];
+
+    if (ignoredFlags.length > 0) {
+      configWarnings.push(
+        `Warning: ${ignoredFlags.join(", ")} ignored when --config is used.`,
+      );
+    }
+
     return {
       manifestDir,
       sutContractName,
@@ -120,6 +143,7 @@ export const parseCli = (argv: string[]): RunConfig | undefined => {
       accounts: fileConfig.accounts,
       accountsMode: fileConfig.accounts_mode ?? "overwrite",
       configPath: options.config,
+      warnings: configWarnings,
     };
   }
 
@@ -147,6 +171,7 @@ export const parseCli = (argv: string[]): RunConfig | undefined => {
     accounts: undefined,
     accountsMode: "overwrite",
     configPath: undefined,
+    warnings: [],
   };
 };
 
@@ -188,4 +213,10 @@ export const logRunConfig = (
   }
 
   radio.emit("logMessage", LOG_DIVIDER + "\n");
+};
+
+export const logWarnings = (radio: EventEmitter, warnings: string[]) => {
+  for (const warning of warnings) {
+    radio.emit("logInfo", warning);
+  }
 };

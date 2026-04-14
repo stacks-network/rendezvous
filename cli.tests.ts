@@ -171,4 +171,66 @@ describe("CLI parsing with parseCli", () => {
     const config = parseCli(["./example", "counter", "test"])!;
     expect(config.accountsMode).toBe("overwrite");
   });
+
+  it("warns when CLI flags are used alongside --config", () => {
+    // Arrange
+    const tempDir = join(tmpdir(), "rendezvous-test-parsecli-warn-flags");
+    mkdirSync(tempDir, { recursive: true });
+    const configPath = join(tempDir, "rv.config.json");
+    writeFileSync(configPath, JSON.stringify({ seed: 1 }), "utf-8");
+
+    // Act
+    const config = parseCli([
+      "./example",
+      "counter",
+      "test",
+      `--config=${configPath}`,
+      "--seed=999",
+      "--bail",
+    ])!;
+
+    // Assert
+    expect(config.warnings).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("--seed"),
+        expect.stringContaining("--bail"),
+      ]),
+    );
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  it("warns when config file contains unrecognized keys", () => {
+    // Arrange
+    const tempDir = join(tmpdir(), "rendezvous-test-parsecli-warn-keys");
+    mkdirSync(tempDir, { recursive: true });
+    const configPath = join(tempDir, "rv.config.json");
+    writeFileSync(
+      configPath,
+      JSON.stringify({ sedd: 42, bail: true }),
+      "utf-8",
+    );
+
+    // Act
+    const config = parseCli([
+      "./example",
+      "counter",
+      "test",
+      `--config=${configPath}`,
+    ])!;
+
+    // Assert
+    expect(config.warnings).toEqual(
+      expect.arrayContaining([expect.stringContaining("sedd")]),
+    );
+
+    // Teardown
+    rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  it("returns no warnings for valid CLI-only usage", () => {
+    const config = parseCli(["./example", "counter", "test", "--seed=42"])!;
+    expect(config.warnings).toEqual([]);
+  });
 });

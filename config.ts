@@ -45,7 +45,9 @@ export interface RendezvousConfig {
  * @param configPath The path to the config file.
  * @returns The parsed and validated config.
  */
-export const loadConfig = (configPath: string): RendezvousConfig => {
+export const loadConfig = (
+  configPath: string,
+): { config: RendezvousConfig; unknownKeys: string[] } => {
   if (!existsSync(configPath)) {
     throw new Error(`Config file not found: ${configPath}`);
   }
@@ -67,7 +69,9 @@ export const loadConfig = (configPath: string): RendezvousConfig => {
  * @param raw The raw parsed JSON object.
  * @returns The validated config.
  */
-const validateConfig = (raw: unknown): RendezvousConfig => {
+const validateConfig = (
+  raw: unknown,
+): { config: RendezvousConfig; unknownKeys: string[] } => {
   if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
     throw new Error("Config file must contain a JSON object.");
   }
@@ -145,7 +149,18 @@ const validateConfig = (raw: unknown): RendezvousConfig => {
     config.dial = obj.dial;
   }
 
-  return config;
+  const knownKeys = new Set([
+    "accounts",
+    "accounts_mode",
+    "seed",
+    "runs",
+    "bail",
+    "regr",
+    "dial",
+  ]);
+  const unknownKeys = Object.keys(obj).filter((k) => !knownKeys.has(k));
+
+  return { config, unknownKeys };
 };
 
 /**

@@ -52,7 +52,7 @@ describe("Config loading and validation", () => {
     const filePath = createTempConfigFile("empty-object", "{}");
 
     // Act
-    const config = loadConfig(filePath);
+    const { config } = loadConfig(filePath);
 
     // Assert
     expect(config).toEqual({});
@@ -77,7 +77,7 @@ describe("Config loading and validation", () => {
     const filePath = createTempConfigFile("all-fields", content);
 
     // Act
-    const config = loadConfig(filePath);
+    const { config, unknownKeys } = loadConfig(filePath);
 
     // Assert
     expect(config.accounts).toEqual([
@@ -89,6 +89,22 @@ describe("Config loading and validation", () => {
     expect(config.bail).toBe(true);
     expect(config.regr).toBe(false);
     expect(config.dial).toBe("./dialers.cjs");
+    expect(unknownKeys).toEqual([]);
+  });
+
+  it("reports unrecognized keys", () => {
+    // Arrange
+    const filePath = createTempConfigFile(
+      "unknown-keys",
+      JSON.stringify({ sedd: 42, rans: 100, seed: 1 }),
+    );
+
+    // Act
+    const { config, unknownKeys } = loadConfig(filePath);
+
+    // Assert
+    expect(unknownKeys).toEqual(["sedd", "rans"]);
+    expect(config.seed).toBe(1);
   });
 
   it("throws when accounts is not an array", () => {
