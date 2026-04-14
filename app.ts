@@ -6,7 +6,7 @@ import { join, resolve } from "node:path";
 import { initSimnet } from "@stacks/clarinet-sdk";
 import { red } from "ansicolor";
 
-import { helpMessage, logRunConfig, parseCli, RunConfig } from "./cli";
+import { helpMessage, logRunConfig, parseCli, type RunConfig } from "./cli";
 import { resolveAccounts } from "./config";
 import { checkInvariants } from "./invariant";
 import { checkProperties } from "./property";

@@ -130,7 +130,9 @@ export const parseCli = (argv: string[]): RunConfig | undefined => {
 
   const runs = options.runs ? parseInt(options.runs, 10) : undefined;
   if (runs !== undefined && (!Number.isInteger(runs) || runs < 1)) {
-    throw new Error(`"runs" must be a positive integer. Got: "${options.runs}".`);
+    throw new Error(
+      `"runs" must be a positive integer. Got: "${options.runs}".`,
+    );
   }
 
   return {

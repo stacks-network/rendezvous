@@ -150,21 +150,21 @@ describe("CLI parsing with parseCli", () => {
   });
 
   it("throws when --seed is not an integer", () => {
-    expect(() => parseCli(["./example", "counter", "test", "--seed=abc"])).toThrow(
-      `"seed" must be an integer.`,
-    );
+    expect(() =>
+      parseCli(["./example", "counter", "test", "--seed=abc"]),
+    ).toThrow(`"seed" must be an integer.`);
   });
 
   it("throws when --runs is not a positive integer", () => {
-    expect(() => parseCli(["./example", "counter", "test", "--runs=0"])).toThrow(
-      `"runs" must be a positive integer.`,
-    );
+    expect(() =>
+      parseCli(["./example", "counter", "test", "--runs=0"]),
+    ).toThrow(`"runs" must be a positive integer.`);
   });
 
   it("throws when --runs is not a number", () => {
-    expect(() => parseCli(["./example", "counter", "test", "--runs=abc"])).toThrow(
-      `"runs" must be a positive integer.`,
-    );
+    expect(() =>
+      parseCli(["./example", "counter", "test", "--runs=abc"]),
+    ).toThrow(`"runs" must be a positive integer.`);
   });
 
   it("defaults accountsMode to overwrite when not specified", () => {
