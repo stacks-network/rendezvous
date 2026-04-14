@@ -2,9 +2,16 @@
   "name": "@stacks/rendezvous",
   "version": "0.14.0",
   "description": "Meet your contract's vulnerabilities head-on.",
-  "main": "app.js",
+  "main": "dist/lib.js",
+  "types": "dist/lib.d.ts",
   "bin": {
     "rv": "./dist/app.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/lib.d.ts",
+      "default": "./dist/lib.js"
+    }
   },
   "scripts": {
     "build": "npx -p typescript tsc --project tsconfig.json && node -e \"if (process.platform !== 'win32') require('fs').chmodSync('./dist/app.js', 0o755);\"",
