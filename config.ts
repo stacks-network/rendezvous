@@ -193,7 +193,8 @@ export const resolveAccounts = (
     merged.set(name, address);
   }
 
-  // All addresses includes simnet addresses plus any new config addresses.
+  // All addresses includes simnet addresses excluding faucet plus any new
+  // user-provided config addresses.
   const allAddresses = [...merged.values()];
 
   return { eligibleAccounts: merged, allAddresses };
