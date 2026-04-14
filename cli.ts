@@ -123,12 +123,22 @@ export const parseCli = (argv: string[]): RunConfig | undefined => {
     };
   }
 
+  const seed = options.seed ? parseInt(options.seed, 10) : undefined;
+  if (seed !== undefined && (!Number.isInteger(seed) || isNaN(seed))) {
+    throw new Error(`"seed" must be an integer. Got: "${options.seed}".`);
+  }
+
+  const runs = options.runs ? parseInt(options.runs, 10) : undefined;
+  if (runs !== undefined && (!Number.isInteger(runs) || runs < 1)) {
+    throw new Error(`"runs" must be a positive integer. Got: "${options.runs}".`);
+  }
+
   return {
     manifestDir,
     sutContractName,
     type: normalizedType as "test" | "invariant",
-    seed: options.seed ? parseInt(options.seed, 10) : undefined,
-    runs: options.runs ? parseInt(options.runs, 10) : undefined,
+    seed,
+    runs,
     bail: options.bail ?? false,
     regr: options.regr ?? false,
     dial: options.dial,
