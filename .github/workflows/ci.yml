@@ -95,6 +95,7 @@ jobs:
           rv . self-listing-helper-v3a test
           rv . self-listing-helper-v3a invariant
           rv . rendezvous-token invariant --dial=./sip010.cjs
+          rv . counter test --config=rv.config.json
 
   generate-docs:
     needs: [tests, examples]

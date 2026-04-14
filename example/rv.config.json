@@ -1,0 +1,15 @@
+{
+  "accounts": [
+    {
+      "name": "whale_1",
+      "address": "SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE"
+    },
+    {
+      "name": "whale_2",
+      "address": "SP2J6ZY48GV1EZ5V2V5RB9MP66SW86PYKKNRV9EJ7"
+    }
+  ],
+  "accounts_mode": "overwrite",
+  "runs": 500,
+  "bail": true
+}
