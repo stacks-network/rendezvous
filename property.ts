@@ -45,6 +45,8 @@ import type { ImplementedTraitType } from "./traits.types";
  * shrinking.
  * @param regr Whether to run regression tests only.
  * @param radio The custom logging event emitter.
+ * @param eligibleAccounts The resolved eligible accounts map (name to address).
+ * @param allAddresses All resolved addresses for principal type generation.
  * @returns void
  */
 export const checkProperties = async (
@@ -57,6 +59,8 @@ export const checkProperties = async (
   bail: boolean,
   regr: boolean,
   radio: EventEmitter,
+  eligibleAccounts: Map<string, string>,
+  allAddresses: string[],
 ) => {
   // A map where the keys are the test contract identifiers and the values are
   // arrays of their test functions. This map will be used to access the test
@@ -237,6 +241,8 @@ export const checkProperties = async (
         seed: regression.seed,
         bail,
         radio,
+        eligibleAccounts,
+        allAddresses,
         testFunctions,
         projectTraitImplementations,
         testContractsPairedFunctions,
@@ -257,6 +263,8 @@ export const checkProperties = async (
       seed,
       bail,
       radio,
+      eligibleAccounts,
+      allAddresses,
       testFunctions,
       projectTraitImplementations,
       testContractsPairedFunctions,
@@ -275,6 +283,8 @@ interface PropertyTestConfig {
   seed: number | undefined;
   bail: boolean;
   radio: EventEmitter;
+  eligibleAccounts: Map<string, string>;
+  allAddresses: string[];
 }
 
 /**
@@ -306,17 +316,12 @@ const propertyTest = async (
     seed,
     bail,
     radio,
+    eligibleAccounts,
+    allAddresses,
     testFunctions,
     projectTraitImplementations,
     testContractsPairedFunctions,
   } = config;
-
-  // Derive accounts and addresses from simnet.
-  const simnetAccounts = simnet.getAccounts();
-  const eligibleAccounts = new Map(
-    [...simnetAccounts].filter(([key]) => key !== "faucet"),
-  );
-  const simnetAddresses = [...simnetAccounts.values()];
 
   const statistics: Statistics = {
     test: {
@@ -371,7 +376,7 @@ const propertyTest = async (
               functionArgs: fc.tuple(
                 ...functionToArbitrary(
                   r.selectedTestFunction,
-                  simnetAddresses,
+                  allAddresses,
                   projectTraitImplementations,
                 ),
               ),
