@@ -6,7 +6,7 @@ import { join, resolve } from "node:path";
 import { initSimnet } from "@stacks/clarinet-sdk";
 import { red } from "ansicolor";
 
-import { helpMessage, logRunConfig, parseCli } from "./cli";
+import { helpMessage, logRunConfig, parseCli, RunConfig } from "./cli";
 import { resolveAccounts } from "./config";
 import { checkInvariants } from "./invariant";
 import { checkProperties } from "./property";
@@ -43,7 +43,10 @@ export const getManifestFileName = (
   return "Clarinet.toml";
 };
 
-const parseCliOrExit = (argv: string[], radio: EventEmitter) => {
+const parseCliOrExit = (
+  argv: string[],
+  radio: EventEmitter,
+): RunConfig | undefined => {
   try {
     return parseCli(argv);
   } catch (err: unknown) {
