@@ -105,4 +105,21 @@ describe("strategyFor", () => {
       { numRuns: 5 },
     );
   });
+
+  it("honors allAddresses override for principal-typed arguments", async () => {
+    const simnet = await initSimnet(manifestPath);
+    const fn = getContractFunction(simnet, "rendezvous-token", "mint");
+    const restrictedAddress = [...simnet.getAccounts().values()][0];
+    const arb = strategyFor(simnet, fn, [restrictedAddress]);
+
+    fc.assert(
+      fc.property(arb, (args: ClarityValue[]) => {
+        const [recipientArg] = args;
+        expect(recipientArg).toEqual(
+          expect.objectContaining({ value: restrictedAddress }),
+        );
+      }),
+      { numRuns: 10 },
+    );
+  });
 });

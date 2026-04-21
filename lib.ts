@@ -11,6 +11,7 @@ import {
   extractProjectTraitImplementations,
   isTraitReferenceFunction,
 } from "./traits";
+import type { ImplementedTraitType } from "./traits.types";
 
 export type { EnrichedContractInterfaceFunction } from "./shared.types";
 
@@ -76,11 +77,18 @@ export const getContractFunction = (
  * Generates a fast-check arbitrary that produces `ClarityValue[]` arrays
  * ready for use with `simnet.callPublicFn` or similar.
  *
- * Automatically resolves principal addresses and trait implementations from
- * the simnet instance.
+ * By default, principal addresses and trait implementations are resolved from
+ * the simnet instance. Pass `allAddresses` to restrict the principal pool
+ * (e.g. to a user-filtered account set), and `projectTraitImplementations` to
+ * reuse a precomputed map.
  *
  * @param simnet The simnet instance.
  * @param fn The enriched function interface (from {@link getContractFunction}).
+ * @param allAddresses Optional addresses used for principal-typed argument
+ *   generation. Defaults to all accounts in the simnet.
+ * @param projectTraitImplementations Optional project/requirement contracts
+ *   keyed by the traits they implement. Defaults to extracting them from the
+ *   simnet.
  * @returns A fast-check arbitrary producing Clarity argument arrays.
  *
  * @example
@@ -106,15 +114,18 @@ export const getContractFunction = (
 export const strategyFor = (
   simnet: Simnet,
   fn: EnrichedContractInterfaceFunction,
+  allAddresses?: string[],
+  projectTraitImplementations?: Record<string, ImplementedTraitType[]>,
 ): fc.Arbitrary<ClarityValue[]> => {
-  const allAddresses = [...simnet.getAccounts().values()];
-  const projectTraitImplementations =
-    extractProjectTraitImplementations(simnet);
+  const resolvedAddresses =
+    allAddresses ?? [...simnet.getAccounts().values()];
+  const resolvedTraitImplementations =
+    projectTraitImplementations ?? extractProjectTraitImplementations(simnet);
 
   const arbitraries = functionToArbitrary(
     fn,
-    allAddresses,
-    projectTraitImplementations,
+    resolvedAddresses,
+    resolvedTraitImplementations,
   );
 
   if (arbitraries.length === 0) {
