@@ -51,6 +51,8 @@ npx rv <path-to-clarinet-project> <contract-name> <type>
 
 **Options:**
 
+- `--config` – Path to a JSON config file. When provided, all run options come
+  from the config file exclusively (CLI flags are ignored).
 - `--seed` – The seed to use for the replay functionality.
 - `--runs` – The number of test iterations to use for exercising the contracts.
   (default: `100`)

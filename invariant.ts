@@ -48,6 +48,8 @@ import type { ImplementedTraitType } from "./traits.types";
  * shrinking.
  * @param regr Whether to run regression tests only.
  * @param radio The custom logging event emitter.
+ * @param eligibleAccounts The resolved eligible accounts map.
+ * @param allAddresses All resolved addresses for principal type generation.
  * @returns void
  */
 export const checkInvariants = async (
@@ -61,6 +63,8 @@ export const checkInvariants = async (
   bail: boolean,
   regr: boolean,
   radio: EventEmitter,
+  eligibleAccounts: Map<string, string>,
+  allAddresses: string[],
 ) => {
   // The Rendezvous identifier is the first one in the list. Only one contract
   // can be fuzzed at a time.
@@ -239,6 +243,8 @@ export const checkInvariants = async (
         bail,
         dial: regression.dial,
         radio,
+        eligibleAccounts,
+        allAddresses,
         functions,
         invariants,
         projectTraitImplementations,
@@ -260,6 +266,8 @@ export const checkInvariants = async (
       bail,
       dial,
       radio,
+      eligibleAccounts,
+      allAddresses,
       functions,
       invariants,
       projectTraitImplementations,
@@ -279,6 +287,8 @@ interface InvariantTestConfig {
   bail: boolean;
   dial: string | undefined;
   radio: EventEmitter;
+  eligibleAccounts: Map<string, string>;
+  allAddresses: string[];
 }
 
 /**
@@ -311,17 +321,12 @@ const invariantTest = async (
     bail,
     dial,
     radio,
+    eligibleAccounts,
+    allAddresses,
     functions,
     invariants,
     projectTraitImplementations,
   } = config;
-
-  // Derive accounts and addresses from simnet.
-  const simnetAccounts = simnet.getAccounts();
-  const eligibleAccounts = new Map(
-    [...simnetAccounts].filter(([key]) => key !== "faucet"),
-  );
-  const simnetAddresses = [...simnetAccounts.values()];
 
   /**
    * The dialer registry, which is used to keep track of all the custom dialers
@@ -408,7 +413,7 @@ const invariantTest = async (
                   fc.tuple(
                     ...functionToArbitrary(
                       selectedFunction,
-                      simnetAddresses,
+                      allAddresses,
                       projectTraitImplementations,
                     ),
                   ),
@@ -417,7 +422,7 @@ const invariantTest = async (
               invariantArgs: fc.tuple(
                 ...functionToArbitrary(
                   r.selectedInvariant,
-                  simnetAddresses,
+                  allAddresses,
                   projectTraitImplementations,
                 ),
               ),

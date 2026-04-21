@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { red } from "ansicolor";
 
 import { getManifestFileName, main } from "./app";
-import { version } from "./package.json";
+import { helpMessage } from "./cli";
 import { getFailureFilePath } from "./persistence";
 import { LOG_DIVIDER } from "./shared";
 import { createIsolatedTestEnvironment } from "./test.utils";
@@ -14,27 +14,6 @@ const isolatedTestEnvPrefix = "rendezvous-test-app-";
 describe("Command-line arguments handling", () => {
   const initialArgv = process.argv;
 
-  const helpMessage = `
-  rv v${version}
-  
-  Usage: rv <path> <contract> <type> [OPTIONS]
-
-  Arguments:
-    <path>        Path to the Clarinet project
-    <contract>    Contract name to fuzz
-    <type>        Test type: test | invariant
-
-  Options:
-    --seed=<n>    Seed for replay functionality
-    --runs=<n>    Number of test iterations [default: 100]
-    --dial=<f>    Path to custom dialers file
-    --regr        Run regression tests only
-    --bail        Stop on first failure
-    -h, --help    Show this message
-
-  Learn more: https://stacks-network.github.io/rendezvous/
-  `;
-
   const noManifestMessage = red(
     `\nNo path to Clarinet project provided. Supply it immediately or face the relentless scrutiny of your contract's vulnerabilities.`,
   );
@@ -43,23 +22,9 @@ describe("Command-line arguments handling", () => {
   );
   const manifestDirPlaceholder = "isolated-example";
 
-  it.each([
-    ["manifest path", ["node", "app.js"]],
-    ["target contract name", ["node", "app.js", "./path/to/clarinet/project"]],
-    ["--help flag", ["node", "app.js", "--help"]],
-  ])(
-    "returns undefined when %s is not provided",
-    async (_testCase: string, argv: string[]) => {
-      process.argv = argv;
-      expect(await main()).toBeUndefined();
-      process.argv = initialArgv;
-    },
-  );
-
-  it("logs the help message at the end when --help is specified", async () => {
+  it("returns cleanly when --help is specified", async () => {
     // Arrange
     process.argv = ["node", "app.js", "--help"];
-
     const consoleLogs: string[] = [];
     jest.spyOn(console, "log").mockImplementation((message: string) => {
       consoleLogs.push(message);
@@ -68,15 +33,37 @@ describe("Command-line arguments handling", () => {
     // Act
     await main();
 
-    const actual = consoleLogs[consoleLogs.length - 1];
-
     // Assert
-    const expected = helpMessage;
-    expect(actual).toBe(expected);
+    expect(consoleLogs).toContain(helpMessage);
 
+    // Teardown
     process.argv = initialArgv;
     jest.restoreAllMocks();
   });
+
+  it.each([
+    ["manifest path", ["node", "app.js"]],
+    ["target contract name", ["node", "app.js", "./path/to/clarinet/project"]],
+  ])(
+    "exits with code 1 when %s is not provided",
+    async (_testCase: string, argv: string[]) => {
+      // Arrange
+      process.argv = argv;
+      const mockExit = jest.spyOn(process, "exit").mockImplementation(((
+        _code?: number,
+      ) => {
+        throw new Error("process.exit");
+      }) as () => never);
+
+      // Act & Assert
+      await expect(main()).rejects.toThrow("process.exit");
+      expect(mockExit).toHaveBeenCalledWith(1);
+
+      // Teardown
+      process.argv = initialArgv;
+      jest.restoreAllMocks();
+    },
+  );
 
   it.each([
     ["manifest path", ["node", "app.js"], noManifestMessage],
@@ -86,27 +73,30 @@ describe("Command-line arguments handling", () => {
       noContractNameMessage,
     ],
   ])(
-    "logs the info and the help message when the %s is not provided",
-    async (_testCase: string, argv: string[], expected: string) => {
+    "logs the error and help message when the %s is not provided",
+    async (_testCase: string, argv: string[], expectedError: string) => {
       // Arrange
       process.argv = argv;
       const consoleLogs: string[] = [];
+      const consoleErrors: string[] = [];
       jest.spyOn(console, "log").mockImplementation((message: string) => {
         consoleLogs.push(message);
       });
+      jest.spyOn(console, "error").mockImplementation((message: string) => {
+        consoleErrors.push(message);
+      });
+      jest.spyOn(process, "exit").mockImplementation(((_code?: number) => {
+        throw new Error("process.exit");
+      }) as () => never);
 
       // Act
-      await main();
-
-      const actualLastLog = consoleLogs[consoleLogs.length - 1];
-      const actualSecondToLastLog = consoleLogs[consoleLogs.length - 2];
+      await expect(main()).rejects.toThrow("process.exit");
 
       // Assert
-      const expectedLastLog = helpMessage;
+      expect(consoleErrors).toContain(expectedError);
+      expect(consoleLogs).toContain(helpMessage);
 
-      expect(actualLastLog).toBe(expectedLastLog);
-      expect(actualSecondToLastLog).toBe(expected);
-
+      // Teardown
       process.argv = initialArgv;
       jest.restoreAllMocks();
     },
@@ -476,11 +466,16 @@ describe("Command-line arguments handling", () => {
       );
       process.argv = updatedArgv;
 
-      const consoleLogs: string[] = [];
+      const allLogs: string[] = [];
       jest.spyOn(console, "log").mockImplementation((message: string) => {
-        consoleLogs.push(message);
+        allLogs.push(message);
       });
-      jest.spyOn(console, "error").mockImplementation(() => {});
+      jest.spyOn(console, "error").mockImplementation((message: string) => {
+        allLogs.push(message);
+      });
+      jest.spyOn(process, "exit").mockImplementation(((_code?: number) => {
+        throw new Error("process.exit");
+      }) as () => never);
 
       // Exercise
       try {
@@ -498,7 +493,7 @@ describe("Command-line arguments handling", () => {
           ? expectedLog.replace(manifestDirPlaceholder, tempDir)
           : expectedLog;
 
-        expect(consoleLogs).toContain(updatedExpectedLog);
+        expect(allLogs).toContain(updatedExpectedLog);
       });
 
       // Teardown

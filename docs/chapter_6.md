@@ -45,7 +45,7 @@ This chapter explains how to use Rendezvous in different situations. By the end,
 To run Rendezvous, use the following command:
 
 ```bash
-rv <path-to-clarinet-project> <contract-name> <type> [--seed] [--runs] [--regr] [--bail] [--dial]
+rv <path-to-clarinet-project> <contract-name> <type> [--config] [--seed] [--runs] [--regr] [--bail] [--dial]
 ```
 
 Let's break down each part of the command.
@@ -354,6 +354,46 @@ rm .rendezvous-regressions/ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.counter.jso
 
 You can also manually edit the regression file to remove specific failures while keeping others.
 
+**6. Using a Config File**
+
+Instead of passing options as CLI flags, you can provide a JSON config file with `--config`. When a config file is used, all run options come from the file exclusively — CLI flags like `--seed` or `--runs` are ignored.
+
+```bash
+rv root contract test --config=rv.config.json
+```
+
+A config file is a JSON object with optional fields:
+
+```json
+{
+  "accounts": [
+    {
+      "name": "whale_1",
+      "address": "SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE"
+    }
+  ],
+  "accounts_mode": "overwrite",
+  "seed": 42,
+  "runs": 500,
+  "bail": true,
+  "dial": "./sip010.cjs"
+}
+```
+
+| Field           | Type             | Description                                             |
+| --------------- | ---------------- | ------------------------------------------------------- |
+| `accounts`      | array of objects | Custom accounts (`name` and `address` fields required). |
+| `accounts_mode` | string           | `"overwrite"` (default) or `"concatenate"`.             |
+| `seed`          | integer          | Seed for replay functionality.                          |
+| `runs`          | positive integer | Number of test iterations.                              |
+| `bail`          | boolean          | Stop on first failure.                                  |
+| `regr`          | boolean          | Run regression tests only.                              |
+| `dial`          | string           | Path to custom dialers file.                            |
+
+The `accounts` field lets you define custom accounts for testing. By default (`"overwrite"` mode), these replace the Devnet.toml accounts entirely. With `"concatenate"` mode, config accounts are merged with the existing Devnet accounts — if a name appears in both, the config account's address takes precedence.
+
+Rendezvous warns if the config file contains unrecognized keys (e.g. a typo like `"sedd"` instead of `"seed"`), and also warns if CLI flags are passed alongside `--config`.
+
 ### Summary
 
 | Argument/Option              | Description                                                                      | Example                                           |
@@ -364,7 +404,9 @@ You can also manually edit the regression file to remove specific failures while
 | `--runs=<num>`               | Sets the number of test iterations (default: 100).                               | `rv root contract test --runs=500`                |
 | `--seed=<num>`               | Uses a specific seed for reproducibility.                                        | `rv root contract test --seed=12345`              |
 | `--regr`                     | Run regression tests only (replay saved failures).                               | `rv root contract test --regr`                    |
+| `--bail`                     | Stop after the first failure.                                                    | `rv root contract test --bail`                    |
 | `--dial=<file>`              | Loads JavaScript dialers from a file for pre/post-processing.                    | `rv root contract test --dial=./custom-dialer.js` |
+| `--config=<file>`            | Uses a JSON config file for all run options.                                     | `rv root contract test --config=rv.config.json`   |
 
 ---
 
