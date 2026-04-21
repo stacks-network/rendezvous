@@ -135,7 +135,7 @@ fc.assert(
 ```
 
 - `getContractFunction(simnet, contract, fn, deployer?)` — retrieves a function interface, enriched with trait data.
-- `strategyFor(simnet, fn)` — returns an `fc.Arbitrary<ClarityValue[]>` ready for use with `simnet.callPublicFn` or `simnet.callReadOnlyFn`.
+- `strategyFor(simnet, fn, allAddresses?, projectTraitImplementations?)` — returns an `fc.Arbitrary<ClarityValue[]>` ready for use with `simnet.callPublicFn` or `simnet.callReadOnlyFn`. `allAddresses` restricts the principal pool (defaults to every account in the simnet); `projectTraitImplementations` reuses a precomputed trait map (defaults to extracting it from the simnet).
 
 ---
 

@@ -31,7 +31,7 @@ Retrieves a function interface from a deployed contract. The returned interface 
 
 **Throws** if the contract or function is not found.
 
-### `strategyFor(simnet, fn)`
+### `strategyFor(simnet, fn, allAddresses?, projectTraitImplementations?)`
 
 Returns a fast-check arbitrary that produces `ClarityValue[]` arrays — ready for use with `simnet.callPublicFn` or `simnet.callReadOnlyFn`.
 
@@ -39,14 +39,16 @@ Handles all Clarity types automatically: `uint`, `int`, `bool`, `principal`, `bu
 
 **Parameters:**
 
-| Parameter | Type                                | Description                                    |
-| --------- | ----------------------------------- | ---------------------------------------------- |
-| `simnet`  | `Simnet`                            | The simnet instance.                           |
-| `fn`      | `EnrichedContractInterfaceFunction` | Function interface from `getContractFunction`. |
+| Parameter                     | Type                                     | Description                                                                                                              |
+| ----------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `simnet`                      | `Simnet`                                 | The simnet instance.                                                                                                     |
+| `fn`                          | `EnrichedContractInterfaceFunction`      | Function interface from `getContractFunction`.                                                                           |
+| `allAddresses`                | `string[]`                               | Optional. Addresses used for principal-typed argument generation. Defaults to every account in the simnet.               |
+| `projectTraitImplementations` | `Record<string, ImplementedTraitType[]>` | Optional. Project/requirement contracts keyed by the traits they implement. Defaults to extracting them from the simnet. |
 
 **Returns:** `fc.Arbitrary<ClarityValue[]>`
 
-Principal addresses and trait implementations are resolved from the simnet automatically.
+When neither override is supplied, principal addresses and trait implementations are resolved from the simnet automatically. Pass `allAddresses` to restrict the principal pool (for example, to a user-filtered account set), and `projectTraitImplementations` to reuse a precomputed map when calling `strategyFor` repeatedly.
 
 ## Example
 
@@ -89,6 +91,20 @@ const increment = getContractFunction(simnet, "counter", "increment");
 const arb = strategyFor(simnet, increment);
 // arb always produces [].
 ```
+
+## Restricting the Principal Pool
+
+When a function takes a `principal` argument, `strategyFor` draws from every account in the simnet by default. Pass `allAddresses` to restrict that pool:
+
+```ts
+const mint = getContractFunction(simnet, "rendezvous-token", "mint");
+const [wallet1] = [...simnet.getAccounts().values()];
+
+const arb = strategyFor(simnet, mint, [wallet1]);
+// Every generated `recipient` is wallet1.
+```
+
+`projectTraitImplementations` can be overridden the same way, which is useful when you already have the trait map computed and want to avoid re-extracting it on each call.
 
 ## Supported Clarity Types
 
