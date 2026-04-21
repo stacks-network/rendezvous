@@ -407,16 +407,8 @@ const propertyTest = async (
           r.functionArgs,
         );
 
-        const printedTestFunctionArgs = r.functionArgs
-          .map((arg) => {
-            try {
-              return typeof arg === "object"
-                ? JSON.stringify(arg)
-                : arg.toString();
-            } catch {
-              return "[Circular]";
-            }
-          })
+        const printedTestFunctionArgs = selectedTestFunctionArgs
+          .map((cv) => cvToString(cv))
           .join(" ");
 
         const [testCallerWallet, testCallerAddress] = r.testCaller;

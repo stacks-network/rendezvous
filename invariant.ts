@@ -460,16 +460,8 @@ const invariantTest = async (
         for (const [index, selectedFunction] of r.selectedFunctions.entries()) {
           const [sutCallerWallet, sutCallerAddress] = r.sutCallers[index];
 
-          const printedFunctionArgs = r.selectedFunctionsArgsList[index]
-            .map((arg) => {
-              try {
-                return typeof arg === "object"
-                  ? JSON.stringify(arg)
-                  : (arg as any).toString();
-              } catch {
-                return "[Circular]";
-              }
-            })
+          const printedFunctionArgs = selectedFunctionsArgsCV[index]
+            .map((cv) => cvToString(cv))
             .join(" ");
 
           try {
@@ -596,16 +588,8 @@ const invariantTest = async (
           }
         }
 
-        const printedInvariantArgs = r.invariantArgs
-          .map((arg) => {
-            try {
-              return typeof arg === "object"
-                ? JSON.stringify(arg)
-                : arg.toString();
-            } catch {
-              return "[Circular]";
-            }
-          })
+        const printedInvariantArgs = selectedInvariantArgsCV
+          .map((cv) => cvToString(cv))
           .join(" ");
 
         const [invariantCallerWallet, invariantCallerAddress] =
