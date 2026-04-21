@@ -87,8 +87,8 @@ export const reporter = (
         radio.emit(
           "logFailure",
           `- Arguments: ${ce.selectedFunctionsArgsList
-            .map((selectedFunctionArgs: any[]) =>
-              JSON.stringify(selectedFunctionArgs),
+            .map((selectedFunctionArgs: ClarityValue[]) =>
+              selectedFunctionArgs.map((cv) => cvToString(cv)).join(" "),
             )
             .join(", ")}`,
         );
@@ -112,7 +112,9 @@ export const reporter = (
         );
         radio.emit(
           "logFailure",
-          `- Arguments: ${JSON.stringify(ce.invariantArgs)}`,
+          `- Arguments: ${(ce.invariantArgs as ClarityValue[])
+            .map((cv) => cvToString(cv))
+            .join(" ")}`,
         );
         radio.emit("logFailure", `- Caller   : ${ce.invariantCaller[0]}`);
 

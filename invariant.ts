@@ -3,7 +3,12 @@ import { resolve } from "node:path";
 
 import type { Simnet } from "@stacks/clarinet-sdk";
 import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
-import { Cl, cvToJSON, cvToString } from "@stacks/transactions";
+import {
+  Cl,
+  cvToJSON,
+  cvToString,
+  type ClarityValue,
+} from "@stacks/transactions";
 import { dim, green, red, underline, yellow } from "ansicolor";
 import fc from "fast-check";
 
@@ -11,14 +16,13 @@ import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
 import { reporter } from "./heatstroke";
 import type { Statistics } from "./heatstroke.types";
 import type { LocalContext } from "./invariant.types";
+import { strategyFor } from "./lib";
 import {
   getFailureFilePath,
   loadFailures,
   persistFailure,
 } from "./persistence";
 import {
-  argsToCV,
-  functionToArbitrary,
   getContractNameFromContractId,
   getFunctionsListForContract,
   LOG_DIVIDER,
@@ -31,7 +35,6 @@ import {
   getNonTestableTraitFunctions,
   isTraitReferenceFunction,
 } from "./traits";
-import type { ImplementedTraitType } from "./traits.types";
 
 /**
  * Runs invariant testing on the target contract and logs the progress. Reports
@@ -247,7 +250,6 @@ export const checkInvariants = async (
         allAddresses,
         functions,
         invariants,
-        projectTraitImplementations,
       });
     }
   } else {
@@ -270,7 +272,6 @@ export const checkInvariants = async (
       allAddresses,
       functions,
       invariants,
-      projectTraitImplementations,
     });
   }
 };
@@ -299,8 +300,6 @@ interface InvariantTestContext {
   functions: EnrichedContractInterfaceFunction[];
   /** Invariant functions for the target contract. */
   invariants: EnrichedContractInterfaceFunction[];
-  /** Project trait implementations. */
-  projectTraitImplementations: Record<string, ImplementedTraitType[]>;
 }
 
 /**
@@ -325,8 +324,19 @@ const invariantTest = async (
     allAddresses,
     functions,
     invariants,
-    projectTraitImplementations,
   } = config;
+
+  // Pre-build one fast-check arbitrary per SUT and invariant function via
+  // the public library API, so invariant runs exercise the same strategy
+  // pipeline as library consumers. `allAddresses` is threaded through so
+  // any upstream account filtering (e.g. user-restricted accounts) is
+  // honored.
+  const sutStrategies = new Map<string, fc.Arbitrary<ClarityValue[]>>(
+    functions.map((fn) => [fn.name, strategyFor(simnet, fn, allAddresses)]),
+  );
+  const invariantStrategies = new Map<string, fc.Arbitrary<ClarityValue[]>>(
+    invariants.map((fn) => [fn.name, strategyFor(simnet, fn, allAddresses)]),
+  );
 
   /**
    * The dialer registry, which is used to keep track of all the custom dialers
@@ -409,23 +419,12 @@ const invariantTest = async (
                 },
               ),
               selectedFunctionsArgsList: fc.tuple(
-                ...r.selectedFunctions.map((selectedFunction) =>
-                  fc.tuple(
-                    ...functionToArbitrary(
-                      selectedFunction,
-                      allAddresses,
-                      projectTraitImplementations,
-                    ),
-                  ),
+                ...r.selectedFunctions.map(
+                  (selectedFunction) =>
+                    sutStrategies.get(selectedFunction.name)!,
                 ),
               ),
-              invariantArgs: fc.tuple(
-                ...functionToArbitrary(
-                  r.selectedInvariant,
-                  allAddresses,
-                  projectTraitImplementations,
-                ),
-              ),
+              invariantArgs: invariantStrategies.get(r.selectedInvariant.name)!,
             })
             .map((args) => ({ ...r, ...args })),
         )
@@ -448,19 +447,10 @@ const invariantTest = async (
             .map((burnBlocks) => ({ ...r, ...burnBlocks })),
         ),
       async (r) => {
-        const selectedFunctionsArgsCV = r.selectedFunctions.map(
-          (selectedFunction, index) =>
-            argsToCV(selectedFunction, r.selectedFunctionsArgsList[index]),
-        );
-        const selectedInvariantArgsCV = argsToCV(
-          r.selectedInvariant,
-          r.invariantArgs,
-        );
-
         for (const [index, selectedFunction] of r.selectedFunctions.entries()) {
           const [sutCallerWallet, sutCallerAddress] = r.sutCallers[index];
 
-          const printedFunctionArgs = selectedFunctionsArgsCV[index]
+          const printedFunctionArgs = r.selectedFunctionsArgsList[index]
             .map((cv) => cvToString(cv))
             .join(" ");
 
@@ -469,7 +459,7 @@ const invariantTest = async (
               await dialerRegistry.executePreDialers({
                 selectedFunction: selectedFunction,
                 functionCall: undefined,
-                clarityValueArguments: selectedFunctionsArgsCV[index],
+                clarityValueArguments: r.selectedFunctionsArgsList[index],
               });
             }
           } catch (error: any) {
@@ -480,7 +470,7 @@ const invariantTest = async (
             const functionCall = simnet.callPublicFn(
               r.rendezvousContractId,
               selectedFunction.name,
-              selectedFunctionsArgsCV[index],
+              r.selectedFunctionsArgsList[index],
               sutCallerAddress,
             );
 
@@ -531,7 +521,7 @@ const invariantTest = async (
                   await dialerRegistry.executePostDialers({
                     selectedFunction: selectedFunction,
                     functionCall: functionCall,
-                    clarityValueArguments: selectedFunctionsArgsCV[index],
+                    clarityValueArguments: r.selectedFunctionsArgsList[index],
                   });
                 }
               } catch (error: any) {
@@ -588,7 +578,7 @@ const invariantTest = async (
           }
         }
 
-        const printedInvariantArgs = selectedInvariantArgsCV
+        const printedInvariantArgs = r.invariantArgs
           .map((cv) => cvToString(cv))
           .join(" ");
 
@@ -599,7 +589,7 @@ const invariantTest = async (
           const { result: invariantCallResult } = simnet.callReadOnlyFn(
             r.rendezvousContractId,
             r.selectedInvariant.name,
-            selectedInvariantArgsCV,
+            r.invariantArgs,
             invariantCallerAddress,
           );
 

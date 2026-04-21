@@ -58,7 +58,7 @@ describe("Custom reporter logging", () => {
             }),
           ),
           selectedFunctionsArgsList: fc.tuple(
-            fc.array(fc.oneof(asciiString(), fc.nat(), fc.boolean())),
+            fc.array(clarityStringUintBoolArg()),
           ),
           selectedInvariant: fc.record({
             name: asciiString(),
@@ -66,9 +66,7 @@ describe("Custom reporter logging", () => {
             outputs: fc.array(asciiString()),
             args: fc.anything(),
           }),
-          invariantArgs: fc.array(
-            fc.oneof(asciiString(), fc.nat(), fc.boolean()),
-          ),
+          invariantArgs: fc.array(clarityStringUintBoolArg()),
           errorMessage: asciiString(),
           clarityError: asciiString(),
           sutCallers: fc.array(
@@ -95,14 +93,14 @@ describe("Custom reporter logging", () => {
             outputs: string[];
             args: any;
           }[];
-          selectedFunctionsArgsList: (string | number | boolean)[][];
+          selectedFunctionsArgsList: ClarityValue[][];
           selectedInvariant: {
             name: string;
             access: string;
             outputs: string[];
             args: any;
           };
-          invariantArgs: (string | number | boolean)[];
+          invariantArgs: ClarityValue[];
           errorMessage: string;
           clarityError: string;
           sutCallers: [string, string][];
@@ -154,7 +152,7 @@ describe("Custom reporter logging", () => {
               .join(", ")})`,
             `- Arguments: ${r.selectedFunctionsArgsList
               .map((selectedFunctionArgs) =>
-                JSON.stringify(selectedFunctionArgs),
+                selectedFunctionArgs.map((cv) => cvToString(cv)).join(" "),
               )
               .join(", ")}`,
             `- Callers  : ${r.sutCallers
@@ -166,7 +164,9 @@ describe("Custom reporter logging", () => {
               )
               .join(", ")}`,
             `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`,
-            `- Arguments: ${JSON.stringify(r.invariantArgs)}`,
+            `- Arguments: ${r.invariantArgs
+              .map((cv) => cvToString(cv))
+              .join(" ")}`,
             `- Caller   : ${r.invariantCaller[0]}`,
             `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
             `The invariant "${
@@ -217,7 +217,7 @@ describe("Custom reporter logging", () => {
             }),
           ),
           selectedFunctionsArgsList: fc.tuple(
-            fc.array(fc.oneof(asciiString(), fc.nat(), fc.boolean())),
+            fc.array(clarityStringUintBoolArg()),
           ),
           selectedInvariant: fc.record({
             name: asciiString(),
@@ -225,9 +225,7 @@ describe("Custom reporter logging", () => {
             outputs: fc.array(asciiString()),
             args: fc.anything(),
           }),
-          invariantArgs: fc.array(
-            fc.oneof(asciiString(), fc.nat(), fc.boolean()),
-          ),
+          invariantArgs: fc.array(clarityStringUintBoolArg()),
           errorMessage: asciiString(),
           clarityError: asciiString(),
           sutCallers: fc.array(
@@ -255,14 +253,14 @@ describe("Custom reporter logging", () => {
             outputs: string[];
             args: any;
           }[];
-          selectedFunctionsArgsList: (string | number | boolean)[][];
+          selectedFunctionsArgsList: ClarityValue[][];
           selectedInvariant: {
             name: string;
             access: string;
             outputs: string[];
             args: any;
           };
-          invariantArgs: (string | number | boolean)[];
+          invariantArgs: ClarityValue[];
           errorMessage: string;
           clarityError: string;
           sutCallers: [string, string][];
@@ -316,7 +314,7 @@ describe("Custom reporter logging", () => {
               .join(", ")})`,
             `- Arguments: ${r.selectedFunctionsArgsList
               .map((selectedFunctionArgs) =>
-                JSON.stringify(selectedFunctionArgs),
+                selectedFunctionArgs.map((cv) => cvToString(cv)).join(" "),
               )
               .join(", ")}`,
             `- Callers  : ${r.sutCallers
@@ -328,7 +326,9 @@ describe("Custom reporter logging", () => {
               )
               .join(", ")}`,
             `- Invariant: ${r.selectedInvariant.name} (${r.selectedInvariant.access})`,
-            `- Arguments: ${JSON.stringify(r.invariantArgs)}`,
+            `- Arguments: ${r.invariantArgs
+              .map((cv) => cvToString(cv))
+              .join(" ")}`,
             `- Caller   : ${r.invariantCaller[0]}`,
             `\nWhat happened? Rendezvous went on a rampage and found a weak spot:\n`,
             `The invariant "${
