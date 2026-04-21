@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 
 import { initSimnet } from "@stacks/clarinet-sdk";
 import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
+import { Cl, cvToString, type ClarityValue } from "@stacks/transactions";
 import fc from "fast-check";
 
 import { reporter } from "./heatstroke";
@@ -21,6 +22,13 @@ const asciiString = () =>
     ),
     minLength: 1,
   });
+
+const clarityStringUintBoolArg = () =>
+  fc.oneof(
+    asciiString().map((s) => Cl.stringAscii(s)),
+    fc.nat().map((n) => Cl.uint(n)),
+    fc.boolean().map((b) => Cl.bool(b)),
+  );
 
 describe("Custom reporter logging", () => {
   it("handles cases with missing path on failure for invariant testing type", async () => {
@@ -487,9 +495,7 @@ describe("Custom reporter logging", () => {
             outputs: fc.array(asciiString()),
             args: fc.anything(),
           }),
-          functionArgs: fc.array(
-            fc.oneof(asciiString(), fc.nat(), fc.boolean()),
-          ),
+          functionArgs: fc.array(clarityStringUintBoolArg()),
           errorMessage: asciiString(),
           clarityError: asciiString(),
           testCaller: fc.constantFrom(
@@ -509,7 +515,7 @@ describe("Custom reporter logging", () => {
             outputs: string[];
             args: any;
           };
-          functionArgs: (string | number | boolean)[];
+          functionArgs: ClarityValue[];
           errorMessage: string;
           clarityError: string;
           testCaller: [string, string];
@@ -550,7 +556,9 @@ describe("Custom reporter logging", () => {
               rendezvousContractId,
             )}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
-            `- Arguments     : ${JSON.stringify(r.functionArgs)}`,
+            `- Arguments     : ${r.functionArgs
+              .map((cv) => cvToString(cv))
+              .join(" ")}`,
             `- Caller        : ${r.testCaller[0]}`,
             `- Outputs       : ${JSON.stringify(
               r.selectedTestFunction.outputs,
@@ -601,9 +609,7 @@ describe("Custom reporter logging", () => {
             outputs: fc.array(asciiString()),
             args: fc.anything(),
           }),
-          functionArgs: fc.array(
-            fc.oneof(asciiString(), fc.nat(), fc.boolean()),
-          ),
+          functionArgs: fc.array(clarityStringUintBoolArg()),
           errorMessage: asciiString(),
           clarityError: asciiString(),
           testCaller: fc.constantFrom(
@@ -624,7 +630,7 @@ describe("Custom reporter logging", () => {
             outputs: string[];
             args: any;
           };
-          functionArgs: (string | number | boolean)[];
+          functionArgs: ClarityValue[];
           errorMessage: string;
           clarityError: string;
           testCaller: [string, string];
@@ -667,7 +673,9 @@ describe("Custom reporter logging", () => {
               rendezvousContractId,
             )}`,
             `- Test Function : ${r.selectedTestFunction.name} (${r.selectedTestFunction.access})`,
-            `- Arguments     : ${JSON.stringify(r.functionArgs)}`,
+            `- Arguments     : ${r.functionArgs
+              .map((cv) => cvToString(cv))
+              .join(" ")}`,
             `- Caller        : ${r.testCaller[0]}`,
             `- Outputs       : ${JSON.stringify(
               r.selectedTestFunction.outputs,

@@ -3,20 +3,19 @@ import { resolve } from "node:path";
 
 import type { Simnet } from "@stacks/clarinet-sdk";
 import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
-import { cvToJSON, cvToString } from "@stacks/transactions";
+import { cvToJSON, cvToString, type ClarityValue } from "@stacks/transactions";
 import { dim, green, red, underline, yellow } from "ansicolor";
 import fc from "fast-check";
 
 import { reporter } from "./heatstroke";
 import type { Statistics } from "./heatstroke.types";
+import { strategyFor } from "./lib";
 import {
   getFailureFilePath,
   loadFailures,
   persistFailure,
 } from "./persistence";
 import {
-  argsToCV,
-  functionToArbitrary,
   getContractNameFromContractId,
   getFunctionsListForContract,
   LOG_DIVIDER,
@@ -29,7 +28,6 @@ import {
   getNonTestableTraitFunctions,
   isTraitReferenceFunction,
 } from "./traits";
-import type { ImplementedTraitType } from "./traits.types";
 
 /**
  * Runs property-based tests on the target contract and logs the progress.
@@ -244,7 +242,6 @@ export const checkProperties = async (
         eligibleAccounts,
         allAddresses,
         testFunctions,
-        projectTraitImplementations,
         testContractsPairedFunctions,
       });
     }
@@ -266,7 +263,6 @@ export const checkProperties = async (
       eligibleAccounts,
       allAddresses,
       testFunctions,
-      projectTraitImplementations,
       testContractsPairedFunctions,
     });
   }
@@ -293,8 +289,6 @@ interface PropertyTestConfig {
 interface PropertyTestContext {
   /** Executable test functions. */
   testFunctions: EnrichedContractInterfaceFunction[];
-  /** Project trait implementations. */
-  projectTraitImplementations: Record<string, ImplementedTraitType[]>;
   /** Test functions paired with their corresponding discard functions. */
   testContractsPairedFunctions: Map<string, Map<string, string | undefined>>;
 }
@@ -319,9 +313,16 @@ const propertyTest = async (
     eligibleAccounts,
     allAddresses,
     testFunctions,
-    projectTraitImplementations,
     testContractsPairedFunctions,
   } = config;
+
+  // Pre-build one fast-check arbitrary per test function via the public
+  // library API, so property runs exercise the same strategy pipeline as
+  // library consumers. `allAddresses` is threaded through so any upstream
+  // account filtering (e.g. user-restricted accounts) is honored.
+  const strategies = new Map<string, fc.Arbitrary<ClarityValue[]>>(
+    testFunctions.map((fn) => [fn.name, strategyFor(simnet, fn, allAddresses)]),
+  );
 
   const statistics: Statistics = {
     test: {
@@ -373,13 +374,7 @@ const propertyTest = async (
         .chain((r) =>
           fc
             .record({
-              functionArgs: fc.tuple(
-                ...functionToArbitrary(
-                  r.selectedTestFunction,
-                  allAddresses,
-                  projectTraitImplementations,
-                ),
-              ),
+              functionArgs: strategies.get(r.selectedTestFunction.name)!,
             })
             .map((args) => ({ ...r, ...args })),
         )
@@ -402,12 +397,7 @@ const propertyTest = async (
             .map((burnBlocks) => ({ ...r, ...burnBlocks })),
         ),
       async (r) => {
-        const selectedTestFunctionArgs = argsToCV(
-          r.selectedTestFunction,
-          r.functionArgs,
-        );
-
-        const printedTestFunctionArgs = selectedTestFunctionArgs
+        const printedTestFunctionArgs = r.functionArgs
           .map((cv) => cvToString(cv))
           .join(" ");
 
@@ -419,7 +409,7 @@ const propertyTest = async (
 
         const discarded = isTestDiscarded(
           discardFunctionName,
-          selectedTestFunctionArgs,
+          r.functionArgs,
           r.rendezvousContractId,
           simnet,
           testCallerAddress,
@@ -447,7 +437,7 @@ const propertyTest = async (
             const { result: testFunctionCallResult } = simnet.callPublicFn(
               r.rendezvousContractId,
               r.selectedTestFunction.name,
-              selectedTestFunctionArgs,
+              r.functionArgs,
               testCallerAddress,
             );
 

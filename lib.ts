@@ -117,8 +117,7 @@ export const strategyFor = (
   allAddresses?: string[],
   projectTraitImplementations?: Record<string, ImplementedTraitType[]>,
 ): fc.Arbitrary<ClarityValue[]> => {
-  const resolvedAddresses =
-    allAddresses ?? [...simnet.getAccounts().values()];
+  const resolvedAddresses = allAddresses ?? [...simnet.getAccounts().values()];
   const resolvedTraitImplementations =
     projectTraitImplementations ?? extractProjectTraitImplementations(simnet);
 
