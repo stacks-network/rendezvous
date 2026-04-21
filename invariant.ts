@@ -15,7 +15,11 @@ import fc from "fast-check";
 import { DialerRegistry, PostDialerError, PreDialerError } from "./dialer";
 import { reporter } from "./heatstroke";
 import type { Statistics } from "./heatstroke.types";
-import type { LocalContext } from "./invariant.types";
+import type {
+  InvariantTestConfig,
+  InvariantTestContext,
+  LocalContext,
+} from "./invariant.types";
 import { strategyFor } from "./lib";
 import {
   getFailureFilePath,
@@ -275,32 +279,6 @@ export const checkInvariants = async (
     });
   }
 };
-
-/**
- * The configuration for an invariant test.
- */
-interface InvariantTestConfig {
-  simnet: Simnet;
-  targetContractName: string;
-  rendezvousContractId: string;
-  runs: number | undefined;
-  seed: number | undefined;
-  bail: boolean;
-  dial: string | undefined;
-  radio: EventEmitter;
-  eligibleAccounts: Map<string, string>;
-  allAddresses: string[];
-}
-
-/**
- * The context to run an invariant test with.
- */
-interface InvariantTestContext {
-  /** SUT functions for the target contract. */
-  functions: EnrichedContractInterfaceFunction[];
-  /** Invariant functions for the target contract. */
-  invariants: EnrichedContractInterfaceFunction[];
-}
 
 /**
  * Runs an invariant test.
