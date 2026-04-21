@@ -15,12 +15,12 @@ import {
   loadFailures,
   persistFailure,
 } from "./persistence";
+import type { PropertyTestConfig, PropertyTestContext } from "./property.types";
 import {
   getContractNameFromContractId,
   getFunctionsListForContract,
   LOG_DIVIDER,
 } from "./shared";
-import type { EnrichedContractInterfaceFunction } from "./shared.types";
 import {
   buildTraitReferenceMap,
   enrichInterfaceWithTraitData,
@@ -267,31 +267,6 @@ export const checkProperties = async (
     });
   }
 };
-
-/**
- * The configuration for a property test.
- */
-interface PropertyTestConfig {
-  simnet: Simnet;
-  targetContractName: string;
-  rendezvousContractId: string;
-  runs: number | undefined;
-  seed: number | undefined;
-  bail: boolean;
-  radio: EventEmitter;
-  eligibleAccounts: Map<string, string>;
-  allAddresses: string[];
-}
-
-/**
- * The context to run a property test with.
- */
-interface PropertyTestContext {
-  /** Executable test functions. */
-  testFunctions: EnrichedContractInterfaceFunction[];
-  /** Test functions paired with their corresponding discard functions. */
-  testContractsPairedFunctions: Map<string, Map<string, string | undefined>>;
-}
 
 /**
  * Runs a property test.
