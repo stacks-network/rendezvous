@@ -7,6 +7,8 @@ The tool focuses on two primary testing methodologies:
 1. **Property-based testing**: Verifying that specific properties of your contract hold true across a wide range of possible inputs.
 2. **Invariant testing**: Ensuring that certain conditions about your contract's state remain true regardless of the sequence of operations performed.
 
+Rendezvous can be used in two ways: through the `rv` CLI (the primary interface covered throughout most of this book) or as a TypeScript library for composing custom property-based tests with full control over the testing loop. See the [Library API](chapter_9.md) chapter for details.
+
 ## Why You Need Rendezvous
 
 Smart contracts are immutable once deployed, making post-deployment fixes expensive or impossible. Traditional testing methods often fall short in discovering edge cases that might lead to security vulnerabilities or unexpected behavior. Rendezvous addresses these challenges by:
@@ -41,4 +43,4 @@ root
 
 This structure allows for a natural workflow where tests live close to the code they're testing, making it easier to maintain both in tandem.
 
-In the following chapters, we'll explore why testing directly in Clarity is beneficial, the testing methodologies employed by Rendezvous, how to install and use the tool, and examples of effective testing patterns.
+In the following chapters, we'll explore why testing directly in Clarity is beneficial, the testing methodologies employed by Rendezvous, how to install and use the tool, how to consume it as a library, and examples of effective testing patterns.

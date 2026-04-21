@@ -79,8 +79,8 @@ export const getContractFunction = (
  * Automatically resolves principal addresses and trait implementations from
  * the simnet instance.
  *
- * @param fn The enriched function interface (from {@link getContractFunction}).
  * @param simnet The simnet instance.
+ * @param fn The enriched function interface (from {@link getContractFunction}).
  * @returns A fast-check arbitrary producing Clarity argument arrays.
  *
  * @example
@@ -91,10 +91,10 @@ export const getContractFunction = (
  *
  * const simnet = await initSimnet("./Clarinet.toml");
  * const increment = getContractFunction(simnet, "counter", "increment");
- * const argsArb = strategyFor(increment, simnet);
+ * const argsArb = strategyFor(simnet, increment);
  *
  * fc.assert(
- *   fc.asyncProperty(argsArb, async (args) => {
+ *   fc.property(argsArb, (args) => {
  *     const { result } = simnet.callPublicFn(
  *       "deployer.counter", "increment", args, "deployer"
  *     );
@@ -104,8 +104,8 @@ export const getContractFunction = (
  * ```
  */
 export const strategyFor = (
-  fn: EnrichedContractInterfaceFunction,
   simnet: Simnet,
+  fn: EnrichedContractInterfaceFunction,
 ): fc.Arbitrary<ClarityValue[]> => {
   const allAddresses = [...simnet.getAccounts().values()];
   const projectTraitImplementations =

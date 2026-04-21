@@ -20,18 +20,18 @@ Retrieves a function interface from a deployed contract. The returned interface 
 
 **Parameters:**
 
-| Parameter      | Type     | Description                                       |
-| -------------- | -------- | ------------------------------------------------- |
-| `simnet`       | `Simnet` | The simnet instance from `initSimnet`.             |
-| `contractName` | `string` | The contract name (e.g., `"counter"`).             |
-| `functionName` | `string` | The function name (e.g., `"increment"`).           |
+| Parameter      | Type     | Description                                                |
+| -------------- | -------- | ---------------------------------------------------------- |
+| `simnet`       | `Simnet` | The simnet instance from `initSimnet`.                     |
+| `contractName` | `string` | The contract name (e.g., `"counter"`).                     |
+| `functionName` | `string` | The function name (e.g., `"increment"`).                   |
 | `deployer`     | `string` | Optional. Deployer address. Defaults to `simnet.deployer`. |
 
 **Returns:** `EnrichedContractInterfaceFunction`
 
 **Throws** if the contract or function is not found.
 
-### `strategyFor(fn, simnet)`
+### `strategyFor(simnet, fn)`
 
 Returns a fast-check arbitrary that produces `ClarityValue[]` arrays — ready for use with `simnet.callPublicFn` or `simnet.callReadOnlyFn`.
 
@@ -39,10 +39,10 @@ Handles all Clarity types automatically: `uint`, `int`, `bool`, `principal`, `bu
 
 **Parameters:**
 
-| Parameter | Type                                 | Description                                   |
-| --------- | ------------------------------------ | --------------------------------------------- |
-| `fn`      | `EnrichedContractInterfaceFunction`  | Function interface from `getContractFunction`. |
-| `simnet`  | `Simnet`                             | The simnet instance.                           |
+| Parameter | Type                                | Description                                    |
+| --------- | ----------------------------------- | ---------------------------------------------- |
+| `simnet`  | `Simnet`                            | The simnet instance.                           |
+| `fn`      | `EnrichedContractInterfaceFunction` | Function interface from `getContractFunction`. |
 
 **Returns:** `fc.Arbitrary<ClarityValue[]>`
 
@@ -51,16 +51,16 @@ Principal addresses and trait implementations are resolved from the simnet autom
 ## Example
 
 ```ts
-import fc from "fast-check";
 import { initSimnet } from "@stacks/clarinet-sdk";
 import { getContractFunction, strategyFor } from "@stacks/rendezvous";
+import fc from "fast-check";
 
 const simnet = await initSimnet("./Clarinet.toml");
 const add = getContractFunction(simnet, "counter", "add");
-const arb = strategyFor(add, simnet);
+const arb = strategyFor(simnet, add);
 
 fc.assert(
-  fc.asyncProperty(arb, async (args) => {
+  fc.property(arb, (args) => {
     const { result } = simnet.callPublicFn(
       `${simnet.deployer}.counter`,
       "add",
@@ -86,23 +86,23 @@ For functions that take no parameters, `strategyFor` returns an arbitrary produc
 
 ```ts
 const increment = getContractFunction(simnet, "counter", "increment");
-const arb = strategyFor(increment, simnet);
+const arb = strategyFor(simnet, increment);
 // arb always produces [].
 ```
 
 ## Supported Clarity Types
 
-| Clarity Type     | Generated As                                      |
-| ---------------- | ------------------------------------------------- |
-| `uint`           | Natural numbers                                   |
-| `int`            | Integers                                          |
-| `bool`           | Booleans                                          |
-| `principal`      | Random address from simnet accounts               |
-| `buff`           | Hex-encoded buffers (respects max length)          |
-| `string-ascii`   | ASCII strings (respects max length)                |
-| `string-utf8`    | UTF-8 strings (respects max length)                |
-| `list`           | Arrays of the element type (recursive)             |
-| `tuple`          | Records with named fields (recursive)              |
-| `optional`       | `none` or `some` of the wrapped type (recursive)   |
-| `response`       | `ok` or `error` branch (recursive)                 |
-| `trait_reference` | Random contract implementing the trait             |
+| Clarity Type      | Generated As                                     |
+| ----------------- | ------------------------------------------------ |
+| `uint`            | Natural numbers                                  |
+| `int`             | Integers                                         |
+| `bool`            | Booleans                                         |
+| `principal`       | Random address from simnet accounts              |
+| `buff`            | Hex-encoded buffers (respects max length)        |
+| `string-ascii`    | ASCII strings (respects max length)              |
+| `string-utf8`     | UTF-8 strings (respects max length)              |
+| `list`            | Arrays of the element type (recursive)           |
+| `tuple`           | Records with named fields (recursive)            |
+| `optional`        | `none` or `some` of the wrapped type (recursive) |
+| `response`        | `ok` or `error` branch (recursive)               |
+| `trait_reference` | Random contract implementing the trait           |

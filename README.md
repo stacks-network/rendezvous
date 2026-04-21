@@ -119,10 +119,10 @@ import fc from "fast-check";
 
 const simnet = await initSimnet("./Clarinet.toml");
 const add = getContractFunction(simnet, "counter", "add");
-const arb = strategyFor(add, simnet);
+const arb = strategyFor(simnet, add);
 
 fc.assert(
-  fc.asyncProperty(arb, (args) => {
+  fc.property(arb, (args) => {
     const { result } = simnet.callPublicFn(
       `${simnet.deployer}.counter`,
       "add",
@@ -135,7 +135,7 @@ fc.assert(
 ```
 
 - `getContractFunction(simnet, contract, fn, deployer?)` — retrieves a function interface, enriched with trait data.
-- `strategyFor(fn, simnet)` — returns an `fc.Arbitrary<ClarityValue[]>` ready for use with `simnet.callPublicFn` or `simnet.callReadOnlyFn`.
+- `strategyFor(simnet, fn)` — returns an `fc.Arbitrary<ClarityValue[]>` ready for use with `simnet.callPublicFn` or `simnet.callReadOnlyFn`.
 
 ---
 

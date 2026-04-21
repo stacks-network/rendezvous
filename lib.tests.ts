@@ -59,7 +59,7 @@ describe("strategyFor", () => {
   it("produces ClarityValue arrays for a function with arguments", async () => {
     const simnet = await initSimnet(manifestPath);
     const fn = getContractFunction(simnet, "counter", "add");
-    const arb = strategyFor(fn, simnet);
+    const arb = strategyFor(simnet, fn);
 
     fc.assert(
       fc.property(arb, (args: ClarityValue[]) => {
@@ -76,7 +76,7 @@ describe("strategyFor", () => {
   it("produces an empty array for a function with no arguments", async () => {
     const simnet = await initSimnet(manifestPath);
     const fn = getContractFunction(simnet, "counter", "increment");
-    const arb = strategyFor(fn, simnet);
+    const arb = strategyFor(simnet, fn);
 
     fc.assert(
       fc.property(arb, (args: ClarityValue[]) => {
@@ -89,7 +89,7 @@ describe("strategyFor", () => {
   it("produces arguments usable with simnet.callPublicFn", async () => {
     const simnet = await initSimnet(manifestPath);
     const fn = getContractFunction(simnet, "counter", "add");
-    const arb = strategyFor(fn, simnet);
+    const arb = strategyFor(simnet, fn);
 
     fc.assert(
       fc.property(arb, (args: ClarityValue[]) => {
