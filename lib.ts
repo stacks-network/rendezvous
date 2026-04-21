@@ -104,7 +104,10 @@ export const getContractFunction = (
  * fc.assert(
  *   fc.property(argsArb, (args) => {
  *     const { result } = simnet.callPublicFn(
- *       "deployer.counter", "increment", args, "deployer"
+ *       "counter",
+ *       "increment",
+ *       args,
+ *       simnet.deployer,
  *     );
  *     return result.type !== "err";
  *   })
