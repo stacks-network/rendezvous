@@ -195,3 +195,5 @@ If you installed from source:
 ## Next Steps
 
 Now that you have Rendezvous installed, you're ready to start testing your Clarity contracts. In the next chapter, we'll cover how to use Rendezvous effectively with detailed usage examples.
+
+If you'd rather drive the testing loop yourself from TypeScript — composing custom fast-check properties on top of Rendezvous's argument generation — see the [Library API](chapter_9.md) chapter.

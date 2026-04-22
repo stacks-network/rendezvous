@@ -1,6 +1,7 @@
 import type { EventEmitter } from "node:events";
 
 import type { ContractInterfaceFunction } from "@stacks/clarinet-sdk-wasm";
+import { cvToString, type ClarityValue } from "@stacks/transactions";
 import { green } from "ansicolor";
 
 import type {
@@ -86,8 +87,8 @@ export const reporter = (
         radio.emit(
           "logFailure",
           `- Arguments: ${ce.selectedFunctionsArgsList
-            .map((selectedFunctionArgs: any[]) =>
-              JSON.stringify(selectedFunctionArgs),
+            .map((selectedFunctionArgs: ClarityValue[]) =>
+              selectedFunctionArgs.map((cv) => cvToString(cv)).join(" "),
             )
             .join(", ")}`,
         );
@@ -111,7 +112,9 @@ export const reporter = (
         );
         radio.emit(
           "logFailure",
-          `- Arguments: ${JSON.stringify(ce.invariantArgs)}`,
+          `- Arguments: ${(ce.invariantArgs as ClarityValue[])
+            .map((cv) => cvToString(cv))
+            .join(" ")}`,
         );
         radio.emit("logFailure", `- Caller   : ${ce.invariantCaller[0]}`);
 
@@ -149,7 +152,9 @@ export const reporter = (
         );
         radio.emit(
           "logFailure",
-          `- Arguments     : ${JSON.stringify(ce.functionArgs)}`,
+          `- Arguments     : ${(ce.functionArgs as ClarityValue[])
+            .map((cv) => cvToString(cv))
+            .join(" ")}`,
         );
         radio.emit("logFailure", `- Caller        : ${ce.testCaller[0]}`);
         radio.emit(

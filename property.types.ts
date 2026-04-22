@@ -1,2 +1,30 @@
-// This file is a placeholder for the property-based testing routine-related
-// types.
+import type { EventEmitter } from "node:events";
+
+import type { Simnet } from "@stacks/clarinet-sdk";
+
+import type { EnrichedContractInterfaceFunction } from "./shared.types";
+
+/**
+ * The configuration for a property test.
+ */
+export interface PropertyTestConfig {
+  simnet: Simnet;
+  targetContractName: string;
+  rendezvousContractId: string;
+  runs: number | undefined;
+  seed: number | undefined;
+  bail: boolean;
+  radio: EventEmitter;
+  eligibleAccounts: Map<string, string>;
+  allAddresses: string[];
+}
+
+/**
+ * The context to run a property test with.
+ */
+export interface PropertyTestContext {
+  /** Executable test functions. */
+  testFunctions: EnrichedContractInterfaceFunction[];
+  /** Test functions paired with their corresponding discard functions. */
+  testContractsPairedFunctions: Map<string, Map<string, string | undefined>>;
+}

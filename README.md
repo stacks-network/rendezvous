@@ -108,6 +108,37 @@ rv example counter invariant
 
 ---
 
+### Library API
+
+Rendezvous also works as a library for building custom property-based testing strategies. It handles the hard part — generating valid random Clarity arguments for any function signature, including recursive types, trait references, and custom accounts.
+
+```ts
+import { initSimnet } from "@stacks/clarinet-sdk";
+import { getContractFunction, strategyFor } from "@stacks/rendezvous";
+import fc from "fast-check";
+
+const simnet = await initSimnet("./Clarinet.toml");
+const add = getContractFunction(simnet, "counter", "add");
+const arb = strategyFor(simnet, add);
+
+fc.assert(
+  fc.property(arb, (args) => {
+    const { result } = simnet.callPublicFn(
+      `${simnet.deployer}.counter`,
+      "add",
+      args,
+      simnet.deployer,
+    );
+    return result.type !== "err";
+  }),
+);
+```
+
+- `getContractFunction(simnet, contract, fn, deployer?)` — retrieves a function interface, enriched with trait data.
+- `strategyFor(simnet, fn, allAddresses?, projectTraitImplementations?)` — returns an `fc.Arbitrary<ClarityValue[]>` ready for use with `simnet.callPublicFn` or `simnet.callReadOnlyFn`. `allAddresses` restricts the principal pool (defaults to every account in the simnet); `projectTraitImplementations` reuses a precomputed trait map (defaults to extracting it from the simnet).
+
+---
+
 ### Documentation
 
 For full documentation, see the official [Rendezvous Book](https://stacks-network.github.io/rendezvous/).

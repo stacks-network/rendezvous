@@ -19,6 +19,7 @@
 - [Installation](chapter_5.md)
 - [Usage](chapter_6.md)
 - [Quickstart Tutorial](chapter_7.md)
+- [Library API](chapter_9.md)
 
 # Examples
 
