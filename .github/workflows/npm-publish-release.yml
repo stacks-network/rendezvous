@@ -23,10 +23,21 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
-      - run: npm publish
+      - name: Publish
+        run: |
+          # Keep RCs off the `latest` dist-tag so plain `npm install` still
+          # resolves to the latest stable release.
+          if [[ "${GITHUB_REF_NAME}" == *-rc* ]]; then
+            npm publish --tag rc
+          else
+            npm publish
+          fi
 
   update-example-post-release:
     needs: publish
+    # Skip for RCs so master's example project stays pinned to a stable
+    # release.
+    if: ${{ !contains(github.ref_name, '-rc') }}
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ github.ref_name }}
