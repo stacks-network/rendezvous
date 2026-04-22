@@ -5,7 +5,7 @@
   "main": "dist/lib.js",
   "types": "dist/lib.d.ts",
   "bin": {
-    "rv": "./dist/app.js"
+    "rv": "dist/app.js"
   },
   "exports": {
     ".": {
@@ -38,7 +38,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/stacks-network/rendezvous.git"
+    "url": "git+https://github.com/stacks-network/rendezvous.git"
   },
   "dependencies": {
     "@stacks/clarinet-sdk": "^3.16.0",
