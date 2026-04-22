@@ -40,6 +40,9 @@
     "type": "git",
     "url": "git+https://github.com/stacks-network/rendezvous.git"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@stacks/clarinet-sdk": "^3.16.0",
     "@stacks/transactions": "^7.3.1",
