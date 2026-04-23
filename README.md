@@ -68,6 +68,7 @@ npx rv <path-to-clarinet-project> <contract-name> <type>
 Here's an example of a test that checks reversing a list twice returns the original:
 
 ```clarity
+;;[#env(simnet)]
 (define-public (test-reverse-list (seq (list 127 uint)))
   (begin
     (asserts!
@@ -91,6 +92,7 @@ rv example reverse test
 Here's a Clarity invariant to detect a bug in the example counter contract:
 
 ```clarity
+;;[#env(simnet)]
 (define-read-only (invariant-counter-gt-zero)
   (let
       ((increment-num-calls (default-to u0 (get called (map-get? context "increment"))))
