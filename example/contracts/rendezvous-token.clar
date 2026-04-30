@@ -43,7 +43,10 @@
     ;; fungible token. Comment out this line and run the following command to
     ;; see the `dialers` in action:
     ;; ```rv example rendezvous-token invariant --dial=example/sip010.cjs```
-    (match memo to-print (print to-print) 0x)
+    (match memo
+      to-print (print to-print)
+      0x
+    )
     (match (ft-transfer? rendezvous amount sender recipient)
       response (ok response)
       error (err error)
@@ -51,7 +54,10 @@
   )
 )
 
-(define-public (mint (recipient principal) (amount uint))
+(define-public (mint
+    (recipient principal)
+    (amount uint)
+  )
   (begin
     (asserts! (is-eq contract-caller deployer) ERR_UNAUTHORIZED)
     (ft-mint? rendezvous amount recipient)
@@ -59,20 +65,25 @@
 )
 
 ;; #[env(simnet)]
-(define-map context (string-ascii 100) {
-    called: uint
+(define-map context
+  (string-ascii 100)
+  {
+    called: uint,
     ;; other data
   }
 )
 
 ;; #[env(simnet)]
-(define-public (update-context (function-name (string-ascii 100)) (called uint))
-  (ok (map-set context function-name {called: called}))
+(define-private (update-context
+    (function-name (string-ascii 100))
+    (called uint)
+  )
+  (ok (map-set context function-name { called: called }))
 )
 
 ;; #[env(simnet)]
 ;; This invariant returns true regardless of the state of the contract. Its
 ;; purpose is to allow the demonstration of the `dialers` feature.
-(define-read-only (invariant-always-true)
+(define-private (invariant-always-true)
   true
 )
