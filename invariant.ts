@@ -757,10 +757,7 @@ const filterSutFunctions = (
   new Map(
     Array.from(allFunctionsMap, ([contractId, functions]) => [
       contractId,
-      functions.filter(
-        (f) =>
-          f.access === "public"
-      ),
+      functions.filter((f) => f.access === "public"),
     ]),
   );
 
