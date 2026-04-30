@@ -69,7 +69,7 @@ Here's an example of a test that checks reversing a list twice returns the origi
 
 ```clarity
 ;; #[env(simnet)]
-(define-public (test-reverse-list (seq (list 127 uint)))
+(define-private (test-reverse-list (seq (list 127 uint)))
   (begin
     (asserts!
       (is-eq seq
@@ -93,7 +93,7 @@ Here's a Clarity invariant to detect a bug in the example counter contract:
 
 ```clarity
 ;; #[env(simnet)]
-(define-read-only (invariant-counter-gt-zero)
+(define-private (invariant-counter-gt-zero)
   (let
       ((increment-num-calls (default-to u0 (get called (map-get? context "increment"))))
        (decrement-num-calls (default-to u0 (get called (map-get? context "decrement")))))
