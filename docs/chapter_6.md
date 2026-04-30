@@ -435,17 +435,17 @@ Let’s say we have a contract named `checker` with the following source:
 )
 
 ;; #[env(simnet)]
-(define-public (update-context (function-name (string-ascii 100)) (called uint))
+(define-private (update-context (function-name (string-ascii 100)) (called uint))
   (ok (map-set context function-name {called: called}))
 )
 
 ;; #[env(simnet)]
-(define-public (test-1)
+(define-private (test-1)
   (ok true)
 )
 
 ;; #[env(simnet)]
-(define-read-only (invariant-1)
+(define-private (invariant-1)
   true
 )
 ```
@@ -456,7 +456,7 @@ The contract source, test functions, and **context** all live in the same file. 
 
 Rendezvous uses a **context** to track function calls and execution details during invariant testing. This allows for better tracking of execution details and invariant validation.
 
-> **Important:** Every contract tested with Rendezvous **invariant testing** must include the `context` map and the `update-context` public function. During invariant testing, Rendezvous calls public functions and uses `update-context` to track successful executions. This tracking enables invariants to reason about how many times each function has been called. If these are missing during invariant testing, Rendezvous will throw a runtime error. The context is not required for property-based testing.
+> **Important:** Every contract tested with Rendezvous **invariant testing** must include the `context` map and the `update-context` private function. During invariant testing, Rendezvous calls public functions and uses `update-context` to track successful executions. This tracking enables invariants to reason about how many times each function has been called. If these are missing during invariant testing, Rendezvous will throw a runtime error. The context is not required for property-based testing.
 
 ### How the Context Works
 
@@ -472,7 +472,7 @@ Here’s how the context is structured:
 })
 
 ;; #[env(simnet)]
-(define-public (update-context (function-name (string-ascii 100)) (called uint))
+(define-private (update-context (function-name (string-ascii 100)) (called uint))
   (ok (map-set context function-name {called: called}))
 )
 ```
@@ -489,7 +489,7 @@ By tracking function calls, the context helps invariants ensure **stronger corre
 **Example invariant using the `context`**
 
 ```clarity
-(define-read-only (invariant-counter-gt-zero)
+(define-private (invariant-counter-gt-zero)
   (let
     (
       (increment-num-calls
@@ -520,7 +520,7 @@ A **separate function** determines whether a test should run.
 
 > Rules for a Discard Function:
 >
-> - Must be **read-only**.
+> - Must be **private**.
 > - Name must match the property test function, prefixed with `"can-"`.
 > - Parameters must **mirror** the property test’s parameters.
 > - Must return `true` **only if inputs are valid**, allowing the test to run.
@@ -528,11 +528,11 @@ A **separate function** determines whether a test should run.
 **Discard function example**
 
 ```clarity
-(define-read-only (can-test-add (n uint))
+(define-private (can-test-add (n uint))
   (> n u1)  ;; Only allow tests where n > 1
 )
 
-(define-public (test-add (n uint))
+(define-private (test-add (n uint))
   (let
     ((counter-before (get-counter)))
     (try! (add n))
@@ -551,7 +551,7 @@ Instead of using a separate function, **the test itself decides whether to run**
 **In-place discarding example**
 
 ```clarity
-(define-public (test-add (n uint))
+(define-private (test-add (n uint))
   (let
     ((counter-before (get-counter)))
     (ok

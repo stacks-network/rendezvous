@@ -62,7 +62,7 @@ To test the buggy version of the contract, replace the valid `increment` functio
 One invariant that can detect the introduced bug is:
 
 ```clarity
-(define-read-only (invariant-counter-gt-zero)
+(define-private (invariant-counter-gt-zero)
   (let
     (
       (increment-num-calls
@@ -116,7 +116,7 @@ Using this command, Rendezvous will **randomly execute public function calls** i
 Another way to detect the introduced bug is by writing this property-based test:
 
 ```clarity
-(define-public (test-increment)
+(define-private (test-increment)
   (let
     (
       (counter-before (get-counter))
@@ -196,7 +196,7 @@ To test the buggy version of the contract, **comment out the line that updates `
 One invariant that can detect the introduced bug is:
 
 ```clarity
-(define-read-only (invariant-last-shipment-id-gt-0-after-create-shipment)
+(define-private (invariant-last-shipment-id-gt-0-after-create-shipment)
   (let
     (
       (create-shipment-num-calls
@@ -242,7 +242,7 @@ Using this command, Rendezvous will **randomly execute public function calls** i
 A property-based test that can detect the introduced bug is:
 
 ```clarity
-(define-public (test-get-last-shipment-id
+(define-private (test-get-last-shipment-id
     (starting-location (string-ascii 25))
     (receiver principal)
   )
@@ -317,7 +317,7 @@ This bug **reduces the maximum supported list length** in a private function, le
 A property-based test that can detect the introduced bug is:
 
 ```clarity
-(define-public (test-reverse-uint (seq (list 127 uint)))
+(define-private (test-reverse-uint (seq (list 127 uint)))
   (begin
     (asserts!
       (is-eq seq (reverse-uint (reverse-uint seq)))
@@ -388,7 +388,7 @@ Seed : 869018352
 
 Counterexample:
 - Test Contract : reverse
-- Test Function : test-reverse-uint (public)
+- Test Function : test-reverse-uint (private)
 - Arguments     : [[0,0,0,0,0]]
 - Caller        : wallet_3
 - Outputs       : {"type":{"response":{"ok":"bool","error":"int128"}}}
@@ -468,7 +468,7 @@ The issue lies in the conditional check `(>= end 1)`, where the `skip` value is 
 The following property-based test evaluates the correctness of `slice-uint`:
 
 ```clarity
-(define-public (test-slice-list-uint (seq (list 127 uint)) (skip int) (n int))
+(define-private (test-slice-list-uint (seq (list 127 uint)) (skip int) (n int))
   (if
     ;; Discard the test if the input is invalid by returning `(ok false)`.
     (or
@@ -540,11 +540,11 @@ An example of a property-based test with an attached discard function can also b
 ;; are unsuitable for those tests.
 ;; To skip the test when inputs are invalid, the first way is to define a
 ;; 'discard' function:
-;; - Must be read-only.
+;; - Must be private.
 ;; - Name should match the property test function's, prefixed with "can-".
 ;; - Parameters should mirror those of the property test.
 ;; - Returns true only if inputs are valid, allowing the test to run.
-(define-read-only (can-test-slice-list-int
+(define-private (can-test-slice-list-int
     (seq (list 127 int))
     (skip int)
     (n int)
@@ -555,7 +555,7 @@ An example of a property-based test with an attached discard function can also b
   )
 )
 
-(define-public (test-slice-list-int (seq (list 127 int)) (skip int) (n int))
+(define-private (test-slice-list-int (seq (list 127 int)) (skip int) (n int))
   (let
     ((result (slice seq skip n)))
     (if
