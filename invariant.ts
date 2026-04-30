@@ -759,8 +759,7 @@ const filterSutFunctions = (
       contractId,
       functions.filter(
         (f) =>
-          f.access === "public" &&
-          !f.name.startsWith("test-"),
+          f.access === "public"
       ),
     ]),
   );
