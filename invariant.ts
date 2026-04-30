@@ -30,6 +30,7 @@ import {
   getContractNameFromContractId,
   getFunctionsListForContract,
   LOG_DIVIDER,
+  RV_ACCESS,
 } from "./shared";
 import type { EnrichedContractInterfaceFunction } from "./shared.types";
 import {
@@ -470,7 +471,7 @@ const invariantTest = async (
               );
               localContext[r.rendezvousContractId][selectedFunction.name]++;
 
-              simnet.callPublicFn(
+              simnet.callPrivateFn(
                 r.rendezvousContractId,
                 "update-context",
                 [
@@ -564,7 +565,7 @@ const invariantTest = async (
           r.invariantCaller;
 
         try {
-          const { result: invariantCallResult } = simnet.callReadOnlyFn(
+          const { result: invariantCallResult } = simnet.callPrivateFn(
             r.rendezvousContractId,
             r.selectedInvariant.name,
             r.invariantArgs,
@@ -724,7 +725,7 @@ export const initializeClarityContext = (
   functions: EnrichedContractInterfaceFunction[],
 ) => {
   functions.forEach((fn) => {
-    const { result: initialize } = simnet.callPublicFn(
+    const { result: initialize } = simnet.callPrivateFn(
       contractId,
       "update-context",
       [Cl.stringAscii(fn.name), Cl.uint(0)],
@@ -744,7 +745,7 @@ export const initializeClarityContext = (
  * functions.
  *
  * The SUT functions are the ones that have `public` access since they are
- * capable of changing the contract state, and they are not test functions.
+ * capable of changing the contract state.
  * @param allFunctionsMap The map containing all the functions for each
  * Rendezvous contract.
  * @returns A map containing the filtered SUT functions for each Rendezvous
@@ -759,7 +760,6 @@ const filterSutFunctions = (
       functions.filter(
         (f) =>
           f.access === "public" &&
-          f.name !== "update-context" &&
           !f.name.startsWith("test-"),
       ),
     ]),
@@ -773,7 +773,7 @@ const filterInvariantFunctions = (
       contractId,
       functions.filter(
         ({ access, name }) =>
-          access === "read_only" && name.startsWith("invariant-"),
+          access === RV_ACCESS.invariant && name.startsWith("invariant-"),
       ),
     ]),
   );
