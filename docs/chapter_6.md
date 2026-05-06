@@ -445,7 +445,7 @@ Let’s say we have a contract named `checker` with the following source:
 )
 
 ;; #[env(simnet)]
-(define-private (invariant-1)
+(define-read-only (invariant-1)
   true
 )
 ```
@@ -489,7 +489,7 @@ By tracking function calls, the context helps invariants ensure **stronger corre
 **Example invariant using the `context`**
 
 ```clarity
-(define-private (invariant-counter-gt-zero)
+(define-read-only (invariant-counter-gt-zero)
   (let
     (
       (increment-num-calls

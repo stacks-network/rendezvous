@@ -93,7 +93,7 @@ Here's a Clarity invariant to detect a bug in the example counter contract:
 
 ```clarity
 ;; #[env(simnet)]
-(define-private (invariant-counter-gt-zero)
+(define-read-only (invariant-counter-gt-zero)
   (let
       ((increment-num-calls (default-to u0 (get called (map-get? context "increment"))))
        (decrement-num-calls (default-to u0 (get called (map-get? context "decrement")))))

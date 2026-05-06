@@ -62,7 +62,7 @@ To test the buggy version of the contract, replace the valid `increment` functio
 One invariant that can detect the introduced bug is:
 
 ```clarity
-(define-private (invariant-counter-gt-zero)
+(define-read-only (invariant-counter-gt-zero)
   (let
     (
       (increment-num-calls
@@ -196,7 +196,7 @@ To test the buggy version of the contract, **comment out the line that updates `
 One invariant that can detect the introduced bug is:
 
 ```clarity
-(define-private (invariant-last-shipment-id-gt-0-after-create-shipment)
+(define-read-only (invariant-last-shipment-id-gt-0-after-create-shipment)
   (let
     (
       (create-shipment-num-calls
