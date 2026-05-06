@@ -20,7 +20,6 @@ import {
   getContractNameFromContractId,
   getFunctionsListForContract,
   LOG_DIVIDER,
-  RV_ACCESS,
 } from "./shared";
 import {
   buildTraitReferenceMap,
@@ -135,8 +134,7 @@ export const checkProperties = async (
     Array.from(rendezvousAllFunctions, ([contractId, functions]) => [
       contractId,
       functions.filter(
-        ({ access, name }) =>
-          access === RV_ACCESS.discard && name.startsWith("can-"),
+        ({ access, name }) => access === "private" && name.startsWith("can-"),
       ),
     ]),
   );
@@ -582,7 +580,7 @@ const filterTestFunctions = (
     Array.from(allFunctionsMap, ([contractId, functions]) => [
       contractId,
       functions.filter(
-        (f) => f.access === RV_ACCESS.test && f.name.startsWith("test-"),
+        (f) => f.access === "private" && f.name.startsWith("test-"),
       ),
     ]),
   );

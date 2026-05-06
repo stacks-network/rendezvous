@@ -16,7 +16,6 @@ import {
   isReturnTypeBoolean,
   isTestDiscardedInPlace,
 } from "./property";
-import { RV_ACCESS } from "./shared";
 import { createIsolatedTestEnvironment } from "./test.utils";
 
 const isolatedTestEnvPrefix = "rendezvous-test-property-";
@@ -27,7 +26,7 @@ describe("Test discarding related operations", () => {
       fc.property(
         fc.record({
           fnName: fc.string(),
-          access: fc.constant(RV_ACCESS.discard),
+          access: fc.constant("private"),
           args: fc.array(
             fc.record({
               name: fc.string(),
@@ -60,7 +59,7 @@ describe("Test discarding related operations", () => {
       fc.property(
         fc.record({
           fnName: fc.string(),
-          access: fc.constant(RV_ACCESS.discard),
+          access: fc.constant("private"),
           args: fc.array(
             fc.record({
               name: fc.string(),
@@ -95,7 +94,7 @@ describe("Test discarding related operations", () => {
       fc.property(
         fc.record({
           fnName: fc.string(),
-          access: fc.constant(RV_ACCESS.discard),
+          access: fc.constant("private"),
           args: fc.array(
             fc.record({
               name: fc.string(),
@@ -139,7 +138,7 @@ describe("Test discarding related operations", () => {
           .record({
             testFn: fc.record({
               fnName: fc.string(),
-              access: fc.constant(RV_ACCESS.discard),
+              access: fc.constant("private"),
               args: fc.array(
                 fc.record({
                   name: fc.string(),
@@ -155,7 +154,7 @@ describe("Test discarding related operations", () => {
             }),
             discardFn: fc.record({
               fnName: fc.string(),
-              access: fc.constant(RV_ACCESS.discard),
+              access: fc.constant("private"),
               args: fc.array(
                 fc.record({
                   name: fc.string(),

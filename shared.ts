@@ -1,7 +1,6 @@
 import type { Simnet } from "@stacks/clarinet-sdk";
 import type {
   ContractInterfaceFunction,
-  ContractInterfaceFunctionAccess,
   IContractInterface,
 } from "@stacks/clarinet-sdk-wasm";
 import {
@@ -31,19 +30,6 @@ import type { ImplementedTraitType, ImportedTraitType } from "./traits.types";
 /** 79 characters long divider for logging. */
 export const LOG_DIVIDER =
   "-------------------------------------------------------------------------------";
-
-/**
- * Single source of truth for the Clarity access modifier expected on each
- * Rendezvous-managed function role (invariant / test / discard / context).
- * Consumers should reference these instead of hardcoding the string so that a
- * future change to the convention is a one-line edit.
- */
-export const RV_ACCESS = {
-  invariant: "private",
-  test: "private",
-  discard: "private",
-  context: "private",
-} as const satisfies Record<string, ContractInterfaceFunctionAccess>;
 
 /**
  * Retrieves the contract interfaces of the contracts deployed by the deployer

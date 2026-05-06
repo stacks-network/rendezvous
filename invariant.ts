@@ -30,7 +30,6 @@ import {
   getContractNameFromContractId,
   getFunctionsListForContract,
   LOG_DIVIDER,
-  RV_ACCESS,
 } from "./shared";
 import type { EnrichedContractInterfaceFunction } from "./shared.types";
 import {
@@ -769,7 +768,7 @@ const filterInvariantFunctions = (
       contractId,
       functions.filter(
         ({ access, name }) =>
-          access === RV_ACCESS.invariant && name.startsWith("invariant-"),
+          access === "private" && name.startsWith("invariant-"),
       ),
     ]),
   );
