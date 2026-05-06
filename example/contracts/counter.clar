@@ -64,7 +64,7 @@
 ;; Invariant function that checks that the counter is greater than zero if the
 ;; number of calls to `increment` is greater than the number of calls to
 ;; `decrement`.
-(define-private (invariant-counter-gt-zero)
+(define-read-only (invariant-counter-gt-zero)
   (let (
       (increment-num-calls (default-to u0 (get called (map-get? context "increment"))))
       (decrement-num-calls (default-to u0 (get called (map-get? context "decrement"))))

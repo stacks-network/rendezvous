@@ -658,7 +658,7 @@
 ;; properly execute testing runs against Alex's self-listing contract.
 
 ;; #[env(simnet)]
-(define-private (invariant-always-true)
+(define-read-only (invariant-always-true)
 	true
 )
 

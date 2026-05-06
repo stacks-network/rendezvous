@@ -564,7 +564,7 @@ const invariantTest = async (
           r.invariantCaller;
 
         try {
-          const { result: invariantCallResult } = simnet.callPrivateFn(
+          const { result: invariantCallResult } = simnet.callReadOnlyFn(
             r.rendezvousContractId,
             r.selectedInvariant.name,
             r.invariantArgs,
@@ -768,7 +768,7 @@ const filterInvariantFunctions = (
       contractId,
       functions.filter(
         ({ access, name }) =>
-          access === "private" && name.startsWith("invariant-"),
+          access === "read_only" && name.startsWith("invariant-"),
       ),
     ]),
   );

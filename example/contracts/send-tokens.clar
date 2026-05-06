@@ -40,7 +40,7 @@
 )
 
 ;; #[env(simnet)]
-(define-private (invariant-token-supply-vs-balance (address principal))
+(define-read-only (invariant-token-supply-vs-balance (address principal))
   (let (
       (total-supply (unwrap-panic (contract-call? .rendezvous-token get-total-supply)))
       (user-balance (unwrap-panic (contract-call? .rendezvous-token get-balance address)))

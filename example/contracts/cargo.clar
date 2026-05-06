@@ -87,7 +87,7 @@
 )
 
 ;; #[env(simnet)]
-(define-private (invariant-last-shipment-id-gt-0-after-create-shipment)
+(define-read-only (invariant-last-shipment-id-gt-0-after-create-shipment)
   (let ((create-shipment-num-calls (default-to u0 (get called (map-get? context "create-new-shipment")))))
     (if (is-eq create-shipment-num-calls u0)
       true
