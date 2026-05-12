@@ -141,6 +141,15 @@ fc.assert(
 
 ---
 
+### Trophy Case
+
+Real bugs and security vulnerabilities uncovered with `rv`. To add a finding, open a pull request appending a row to the table below.
+
+| Date | Project | Vulnerability | Invariant/Property | Version | Submitter |
+| ---- | ------- | ------------- | ------------------ | ------- | --------- |
+
+---
+
 ### Documentation
 
 For full documentation, see the official [Rendezvous Book](https://stacks-network.github.io/rendezvous/).
