@@ -28,3 +28,4 @@
 ---
 
 - [Contributing](CONTRIBUTING.md)
+- [Trophy Case](https://github.com/stacks-network/rendezvous#trophy-case)

@@ -141,6 +141,16 @@ fc.assert(
 
 ---
 
+### Trophy Case
+
+Real bugs and security vulnerabilities uncovered with `rv`. To add a finding, open a pull request appending a row to the table below.
+
+| Date        | Project                                                   | Vulnerability                                                                                                             | Invariant/Property                                                                                                                                                                           | Version      | Submitter                                  |
+| ----------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------ |
+| May 8, 2026 | [Jing v3](https://github.com/Rapha-btc/jing-contracts-v3) | Cancel-cycle overwrote next-cycle totals rolled forward by the small-share deposit filter, silently wiping the accounting | [`invariant-balance-eq-cycle-totals`](https://github.com/Rapha-btc/jing-contracts-v3/blob/4ff5170ac912b6948f34e5ad4ab3603ee28e1f35/tests/rv/markets-sbtc-stx-jing.invariants.clar#L226-L237) | `1.0.0-rc.1` | [@Rapha-btc](https://github.com/Rapha-btc) |
+
+---
+
 ### Documentation
 
 For full documentation, see the official [Rendezvous Book](https://stacks-network.github.io/rendezvous/).
