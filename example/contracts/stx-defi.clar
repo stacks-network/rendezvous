@@ -24,46 +24,28 @@
 (define-constant err-overborrow (err u300))
 
 (define-public (deposit (amount uint))
-  (let
-    (
-      (current-balance
-        (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
-      )
-    )
+  (let ((current-balance (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))))
     (try! (stx-transfer? amount tx-sender (as-contract tx-sender)))
-    (map-set deposits
-      { owner: tx-sender } { amount: (+ current-balance amount) }
-    )
+    (map-set deposits { owner: tx-sender } { amount: (+ current-balance amount) })
     (var-set total-deposits (+ (var-get total-deposits) amount))
     (ok true)
   )
 )
 
 (define-public (borrow (amount uint))
-  (let
-    (
-      (user-deposit
-        (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
-      )
+  (let (
+      (user-deposit (default-to u0 (get amount (map-get? deposits { owner: tx-sender }))))
       (allowed-borrow (/ user-deposit u2))
-      (current-loan-details
-        (default-to
-          {
-            amount: u0,
-            last-interaction-block: u0,
-          }
-          (map-get? loans tx-sender)
-        )
-      )
-      (accrued-interest
-        (calculate-accrued-interest
-          (get amount current-loan-details)
-          (get last-interaction-block current-loan-details)
-        )
-      )
-      (total-due
-        (+ (get amount current-loan-details) (unwrap-panic accrued-interest))
-      )
+      (current-loan-details (default-to {
+        amount: u0,
+        last-interaction-block: u0,
+      }
+        (map-get? loans tx-sender)
+      ))
+      (accrued-interest (calculate-accrued-interest (get amount current-loan-details)
+        (get last-interaction-block current-loan-details)
+      ))
+      (total-due (+ (get amount current-loan-details) (unwrap-panic accrued-interest)))
       ;; The following commented line fixes the bug in the original
       ;; implementation. Uncommenting it and commenting out the next line
       ;; would re-introduce the bug to see Rendezvous in action.
@@ -71,17 +53,13 @@
       ;; (new-loan (+ amount))
     )
     (asserts! (<= new-loan allowed-borrow) err-overborrow)
-    (let
-      ((recipient tx-sender))
+    (let ((recipient tx-sender))
       (try! (as-contract (stx-transfer? amount tx-sender recipient)))
     )
-    (map-set loans
-      tx-sender
-      {
-        amount: new-loan,
-        last-interaction-block: burn-block-height,
-      }
-    )
+    (map-set loans tx-sender {
+      amount: new-loan,
+      last-interaction-block: burn-block-height,
+    })
     (ok true)
   )
 )
@@ -95,80 +73,55 @@
 )
 
 (define-read-only (get-amount-owed)
-  (let
-    (
-      (current-loan-details
-        (default-to
-          {
-            amount: u0,
-            last-interaction-block: u0,
-          }
-          (map-get? loans tx-sender)
-        )
-      )
-      (accrued-interest
-        (calculate-accrued-interest
-          (get amount current-loan-details)
-          (get last-interaction-block current-loan-details)
-        )
-      )
-      (total-due
-        (+ (get amount current-loan-details) (unwrap-panic accrued-interest))
-      )
+  (let (
+      (current-loan-details (default-to {
+        amount: u0,
+        last-interaction-block: u0,
+      }
+        (map-get? loans tx-sender)
+      ))
+      (accrued-interest (calculate-accrued-interest (get amount current-loan-details)
+        (get last-interaction-block current-loan-details)
+      ))
+      (total-due (+ (get amount current-loan-details) (unwrap-panic accrued-interest)))
     )
     (ok total-due)
   )
 )
 
 (define-public (repay (amount uint))
-  (let
-    (
-      (current-loan-details
-        (default-to
-          {
-            amount: u0,
-            last-interaction-block: u0,
-          }
-          (map-get? loans tx-sender)
+  (let (
+      (current-loan-details (default-to {
+        amount: u0,
+        last-interaction-block: u0,
+      }
+        (map-get? loans tx-sender)
+      ))
+      (accrued-interest (unwrap!
+        (calculate-accrued-interest (get amount current-loan-details)
+          (get last-interaction-block current-loan-details)
         )
-      )
-      (accrued-interest
-        (unwrap!
-          (calculate-accrued-interest
-            (get amount current-loan-details)
-            (get last-interaction-block current-loan-details)
-          )
-          err-no-interest
-        )
-      )
+        err-no-interest
+      ))
       (total-due (+ (get amount current-loan-details) accrued-interest))
     )
     (asserts! (>= total-due amount) err-overpay)
     (try! (stx-transfer? amount tx-sender (as-contract tx-sender)))
-    (map-set loans
-      tx-sender
-      {
-        amount: (- total-due amount),
-        last-interaction-block: burn-block-height,
-      }
-    )
+    (map-set loans tx-sender {
+      amount: (- total-due amount),
+      last-interaction-block: burn-block-height,
+    })
     (var-set pool-reserve (+ (var-get pool-reserve) accrued-interest))
     (ok true)
   )
 )
 
 (define-public (claim-yield)
-  (let
-    (
-      (user-deposit
-        (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
-      )
-      (yield-amount
-        (/ (* (var-get pool-reserve) user-deposit) (var-get total-deposits))
-      )
+  (let (
+      (user-deposit (default-to u0 (get amount (map-get? deposits { owner: tx-sender }))))
+      (yield-amount (/ (* (var-get pool-reserve) user-deposit) (var-get total-deposits)))
     )
-    (let
-      ((recipient tx-sender))
+    (let ((recipient tx-sender))
       (try! (as-contract (stx-transfer? yield-amount tx-sender recipient)))
     )
     (var-set pool-reserve (- (var-get pool-reserve) yield-amount))
@@ -180,12 +133,9 @@
     (amount uint)
     (start-block uint)
   )
-  (let
-    (
+  (let (
       (elapsed-blocks (- burn-block-height start-block))
-      (interest
-        (/ (* amount (var-get loan-interest-rate) elapsed-blocks) u10000)
-      )
+      (interest (/ (* amount (var-get loan-interest-rate) elapsed-blocks) u10000))
     )
     (asserts! (not (is-eq start-block u0)) (ok u0))
     (ok interest)
@@ -193,30 +143,12 @@
 )
 
 ;; #[env(simnet)]
-(define-public (test-deposit (amount uint))
-  (if
-    (and (>= (stx-get-balance tx-sender) amount) (> amount u0))
-    (let
-      (
-        (initial-balance
-          (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
-        )
-      )
+(define-private (test-deposit (amount uint))
+  (if (and (>= (stx-get-balance tx-sender) amount) (> amount u0))
+    (let ((initial-balance (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))))
       (unwrap! (deposit amount) (err "Deposit call failed"))
-      (let
-        (
-          (updated-balance
-            (default-to
-              u0
-              (get amount (map-get? deposits { owner: tx-sender }))
-            )
-          )
-        )
-        (asserts!
-          (is-eq
-            (+ initial-balance amount)
-            updated-balance
-          )
+      (let ((updated-balance (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))))
+        (asserts! (is-eq (+ initial-balance amount) updated-balance)
           (err "Critical error: Deposit amount not updated correctly")
         )
         (ok true)
@@ -227,51 +159,40 @@
 )
 
 ;; #[env(simnet)]
-(define-public (test-borrow (amount uint))
-  (if
-    (and
+(define-private (test-borrow (amount uint))
+  (if (and
       (> amount u0)
       (>= (stx-get-balance tx-sender) amount)
       (<=
         (+
           (get amount
-            (default-to
-              { amount: u0, last-interaction-block: u0 }
-              (map-get? loans tx-sender )
-            )
-          )
+            (default-to {
+              amount: u0,
+              last-interaction-block: u0,
+            }
+              (map-get? loans tx-sender)
+            ))
           amount
         )
-        (/
-          (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
+        (/ (default-to u0 (get amount (map-get? deposits { owner: tx-sender })))
           u2
-        )
-      )
+        ))
     )
-    (let
-      (
-        (initial-loan
-          (default-to
-            { amount: u0, last-interaction-block: u0 }
-            (map-get? loans tx-sender)
-          )
-        )
-      )
+    (let ((initial-loan (default-to {
+        amount: u0,
+        last-interaction-block: u0,
+      }
+        (map-get? loans tx-sender)
+      )))
       (unwrap! (borrow amount) (err "Borrow call failed"))
-      (let
-        (
-          (updated-loan
-            (default-to
-              { amount: u0, last-interaction-block: u0 }
-              (map-get? loans tx-sender)
-            )
-          )
-        )
+      (let ((updated-loan (default-to {
+          amount: u0,
+          last-interaction-block: u0,
+        }
+          (map-get? loans tx-sender)
+        )))
         (asserts!
-          (is-eq
-            (+ (get amount initial-loan) amount)
-            (get amount updated-loan)
-          )
+          (is-eq (+ (get amount initial-loan) amount) (get amount updated-loan))
           (err "Critical error: Loan amount not updated correctly")
         )
         (ok true)

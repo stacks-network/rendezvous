@@ -195,7 +195,7 @@ Dialers allow you to define **pre- and post-execution functions** using JavaScri
 rv root contract invariant --dial=./custom-dialer.js
 ```
 
-A good example of a dialer can be found in the Rendezvous repository, within the example Clarinet project, inside the [sip010.js file](https://github.com/stacks-network/rendezvous/blob/272b9247cdfcd5d12da89254e622e712d6e29e5e/example/sip010.js).
+A good example of a dialer can be found in the Rendezvous repository, within the example Clarinet project, inside the [sip010.cjs file](https://github.com/stacks-network/rendezvous/blob/12b3e4cc011c0029522b54e0e02342f9d47600eb/example/sip010.cjs).
 
 In that file, you’ll find a **post-dialer** designed as a **sanity check** for SIP-010 token contracts. It ensures that the `transfer` function correctly emits the required **print event** containing the `memo`, as specified in [SIP-010](https://github.com/stacksgov/sips/blob/6ea251726353bd1ad1852aabe3d6cf1ebfe02830/sips/sip-010/sip-010-fungible-token-standard.md?plain=1#L69).
 
@@ -435,12 +435,12 @@ Let’s say we have a contract named `checker` with the following source:
 )
 
 ;; #[env(simnet)]
-(define-public (update-context (function-name (string-ascii 100)) (called uint))
+(define-private (update-context (function-name (string-ascii 100)) (called uint))
   (ok (map-set context function-name {called: called}))
 )
 
 ;; #[env(simnet)]
-(define-public (test-1)
+(define-private (test-1)
   (ok true)
 )
 
@@ -456,7 +456,7 @@ The contract source, test functions, and **context** all live in the same file. 
 
 Rendezvous uses a **context** to track function calls and execution details during invariant testing. This allows for better tracking of execution details and invariant validation.
 
-> **Important:** Every contract tested with Rendezvous **invariant testing** must include the `context` map and the `update-context` public function. During invariant testing, Rendezvous calls public functions and uses `update-context` to track successful executions. This tracking enables invariants to reason about how many times each function has been called. If these are missing during invariant testing, Rendezvous will throw a runtime error. The context is not required for property-based testing.
+> **Important:** Every contract tested with Rendezvous **invariant testing** must include the `context` map and the `update-context` private function. During invariant testing, Rendezvous calls public functions and uses `update-context` to track successful executions. This tracking enables invariants to reason about how many times each function has been called. If these are missing during invariant testing, Rendezvous will throw a runtime error. The context is not required for property-based testing.
 
 ### How the Context Works
 
@@ -472,7 +472,7 @@ Here’s how the context is structured:
 })
 
 ;; #[env(simnet)]
-(define-public (update-context (function-name (string-ascii 100)) (called uint))
+(define-private (update-context (function-name (string-ascii 100)) (called uint))
   (ok (map-set context function-name {called: called}))
 )
 ```
@@ -532,7 +532,7 @@ A **separate function** determines whether a test should run.
   (> n u1)  ;; Only allow tests where n > 1
 )
 
-(define-public (test-add (n uint))
+(define-private (test-add (n uint))
   (let
     ((counter-before (get-counter)))
     (try! (add n))
@@ -551,7 +551,7 @@ Instead of using a separate function, **the test itself decides whether to run**
 **In-place discarding example**
 
 ```clarity
-(define-public (test-add (n uint))
+(define-private (test-add (n uint))
   (let
     ((counter-before (get-counter)))
     (ok
@@ -659,9 +659,9 @@ This process allows Rendezvous to create meaningful state transitions and valida
 
 ### Example
 
-The `example` Clarinet project demonstrates this feature. The [send-tokens](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/send-tokens.clar) contract contains one public function and one property-based test that both accept trait references.
+The `example` Clarinet project demonstrates this feature. The [send-tokens](https://github.com/stacks-network/rendezvous/blob/1e9fe78b07d8cd971843634f3915186295efb414/example/contracts/send-tokens.clar) contract contains one public function and one property-based test that both accept trait references.
 
-To enable testing, the project includes [rendezvous-token](https://github.com/stacks-network/rendezvous/blob/9c02aa7c2571b3795debc657bd433fd9bf7f19eb/example/contracts/rendezvous-token.clar), which implements the required trait.
+To enable testing, the project includes [rendezvous-token](https://github.com/stacks-network/rendezvous/blob/1e9fe78b07d8cd971843634f3915186295efb414/example/contracts/rendezvous-token.clar), which implements the required trait.
 
 ### Adding More Implementations
 

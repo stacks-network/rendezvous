@@ -116,7 +116,7 @@ Using this command, Rendezvous will **randomly execute public function calls** i
 Another way to detect the introduced bug is by writing this property-based test:
 
 ```clarity
-(define-public (test-increment)
+(define-private (test-increment)
   (let
     (
       (counter-before (get-counter))
@@ -242,7 +242,7 @@ Using this command, Rendezvous will **randomly execute public function calls** i
 A property-based test that can detect the introduced bug is:
 
 ```clarity
-(define-public (test-get-last-shipment-id
+(define-private (test-get-last-shipment-id
     (starting-location (string-ascii 25))
     (receiver principal)
   )
@@ -317,7 +317,7 @@ This bug **reduces the maximum supported list length** in a private function, le
 A property-based test that can detect the introduced bug is:
 
 ```clarity
-(define-public (test-reverse-uint (seq (list 127 uint)))
+(define-private (test-reverse-uint (seq (list 127 uint)))
   (begin
     (asserts!
       (is-eq seq (reverse-uint (reverse-uint seq)))
@@ -388,7 +388,7 @@ Seed : 869018352
 
 Counterexample:
 - Test Contract : reverse
-- Test Function : test-reverse-uint (public)
+- Test Function : test-reverse-uint (private)
 - Arguments     : [[0,0,0,0,0]]
 - Caller        : wallet_3
 - Outputs       : {"type":{"response":{"ok":"bool","error":"int128"}}}
@@ -468,7 +468,7 @@ The issue lies in the conditional check `(>= end 1)`, where the `skip` value is 
 The following property-based test evaluates the correctness of `slice-uint`:
 
 ```clarity
-(define-public (test-slice-list-uint (seq (list 127 uint)) (skip int) (n int))
+(define-private (test-slice-list-uint (seq (list 127 uint)) (skip int) (n int))
   (if
     ;; Discard the test if the input is invalid by returning `(ok false)`.
     (or
@@ -555,7 +555,7 @@ An example of a property-based test with an attached discard function can also b
   )
 )
 
-(define-public (test-slice-list-int (seq (list 127 int)) (skip int) (n int))
+(define-private (test-slice-list-int (seq (list 127 int)) (skip int) (n int))
   (let
     ((result (slice seq skip n)))
     (if

@@ -470,7 +470,7 @@ const invariantTest = async (
               );
               localContext[r.rendezvousContractId][selectedFunction.name]++;
 
-              simnet.callPublicFn(
+              simnet.callPrivateFn(
                 r.rendezvousContractId,
                 "update-context",
                 [
@@ -724,7 +724,7 @@ export const initializeClarityContext = (
   functions: EnrichedContractInterfaceFunction[],
 ) => {
   functions.forEach((fn) => {
-    const { result: initialize } = simnet.callPublicFn(
+    const { result: initialize } = simnet.callPrivateFn(
       contractId,
       "update-context",
       [Cl.stringAscii(fn.name), Cl.uint(0)],
@@ -744,7 +744,7 @@ export const initializeClarityContext = (
  * functions.
  *
  * The SUT functions are the ones that have `public` access since they are
- * capable of changing the contract state, and they are not test functions.
+ * capable of changing the contract state.
  * @param allFunctionsMap The map containing all the functions for each
  * Rendezvous contract.
  * @returns A map containing the filtered SUT functions for each Rendezvous
@@ -756,12 +756,7 @@ const filterSutFunctions = (
   new Map(
     Array.from(allFunctionsMap, ([contractId, functions]) => [
       contractId,
-      functions.filter(
-        (f) =>
-          f.access === "public" &&
-          f.name !== "update-context" &&
-          !f.name.startsWith("test-"),
-      ),
+      functions.filter((f) => f.access === "public"),
     ]),
   );
 

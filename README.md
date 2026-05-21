@@ -69,7 +69,7 @@ Here's an example of a test that checks reversing a list twice returns the origi
 
 ```clarity
 ;; #[env(simnet)]
-(define-public (test-reverse-list (seq (list 127 uint)))
+(define-private (test-reverse-list (seq (list 127 uint)))
   (begin
     (asserts!
       (is-eq seq
@@ -137,7 +137,7 @@ fc.assert(
 ```
 
 - `getContractFunction(simnet, contract, fn, deployer?)` — retrieves a function interface, enriched with trait data.
-- `strategyFor(simnet, fn, allAddresses?, projectTraitImplementations?)` — returns an `fc.Arbitrary<ClarityValue[]>` ready for use with `simnet.callPublicFn` or `simnet.callReadOnlyFn`. `allAddresses` restricts the principal pool (defaults to every account in the simnet); `projectTraitImplementations` reuses a precomputed trait map (defaults to extracting it from the simnet).
+- `strategyFor(simnet, fn, allAddresses?, projectTraitImplementations?)` — returns an `fc.Arbitrary<ClarityValue[]>` ready for use with `simnet.callPublicFn`, `simnet.callReadOnlyFn`, or `simnet.callPrivateFn`. `allAddresses` restricts the principal pool (defaults to every account in the simnet); `projectTraitImplementations` reuses a precomputed trait map (defaults to extracting it from the simnet).
 
 ---
 

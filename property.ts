@@ -409,7 +409,7 @@ const propertyTest = async (
           try {
             // If the function call results in a runtime error, the error will
             // be caught and logged as a test failure in the catch block.
-            const { result: testFunctionCallResult } = simnet.callPublicFn(
+            const { result: testFunctionCallResult } = simnet.callPrivateFn(
               r.rendezvousContractId,
               r.selectedTestFunction.name,
               r.functionArgs,
@@ -580,7 +580,7 @@ const filterTestFunctions = (
     Array.from(allFunctionsMap, ([contractId, functions]) => [
       contractId,
       functions.filter(
-        (f) => f.access === "public" && f.name.startsWith("test-"),
+        (f) => f.access === "private" && f.name.startsWith("test-"),
       ),
     ]),
   );

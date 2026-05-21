@@ -246,7 +246,7 @@ Before writing any meaningful properties, it's a good idea to check that Rendezv
 
 ```clarity
 ;; #[env(simnet)]
-(define-public (test-always-true)
+(define-private (test-always-true)
   (ok true)
 )
 ```
@@ -309,7 +309,7 @@ You want to test that **borrowing always updates the loan amount correctly**. Ad
 ;; Property: Borrowing should always update the loan amount correctly.
 ;; The new loan amount should equal the old loan amount plus the borrowed
 ;; amount.
-(define-public (test-borrow (amount uint))
+(define-private (test-borrow (amount uint))
   (let (
       ;; Record the loan amount before performing any action that would end up
       ;; changing the internal state of the smart contract. Query the loans map
@@ -339,7 +339,7 @@ You want to test that **borrowing always updates the loan amount correctly**. Ad
 Rendezvous:
 
 1. Deploys the contract with all `#[env(simnet)]`-annotated test functions included.
-2. Detects all public `test-*` functions automatically.
+2. Detects all private `test-*` functions automatically.
 3. Generates a random sequence to call each test.
 4. Produces random argument values for each function parameter.
 5. Randomly selects senders from settings/Devnet.toml.
@@ -370,7 +370,7 @@ Let's address them one by one.
 ;; This is a helper function that will eventually be picked up during
 ;; property-based-testing runs. It allows creating deposits in the smart
 ;; contract so other tests can check properties requiring a deposit.
-(define-public (test-deposit-helper (amount uint))
+(define-private (test-deposit-helper (amount uint))
   (let (
       ;; Call the deposit function and ignore the result.
       (deposit-result (deposit amount))
@@ -387,7 +387,7 @@ Let's address them one by one.
 ;; Property: Borrowing should always update the loan amount correctly.
 ;; The new loan amount should equal the old loan amount plus the borrowed
 ;; amount.
-(define-public (test-borrow (amount uint))
+(define-private (test-borrow (amount uint))
   (if (or
       ;; If amount is 0, the STX transfer performed in the borrow operation
       ;; would fail, resulting in a false negative.
@@ -466,7 +466,7 @@ Seed : 1880056597
 
 Counterexample:
 - Test Contract : stx-defi
-- Test Function : test-borrow (public)
+- Test Function : test-borrow (private)
 - Arguments     : [1]
 - Caller        : wallet_8
 - Outputs       : {"type":{"response":{"ok":"bool","error":{"string-ascii":{"length":33}}}}}
