@@ -659,9 +659,9 @@ This process allows Rendezvous to create meaningful state transitions and valida
 
 ### Example
 
-The `example` Clarinet project demonstrates this feature. The [send-tokens](https://github.com/stacks-network/rendezvous/blob/12b3e4cc011c0029522b54e0e02342f9d47600eb/example/contracts/send-tokens.clar) contract contains one public function and one property-based test that both accept trait references.
+The `example` Clarinet project demonstrates this feature. The [send-tokens](https://github.com/stacks-network/rendezvous/blob/1e9fe78b07d8cd971843634f3915186295efb414/example/contracts/send-tokens.clar) contract contains one public function and one property-based test that both accept trait references.
 
-To enable testing, the project includes [rendezvous-token](https://github.com/stacks-network/rendezvous/blob/12b3e4cc011c0029522b54e0e02342f9d47600eb/example/contracts/rendezvous-token.clar), which implements the required trait.
+To enable testing, the project includes [rendezvous-token](https://github.com/stacks-network/rendezvous/blob/1e9fe78b07d8cd971843634f3915186295efb414/example/contracts/rendezvous-token.clar), which implements the required trait.
 
 ### Adding More Implementations
 
