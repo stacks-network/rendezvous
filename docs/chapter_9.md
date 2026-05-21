@@ -33,7 +33,7 @@ Retrieves a function interface from a deployed contract. The returned interface 
 
 ### `strategyFor(simnet, fn, allAddresses?, projectTraitImplementations?)`
 
-Returns a fast-check arbitrary that produces `ClarityValue[]` arrays — ready for use with `simnet.callPublicFn` or `simnet.callReadOnlyFn`.
+Returns a fast-check arbitrary that produces `ClarityValue[]` arrays — ready for use with `simnet.callPublicFn`, `simnet.callReadOnlyFn`, or `callPrivateFn`.
 
 Handles all Clarity types automatically: `uint`, `int`, `bool`, `principal`, `buff`, `string-ascii`, `string-utf8`, `list`, `tuple`, `optional`, `response`, and `trait_reference` (including recursive/nested structures like list of tuples or optional of response).
 
