@@ -21,9 +21,11 @@
     (item uint)
     (seq (list 127 uint))
   )
-  (unwrap-panic (as-max-len? (concat (list item) seq) u127))
+  (unwrap-panic
+    ;; Replace with u127 with u4 to introduce a bug.
+    (as-max-len? (concat (list item) seq) u127)
+  )
 )
-;; Replace with u4 to introduce a bug.
 
 (define-private (reverse-list1 (seq (list 127 uint)))
   (fold reverse-redx-unsigned-list seq (list))
