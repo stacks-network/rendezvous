@@ -540,11 +540,11 @@ An example of a property-based test with an attached discard function can also b
 ;; are unsuitable for those tests.
 ;; To skip the test when inputs are invalid, the first way is to define a
 ;; 'discard' function:
-;; - Must be private.
+;; - Must be read-only.
 ;; - Name should match the property test function's, prefixed with "can-".
 ;; - Parameters should mirror those of the property test.
 ;; - Returns true only if inputs are valid, allowing the test to run.
-(define-private (can-test-slice-list-int
+(define-read-only (can-test-slice-list-int
     (seq (list 127 int))
     (skip int)
     (n int)

@@ -134,7 +134,7 @@ export const checkProperties = async (
     Array.from(rendezvousAllFunctions, ([contractId, functions]) => [
       contractId,
       functions.filter(
-        ({ access, name }) => access === "private" && name.startsWith("can-"),
+        ({ access, name }) => access === "read_only" && name.startsWith("can-"),
       ),
     ]),
   );
@@ -609,7 +609,7 @@ const isTestDiscarded = (
     return false;
   }
 
-  const { result: discardFunctionCallResult } = simnet.callPrivateFn(
+  const { result: discardFunctionCallResult } = simnet.callReadOnlyFn(
     contractId,
     discardFunctionName,
     selectedTestFunctionArgs,

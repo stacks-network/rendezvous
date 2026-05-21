@@ -445,7 +445,7 @@
 ;; - Name should match the property test function's, prefixed with "can-".
 ;; - Parameters should mirror those of the property test.
 ;; - Returns true only if inputs are valid, allowing the test to run.
-(define-private (can-test-slice-list-int
+(define-read-only (can-test-slice-list-int
     (seq (list 127 int))
     (skip int)
     (n int)

@@ -26,7 +26,7 @@ describe("Test discarding related operations", () => {
       fc.property(
         fc.record({
           fnName: fc.string(),
-          access: fc.constant("private"),
+          access: fc.constant("read_only"),
           args: fc.array(
             fc.record({
               name: fc.string(),
@@ -59,7 +59,7 @@ describe("Test discarding related operations", () => {
       fc.property(
         fc.record({
           fnName: fc.string(),
-          access: fc.constant("private"),
+          access: fc.constant("read_only"),
           args: fc.array(
             fc.record({
               name: fc.string(),
@@ -94,7 +94,7 @@ describe("Test discarding related operations", () => {
       fc.property(
         fc.record({
           fnName: fc.string(),
-          access: fc.constant("private"),
+          access: fc.constant("read_only"),
           args: fc.array(
             fc.record({
               name: fc.string(),
@@ -138,7 +138,7 @@ describe("Test discarding related operations", () => {
           .record({
             testFn: fc.record({
               fnName: fc.string(),
-              access: fc.constant("private"),
+              access: fc.constant("read_only"),
               args: fc.array(
                 fc.record({
                   name: fc.string(),
@@ -154,7 +154,7 @@ describe("Test discarding related operations", () => {
             }),
             discardFn: fc.record({
               fnName: fc.string(),
-              access: fc.constant("private"),
+              access: fc.constant("read_only"),
               args: fc.array(
                 fc.record({
                   name: fc.string(),

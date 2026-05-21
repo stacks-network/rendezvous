@@ -520,7 +520,7 @@ A **separate function** determines whether a test should run.
 
 > Rules for a Discard Function:
 >
-> - Must be **private**.
+> - Must be **read-only**.
 > - Name must match the property test function, prefixed with `"can-"`.
 > - Parameters must **mirror** the property test’s parameters.
 > - Must return `true` **only if inputs are valid**, allowing the test to run.
@@ -528,7 +528,7 @@ A **separate function** determines whether a test should run.
 **Discard function example**
 
 ```clarity
-(define-private (can-test-add (n uint))
+(define-read-only (can-test-add (n uint))
   (> n u1)  ;; Only allow tests where n > 1
 )
 
