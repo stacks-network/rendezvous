@@ -9,5 +9,5 @@ build-dir = "dist"
 
 [output.html]
 additional-css = ["custom.css"]
-edit-url-template = "https://github.com/stacks-network/rendezvous/blob/master/docs/{path}"
-git-repository-url = "https://github.com/stacks-network/rendezvous/"
+edit-url-template = "https://github.com/stx-labs/rendezvous/blob/master/docs/{path}"
+git-repository-url = "https://github.com/stx-labs/rendezvous/"

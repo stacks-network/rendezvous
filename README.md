@@ -153,7 +153,7 @@ Real bugs and security vulnerabilities uncovered with `rv`. To add a finding, op
 
 ### Documentation
 
-For full documentation, see the official [Rendezvous Book](https://stacks-network.github.io/rendezvous/).
+For full documentation, see the official [Rendezvous Book](https://stx-labs.github.io/rendezvous/).
 
 ---
 
