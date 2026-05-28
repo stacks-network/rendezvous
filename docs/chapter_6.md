@@ -588,7 +588,7 @@ Some smart contracts need a special `Clarinet.toml` file to allow Rendezvous to 
 
 A great example is the **sBTC contract suite**.
 
-For testing the [`sbtc-token`](https://github.com/stacks-network/sbtc/blob/b624e4a8f08eb589a435719b200873e8aa5b3305/contracts/contracts/sbtc-token.clar#L30-L35) contract, the `sbtc-registry` authorization function [`is-protocol-caller`](https://github.com/stacks-network/sbtc/blob/b624e4a8f08eb589a435719b200873e8aa5b3305/contracts/contracts/sbtc-registry.clar#L361-L369) is **too restrictive**. Normally, it only allows calls from protocol contracts, making it **impossible to directly test certain state transitions** in `sbtc-token`.
+For testing the [`sbtc-token`](https://github.com/stacks-sbtc/sbtc/blob/b624e4a8f08eb589a435719b200873e8aa5b3305/contracts/contracts/sbtc-token.clar#L30-L35) contract, the `sbtc-registry` authorization function [`is-protocol-caller`](https://github.com/stacks-sbtc/sbtc/blob/b624e4a8f08eb589a435719b200873e8aa5b3305/contracts/contracts/sbtc-registry.clar#L361-L369) is **too restrictive**. Normally, it only allows calls from protocol contracts, making it **impossible to directly test certain state transitions** in `sbtc-token`.
 
 To work around this, you need two things:
 
