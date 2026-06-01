@@ -672,10 +672,10 @@ Now that you understand the power of Rendezvous, explore:
 
 ## Get Involved
 
-**Found this tutorial useful?** Star the [Rendezvous repository on GitHub](https://github.com/stacks-network/rendezvous) to show your support!
+**Found this tutorial useful?** Star the [Rendezvous repository on GitHub](https://github.com/stx-labs/rendezvous) to show your support!
 
 Have questions, found a bug, or want to contribute? We'd love to hear from you:
 
-- **Open an issue** on [GitHub](https://github.com/stacks-network/rendezvous/issues)
+- **Open an issue** on [GitHub](https://github.com/stx-labs/rendezvous/issues)
 - **Reach out** with questions or feedback
 - **Share your findings** — contribute examples of bugs you've caught to show others how powerful advanced testing techniques can be

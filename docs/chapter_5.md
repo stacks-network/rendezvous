@@ -64,7 +64,7 @@ If you want to contribute to Rendezvous or run it from source:
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/stacks-network/rendezvous.git
+   git clone https://github.com/stx-labs/rendezvous.git
    ```
 
 2. Navigate to the project directory:

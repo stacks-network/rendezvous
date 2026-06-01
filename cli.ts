@@ -29,7 +29,7 @@ export const helpMessage = `
     --bail        Stop on first failure
     -h, --help    Show this message
 
-  Learn more: https://stacks-network.github.io/rendezvous/
+  Learn more: https://stx-labs.github.io/rendezvous/
   `;
 
 /**

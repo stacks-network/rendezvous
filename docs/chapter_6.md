@@ -195,7 +195,7 @@ Dialers allow you to define **pre- and post-execution functions** using JavaScri
 rv root contract invariant --dial=./custom-dialer.js
 ```
 
-A good example of a dialer can be found in the Rendezvous repository, within the example Clarinet project, inside the [sip010.cjs file](https://github.com/stacks-network/rendezvous/blob/12b3e4cc011c0029522b54e0e02342f9d47600eb/example/sip010.cjs).
+A good example of a dialer can be found in the Rendezvous repository, within the example Clarinet project, inside the [sip010.cjs file](https://github.com/stx-labs/rendezvous/blob/12b3e4cc011c0029522b54e0e02342f9d47600eb/example/sip010.cjs).
 
 In that file, you’ll find a **post-dialer** designed as a **sanity check** for SIP-010 token contracts. It ensures that the `transfer` function correctly emits the required **print event** containing the `memo`, as specified in [SIP-010](https://github.com/stacksgov/sips/blob/6ea251726353bd1ad1852aabe3d6cf1ebfe02830/sips/sip-010/sip-010-fungible-token-standard.md?plain=1#L69).
 
@@ -588,7 +588,7 @@ Some smart contracts need a special `Clarinet.toml` file to allow Rendezvous to 
 
 A great example is the **sBTC contract suite**.
 
-For testing the [`sbtc-token`](https://github.com/stacks-network/sbtc/blob/b624e4a8f08eb589a435719b200873e8aa5b3305/contracts/contracts/sbtc-token.clar#L30-L35) contract, the `sbtc-registry` authorization function [`is-protocol-caller`](https://github.com/stacks-network/sbtc/blob/b624e4a8f08eb589a435719b200873e8aa5b3305/contracts/contracts/sbtc-registry.clar#L361-L369) is **too restrictive**. Normally, it only allows calls from protocol contracts, making it **impossible to directly test certain state transitions** in `sbtc-token`.
+For testing the [`sbtc-token`](https://github.com/stacks-sbtc/sbtc/blob/b624e4a8f08eb589a435719b200873e8aa5b3305/contracts/contracts/sbtc-token.clar#L30-L35) contract, the `sbtc-registry` authorization function [`is-protocol-caller`](https://github.com/stacks-sbtc/sbtc/blob/b624e4a8f08eb589a435719b200873e8aa5b3305/contracts/contracts/sbtc-registry.clar#L361-L369) is **too restrictive**. Normally, it only allows calls from protocol contracts, making it **impossible to directly test certain state transitions** in `sbtc-token`.
 
 To work around this, you need two things:
 
@@ -659,9 +659,9 @@ This process allows Rendezvous to create meaningful state transitions and valida
 
 ### Example
 
-The `example` Clarinet project demonstrates this feature. The [send-tokens](https://github.com/stacks-network/rendezvous/blob/1e9fe78b07d8cd971843634f3915186295efb414/example/contracts/send-tokens.clar) contract contains one public function and one property-based test that both accept trait references.
+The `example` Clarinet project demonstrates this feature. The [send-tokens](https://github.com/stx-labs/rendezvous/blob/1e9fe78b07d8cd971843634f3915186295efb414/example/contracts/send-tokens.clar) contract contains one public function and one property-based test that both accept trait references.
 
-To enable testing, the project includes [rendezvous-token](https://github.com/stacks-network/rendezvous/blob/1e9fe78b07d8cd971843634f3915186295efb414/example/contracts/rendezvous-token.clar), which implements the required trait.
+To enable testing, the project includes [rendezvous-token](https://github.com/stx-labs/rendezvous/blob/1e9fe78b07d8cd971843634f3915186295efb414/example/contracts/rendezvous-token.clar), which implements the required trait.
 
 ### Adding More Implementations
 
