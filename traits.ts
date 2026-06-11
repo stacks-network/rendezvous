@@ -553,7 +553,17 @@ export const extractProjectTraitImplementations = (simnet: Simnet) => {
   const projectTraitImplementations = allProjectContracts.reduce<
     Record<string, ImplementedTraitType[]>
   >((acc, contractId) => {
-    const ast = simnet.getContractAST(contractId);
+    // Some deployed contracts (notably remote `requirements` contracts) have
+    // no introspectable AST in the simnet, so `getContractAST` throws. Such a
+    // contract cannot implement a project-local trait, so skip it instead of
+    // aborting the whole run.
+    let ast;
+    try {
+        ast = simnet.getContractAST(contractId);
+    }
+    catch (e) {
+        return acc;
+    }    
     const implementedTraits = ast.implemented_traits as ImplementedTraitType[];
     if (implementedTraits.length > 0) {
       acc[contractId] = implementedTraits;
