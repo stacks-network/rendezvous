@@ -44,14 +44,14 @@
     "access": "public"
   },
   "dependencies": {
-    "@stacks/clarinet-sdk": "^3.18.1",
+    "@stacks/clarinet-sdk": "^3.20.0",
     "@stacks/transactions": "^7.4.0",
     "ansicolor": "^2.0.3",
     "fast-check": "^4.5.3"
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
-    "@stacks/clarinet-sdk-wasm": "^3.18.1",
+    "@stacks/clarinet-sdk-wasm": "^3.20.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^25.6.0",
     "jest": "^30.2.0",
