@@ -1,5 +1,7 @@
-const { initSimnet } = require("@stacks/clarinet-sdk");
-const { join, resolve } = require("node:path");
+import { join, resolve } from "node:path";
+
+import { initSimnet } from "@stacks/clarinet-sdk";
+import { beforeAll } from "vitest";
 
 // Ensure that the Clarinet project cache and deployment plan are initialized
 // before all the tests run.

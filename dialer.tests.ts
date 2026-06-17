@@ -16,7 +16,7 @@ describe("DialerRegistry interaction", () => {
 
   it("correctly executes registered pre-dialer", async () => {
     // Arrange
-    const mockPreDialer = jest.fn();
+    const mockPreDialer = vi.fn();
     const registry = new DialerRegistry(dialPath);
     registry.registerPreDialer(mockPreDialer);
 
@@ -29,7 +29,7 @@ describe("DialerRegistry interaction", () => {
 
   it("correctly executes registered post-dialer", async () => {
     // Arrange
-    const mockPostDialer = jest.fn();
+    const mockPostDialer = vi.fn();
     const registry = new DialerRegistry(dialPath);
     registry.registerPostDialer(mockPostDialer);
 
@@ -42,8 +42,8 @@ describe("DialerRegistry interaction", () => {
 
   it("all the pre-dialers are executed", async () => {
     // Arrange
-    const mockPreDialer1 = jest.fn();
-    const mockPreDialer2 = jest.fn();
+    const mockPreDialer1 = vi.fn();
+    const mockPreDialer2 = vi.fn();
     const registry = new DialerRegistry(dialPath);
 
     registry.registerPreDialer(mockPreDialer1);
@@ -59,8 +59,8 @@ describe("DialerRegistry interaction", () => {
 
   it("all the post-dialers are executed", async () => {
     // Arrange
-    const mockPostDialer1 = jest.fn();
-    const mockPostDialer2 = jest.fn();
+    const mockPostDialer1 = vi.fn();
+    const mockPostDialer2 = vi.fn();
     const registry = new DialerRegistry(dialPath);
 
     registry.registerPostDialer(mockPostDialer1);
@@ -76,7 +76,7 @@ describe("DialerRegistry interaction", () => {
 
   it("early exits when specified dialer file is not found", async () => {
     // Arrange
-    jest.spyOn(process, "exit").mockImplementation(() => {
+    vi.spyOn(process, "exit").mockImplementation(() => {
       throw new Error("process.exit was called");
     });
     const registry = new DialerRegistry("non-existent.js");

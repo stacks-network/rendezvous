@@ -1,5 +1,6 @@
-import fs, { rmSync } from "node:fs";
-import { resolve } from "node:path";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 
 import { red } from "ansicolor";
 
@@ -26,7 +27,7 @@ describe("Command-line arguments handling", () => {
     // Arrange
     process.argv = ["node", "app.js", "--help"];
     const consoleLogs: string[] = [];
-    jest.spyOn(console, "log").mockImplementation((message: string) => {
+    vi.spyOn(console, "log").mockImplementation((message: string) => {
       consoleLogs.push(message);
     });
 
@@ -38,7 +39,7 @@ describe("Command-line arguments handling", () => {
 
     // Teardown
     process.argv = initialArgv;
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it.each([
@@ -49,7 +50,7 @@ describe("Command-line arguments handling", () => {
     async (_testCase: string, argv: string[]) => {
       // Arrange
       process.argv = argv;
-      const mockExit = jest.spyOn(process, "exit").mockImplementation(((
+      const mockExit = vi.spyOn(process, "exit").mockImplementation(((
         _code?: number,
       ) => {
         throw new Error("process.exit");
@@ -61,7 +62,7 @@ describe("Command-line arguments handling", () => {
 
       // Teardown
       process.argv = initialArgv;
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
     },
   );
 
@@ -79,13 +80,13 @@ describe("Command-line arguments handling", () => {
       process.argv = argv;
       const consoleLogs: string[] = [];
       const consoleErrors: string[] = [];
-      jest.spyOn(console, "log").mockImplementation((message: string) => {
+      vi.spyOn(console, "log").mockImplementation((message: string) => {
         consoleLogs.push(message);
       });
-      jest.spyOn(console, "error").mockImplementation((message: string) => {
+      vi.spyOn(console, "error").mockImplementation((message: string) => {
         consoleErrors.push(message);
       });
-      jest.spyOn(process, "exit").mockImplementation(((_code?: number) => {
+      vi.spyOn(process, "exit").mockImplementation(((_code?: number) => {
         throw new Error("process.exit");
       }) as () => never);
 
@@ -98,7 +99,7 @@ describe("Command-line arguments handling", () => {
 
       // Teardown
       process.argv = initialArgv;
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
     },
   );
 
@@ -467,13 +468,13 @@ describe("Command-line arguments handling", () => {
       process.argv = updatedArgv;
 
       const allLogs: string[] = [];
-      jest.spyOn(console, "log").mockImplementation((message: string) => {
+      vi.spyOn(console, "log").mockImplementation((message: string) => {
         allLogs.push(message);
       });
-      jest.spyOn(console, "error").mockImplementation((message: string) => {
+      vi.spyOn(console, "error").mockImplementation((message: string) => {
         allLogs.push(message);
       });
-      jest.spyOn(process, "exit").mockImplementation(((_code?: number) => {
+      vi.spyOn(process, "exit").mockImplementation(((_code?: number) => {
         throw new Error("process.exit");
       }) as () => never);
 
@@ -498,7 +499,7 @@ describe("Command-line arguments handling", () => {
 
       // Teardown
       process.argv = initialArgv;
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
       rmSync(tempDir, { recursive: true, force: true });
     },
   );
@@ -516,8 +517,8 @@ describe("Contract selection", () => {
     process.argv = ["node", "app.js", tempDir, "nonexistent", "test"];
 
     const consoleErrors: string[] = [];
-    jest.spyOn(console, "log").mockImplementation(() => {});
-    jest.spyOn(console, "error").mockImplementation((message: string) => {
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation((message: string) => {
       consoleErrors.push(message);
     });
 
@@ -531,7 +532,7 @@ describe("Contract selection", () => {
 
     // Teardown
     process.argv = initialArgv;
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     rmSync(tempDir, { recursive: true, force: true });
   });
 });
@@ -551,15 +552,10 @@ describe("Custom manifest detection", () => {
 
   it("returns the custom manifest file name when it exists", () => {
     // Setup
-    const manifestDir = "d290f1ee-6c54-4b01-90e6-d701748f0851";
+    const manifestDir = mkdtempSync(join(tmpdir(), isolatedTestEnvPrefix));
     const targetContractName = "7c9e6679-7425-40de-944b-e07fc1f90ae7";
-
     const expected = `Clarinet-${targetContractName}.toml`;
-    const expectedPath = resolve(manifestDir, expected);
-
-    jest
-      .spyOn(fs, "existsSync")
-      .mockImplementation((p: fs.PathLike) => p.toString() === expectedPath);
+    writeFileSync(join(manifestDir, expected), "");
 
     // Exercise
     const actual = getManifestFileName(manifestDir, targetContractName);
@@ -568,6 +564,6 @@ describe("Custom manifest detection", () => {
     expect(actual).toBe(expected);
 
     // Teardown
-    jest.restoreAllMocks();
+    rmSync(manifestDir, { recursive: true, force: true });
   });
 });
